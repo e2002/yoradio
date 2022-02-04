@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=0.25">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" type="image/png" href="elogo.png">
+  <link rel="icon" type="image/png" href="elogo.png">
+  <link rel="stylesheet" title="base" href="/style.css" type="text/css">
+  <title>ёRadio</title>
+  <style> </style>
+  </head>
+<body>
+  <div class="content">
+    <div class="logo"></div>
+    <div id="navbar"%APMODE%>
+      <div class="playerbytton navbutton" id="playlistbutton" onclick="showEditor()"></div>
+      <div class="playerbytton navbutton" id="settingsbutton" onclick="showSettings()"></div>
+    </div>
+    <div class="playerwrap">
+      <div class="player">
+        <div id="nameset">&nbsp;</div>
+        <div id="meta">&nbsp;</div>
+        <div class="playerbyttonwrap">
+          <div class="playerbytton" id="prevbutton"></div>
+          <div class="stopped" id="playbutton"></div>
+          <div class="playerbytton" id="nextbutton"></div>
+          <div class="playerbytton" id="volmbutton"></div>
+          <div class="playerbytton" id="volpbutton"></div>
+          <div class="playerbytton" id="eqbutton" onclick="showEqualizer(true)"></div>
+        </div>
+        <div id="equalizerwrap">
+		      <div id="equalizerbg" class="hidden">
+				    <ul id="equalizer">
+						  <li>
+						  <li>
+								balance<span class="eqinfo" id="eqbalinfo">0</span>
+								<input type="range" id="eqbal" class="slider" data-slaveid="eqbalinfo" onchange="onRangeBalChange(this)" name="lovpass" min="-16" max="16" value="0">
+							</li>
+						  <li>
+						  <li>
+								treble<span class="eqinfo" id="eqtrebleinfo">0</span>
+								<input type="range" id="eqtreble" class="slider" data-slaveid="eqtrebleinfo" onchange="onRangeEqChange(this)" name="lovpass" min="-16" max="16" value="0">
+							</li>
+						  <li>
+								middle<span class="eqinfo" id="eqmiddleinfo">0</span>
+								<input type="range" id="eqmiddle" class="slider" data-slaveid="eqmiddleinfo" onchange="onRangeEqChange(this)" name="bandpass" min="-16" max="16" value="0">
+						  </li>
+						  <li>
+								bass<span class="eqinfo" id="eqbassinfo">0</span>
+								<input type="range" id="eqbass" class="slider" data-slaveid="eqbassinfo" onchange="onRangeEqChange(this)" name="highpass" min="-16" max="16" value="0">
+						  </li>
+						  <li class="formbuttons">
+						  	<div class="button" id="accept_button" onclick="showEqualizer(false)">Acceptable...</div>
+						  </li>
+				    </ul>
+		      </div>
+		      <input type="range" id="volrange" class="slider" name="vol" data-slaveid="volinfo" onchange="onRangeVolChange(this.value)" min="0" max="254" value="0">
+		      <div class="infowrap">
+		        <div class="infoitem">volume: <span id="volinfo">0</span></div>
+		        <div class="infoitem" id="bitinfo">bitrate: 0kBit</div>
+		        <div class="infoitem" id="rsiinfo">rssi: 0dBm</div>
+		      </div>
+		      <ul id="playlist">
+		      </ul>
+        </div><!--equalizerwrap-->
+      </div><!--player-->
+      <div id="settings"%NOTAPMODE%>
+        <h2>WiFi Settings</h2>
+        <ul id="credentialwrap">
+          <li class="credentialitem">
+            <span>1.</span>
+            <div class="textinput"><label for="ssid0">SSID</label><input name="ssid" id="ssid0" type="text" value="%SSID%" maxlength="20"/ ></div>
+            <div class="textinput"><label for"pass0">Password</label><input name="pass" id="pass0" type="password" value="%PASS%" maxlength="40" /></div>
+          </li>
+          <li class="credentialitem">
+            <span>2.</span>
+            <div class="textinput"><label for="ssid1">SSID</label><input name="ssid" id="ssid1" type="text" value="%SSID%" maxlength="20" /></div>
+            <div class="textinput"><label for"pass1">Password</label><input name="pass" id="pass1" type="password" value="%PASS%" maxlength="40" /></div>
+          </li>
+          <li class="credentialitem">
+            <span>3.</span>
+            <div class="textinput"><label for="ssid2">SSID</label><input name="ssid" id="ssid2" type="text" value="%SSID%" maxlength="20" /></div>
+            <div class="textinput"><label for"pass2">Password</label><input name="pass" id="pass2" type="password" value="%PASS%" maxlength="40" /></div>
+          </li>
+          <li class="credentialitem">
+            <span>4.</span>
+            <div class="textinput"><label for="ssid3">SSID</label><input name="ssid" id="ssid3" type="text" value="%SSID%" maxlength="20" /></div>
+            <div class="textinput"><label for"pass3">Password</label><input name="pass" id="pass3" type="password" value="%PASS%" maxlength="40" /></div>
+          </li>
+          <li class="credentialitem">
+            <span>5.</span>
+            <div class="textinput"><label for="ssid4">SSID</label><input name="ssid" id="ssid4" type="text" value="%SSID%" maxlength="20" /></div>
+            <div class="textinput"><label for"pass4">Password</label><input name="pass" id="pass4" type="password" value="%PASS%" maxlength="40" /></div>
+          </li>
+        </ul>
+        <div class="formbuttons">
+          <div class="button" id="cancel_button" onclick="doCancel()"%APMODE%>Cancel</div>
+          <div class="button" id="save_button" onclick="submitWiFi()">Save</div>
+        </div>
+      </div><!--settings-->
+      <div id="pleditorwrap" hidden>
+        <div id="pleditor">
+          <h2>Playlist Editor<span onclick="doCancel()"></span></h2>
+          <div id="pleheader"><span class="space"></span><span class="plename">Name</span><span class="pleurl">URL</span><span class="pleovol">Ovol</span></div>
+          <ol id="pleditorcontent">
+            <li class="pleitem">
+              <span>1.</span>
+              <input class="pleinput plename" type="text" value="" maxlength="140" />
+              <input class="pleinput pleurl" type="text" value="" maxlength="140" />
+              <input class="pleinput pleovol" type="number" min="-30" max="30" step="1" value="0" />
+            </li>
+          </ol><!--pleditorcontent-->
+          <div class="formbuttons">
+            <label for="file-upload" class="button">Import</label><input id="file-upload" type="file" accept=".txt, .csv" onchange="doUpload(this)" hidden/>
+            <div class="button" onclick="doExport()">Export</div>
+            <div class="button" onclick="doAdd()">Add</div>
+            <div class="button" onclick="doRemove()">Remove</div>
+            <!--<div class="button" onclick="doCancel()">Cancel</div>-->
+            <div class="button" onclick="submitPlaylist()">Save</div>
+          </div>
+        </div><!--pleditor-->
+      </div><!--pleditorwrap-->
+    </div><!--playerwrap-->
+    <div id="copy">powered by <a target="_blank" href="https://github.com/e2002/yoradio/">ёRadio</a> | v%VERSION%</div>
+  </div>
+  <script src="script.js"></script>
+  <script src="dragpl.js"></script>
+</body>
+</html>
