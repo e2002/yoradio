@@ -8,9 +8,11 @@
 #include "network.h"
 
 /*
+// Without display
 #include "displayDummy.h"
 DisplayDummy dsp;
 */
+// With ST7735 display
 #include "displayST7735.h"
 DisplayST7735 dsp;
 
