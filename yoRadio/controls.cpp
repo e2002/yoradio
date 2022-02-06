@@ -36,6 +36,9 @@ void initControls() {
 
 void loopControls() {
   encbutton.tick();
+  btnleft.tick();
+  btncenter.tick();
+  btnright.tick();
   encoderLoop();
   yield();
 }

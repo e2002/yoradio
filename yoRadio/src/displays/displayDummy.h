@@ -1,11 +1,8 @@
-#ifndef displayST7735_h
-#define displayST7735_h
+#ifndef displayDummy_h
+#define displayDummy_h
 
 #include "Arduino.h"
-#include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
-#include "options.h"
-#include "fonts/DS_DIGI28pt7b.h"
+#include "../../options.h"
 
 #define TFT_ROTATE      3
 #define TFT_LINEHGHT    10
@@ -15,9 +12,9 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
 
-class DisplayST7735: public Adafruit_ST7735 {
+class DisplayDummy {
   public:
-    DisplayST7735();
+    DisplayDummy();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -41,12 +38,13 @@ class DisplayST7735: public Adafruit_ST7735 {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
+    void loop();
   private:
     uint16_t swidth, sheight;
     
 };
 
-extern DisplayST7735 dsp;
+extern DisplayDummy dsp;
 
 /*
  * TFT COLORS

@@ -1,9 +1,9 @@
 #include "displayST7735.h"
 #include <SPI.h>
 #include "fonts/bootlogo.h"
-#include "player.h"
-#include "config.h"
-#include "network.h"
+#include "../../player.h"
+#include "../../config.h"
+#include "../../network.h"
 
 #define DTYPE INITR_BLACKTAB // 1.8' https://aliexpress.ru/item/1005002822797745.html
 /*  If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
@@ -319,3 +319,8 @@ void DisplayST7735::set_Cursor(int16_t x, int16_t y) {
 void DisplayST7735::printText(const char* txt) {
   print(txt);
 }
+
+void DisplayST7735::loop() {
+
+}
+

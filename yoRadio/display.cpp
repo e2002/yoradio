@@ -7,14 +7,22 @@
 #include "options.h"
 #include "network.h"
 
-/*
-// Without display
-#include "displayDummy.h"
+//#define DSP_DUMMY
+//#define DSP_ST7735
+#define DSP_SSD1306
+
+#ifdef DSP_DUMMY
+#include "src/displays/displayDummy.h"
 DisplayDummy dsp;
-*/
-// With ST7735 display
-#include "displayST7735.h"
+#endif
+#ifdef DSP_ST7735
+#include "src/displays/displayST7735.h"
 DisplayST7735 dsp;
+#endif
+#ifdef DSP_SSD1306
+#include "src/displays/displaySSD1306.h"
+DisplaySSD1306 dsp;
+#endif
 
 Display display;
 
@@ -129,7 +137,9 @@ void Display::init() {
   meta.init(" * ", 2, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
   title1.init(" * ", 1, TFT_FRAMEWDT + 2 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
   title2.init(" * ", 1, TFT_FRAMEWDT + 3 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
-  plCurrent.init(" * ", 2, 57, 0, TFT_BG, TFT_LOGO);
+  int yStart = (screenheight / 2 - PLMITEMHEIGHT / 2) + 3;
+  //plCurrent.init(" * ", 2, 57, 0, TFT_BG, TFT_LOGO);
+  plCurrent.init(" * ", 2, yStart, 0, TFT_BG, TFT_LOGO);
   plCurrent.lock();
 }
 
@@ -237,6 +247,7 @@ void Display::loop() {
         break;
       }
   }
+  dsp.loop();
   yield();
 }
 
@@ -246,6 +257,7 @@ void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 
 void Display::bootString(const char* text, byte y) {
   dsp.centerText(text, y, TFT_LOGO, TFT_BG);
+  dsp.loop();
 }
 
 void Display::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {

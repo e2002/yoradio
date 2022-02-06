@@ -1,8 +1,8 @@
 #include "displayDummy.h"
 #include <SPI.h>
-#include "player.h"
-#include "config.h"
-#include "network.h"
+#include "../../player.h"
+#include "../../config.h"
+#include "../../network.h"
 
 DisplayDummy::DisplayDummy() {
 
@@ -159,5 +159,9 @@ void DisplayDummy::set_Cursor(int16_t x, int16_t y) {
 }
 
 void DisplayDummy::printText(const char* txt) {
+
+}
+
+void DisplayDummy::loop() {
 
 }
