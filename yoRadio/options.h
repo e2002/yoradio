@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.180"
+#define VERSION "0.4.177"
 
 /*
  * TFT DISPLAY
@@ -27,27 +27,21 @@
 /*
  * I2S DAC
  */
-/*
 #define I2S_DOUT      27  // DIN connection
 #define I2S_BCLK      26  // BCLK Bit clock
 #define I2S_LRC       25  // WSEL Left Right Clock
-/*/
-#define I2S_DOUT      22  // DIN connection
-#define I2S_BCLK      26  // BCLK Bit clock
-#define I2S_LRC       25  // WSEL Left Right Clock
-//*/
 /*
  * ENCODER
  */
 #define ENC_BTNL      13
-#define ENC_BTNB      13
+#define ENC_BTNB      12
 #define ENC_BTNR      14
 
 /*
  * BUTTONS
  */
 #define BTN_LEFT      32
-#define BTN_CENTER    14
+#define BTN_CENTER    31
 #define BTN_RIGHT     33
 /*
  * ESP DEVBOARD
