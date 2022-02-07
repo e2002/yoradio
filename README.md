@@ -3,7 +3,6 @@
 
 #### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) library
 #### More images in [Images.md](Images.md)
---
 ## Version history
 ### v0.4.180
 - Vol steps 0..256 (in ESP32-audioI2S)
