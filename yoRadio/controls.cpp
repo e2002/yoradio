@@ -9,40 +9,61 @@
 
 long encOldPosition  = 0;
 
+#if ENC_BTNL!=255
 ESP32Encoder encoder;
 OneButton encbutton(ENC_BTNB, true);
-
+#endif
+#if BTN_LEFT!=255
 OneButton btnleft(BTN_LEFT, true);
+#endif
+#if BTN_CENTER!=255
 OneButton btncenter(BTN_CENTER, true);
+#endif
+#if BTN_RIGHT!=255
 OneButton btnright(BTN_RIGHT, true);
+#endif
 
 void initControls() {
+#if ENC_BTNL!=255
   ESP32Encoder::useInternalWeakPullResistors = UP;
   encoder.attachHalfQuad(ENC_BTNL, ENC_BTNR);
   encbutton.attachClick(onEncClick);
   encbutton.attachDoubleClick(onEncDoubleClick);
   encbutton.attachLongPressStart(onEncLPStart);
-
+#endif
+#if BTN_LEFT!=255
   btnleft.attachClick(onLeftClick);
   btnleft.attachDoubleClick(onLeftDoubleClick);
-
+#endif
+#if BTN_CENTER!=255
   btncenter.attachClick(onEncClick);
   btncenter.attachDoubleClick(onEncDoubleClick);
   btncenter.attachLongPressStart(onEncLPStart);
-
+#endif
+#if BTN_RIGHT!=255
   btnright.attachClick(onRightClick);
   btnright.attachDoubleClick(onRightDoubleClick);
+#endif
 }
 
 void loopControls() {
+#if ENC_BTNL!=255
   encbutton.tick();
-  btnleft.tick();
-  btncenter.tick();
-  btnright.tick();
   encoderLoop();
+#endif
+#if BTN_LEFT!=255
+  btnleft.tick();
+#endif
+#if BTN_CENTER!=255
+  btncenter.tick();
+#endif
+#if BTN_RIGHT!=255
+  btnright.tick();
+#endif
   yield();
 }
 
+#if ENC_BTNL!=255
 void encoderLoop() {
   long encNewPosition = encoder.getCount() / 2;
   if (encNewPosition != 0 && encNewPosition != encOldPosition) {
@@ -51,6 +72,7 @@ void encoderLoop() {
     controlsEvent(encNewPosition > 0);
   }
 }
+#endif
 
 void onEncClick() {
   if (display.mode == PLAYER) {
@@ -61,6 +83,7 @@ void onEncClick() {
     player.play(display.currentPlItem);
   }
 }
+
 
 void onEncDoubleClick() {
   display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);

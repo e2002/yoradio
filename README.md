@@ -35,7 +35,7 @@ Three tact buttons or Encoder or all together
 | ------ | ------ |
 | GND       | GND |
 | VIN       | +5v |
-| DOUT(DIN) | 27* |
+| DOUT(DIN) | 22* |
 | BCLK      | 26* |
 | LRC(WSEL) | 25* |
 
