@@ -51,6 +51,8 @@ Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\* (\* depending on display mod
 #### Tool:
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
 ## Version history
+### v0.4.182
+- display connection algorithm changed
 ### v0.4.180
 - Vol steps 0..256 (in ESP32-audioI2S)
 ### v0.4.177
