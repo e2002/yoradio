@@ -17,6 +17,7 @@
 #define TFT_RST       15   // Or set to -1 and connect to Arduino RESET pin
 //#define TFT_RST    -1    // we use the seesaw for resetting to save a pin
 #define TFT_DC        4
+
 /*
  * OLED I2C DISPLAY
  */
@@ -28,19 +29,19 @@
  */
 #define I2S_DOUT      27  // DIN connection
 #define I2S_BCLK      26  // BCLK Bit clock
-#define I2S_LRC       25  // WSEL Left Right Clock
+#define I2S_LRC       25  // WSEL Left Right Clockz
 /*
  * ENCODER
  */
 #define ENC_BTNL      13
-#define ENC_BTNB      13
+#define ENC_BTNB      12
 #define ENC_BTNR      14
 
 /*
  * BUTTONS
  */
 #define BTN_LEFT      32
-#define BTN_CENTER    14
+#define BTN_CENTER    31
 #define BTN_RIGHT     33
 /*
  * ESP DEVBOARD
