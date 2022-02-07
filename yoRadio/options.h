@@ -1,7 +1,14 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.181"
+#define VERSION "0.4.182"
+
+/* DISPLAY MODEL
+ * 0 - DUMMY
+ * 1 - ST7735
+ * 2 - SSD1306
+ */
+#define DSP_MODEL  1
 
 /*
  * TFT DISPLAY
@@ -26,7 +33,7 @@
 /*
  * I2S DAC
  */
-#define I2S_DOUT      22  // DIN connection
+#define I2S_DOUT      27  // DIN connection
 #define I2S_BCLK      26  // BCLK Bit clock
 #define I2S_LRC       25  // WSEL Left Right Clock
 /*
@@ -45,5 +52,9 @@
  * ESP DEVBOARD
  */
 #define LED_BUILTIN 2
+
+#if __has_include("myoptions.h")
+#include "myoptions.h"
+#endif
 
 #endif

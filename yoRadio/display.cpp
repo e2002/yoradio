@@ -7,19 +7,13 @@
 #include "options.h"
 #include "network.h"
 
-//#define DSP_DUMMY
-#define DSP_ST7735
-//#define DSP_SSD1306
-
-#ifdef DSP_DUMMY
+#if DSP_MODEL==0
 #include "src/displays/displayDummy.h"
 DisplayDummy dsp;
-#endif
-#ifdef DSP_ST7735
+#elif DSP_MODEL==1
 #include "src/displays/displayST7735.h"
 DisplayST7735 dsp;
-#endif
-#ifdef DSP_SSD1306
+#elif DSP_MODEL==2
 #include "src/displays/displaySSD1306.h"
 DisplaySSD1306 dsp;
 #endif
