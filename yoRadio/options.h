@@ -26,9 +26,15 @@
 /*
  * I2S DAC
  */
+/*
 #define I2S_DOUT      27  // DIN connection
 #define I2S_BCLK      26  // BCLK Bit clock
 #define I2S_LRC       25  // WSEL Left Right Clock
+/*/
+#define I2S_DOUT      22  // DIN connection
+#define I2S_BCLK      26  // BCLK Bit clock
+#define I2S_LRC       25  // WSEL Left Right Clock
+//*/
 /*
  * ENCODER
  */

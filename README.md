@@ -9,3 +9,9 @@ Web-radio based on ESP32-audioI2S library\
 \
 ![ёRadio](images/page1.jpg)
 --
+## Version history
+###v0.4.180
+- Vol steps 0..256
+###v0.4.177
+- Added support for SSD1306 displays.
+- Fixed broken buttons.
