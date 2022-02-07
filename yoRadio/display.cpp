@@ -8,8 +8,8 @@
 #include "network.h"
 
 //#define DSP_DUMMY
-#define DSP_ST7735
-//#define DSP_SSD1306
+//#define DSP_ST7735
+#define DSP_SSD1306
 
 #ifdef DSP_DUMMY
 #include "src/displays/displayDummy.h"

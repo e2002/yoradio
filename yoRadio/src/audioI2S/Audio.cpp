@@ -550,7 +550,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     }
 
     const uint32_t TIMEOUT_MS_SSL{3700};
-    
+
     if(m_f_ssl == true) {
         uint32_t t = millis();
         if(clientsecure.connect(hostwoext, port, TIMEOUT_MS_SSL)) {
@@ -4244,37 +4244,39 @@ void Audio::setBalance(int8_t bal){ // bal -16...16
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::setVolume(uint8_t vol) { // vol 22 steps, 0...21
-    //if(vol > 21) vol = 21;
+    if(vol > 256) vol = 256;
     //volume = map(eeprom_config.volume, 0, 21, 0, 255);
-    m_vol = map(vol, 0, 254, 0, 64);
+    //m_vol = map(vol, 0, 254, 0, 64);
+    m_vol = vol;
     //m_vol = volumetable[vol];
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint8_t Audio::getVolume() {
-    return map(m_vol, 0, 64, 0, 254);
+    return m_vol;
+    /*return map(m_vol, 0, 64, 0, 254);
     for(uint8_t i = 0; i < 22; i++) {
         if(volumetable[i] == m_vol) return i;
     }
     m_vol = 12; // if m_vol not found in table
-    return m_vol;
+    return m_vol;*/
 }
 //---------------------------------------------------------------------------------------------------------------------
 int32_t Audio::Gain(int16_t s[2]) {
     int32_t v[2];
-    float step = (float)m_vol /64;
+    float step = (float)m_vol /254;
     uint8_t l = 0, r = 0;
 
     if(m_balance < 0){
-        step = step * (float)(abs(m_balance) * 4);
+        step = step * (float)(abs(m_balance) * 16);
         l = (uint8_t)(step);
     }
     if(m_balance > 0){
-        step = step * m_balance * 4;
+        step = step * m_balance * 16;
         r = (uint8_t)(step);
     }
 
-    v[LEFTCHANNEL] = (s[LEFTCHANNEL]  * (m_vol - l)) >> 6;
-    v[RIGHTCHANNEL]= (s[RIGHTCHANNEL] * (m_vol - r)) >> 6;
+    v[LEFTCHANNEL] = (s[LEFTCHANNEL]  * (m_vol - l)) >> 8;
+    v[RIGHTCHANNEL]= (s[RIGHTCHANNEL] * (m_vol - r)) >> 8;
 
     return (v[RIGHTCHANNEL] << 16) | (v[LEFTCHANNEL] & 0xffff);
 }
