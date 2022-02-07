@@ -45,6 +45,11 @@ Three tact buttons or Encoder or all together
 | PIN       | * |
 
 \* Any free pin, configured in options.h
+### Dependencies
+#### Libraries:
+Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\* (\* depending on display model), ESP32Encoder, OneButton, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
+#### Tool:
+[ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
 ## Version history
 ### v0.4.180
 - Vol steps 0..256 (in ESP32-audioI2S)
