@@ -17,7 +17,6 @@
 #define TFT_RST       15   // Or set to -1 and connect to Arduino RESET pin
 //#define TFT_RST    -1    // we use the seesaw for resetting to save a pin
 #define TFT_DC        4
-
 /*
  * OLED I2C DISPLAY
  */
