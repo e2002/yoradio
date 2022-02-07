@@ -5,7 +5,7 @@
 #### More images in [Images.md](Images.md)
 ### Hardware
 #### Required:
-**ESP32 board**: https://aliexpress.ru/item/32847027609.html\
+**ESP32 board**: https://aliexpress.ru/item/32847027609.html \
 **I2S DAC**, roughly like this one: https://aliexpress.ru/item/1005001993192815.html
 #### Optional:
 ##### Displays
