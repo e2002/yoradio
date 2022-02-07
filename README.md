@@ -1,9 +1,8 @@
 # ёRadio
 ![ёRadio Logo](yoRadio/data/www/elogo100.png)
 
-Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) library\
-\
-More images in [Images.md](Images.md)
+#### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) library
+#### More images in [Images.md](Images.md)
 --
 ## Version history
 ### v0.4.180
