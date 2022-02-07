@@ -55,7 +55,7 @@ Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\* (\* depending on display mod
 - display connection algorithm changed
 - added support for myoptions.h file for custom settings
 ### v0.4.180
-- Vol steps 0..256 (in ESP32-audioI2S)
+- vol steps 0..256 (in ESP32-audioI2S)
 ### v0.4.177
-- Added support for SSD1306 I2C displays.
-- Fixed broken buttons.
+- added support for SSD1306 I2C displays.
+- fixed broken buttons.
