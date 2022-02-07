@@ -207,7 +207,7 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count) {
 bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {
   char *tmpe;
   const char* cursor = line;
-  char buf[4];
+  char buf[5];
   tmpe=strstr(cursor, "\t");
   if(tmpe==NULL) return false;
   strlcpy(name, cursor, tmpe-cursor+1);
@@ -219,7 +219,7 @@ bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {
   if(strlen(url)==0) return false;
   cursor=tmpe+1;
   if (strlen(cursor) == 0) return false;
-  strlcpy(buf, cursor, 3);
+  strlcpy(buf, cursor, 4);
   ovol = atoi(buf);
   return true;
 }
