@@ -42,7 +42,7 @@ Three tact buttons or Encoder or all together
 | Buttons, Encoder | ESP-32 |
 | ------ | ------ |
 | GND       | GND |
-| PIN       | * |
+| PIN       | * | \
 \* Any free pin, configured in options.h
 ## Version history
 ### v0.4.180
