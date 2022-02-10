@@ -7,7 +7,8 @@
 ### Hardware
 #### Required:
 **ESP32 board**: https://aliexpress.ru/item/32847027609.html \
-**I2S DAC**, roughly like this one: https://aliexpress.ru/item/1005001993192815.html
+**I2S DAC**, roughly like this one: https://aliexpress.ru/item/1005001993192815.html \
+https://aliexpress.ru/item/1005002011542576.html
 #### Optional:
 ##### Displays
 - **ST7735** 1.8' or 1.44' https://aliexpress.ru/item/1005002822797745.html
