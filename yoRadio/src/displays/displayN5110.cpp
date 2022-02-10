@@ -1,33 +1,27 @@
-#include "displaySSD1306.h"
+#include "displayN5110.h"
 #include <Wire.h>
 #include "../../player.h"
 #include "../../config.h"
 #include "../../network.h"
 
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-
 #define LOGO_WIDTH 21
-#define LOGO_HEIGHT 32
+#define LOGO_HEIGHT 28
 
 const unsigned char logo [] PROGMEM=
 {
-    0x06, 0x03, 0x00, 0x0f, 0x07, 0x80, 0x1f, 0x8f, 0xc0, 0x1f, 0x8f, 0xc0,
-    0x0f, 0x07, 0x80, 0x06, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xf8, 0x00, 0x03, 0xff, 0x00, 0x0f, 0xff, 0x80,
-    0x1f, 0xff, 0xc0, 0x1f, 0xff, 0xc0, 0x3f, 0x8f, 0xe0, 0x7e, 0x03, 0xf0,
-    0x7c, 0x01, 0xf0, 0x7c, 0x01, 0xf0, 0x7f, 0xff, 0xf0, 0xff, 0xff, 0xf8,
-    0xff, 0xff, 0xf8, 0xff, 0xff, 0xf8, 0x7c, 0x00, 0x00, 0x7c, 0x00, 0x00,
-    0x7e, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x3f, 0xc0, 0xe0, 0x3f, 0xff, 0xe0,
-    0x1f, 0xff, 0xe0, 0x0f, 0xff, 0xe0, 0x03, 0xff, 0xc0, 0x00, 0xfe, 0x00
+	0x07, 0x03, 0x80, 0x0f, 0x87, 0xc0, 0x0f, 0x87, 0xc0, 0x0f, 0x87, 0xc0, 0x0f, 0x87, 0xc0, 0x07,
+	0x03, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xfe, 0x00, 0x07, 0xff, 0x80, 0x1f, 0xff,
+	0xc0, 0x1f, 0xff, 0xe0, 0x3f, 0xff, 0xf0, 0x7f, 0x07, 0xf0, 0x7e, 0x03, 0xf0, 0x7e, 0x01, 0xf8,
+	0x7f, 0xff, 0xf8, 0xff, 0xff, 0xf8, 0xff, 0xff, 0xf8, 0x7f, 0xff, 0xf8, 0x7e, 0x00, 0x00, 0x7f,
+	0x00, 0x00, 0x7f, 0x80, 0x20, 0x3f, 0xff, 0xe0, 0x3f, 0xff, 0xe0, 0x1f, 0xff, 0xe0, 0x0f, 0xff,
+	0xe0, 0x01, 0xff, 0xc0
 };
 
-TwoWire I2CSSD1306 = TwoWire(0);
-
-DisplaySSD1306::DisplaySSD1306(): Adafruit_SSD1306(128, 64, &I2CSSD1306, I2C_RST) {
+DisplayN5110::DisplayN5110(): Adafruit_PCD8544(TFT_DC, TFT_CS, TFT_RST) {
 
 }
 
-char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
+char* DisplayN5110::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;
@@ -41,7 +35,7 @@ char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
         continue;
       }
       byte rus = (byte) * iter;
-      if (rus == 208 && (byte) * (iter + 1) == 129) { // ёКостыли
+      if (rus == 208 && (byte) * (iter + 1) == 129) {
         *iter = (char)209;
         *(iter + 1) = (char)145;
         E = true;
@@ -81,7 +75,6 @@ char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
           }
         case 0xD1: {
             if (strn[index + 1] == 0x91) {
-              //strn[index] = 0xB7;
               strn[index] = 0xB8;
               break;
             }
@@ -101,30 +94,29 @@ char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
   return strn;
 }
 
-void DisplaySSD1306::apScreen() {
+void DisplayN5110::apScreen() {
   setTextSize(1);
   setTextColor(TFT_FG, TFT_BG);
-  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 2 * TFT_LINEHGHT);
+  setFont(&TinyFont6);
+  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 1 * TFT_LINEHGHT+6);
   print("AP NAME: ");
   print(apSsid);
-  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 3 * TFT_LINEHGHT);
-  print("PASSWORD: ");
+  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 2 * TFT_LINEHGHT+6);
+  print("PASSWD: ");
   print(apPassword);
   setTextColor(SILVER, TFT_BG);
-  setCursor(TFT_FRAMEWDT, sheight - TFT_LINEHGHT * 2);
+  setCursor(TFT_FRAMEWDT, sheight - 10);
   print("SETTINGS PAGE ON: ");
-  setCursor(TFT_FRAMEWDT, sheight - TFT_LINEHGHT);
+  setCursor(TFT_FRAMEWDT, sheight-2);
   print("http://");
   print(WiFi.softAPIP().toString().c_str());
   print("/");
+  setFont();
 }
 
-void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  I2CSSD1306.begin(I2C_SDA, I2C_SCL, 400000);
-  if (!begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for (;;); // Don't proceed, loop forever
-  }
+void DisplayN5110::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+  begin();
+  setContrast(TFT_CONTRAST);
   cp437(true);
   fillScreen(TFT_BG);
   setRotation(TFT_ROTATE);
@@ -135,26 +127,23 @@ void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   sheight = screenheight;
 }
 
-void DisplaySSD1306::drawLogo() {
+void DisplayN5110::drawLogo() {
   clearDisplay();
-  drawBitmap(
-    (width()  - LOGO_WIDTH ) / 2,
-    8,
-    logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  drawBitmap((width()  - LOGO_WIDTH ) / 2, 0, logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display();
 }
 
-void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DisplayN5110::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
-  config.fillPlMenu(plMenu, currentItem - 2, PLMITEMS);
-  setTextSize(2);
+  config.fillPlMenu(plMenu, currentItem - 3, PLMITEMS);
+  setTextSize(1);
   int yStart = (sheight / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
   fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) + 1, swidth, PLMITEMHEIGHT, TFT_LOGO);
   setTextColor(TFT_FG, TFT_BG);
   for (byte i = 0; i < PLMITEMS; i++) {
-    if (i == 2) {
+    if (i == 3) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
@@ -163,17 +152,17 @@ void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplaySSD1306::clearDsp() {
+void DisplayN5110::clearDsp() {
   fillScreen(TFT_BG);
 }
 
-void DisplaySSD1306::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DisplayN5110::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT == 0) return;
   fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
-void DisplaySSD1306::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DisplayN5110::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(textsize);
@@ -184,109 +173,129 @@ void DisplaySSD1306::getScrolBbounds(const char* text, const char* separator, by
   sWidth = w;
 }
 
-void DisplaySSD1306::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DisplayN5110::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   fillRect(0,  texttop, swidth, textheight, bg);
 }
 
-void DisplaySSD1306::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DisplayN5110::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   const char* txt = text;
+
+  if(y==90) {
+    y=sheight-TFT_LINEHGHT*2;
+  }
+  if(y==110) {
+    y=sheight;
+    setFont(&TinyFont5);
+  }
   getTextBounds(txt, 0, 0, &x1, &y1, &w, &h);
   setTextColor(fg);
-  if(y==90) y=sheight-TFT_LINEHGHT*2-5;
-  if(y==110) y=sheight-TFT_LINEHGHT;
   setCursor((swidth - w) / 2, y);
   fillRect(0, y, swidth, h, bg);
-  print(txt);
+  print(utf8Rus(txt, true));
+  setFont();
 }
 
-void DisplaySSD1306::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DisplayN5110::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
   setTextColor(fg);
-  setCursor(swidth - w - TFT_FRAMEWDT, y);
-  fillRect(swidth - w - TFT_FRAMEWDT, y, w, h, bg);
+  setCursor(swidth - w - TFT_FRAMEWDT, y+h+1);
+  fillRect(swidth - w - TFT_FRAMEWDT, y, w, h+1, bg);
   print(text);
 }
 
-void DisplaySSD1306::displayHeapForDebug() {
+void DisplayN5110::displayHeapForDebug() {
 
 }
 
-void DisplaySSD1306::printClock(const char* timestr) {
-  setTextSize(2);
-  centerText(timestr, 34, TFT_FG, TFT_BG);
+void DisplayN5110::printClock(const char* timestr) {
+  int16_t  x1, y1;
+  uint16_t w, h;
   setTextSize(1);
+  setFont(&DS_DIGI15pt7b);
+  getTextBounds(timestr, 0, 0, &x1, &y1, &w, &h);
+  setTextColor(TFT_FG);
+  setCursor((swidth - w) / 2, 19+17);
+  fillRect(0, 18, swidth, h+2, TFT_BG);
+  print(timestr);
+  setFont();
 }
 
-void DisplaySSD1306::drawVolumeBar(bool withNumber) {
-  int16_t vTop = sheight - 4;
+void DisplayN5110::drawVolumeBar(bool withNumber) {
+  int16_t vTop = sheight - 3;
   int16_t vWidth = swidth;
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
   fillRect(TFT_FRAMEWDT, vTop, vWidth, 3, TFT_BG);
   drawRect(TFT_FRAMEWDT, vTop, vWidth, 3, TFT_LOGO);
   fillRect(TFT_FRAMEWDT + 1, vTop + 1, ww, 1, TFT_LOGO);
   if (withNumber) {
-    setTextSize(2);
+    setTextSize(1);
     setTextColor(TFT_FG);
     char volstr[4];
     uint16_t wv, hv;
     int16_t  x1, y1;
     sprintf(volstr, "%d", config.store.volume);
+    setFont(&DS_DIGI15pt7b);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
-    fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
-    setCursor((swidth - wv) / 2, 24);
+    fillRect(TFT_FRAMEWDT, 24-10, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+    setCursor((swidth - wv) / 2, 24+8);
     print(volstr);
+    setFont();
   }
 }
 
-void DisplaySSD1306::frameTitle(const char* str) {
-  setTextSize(2);
+void DisplayN5110::frameTitle(const char* str) {
+  setTextSize(1);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
-void DisplaySSD1306::rssi(const char* str) {
+void DisplayN5110::rssi(const char* str) {
   char buf[4];
   strlcpy(buf, str, strlen(str)-2);
-  int16_t vTop = sheight - TFT_LINEHGHT - 4;
+  int16_t vTop = sheight - TFT_LINEHGHT - 2;
   setTextSize(1);
+  setFont(&TinyFont5);
   rightText(buf, vTop, SILVER, TFT_BG);
+  setFont();
 }
 
-void DisplaySSD1306::ip(const char* str) {
-  int16_t vTop = sheight - TFT_LINEHGHT - 4;
+void DisplayN5110::ip(const char* str) {
+  int16_t vTop = sheight - TFT_LINEHGHT - 2;
   setTextSize(1);
   setTextColor(SILVER, TFT_BG);
   setCursor(0, vTop);
+  setFont(&TinyFont5);
   print(str);
+  setFont();
 }
 
-void DisplaySSD1306::set_TextSize(uint8_t s) {
+void DisplayN5110::set_TextSize(uint8_t s) {
   setTextSize(s);
 }
 
-void DisplaySSD1306::set_TextColor(uint16_t fg, uint16_t bg) {
+void DisplayN5110::set_TextColor(uint16_t fg, uint16_t bg) {
   setTextColor(fg, bg);
 }
 
-void DisplaySSD1306::set_Cursor(int16_t x, int16_t y) {
+void DisplayN5110::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplaySSD1306::printText(const char* txt) {
+void DisplayN5110::printText(const char* txt) {
   print(txt);
 }
 
-void DisplaySSD1306::loop() {
+void DisplayN5110::loop() {
   if (checkdelay(83, loopdelay)) {
     display();
   }
   yield();
 }
 
-boolean DisplaySSD1306::checkdelay(int m, unsigned long &tstamp) {
+boolean DisplayN5110::checkdelay(int m, unsigned long &tstamp) {
   if (millis() - tstamp > m) {
     tstamp = millis();
     return true;
@@ -294,3 +303,4 @@ boolean DisplaySSD1306::checkdelay(int m, unsigned long &tstamp) {
     return false;
   }
 }
+

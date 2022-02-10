@@ -16,6 +16,9 @@ DisplayST7735 dsp;
 #elif DSP_MODEL==2
 #include "src/displays/displaySSD1306.h"
 DisplaySSD1306 dsp;
+#elif DSP_MODEL==3
+#include "src/displays/displayN5110.h"
+DisplayN5110 dsp;
 #endif
 
 Display display;
@@ -25,8 +28,14 @@ void ticks() {
 }
 
 #define STARTTIME  5000
-#define SCROLLTIME 83
+
+#if DSP_MODEL==3
+#define SCROLLDELTA 8
+#define SCROLLTIME 332
+#else
 #define SCROLLDELTA 3
+#define SCROLLTIME 83
+#endif
 
 void  Scroll::init(char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
   textsize = tsize;
@@ -128,12 +137,18 @@ void Scroll::getbounds(uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
 void Display::init() {
   dsp.initD(screenwidth, screenheight);
   dsp.drawLogo();
-  meta.init(" * ", 2, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
-  title1.init(" * ", 1, TFT_FRAMEWDT + 2 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
-  title2.init(" * ", 1, TFT_FRAMEWDT + 3 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
+  if(DSP_MODEL==3){
+    meta.init(" * ", 1, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
+    title1.init(" * ", 1, TFT_FRAMEWDT + TFT_LINEHGHT+1, STARTTIME, TFT_FG, TFT_BG);
+    //title2.init(" * ", 1, TFT_FRAMEWDT + 2 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
+  }else{
+    meta.init(" * ", 2, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
+    title1.init(" * ", 1, TFT_FRAMEWDT + 2 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
+    title2.init(" * ", 1, TFT_FRAMEWDT + 3 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
+  }
   int yStart = (screenheight / 2 - PLMITEMHEIGHT / 2) + 3;
   //plCurrent.init(" * ", 2, 57, 0, TFT_BG, TFT_LOGO);
-  plCurrent.init(" * ", 2, yStart, 0, TFT_BG, TFT_LOGO);
+  plCurrent.init(" * ", DSP_MODEL==3?1:2, yStart, 0, TFT_BG, TFT_LOGO);
   plCurrent.lock();
 }
 
@@ -178,13 +193,13 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == PLAYER) {
     meta.reset();
     title1.reset();
-    title2.reset();
+    if(DSP_MODEL!=3) title2.reset();
     plCurrent.lock();
     time();
   } else {
     meta.lock();
     title1.lock();
-    title2.lock();
+    if(DSP_MODEL!=3) title2.lock();
   }
   if (newmode == VOL) {
     dsp.frameTitle("VOLUME");
@@ -210,7 +225,7 @@ void Display::drawPlayer() {
   }
   meta.loop();
   title1.loop();
-  title2.loop();
+  if(DSP_MODEL!=3) title2.loop();
 }
 
 void Display::drawVolume() {
@@ -260,6 +275,7 @@ void Display::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 
 void Display::station() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
+  dsp.loop();
   netserver.requestOnChange(STATION, 0);
 }
 
@@ -271,7 +287,7 @@ void Display::title(const char *str) {
   strlcpy(config.station.title, title, BUFLEN);
   if (strlen(config.station.title) > 0) {
     char* ici;
-    if ((ici = strstr(config.station.title, " - ")) != NULL) {
+    if ((ici = strstr(config.station.title, " - ")) != NULL && DSP_MODEL!=3) {
       strlcpy(sng, ici + 3, BUFLEN / 2);
       strlcpy(ttl, config.station.title, strlen(config.station.title) - strlen(ici) + 1);
     } else {
@@ -279,7 +295,8 @@ void Display::title(const char *str) {
       sng[0] = '\0';
     }
     title1.setText(dsp.utf8Rus(ttl, true));
-    title2.setText(dsp.utf8Rus(sng, true));
+    if(DSP_MODEL!=3) title2.setText(dsp.utf8Rus(sng, true));
+    dsp.loop();
   }
   netserver.requestOnChange(TITLE, 0);
 }

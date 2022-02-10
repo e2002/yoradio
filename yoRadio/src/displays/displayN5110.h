@@ -1,22 +1,26 @@
-#ifndef displaySSD1306_h
-#define displaySSD1306_h
+#ifndef displayN5110_h
+#define displayN5110_h
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_PCD8544.h>
+#include "fonts/TinyFont5.h"
+#include "fonts/TinyFont6.h"
+#include "fonts/DS_DIGI15pt7b.h"
 #include "../../options.h"
 
 #define TFT_ROTATE      0
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
+#define TFT_CONTRAST    55
 
-#define PLMITEMS        5
+#define PLMITEMS        7
 #define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   18
+#define PLMITEMHEIGHT   10
 
-class DisplaySSD1306: public Adafruit_SSD1306 {
+class DisplayN5110: public Adafruit_PCD8544 {
   public:
-    DisplaySSD1306();
+    DisplayN5110();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -47,14 +51,14 @@ class DisplaySSD1306: public Adafruit_SSD1306 {
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 
-extern DisplaySSD1306 dsp;
+extern DisplayN5110 dsp;
 
 /*
  * TFT COLORS
  */
-#define SILVER      WHITE
-#define TFT_BG      BLACK
-#define TFT_FG      WHITE
-#define TFT_LOGO    WHITE
+#define SILVER      BLACK
+#define TFT_BG      WHITE
+#define TFT_FG      BLACK
+#define TFT_LOGO    BLACK
 
 #endif

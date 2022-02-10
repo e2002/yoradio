@@ -11,6 +11,7 @@
 ##### Displays
 - **ST7735** 1.8' or 1.44' https://aliexpress.ru/item/1005002822797745.html
 - or **SSD1306** 0.96' I2C https://aliexpress.ru/item/1005001621806398.html
+- or **Nokia5110** 84x48 SPI https://aliexpress.ru/item/1005001621837569.html
 ##### Controls
 Three tact buttons or Encoder or all together
 ### Connection table
@@ -47,10 +48,13 @@ Three tact buttons or Encoder or all together
 \* Any free pin, configured in options.h
 ### Dependencies
 #### Libraries:
-Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\* (\* depending on display model), ESP32Encoder, OneButton, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
+Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
 #### Tool:
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
 ## Version history
+### v0.4.197
+- added support for Nokia 5110 SPI displays
+- some bugs fixes
 ### v0.4.183
 - ovol reading bug
 ### v0.4.182
@@ -59,5 +63,5 @@ Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\* (\* depending on display mod
 ### v0.4.180
 - vol steps 0..256 (in ESP32-audioI2S)
 ### v0.4.177
-- added support for SSD1306 I2C displays.
+- added support for SSD1306 I2C displays
 - fixed broken buttons.

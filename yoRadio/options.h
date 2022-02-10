@@ -1,12 +1,13 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.183"
+#define VERSION "0.4.197"
 
 /* DISPLAY MODEL
  * 0 - DUMMY
  * 1 - ST7735
  * 2 - SSD1306
+ * 3 - NOKIA5110
  */
 #define DSP_MODEL  1
 
