@@ -16,7 +16,7 @@
 ##### More images in [Images.md](Images.md)
 
 ---
-### Hardware
+## Hardware
 #### Required:
 **ESP32 board**: https://aliexpress.ru/item/32847027609.html \
 **I2S DAC**, roughly like this one: https://aliexpress.ru/item/1005001993192815.html \
@@ -31,7 +31,7 @@ https://aliexpress.ru/item/1005002011542576.html
 Three tact buttons or Encoder or all together
 
 ---
-### Connection tables
+## Connection tables
 | SPI Display | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
@@ -65,7 +65,7 @@ Three tact buttons or Encoder or all together
 _\* Any free pin, configured in options.h_
 
 ---
-### Dependencies
+## Dependencies
 #### Libraries:
 Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
 #### Tool:
@@ -140,20 +140,20 @@ sys.date - date/time
 
 ---
 ## Version history
-### v0.4.197
+#### v0.4.197
 - added support for Nokia 5110 SPI displays
 - some bugs fixes
 
-### v0.4.183
+#### v0.4.183
 - ovol reading bug
 
-### v0.4.182
+#### v0.4.182
 - display connection algorithm changed
 - added support for myoptions.h file for custom settings
 
-### v0.4.180
+#### v0.4.180
 - vol steps 0..256 (in ESP32-audioI2S)
 
-### v0.4.177
+#### v0.4.177
 - added support for SSD1306 I2C displays
 - fixed broken buttons.
