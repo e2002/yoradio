@@ -2,7 +2,15 @@
 ![ёRadio Logo](yoRadio/data/www/elogo100.png)
 
 ##### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) library
-<img src="images/img0.jpg" width="830" height="443"> 
+- [Hardware](#hardware)
+- [Connection tables](#connection-tables)
+- [Software dependencies](#dependencies)
+- [Hardware setup](#hardware-setup)
+- [Quick start](#quick-start)
+- [More features](#more-features)
+- [Version history](#version-history)
+
+<img src="images/img0.jpg" width="830" height="443">
 
 ##### More images in [Images.md](Images.md)
 ### Hardware
@@ -18,7 +26,7 @@ https://aliexpress.ru/item/1005002011542576.html
 
 ##### Controls
 Three tact buttons or Encoder or all together
-### Connection table
+### Connection tables
 | SPI Display | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
