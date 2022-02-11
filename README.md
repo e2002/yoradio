@@ -96,7 +96,7 @@ cli.start, start, cli.play, play - start playing \
 cli.play("x"), play(x), play x - play station x \
 cli.vol, vol - the current value of volume (0-254) \
 cli.vol("x"), vol(x), vol x - set volume (0-254) \
-cli.audioinfo, audioinfo - the current value of debug (0-1)
+cli.audioinfo, audioinfo - the current value of debug (0-1) \
 cli.audioinfo("x"), audioinfo(x), audioinfo x - debug on/off (0-1) \
 cli.smartstart, smartstart - the current value of smart start
 cli.smartstart("x"), smartstart(x), smartstart x - smart start: 2-off, 0-1 - start playing on boot, if the radio was playing before the reboot \
