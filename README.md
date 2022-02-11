@@ -75,7 +75,16 @@ Rotation of the ST7735 display is configured in the file [src/displays/displayST
 ````
 #define TFT_ROTATE 3 // 180 degress
 ````
-
+If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
+````
+  // Black tab, change MADCTL color filter
+  if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
+    uint8_t data = 0xC0;
+    sendCommand(ST77XX_MADCTL, &data, 1);
+    _colstart = 2; // ← add this line
+    _rowstart = 1; // ← add this line
+  }
+````
 ## Quick start
 1. In ArduinoIDE - upload sketch data (Tools→ESP32 Sketch Data Upload)
 2. Upload the sketch to the board ([example of the board connection](images/board.jpg))
