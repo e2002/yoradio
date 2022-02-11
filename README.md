@@ -99,7 +99,7 @@ If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
 1. In ArduinoIDE - upload sketch data (Tools→ESP32 Sketch Data Upload)
 2. Upload the sketch to the board ([example of the board connection](images/board.jpg))
 3. Connect to yoRadioAP acces point with password 12345987, go to http://192.168.4.1/ configure and wifi connections.  \
-_\*this step can be skipped if you add WiFiSSID WiFiPassord pairs to the [yoRadio/data/data/wifi.csv](yoRadio/data/data/wifi.csv) file (tab-separated values, one line per access point) before uploading the sketch data in step 1_
+_\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRadio/data/data/wifi.csv](yoRadio/data/data/wifi.csv) file (tab-separated values, one line per access point) before uploading the sketch data in step 1_
 4. After successful connection go to http://\<ipaddress\>/ , add stations to playlist (or import WebStations.txt from KaRadio)
 5. Well done!
 
