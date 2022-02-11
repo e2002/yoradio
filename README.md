@@ -14,6 +14,8 @@
 <img src="images/img0.jpg" width="830" height="443">
 
 ##### More images in [Images.md](Images.md)
+
+---
 ### Hardware
 #### Required:
 **ESP32 board**: https://aliexpress.ru/item/32847027609.html \
@@ -27,6 +29,8 @@ https://aliexpress.ru/item/1005002011542576.html
 
 ##### Controls
 Three tact buttons or Encoder or all together
+
+---
 ### Connection tables
 | SPI Display | ESP-32 | options.h |
 | ------ | ------ | ------ |
@@ -59,11 +63,15 @@ Three tact buttons or Encoder or all together
 | PIN       | * | ENC_BTNx, BTN_xxx  |
 
 _\* Any free pin, configured in options.h_
+
+---
 ### Dependencies
 #### Libraries:
 Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
 #### Tool:
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
+
+---
 ## Hardware setup
 Hardware is connected in the **[options.h](yoRadio/options.h)** file. \
 _so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamples/myoptions.h)) in the root of the project and make settings in it_
@@ -95,6 +103,8 @@ If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
     _rowstart = 1; // ← add this line
   }
 ````
+
+---
 ## Quick start
 1. In ArduinoIDE - upload sketch data (Tools→ESP32 Sketch Data Upload)
 2. Upload the sketch to the board ([example of the board connection](images/board.jpg))
@@ -105,6 +115,8 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 **localization:**
 Если Adafruit_GFX ещё не русифицирована, русифицировать её, заменив файл Arduino/libraries/Adafruit_GFX_Library/glcdfont.c файлом [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
+
+---
 ## More features
 - Сan add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
 - Telnet with KaRadio format output \
@@ -126,6 +138,7 @@ cli.info, info - get current state \
 sys.boot, boot, reboot - reboot \
 sys.date - date/time
 
+---
 ## Version history
 ### v0.4.197
 - added support for Nokia 5110 SPI displays
