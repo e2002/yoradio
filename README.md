@@ -62,7 +62,8 @@ Three tact buttons or Encoder or all together
 | GND       | GND | - |
 | PIN       | * | ENC_BTNx, BTN_xxx  |
 
-_\* Any free pin, configured in options.h_
+_\* Any free pin, configured in options.h_ \
+_\** GPIOs 34-39 don't have software pullup/down functions. For encoder/buttons use an external pullup resistor, 10 kOhm works here_
 
 ---
 ## Dependencies
