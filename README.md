@@ -2,7 +2,7 @@
 ![ёRadio Logo](yoRadio/data/www/elogo100.png)
 
 ##### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) library
-<img src="images/img0.jpg" width="830" height="443"> \
+<img src="images/img0.jpg" width="830" height="443"> 
 
 ##### More images in [Images.md](Images.md)
 ### Hardware
