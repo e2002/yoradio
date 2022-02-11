@@ -7,7 +7,6 @@
 #include "fonts/TinyFont5.h"
 #include "fonts/TinyFont6.h"
 #include "fonts/DS_DIGI15pt7b.h"
-#include "../../options.h"
 
 #define TFT_ROTATE      0
 #define TFT_LINEHGHT    8

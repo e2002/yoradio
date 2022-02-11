@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.197"
+#define VERSION "0.4.199"
 
 /* DISPLAY MODEL
  * 0 - DUMMY

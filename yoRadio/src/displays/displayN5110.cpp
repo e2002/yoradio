@@ -1,3 +1,6 @@
+#include "../../options.h"
+#if DSP_MODEL==3
+
 #include "displayN5110.h"
 #include <Wire.h>
 #include "../../player.h"
@@ -304,3 +307,4 @@ boolean DisplayN5110::checkdelay(int m, unsigned long &tstamp) {
   }
 }
 
+#endif

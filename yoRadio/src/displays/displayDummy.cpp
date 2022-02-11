@@ -1,3 +1,6 @@
+#include "../../options.h"
+#if DSP_MODEL==0
+
 #include "displayDummy.h"
 #include <SPI.h>
 #include "../../player.h"
@@ -127,7 +130,7 @@ void DisplayDummy::displayHeapForDebug() {
 }
 
 void DisplayDummy::printClock(const char* timestr) {
-  
+
 }
 
 void DisplayDummy::drawVolumeBar(bool withNumber) {
@@ -165,3 +168,5 @@ void DisplayDummy::printText(const char* txt) {
 void DisplayDummy::loop() {
 
 }
+
+#endif

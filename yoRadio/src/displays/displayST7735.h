@@ -4,7 +4,6 @@
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
-#include "../../options.h"
 #include "fonts/DS_DIGI28pt7b.h"
 
 #define TFT_ROTATE      3
@@ -44,7 +43,7 @@ class DisplayST7735: public Adafruit_ST7735 {
     void loop();
   private:
     uint16_t swidth, sheight;
-    
+
 };
 
 extern DisplayST7735 dsp;

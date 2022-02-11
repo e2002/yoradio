@@ -1,3 +1,6 @@
+#include "../../options.h"
+#if DSP_MODEL==1
+
 #include "displayST7735.h"
 #include <SPI.h>
 #include "fonts/bootlogo.h"
@@ -324,3 +327,4 @@ void DisplayST7735::loop() {
 
 }
 
+#endif

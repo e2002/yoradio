@@ -4,7 +4,6 @@
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "../../options.h"
 
 #define TFT_ROTATE      0
 #define TFT_LINEHGHT    8

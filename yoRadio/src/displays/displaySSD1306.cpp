@@ -1,3 +1,6 @@
+#include "../../options.h"
+#if DSP_MODEL==2
+
 #include "displaySSD1306.h"
 #include <Wire.h>
 #include "../../player.h"
@@ -294,3 +297,5 @@ boolean DisplaySSD1306::checkdelay(int m, unsigned long &tstamp) {
     return false;
   }
 }
+
+#endif

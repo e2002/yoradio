@@ -140,6 +140,9 @@ sys.date - date/time
 
 ---
 ## Version history
+#### v0.4.199
+- excluded required installation of all libraries for displays.
+
 #### v0.4.197
 - added support for Nokia 5110 SPI displays
 - some bugs fixes

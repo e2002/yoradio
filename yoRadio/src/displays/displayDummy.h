@@ -2,7 +2,6 @@
 #define displayDummy_h
 
 #include "Arduino.h"
-#include "../../options.h"
 
 #define TFT_ROTATE      3
 #define TFT_LINEHGHT    10
@@ -41,7 +40,7 @@ class DisplayDummy {
     void loop();
   private:
     uint16_t swidth, sheight;
-    
+
 };
 
 extern DisplayDummy dsp;
