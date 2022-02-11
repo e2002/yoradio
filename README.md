@@ -84,6 +84,8 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassord pairs to the [yoRadi
 4. After successful connection go to http://\<ipaddress\>/ , add stations to playlist (or import WebStations.txt from KaRadio)
 5. Well done!
 
+**localization:**
+Если Adafruit_GFX ещё не русифицирована, русифицировать её, заменив файл Arduino/libraries/Adafruit_GFX_Library/glcdfont.c файлом [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
 ## More features
 - Сan add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
 - Telnet with KaRadio format output \
