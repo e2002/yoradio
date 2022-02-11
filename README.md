@@ -56,7 +56,7 @@ Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* dep
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
 ## Hardware setup
 Hardware is connected in the **[options.h](yoRadio/options.h)** file. \
-_so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamlles/myoptions.h)) in the root of the project and make settings in it_
+_so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamples/myoptions.h)) in the root of the project and make settings in it_
 ````
 /* DISPLAY MODEL
  * 0 - DUMMY
