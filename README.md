@@ -42,6 +42,16 @@ Three tact buttons or Encoder or all together
 | RSTL | 15* | TFT_RST |
 | DCL | 4* | TFT_DC |
 
+| NOKIA5110 | ESP-32 | options.h |
+| ------ | ------ | ------ |
+| RST | 15* | TFT_RST |
+| CE | 5* | TFT_CS |
+| DC | 4* | TFT_DC |
+| DIN | 23 | - |
+| CLK | 18 | - |
+| VCC | +3v3 | - |
+| GND | GND | - |
+
 | I2C Display | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
@@ -76,7 +86,7 @@ Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* dep
 ## Hardware setup
 Hardware is connected in the **[options.h](yoRadio/options.h)** file. \
 _so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamples/myoptions.h)) in the root of the project and make settings in it_
-````
+````c++
 /* DISPLAY MODEL
  * 0 - DUMMY
  * 1 - ST7735
@@ -86,16 +96,16 @@ _so that the settings are not overwritten when updating git, you need to put the
 #define DSP_MODEL  1
 ````
 The ST7735 display model is configured in the file [src/displays/displayST7735.cpp](yoRadio/src/displays/displayST7735.cpp)
-````
+````c++
 #define DTYPE INITR_BLACKTAB // 1.8' https://aliexpress.ru/item/1005002822797745.html
 //#define DTYPE INITR_144GREENTAB // 1.44' https://aliexpress.ru/item/1005002822797745.html
 ````
 Rotation of the ST7735 display is configured in the file [src/displays/displayST7735.h](yoRadio/src/displays/displayST7735.h)
-````
+````c++
 #define TFT_ROTATE 3 // 180 degress
 ````
 If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
-````
+````c++
   // Black tab, change MADCTL color filter
   if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
     uint8_t data = 0xC0;
@@ -107,14 +117,14 @@ If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
 
 ---
 ## Quick start
-1. In ArduinoIDE - upload sketch data (Tools→ESP32 Sketch Data Upload)
-2. Upload the sketch to the board ([example of the board connection](images/board.jpg))
+1. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload ([it's here](images/board2.jpg))
+2. Upload the sketch to the board ([example of the board settings](images/board.jpg))
 3. Connect to yoRadioAP acces point with password 12345987, go to http://192.168.4.1/ configure and wifi connections.  \
 _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRadio/data/data/wifi.csv](yoRadio/data/data/wifi.csv) file (tab-separated values, one line per access point) before uploading the sketch data in step 1_
-4. After successful connection go to http://\<ipaddress\>/ , add stations to playlist (or import WebStations.txt from KaRadio)
+4. After successful connection go to http://\<yoipaddress\>/ , add stations to playlist (or import WebStations.txt from KaRadio)
 5. Well done!
 
-**localization:**
+**Localization:**
 Если Adafruit_GFX ещё не русифицирована, русифицировать её, заменив файл Arduino/libraries/Adafruit_GFX_Library/glcdfont.c файлом [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
 
 ---
@@ -122,27 +132,35 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 - Сan add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
 - Telnet with KaRadio format output \
  **Commands**: \
-cli.prev (or simply prev) - previous station \
-cli.next, next - next station \
-cli.toggle, toggle - start/stop \
-cli.stop, stop - stop \
-cli.start, start, cli.play, play - start playing \
-cli.play("x"), play(x), play x - play station x \
-cli.vol, vol - the current value of volume (0-254) \
-cli.vol("x"), vol(x), vol x - set volume (0-254) \
-cli.audioinfo, audioinfo - the current value of debug (0-1) \
-cli.audioinfo("x"), audioinfo(x), audioinfo x - debug on/off (0-1) \
-cli.smartstart, smartstart - the current value of smart start \
-cli.smartstart("x"), smartstart(x), smartstart x - smart start: 2-off, 0-1 - start playing on boot, if the radio was playing before the reboot \
-cli.list, list - get playlist \
-cli.info, info - get current state \
-sys.boot, boot, reboot - reboot \
-sys.date - date/time
+ **cli.prev** (_or simply_ **prev**) - previous station \
+ **cli.next** _or_ **next** - next station \
+ **cli.toggle** _or_ **toggle** - start/stop \
+ **cli.stop** _or_ **stop** - stop \
+ **cli.start** _or_ **start** _or_ **cli.play** _or_ **play** - start playing \
+ **cli.play("x")** _or_ **play(x)** _or_ **play x** - play station x \
+ **cli.vol** _or_ **vol** - display the current value of volume (0-254) \
+ **cli.vol("x")** _or_ **vol(x)** _or_ **vol x** - set volume (0-254) \
+ **cli.audioinfo** _or_ **audioinfo** - display the current value of debug (0-1) \
+ **cli.audioinfo("x")** _or_ **audioinfo(x)** _or_ **audioinfo x** - debug on/off (0-1) \
+ **cli.smartstart** _or_ **smartstart** - display the current value of smart start \
+ **cli.smartstart("x")** _or_ **smartstart(x)** _or_ **smartstart x** - smart start: 2-off, 0-1 - start playing on boot, if the radio was playing before the reboot \
+ **cli.list** _or_ **list** - display playlist \
+ **cli.info** _or_ **info** - display current state \
+ **sys.boot** _or_ **boot** _or_ **reboot** - reboot \
+ **sys.date** - sync date/time and display it \
+ **sys.tzo** _or_ **tzo** - display the timezone offset \
+ **sys.tzo("h:m")** _or_ **tzo(h:m)** _or_ **tzo h:m** - set timezone offset \
+ **sys.tzo("h")** _or_ **tzo(h)** _or_ **tzo h** - set timezone offset in hours only
 
 ---
 ## Version history
+#### v0.4.210
+- added timezone config by telnet
+- fix telnet output
+- some separation apples and oranges
+
 #### v0.4.199
-- excluded required installation of all libraries for displays.
+- excluded required installation of all libraries for displays
 
 #### v0.4.197
 - added support for Nokia 5110 SPI displays

@@ -23,6 +23,10 @@ struct config_t
   byte lastSSID;
   bool audioinfo;
   byte smartstart;
+  byte tz_set; // must be 57
+  int8_t tzHour;
+  int8_t tzMin;
+  uint16_t timezoneOffset;
 };
 
 struct station_t
@@ -67,6 +71,9 @@ class Config {
     void initPlaylist();
     void indexPlaylist();
     void fillPlMenu(char plmenu[][40], int from, byte count);
+    void setTimezone(int8_t tzh, int8_t tzm);
+    void setTimezoneOffset(uint16_t tzo);
+    uint16_t getTimezoneOffset();
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);

@@ -2,8 +2,14 @@
 #include "WiFi.h"
 #include "display.h"
 #include "options.h"
+#include "config.h"
+#include "telnet.h"
 
 Network network;
+
+void syncTime() {
+  network.requestTimeSync(true);
+}
 
 void Network::begin() {
   config.initNetwork();
@@ -35,7 +41,7 @@ void Network::begin() {
         break;
       }
     }
-    if(WiFi.status() != WL_CONNECTED && ls==startedls){
+    if (WiFi.status() != WL_CONNECTED && ls == startedls) {
       raiseSoftAP();
       return;
     }
@@ -46,6 +52,22 @@ void Network::begin() {
   }
   digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
+  requestTimeSync();
+  ntimer.attach_ms(TSYNC_DELAY, syncTime);
+}
+
+void Network::requestTimeSync(bool withTelnetOutput) {
+  configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), "pool.ntp.org", "ru.pool.ntp.org");
+  if (withTelnetOutput) {
+    getLocalTime(&timeinfo);
+    char timeStringBuff[50];
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
+    if (config.store.tzHour < 0) {
+      telnet.printf(0, "##SYS.DATE#: %s%03d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
+    } else {
+      telnet.printf(0, "##SYS.DATE#: %s+%02d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
+    }
+  }
 }
 
 void Network::raiseSoftAP() {

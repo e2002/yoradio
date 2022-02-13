@@ -7,9 +7,6 @@
 
 enum displayMode_e { PLAYER, VOL, STATIONS };
 
-#define TIMEZONE 10800       // 3600*3=10800 (UTC+3)
-#define OFFSET   0           // Daylight Offset (sec.)
-
 class Scroll {
   public:
     Scroll() { };
@@ -33,7 +30,7 @@ class Scroll {
     void getbounds(uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth);
     boolean checkdelay(int m, unsigned long &tstamp);
     void scroll();
-    void ticks();
+    void sticks();
     void clear();
     void setTextParams();
     void drawFrame();
@@ -41,8 +38,6 @@ class Scroll {
 
 class Display {
   public:
-    struct tm timeinfo;
-    uint16_t syncTicks;
     bool clockRequest;
     uint16_t screenwidth, screenheight;
     displayMode_e mode;

@@ -6,6 +6,12 @@ Config config;
 
 void Config::init() {
   eepromRead(EEPROM_START, store);
+  if (store.tz_set!=57){ // update to v0.4.200
+    store.tz_set = 57;
+    store.tzHour = 3;
+    store.tzMin = 0;
+    store.timezoneOffset = 0;
+  }
   if (store.config_set != 4256) setDefaults();
   //if (!SPIFFS.begin(false, "/spiffs", 30)) {
   if (!SPIFFS.begin(false)) {
@@ -54,6 +60,25 @@ void Config::setDefaults() {
   store.lastSSID = 0;
   store.audioinfo = false;
   store.smartstart = 2;
+  store.tz_set = 57;
+  store.tzHour = 3;
+  store.tzMin = 0;
+  store.timezoneOffset = 0;
+}
+
+void Config::setTimezone(int8_t tzh, int8_t tzm) {
+  store.tzHour=tzh;
+  store.tzMin=tzm;
+  save();
+}
+
+void Config::setTimezoneOffset(uint16_t tzo) {
+  store.timezoneOffset=tzo;
+  save();
+}
+
+uint16_t Config::getTimezoneOffset() {
+  return 0; // TODO
 }
 
 void Config::save() {

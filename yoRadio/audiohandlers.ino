@@ -33,7 +33,7 @@ void audio_showstreamtitle(const char *info) {
       telnet.info();
       player.requesToStart = false;
     } else {
-      telnet.printf("##CLI.META#: %s\n", info);
+      telnet.printf("##CLI.META#: %s\n> ", info);
     }
   }
 }

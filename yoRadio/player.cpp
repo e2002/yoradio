@@ -30,6 +30,7 @@ void Player::loop() {
   } else {
     if (isRunning()) {
       digitalWrite(LED_BUILTIN, LOW);
+      display.title("[stopped]");
       stopSong();
       stopInfo();
     }

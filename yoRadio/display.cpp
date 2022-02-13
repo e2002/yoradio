@@ -1,10 +1,11 @@
+#include "options.h"
+
 #include "WiFi.h"
 #include "time.h"
 #include "display.h"
 
 #include "player.h"
 #include "netserver.h"
-#include "options.h"
 #include "network.h"
 
 #if DSP_MODEL==0
@@ -85,7 +86,7 @@ void Scroll::clearscrolls() {
 void Scroll::loop() {
   if (checkdelay(x == TFT_FRAMEWDT ? delayStartScroll : SCROLLTIME, scrolldelay)) {
     scroll();
-    ticks();
+    sticks();
   }
   yield();
 }
@@ -103,7 +104,7 @@ void Scroll::drawFrame() {
   dsp.drawScrollFrame(texttop, textheight, bg);
 }
 
-void Scroll::ticks() {
+void Scroll::sticks() {
   if (!doscroll || locked) return;
   setTextParams();
   dsp.set_Cursor(x, texttop);
@@ -170,7 +171,6 @@ void Display::start() {
   station();
   rssi();
   time();
-  configTime(TIMEZONE, OFFSET, "pool.ntp.org", "ru.pool.ntp.org");
   timer.attach_ms(1000, ticks);
   // Экстреминатус секвестирован
 }
@@ -213,14 +213,8 @@ void Display::swichMode(displayMode_e newmode) {
 
 void Display::drawPlayer() {
   if (clockRequest) {
-    if (syncTicks % 21600 == 0) { //6hours
-      configTime(TIMEZONE, OFFSET, "pool.ntp.org", "ru.pool.ntp.org");
-      yield();
-      syncTicks = 0;
-    }
-    getLocalTime(&timeinfo);
+    getLocalTime(&network.timeinfo);
     time();
-    syncTicks++;
     clockRequest = false;
   }
   meta.loop();
@@ -322,9 +316,9 @@ void Display::time() {
   if (!dt) {
     heap();
     rssi();
-    strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M", &timeinfo);
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M", &network.timeinfo);
   } else {
-    strftime(timeStringBuff, sizeof(timeStringBuff), "%H %M", &timeinfo);
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%H %M", &network.timeinfo);
   }
   dsp.printClock(timeStringBuff);
   dt = !dt;
