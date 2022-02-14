@@ -183,6 +183,9 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.251
+- fixed compilation error bug when using VS1053 together with ST7735
+
 #### v0.4.249
 - fix VS10003/1053 reseting
 - fix css in Firefox
