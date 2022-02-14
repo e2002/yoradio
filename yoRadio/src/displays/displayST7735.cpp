@@ -251,7 +251,7 @@ void DisplayST7735::displayHeapForDebug() {
   print(ESP.getFreeHeap());
   print(" / ");
   print(ESP.getMaxAllocHeap());
-
+#if VS1053_CS==255
   // audio buffer;
   fillRect(0, sheight - 2, swidth, 2, TFT_BG);
   int astored = player.inBufferFilled();
@@ -259,6 +259,7 @@ void DisplayST7735::displayHeapForDebug() {
   int aprcnt = 100 * astored / (astored + afree);
   byte sbw = map(aprcnt, 0, 100 , 0, swidth);
   fillRect(0, sheight - 2, sbw, 2, SILVER);
+#endif
 }
 
 void DisplayST7735::printClock(const char* timestr) {
