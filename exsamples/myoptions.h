@@ -7,8 +7,9 @@
  * 1: white SSD1306 without controls
  * 2: ST7735 with encoder
  * 3: Nokia 5110 dev board
+ * 4: VS1053 dev
  */
-#define HWID          3
+#define HWID          2
 
 /******************************************/
 
@@ -34,6 +35,12 @@
 #define BTN_LEFT      13
 #define BTN_CENTER    12
 #define BTN_RIGHT     14
+
+#elif HWID==4
+#define DSP_MODEL     3
+#define VS1053_CS     27
+#define I2S_DOUT      255
+#define VS1053_RST    14
 
 #endif
 

@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.210"
+#define VERSION "0.4.248"
 
 /* DISPLAY MODEL
  * 0 - DUMMY
@@ -22,7 +22,7 @@
  * ************
  */
 #define TFT_CS        5
-#define TFT_RST       15   // Or set to -1 and connect to Arduino RESET pin
+#define TFT_RST       15   // Or set to -1 and connect to Esp EN pin
 //#define TFT_RST    -1    // we use the seesaw for resetting to save a pin
 #define TFT_DC        4
 /*
@@ -31,6 +31,13 @@
 #define I2C_SDA 13
 #define I2C_SCL 14
 #define I2C_RST -1
+/*
+ * VS1053
+ */
+#define VS1053_CS     255 // 27
+#define VS1053_DCS    25
+#define VS1053_DREQ   26
+#define VS1053_RST    -1    // set to -1 if connected to Esp EN pin
 /*
  * I2S DAC
  */

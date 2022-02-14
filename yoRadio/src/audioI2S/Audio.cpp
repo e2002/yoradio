@@ -1,3 +1,5 @@
+#include "../../options.h"
+#if VS1053_CS==255
 /*
  * Audio.cpp
  *
@@ -4538,3 +4540,4 @@ int16_t* Audio::IIR_filterChain2(int16_t iir_in[2], bool clear){  // Infinite Im
 
     return iir_out;
 }
+#endif

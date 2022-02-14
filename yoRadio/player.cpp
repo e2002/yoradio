@@ -1,19 +1,44 @@
+#include "options.h"
+
 #include "player.h"
+
 #include "config.h"
 #include "telnet.h"
 #include "display.h"
-#include "options.h"
+
 #include "netserver.h"
 
 Player player;
 
+#if VS1053_CS!=255
+Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {
+
+}
+void ResetChip(){
+  digitalWrite(VS1053_RST, LOW);
+  delay(10);
+  digitalWrite(VS1053_RST, HIGH);
+  delay(100);
+}
+#else
+Player::Player() {}
+#endif
+
+
+
 void Player::init() {
+#if I2S_DOUT!=255
   setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+#else
+  SPI.begin();
+  if(VS1053_RST>0) ResetChip();
+  begin();
+#endif
+  setBalance(config.store.balance);
+  setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
   mode = STOPPED;
   requesToStart = true;
-  setBalance(config.store.balance);
-  setTone(config.store.bass, config.store.middle, config.store.trebble);
   zeroRequest();
 }
 
@@ -25,6 +50,7 @@ void Player::stopInfo() {
 }
 
 void Player::loop() {
+  //Serial.println(mode == PLAYING?"mode == PLAYING":"mode == STOPPED");
   if (mode == PLAYING) {
     Audio::loop();
   } else {

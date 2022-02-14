@@ -8,6 +8,8 @@
 \
 ![ёRadio](images/img6.jpg)\
 \
+![ёRadio](images/img7.jpg)\
+\
 ![ёRadio](images/page1.jpg)\
 \
 ![ёRadio](images/page2.jpg)\

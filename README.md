@@ -1,7 +1,7 @@
 # ёRadio
 ![ёRadio Logo](yoRadio/data/www/elogo100.png)
 
-##### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) library
+##### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) or/and [ESP32-vs1053_ext](https://github.com/schreibfaul1/ESP32-vs1053_ext) library
 ---
 - [Hardware](#hardware)
 - [Connection tables](#connection-tables)
@@ -20,7 +20,10 @@
 #### Required:
 **ESP32 board**: https://aliexpress.ru/item/32847027609.html \
 **I2S DAC**, roughly like this one: https://aliexpress.ru/item/1005001993192815.html \
-https://aliexpress.ru/item/1005002011542576.html
+https://aliexpress.ru/item/1005002011542576.html \
+or **VS1053b module** : https://aliexpress.ru/item/32893187079.html \
+https://aliexpress.ru/item/32838958284.html
+
 #### Optional:
 ##### Displays
 - **ST7735** 1.8' or 1.44' https://aliexpress.ru/item/1005002822797745.html
@@ -67,6 +70,20 @@ Three tact buttons or Encoder or all together
 | BCLK      | 26* | I2S_BCLK |
 | LRC(WSEL) | 25* | I2S_LRC |
 
+| VS1053 | ESP-32 | options.h |
+| ------ | ------ | ------ |
+| XDCS | 25* | VS1053_DCS |
+| XCS | 27* | VS1053_CS |
+| XRST | EN | VS1053_RST |
+| DERQ | 26* | VS1053_DREQ |
+| SCK | 18 | - |
+| MOSI | 23 | - |
+| MISO | 19 | - |
+| 5V | +5V | - |
+| DGND | GND | - |
+
+_\#\# Important! You must choose between I2S DAC and VS1053 by disabling the second module in the settings (see below)_
+
 | Buttons, Encoder | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND       | GND | - |
@@ -85,7 +102,19 @@ Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* dep
 ---
 ## Hardware setup
 Hardware is connected in the **[options.h](yoRadio/options.h)** file. \
-_so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamples/myoptions.h)) in the root of the project and make settings in it_
+_so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamples/myoptions.h)) in the root of the project and make settings in it_ \
+
+**Important!**
+You must choose between I2S DAC and VS1053 by disabling the second module in the settings:
+````c++
+// If I2S DAC used:
+#define I2S_DOUT      27
+#define VS1053_CS     255
+// If VS1053 used:
+#define I2S_DOUT      255
+#define VS1053_CS     27
+````
+Define display model:
 ````c++
 /* DISPLAY MODEL
  * 0 - DUMMY
@@ -95,12 +124,12 @@ _so that the settings are not overwritten when updating git, you need to put the
  */
 #define DSP_MODEL  1
 ````
-The ST7735 display model is configured in the file [src/displays/displayST7735.cpp](yoRadio/src/displays/displayST7735.cpp)
+The ST7735 display submodel is configured in the file [src/displays/displayST7735.cpp](yoRadio/src/displays/displayST7735.cpp)
 ````c++
 #define DTYPE INITR_BLACKTAB // 1.8' https://aliexpress.ru/item/1005002822797745.html
 //#define DTYPE INITR_144GREENTAB // 1.44' https://aliexpress.ru/item/1005002822797745.html
 ````
-Rotation of the ST7735 display is configured in the file [src/displays/displayST7735.h](yoRadio/src/displays/displayST7735.h)
+Rotation of the displays is configured in the files [src/displays/displayXXXXX.h](yoRadio/src/displays/displayST7735.h)
 ````c++
 #define TFT_ROTATE 3 // 180 degress
 ````
@@ -154,6 +183,9 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.248
+- added support for VS1053 module _in testing mode_
+
 #### v0.4.210
 - added timezone config by telnet
 - fix telnet output

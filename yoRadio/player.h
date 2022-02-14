@@ -1,7 +1,12 @@
 #ifndef player_h
 #define player_h
+#include "options.h"
 
+#if I2S_DOUT!=255
 #include "src/audioI2S/AudioEx.h"
+#else
+#include "src/audioVS1053/audioVS1053Ex.h"
+#endif
 
 enum audioMode_e { PLAYING, STOPPED };
 
@@ -18,6 +23,7 @@ class Player: public Audio {
     audiorequest_t request; 
     bool requesToStart;
   public:
+    Player();
     void init();
     void loop();
     void zeroRequest();
@@ -32,5 +38,6 @@ class Player: public Audio {
 };
 
 extern Player player;
+
 
 #endif
