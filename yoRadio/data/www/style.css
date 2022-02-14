@@ -167,6 +167,10 @@ a:hover { text-decoration: underline }
   height: 8px;
   background-color: #000;
 }
+#settings, #pleditorcontent {
+	scrollbar-color: #e3d25f #000;
+  scrollbar-width: thin;
+}
 #settings::-webkit-scrollbar-thumb, #pleditorcontent::-webkit-scrollbar-thumb {
   background: #e3d25f;
 }
@@ -401,13 +405,20 @@ a:hover { text-decoration: underline }
   outline: none;
   transition: background 450ms ease-in;
   -webkit-appearance: none;
+  -moz-appearance: none;
   box-sizing: border-box;
 }
-#volrange::-webkit-slider-thumb, .slider::-webkit-slider-thumb {
+#volrange::-webkit-slider-thumb, .slider::-webkit-slider-thumb, #volrange::-moz-range-thumb, .slider::-moz-range-thumb {
   width: 10px;
-  -webkit-appearance: none;Раменское
+  -webkit-appearance: none;
+  -moz-appearance: none;
   height: 10px;
   cursor: ew-resize;
+  background-color: transparent;
+  border: 0;
+}
+input[type=range]::-moz-range-track {
+  background-color: transparent;
 }
 .slider {
   width: 400px;
@@ -425,8 +436,11 @@ a:hover { text-decoration: underline }
   overflow-y: auto;
   height: 0px;
   box-sizing: border-box;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAABOAQMAAAAw4lVwAAAABlBMVEUnJycAAADxyujSAAAADklEQVQI12OgLjhATQgAdZgdQbNqrBUAAAAASUVORK5CYII=');
+  scrollbar-color: #e3d25f #000;
+  scrollbar-width: thin;
 }
-#playlist::-webkit-scrollbar {
+#playlist::-webkit-scrollbarr {
   width: 5px;
   height: 8px;
   background-color: #000;
@@ -441,6 +455,7 @@ a:hover { text-decoration: underline }
   color: #bfa73e;
   cursor: pointer;
   position: relative;
+  background: #000;
 }
 #playlist li span {
   position: absolute;

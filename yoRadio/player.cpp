@@ -15,8 +15,9 @@ Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {
 
 }
 void ResetChip(){
+  pinMode(VS1053_RST, OUTPUT);
   digitalWrite(VS1053_RST, LOW);
-  delay(10);
+  delay(30);
   digitalWrite(VS1053_RST, HIGH);
   delay(100);
 }

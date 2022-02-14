@@ -8,6 +8,7 @@
  * 2: ST7735 with encoder
  * 3: Nokia 5110 dev board
  * 4: VS1053 dev
+ * 5: VS1053 UNO3 Shield
  */
 #define HWID          2
 
@@ -40,7 +41,16 @@
 #define DSP_MODEL     3
 #define VS1053_CS     27
 #define I2S_DOUT      255
-#define VS1053_RST    14
+//#define VS1053_RST    14
+
+#elif HWID==5
+#define DSP_MODEL     3
+#define TFT_RST       -1	// connecting to esp reset pin
+#define I2S_DOUT      255
+#define VS1053_CS     27
+#define VS1053_DCS    14
+#define VS1053_DREQ   26
+#define VS1053_RST    12
 
 #endif
 

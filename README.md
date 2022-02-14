@@ -183,6 +183,11 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.249
+- fix VS10003/1053 reseting
+- fix css in Firefox
+- fix font in NOKIA5110 display
+
 #### v0.4.248
 - added support for VS1053 module _in testing mode_
 

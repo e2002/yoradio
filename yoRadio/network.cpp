@@ -73,5 +73,6 @@ void Network::requestTimeSync(bool withTelnetOutput) {
 void Network::raiseSoftAP() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP(apSsid, apPassword);
+  Serial.printf("\n\nRunning in AP mode.\nConnect to AP %s with password %s for settings.\n\n", apSsid, apPassword);
   status = SOFT_AP;
 }
