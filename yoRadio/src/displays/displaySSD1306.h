@@ -5,7 +5,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define TFT_ROTATE      0
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
 

@@ -6,7 +6,6 @@
 #include <Adafruit_ST7735.h>
 #include "fonts/DS_DIGI28pt7b.h"
 
-#define TFT_ROTATE      3
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    4
 

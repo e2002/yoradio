@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.251"
+#define VERSION "0.4.255"
 
 /* DISPLAY MODEL
  * 0 - DUMMY
@@ -59,7 +59,12 @@
 /*
  * ESP DEVBOARD
  */
-#define LED_BUILTIN 2
+#define LED_BUILTIN   2
+
+/*
+ * Other settings. You can overwrite them in the myoptions.h file
+ */
+#define TFT_ROTATE    3   // display rotation. 3 - 180 degress
 
 #if __has_include("myoptions.h")
 #include "myoptions.h"

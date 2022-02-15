@@ -11,6 +11,9 @@
 
 #define AUDIOBUFFER_MULTIPLIER 13
 
+#define VS1053VOLM 128				// 128 or 96 only
+#define VS1053VOL(v) (VS1053VOLM==128?log10(((float)v+1)) * 50.54571334 + 128:log10(((float)v+1)) * 64.54571334 + 96)
+
 #include "Arduino.h"
 #include "libb64/cencode.h"
 #include "SPI.h"
@@ -128,6 +131,7 @@ private:
     uint8_t       curvol ;                        	// Current volume setting 0..100%
 
     const uint8_t vs1053_chunk_size = 32 ;
+    int8_t          m_balance = 0;                  // -16 (mute left) ... +16 (mute right)
     // SCI Register
     const uint8_t SCI_MODE          = 0x0 ;
     const uint8_t SCI_STATUS        = 0x1 ;

@@ -133,7 +133,7 @@ Rotation of the displays is configured in the files [src/displays/displayXXXXX.h
 ````c++
 #define TFT_ROTATE 3 // 180 degress
 ````
-If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
+##### If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
 ````c++
   // Black tab, change MADCTL color filter
   if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {

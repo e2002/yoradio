@@ -8,20 +8,6 @@
 #include "../../config.h"
 #include "../../network.h"
 
-#define DTYPE INITR_BLACKTAB // 1.8' https://aliexpress.ru/item/1005002822797745.html
-/*  If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
-
-  // Black tab, change MADCTL color filter
-  if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
-    uint8_t data = 0xC0;
-    sendCommand(ST77XX_MADCTL, &data, 1);
-  _add this_ ->    _colstart = 2;
-  _add this_ ->    _rowstart = 1;
-  }
-
-*/
-//#define DTYPE INITR_144GREENTAB // 1.44' https://aliexpress.ru/item/1005002822797745.html
-
 class GFXClock {
   public:
     GFXClock() {};
