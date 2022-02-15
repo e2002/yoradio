@@ -16,6 +16,7 @@
 
 #if HWID==0
 #define DSP_MODEL     2
+#define TFT_ROTATE    0
 #define I2S_DOUT      22
 #define BTN_LEFT      16
 #define BTN_CENTER    5
@@ -23,34 +24,42 @@
 
 #elif HWID==1
 #define DSP_MODEL     2
+#define TFT_ROTATE    0
 #define I2S_DOUT      22
 
 #elif HWID==2
 #define DSP_MODEL     1
+#define TFT_ROTATE    3
 #define ENC_BTNL      13
 #define ENC_BTNB      12
 #define ENC_BTNR      14
 
 #elif HWID==3
 #define DSP_MODEL     3
+#define TFT_ROTATE    0
 #define BTN_LEFT      13
 #define BTN_CENTER    12
 #define BTN_RIGHT     14
 
 #elif HWID==4
 #define DSP_MODEL     3
+#define TFT_ROTATE    0
 #define VS1053_CS     27
 #define I2S_DOUT      255
 //#define VS1053_RST    14
 
 #elif HWID==5
 #define DSP_MODEL     3
-#define TFT_RST       -1	// connecting to esp reset pin
+#define TFT_RST       -1
+#define TFT_DC        13
 #define I2S_DOUT      255
 #define VS1053_CS     27
 #define VS1053_DCS    14
 #define VS1053_DREQ   26
 #define VS1053_RST    12
+#define ENC_BTNL      25
+#define ENC_BTNB      17
+#define ENC_BTNR      16
 
 #endif
 

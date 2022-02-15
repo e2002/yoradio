@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.255"
+#define VERSION "0.4.260"
 
 /* DISPLAY MODEL
  * 0 - DUMMY
@@ -64,7 +64,17 @@
 /*
  * Other settings. You can overwrite them in the myoptions.h file
  */
-#define TFT_ROTATE    3   // display rotation. 3 - 180 degress
+#define TFT_ROTATE    3   // display rotation. 0 - 0, 1 - 90, 2 - 180, 3 - 270 degress
+
+// 
+/*
+*** ST7735 display submodel ***
+INITR_BLACKTAB        // 1.8' https://aliexpress.ru/item/1005002822797745.html (See this note If there is a noisy line on one side of the screen https://github.com/e2002/yoradio#hardware-setup )
+INITR_144GREENTAB     // 1.44' https://aliexpress.ru/item/1005002822797745.html
+INITR_GREENTAB
+INITR_REDTAB
+ */
+#define DTYPE INITR_BLACKTAB
 
 #if __has_include("myoptions.h")
 #include "myoptions.h"

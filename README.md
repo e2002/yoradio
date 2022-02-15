@@ -124,16 +124,16 @@ Define display model:
  */
 #define DSP_MODEL  1
 ````
-The ST7735 display submodel is configured in the file [src/displays/displayST7735.cpp](yoRadio/src/displays/displayST7735.cpp)
+The ST7735 display submodel:
 ````c++
 #define DTYPE INITR_BLACKTAB // 1.8' https://aliexpress.ru/item/1005002822797745.html
 //#define DTYPE INITR_144GREENTAB // 1.44' https://aliexpress.ru/item/1005002822797745.html
 ````
-Rotation of the displays is configured in the files [src/displays/displayXXXXX.h](yoRadio/src/displays/displayST7735.h)
+Rotation of the display:
 ````c++
 #define TFT_ROTATE 3 // 180 degress
 ````
-##### If there is a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
+##### Note: If INITR_BLACKTAB dsp have a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
 ````c++
   // Black tab, change MADCTL color filter
   if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
@@ -183,11 +183,15 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.260
+- added control of balance and equalizer for VS1053
+- **TFT_ROTATE** and st7735 **DTYPE** moved to myoptions.h
+
 #### v0.4.251
 - fixed compilation error bug when using VS1053 together with ST7735
 
 #### v0.4.249
-- fix VS10003/1053 reseting
+- fix VS1003/1053 reseting
 - fix css in Firefox
 - fix font in NOKIA5110 display
 

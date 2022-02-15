@@ -36,6 +36,9 @@ bool NetServer::begin() {
   webserver.on(INDEX_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(SPIFFS, INDEX_PATH, "application/octet-stream");
   });
+  webserver.on(SSIDS_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(SPIFFS, SSIDS_PATH, "application/octet-stream");
+  });
   webserver.on("/upload", HTTP_POST, [](AsyncWebServerRequest * request) {
     //request->send(200);
   }, handleUpload);
