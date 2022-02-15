@@ -366,8 +366,6 @@ void Audio::setVolume(uint8_t vol){
     }
     curvol = vol;
 
-		//uint8_t lgvolL = log10(((float)valueL+1)) * 64.54571334 + 96;
-		//uint8_t lgvolR = log10(((float)valueR+1)) * 64.54571334 + 96;
 		uint8_t lgvolL = VS1053VOL(valueL);
 		uint8_t lgvolR = VS1053VOL(valueR);
 		if(lgvolL==VS1053VOLM) lgvolL=0;
