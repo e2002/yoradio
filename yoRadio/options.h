@@ -12,14 +12,11 @@
 #define DSP_MODEL  1
 
 /*
- * TFT DISPLAY
+ * The connection tables are located here https://github.com/e2002/yoradio#connection-tables
  */
-/**************
- * GND  | GND *
- * VCC  | +5v *
- * SCL  | D18 *
- * SDA  | D23 *
- * ************
+
+/*
+ * TFT DISPLAY
  */
 #define TFT_CS        5
 #define TFT_RST       15   // Or set to -1 and connect to Esp EN pin
@@ -66,10 +63,10 @@
  */
 #define TFT_ROTATE    3   // display rotation. 0 - 0, 1 - 90, 2 - 180, 3 - 270 degress
 
-// 
 /*
 *** ST7735 display submodel ***
-INITR_BLACKTAB        // 1.8' https://aliexpress.ru/item/1005002822797745.html (See this note If there is a noisy line on one side of the screen https://github.com/e2002/yoradio#hardware-setup )
+INITR_BLACKTAB        // 1.8' https://aliexpress.ru/item/1005002822797745.html
+    See this note If INITR_BLACKTAB have a noisy line on one side of the screen https://github.com/e2002/yoradio#note-if-initr_blacktab-dsp-have-a-noisy-line-on-one-side-of-the-screen-then-in-adafruit_st7735cpp
 INITR_144GREENTAB     // 1.44' https://aliexpress.ru/item/1005002822797745.html
 INITR_GREENTAB
 INITR_REDTAB
