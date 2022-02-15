@@ -131,7 +131,7 @@ The ST7735 display submodel:
 ````
 Rotation of the display:
 ````c++
-#define TFT_ROTATE 3 // 180 degress
+#define TFT_ROTATE 3 // 270 degrees
 ````
 ##### Note: If INITR_BLACKTAB dsp have a noisy line on one side of the screen, then in Adafruit_ST7735.cpp:
 ````c++

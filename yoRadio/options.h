@@ -61,7 +61,7 @@
 /*
  * Other settings. You can overwrite them in the myoptions.h file
  */
-#define TFT_ROTATE    3   // display rotation. 0 - 0, 1 - 90, 2 - 180, 3 - 270 degress
+#define TFT_ROTATE    3   // display rotation. 0 - 0, 1 - 90, 2 - 180, 3 - 270 degrees
 
 /*
 *** ST7735 display submodel ***
