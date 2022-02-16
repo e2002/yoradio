@@ -18,17 +18,18 @@
 ---
 ## Hardware
 #### Required:
-**ESP32 board**: https://aliexpress.ru/item/32847027609.html \
-**I2S DAC**, roughly like this one: https://aliexpress.ru/item/1005001993192815.html \
-https://aliexpress.ru/item/1005002011542576.html \
-or **VS1053b module** : https://aliexpress.ru/item/32893187079.html \
-https://aliexpress.ru/item/32838958284.html
+**ESP32 board**: https://aliexpress.com/item/32847027609.html \
+**I2S DAC**, roughly like this one: https://aliexpress.com/item/1005001993192815.html \
+https://aliexpress.com/item/1005002011542576.html \
+or **VS1053b module** : https://aliexpress.com/item/32893187079.html \
+https://aliexpress.com/item/32838958284.html \
+https://aliexpress.com/item/32965676064.html
 
 #### Optional:
 ##### Displays
-- **ST7735** 1.8' or 1.44' https://aliexpress.ru/item/1005002822797745.html
-- or **SSD1306** 0.96' I2C https://aliexpress.ru/item/1005001621806398.html
-- or **Nokia5110** 84x48 SPI https://aliexpress.ru/item/1005001621837569.htmlz
+- **ST7735** 1.8' or 1.44' https://aliexpress.com/item/1005002822797745.html
+- or **SSD1306** 0.96' I2C https://aliexpress.com/item/1005001621806398.html
+- or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.htmlz
 
 ##### Controls
 Three tact buttons or Encoder or all together
@@ -74,7 +75,7 @@ Three tact buttons or Encoder or all together
 | ------ | ------ | ------ |
 | XDCS | 25* | VS1053_DCS |
 | XCS | 27* | VS1053_CS |
-| XRST | EN | VS1053_RST |
+| XRST | EN* | VS1053_RST |
 | DERQ | 26* | VS1053_DREQ |
 | SCK | 18 | - |
 | MOSI | 23 | - |
