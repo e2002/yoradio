@@ -34,7 +34,8 @@ https://aliexpress.com/item/32965676064.html
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
 - Encoder https://www.aliexpress.com/item/32873198060.html
-- IR Control https://www.aliexpress.com/item/32562721229.html
+- IR Control https://www.aliexpress.com/item/32562721229.html \
+https://www.aliexpress.com/item/33009687492.html
 
 ---
 ## Connection tables
