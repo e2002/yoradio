@@ -38,7 +38,7 @@ void ticks() {
 #define SCROLLTIME 83
 #endif
 
-void  Scroll::init(char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
+void  Scroll::init(const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
   textsize = tsize;
   texttop = top;
   fg = fgcolor;

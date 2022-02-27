@@ -32,7 +32,9 @@ https://aliexpress.com/item/32965676064.html
 - or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.htmlz
 
 ##### Controls
-Three tact buttons or Encoder or all together
+- Three tact buttons https://www.aliexpress.com/item/32907144687.html
+- Encoder https://www.aliexpress.com/item/32873198060.html
+- IR Control https://www.aliexpress.com/item/32562721229.html
 
 ---
 ## Connection tables
@@ -85,10 +87,10 @@ Three tact buttons or Encoder or all together
 
 _\#\# Important! You must choose between I2S DAC and VS1053 by disabling the second module in the settings (see below)_
 
-| Buttons, Encoder | ESP-32 | options.h |
+| Buttons, Encoder, LED, IR | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND       | GND | - |
-| PIN       | * | ENC_BTNx, BTN_xxx  |
+| PIN       | * | ENC_BTNx, BTN_xxx, LED_BUILTIN, IR_PIN  |
 
 _\* Any free pin, configured in options.h_ \
 _\** GPIOs 34-39 don't have software pullup/down functions. For encoder/buttons use an external pullup resistor, 10 kOhm works here_
@@ -96,7 +98,7 @@ _\** GPIOs 34-39 don't have software pullup/down functions. For encoder/buttons 
 ---
 ## Dependencies
 #### Libraries:
-Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
+Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, IRremoteESP8266, [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
 #### Tool:
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
 
@@ -184,6 +186,13 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.292
+- added support for IR control
+- new options in options.h (ENC_INTERNALPULLUP, ENC_HALFQUARD, BTN_INTERNALPULLUP, VOL_STEP) _//Thanks for [Buska1968](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=113385448)_
+- сompilation error for module SSD1306 with arduino-esp32 version newest than 2.0.0
+- fix compiler warnings in options.h
+- fix some compiler warnings
+
 #### v0.4.260
 - added control of balance and equalizer for VS1053
 - **TFT_ROTATE** and st7735 **DTYPE** moved to myoptions.h

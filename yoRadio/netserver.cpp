@@ -53,6 +53,7 @@ bool NetServer::begin() {
         packet.println(WiFi.localIP());
     });
   }
+  return true;
 }
 
 void NetServer::loop() {
@@ -122,6 +123,7 @@ bool NetServer::savePlaylist(const char* post) {
     file.print(post);
     file.close();
     netserver.requestOnChange(PLAYLISTSAVED, 0);
+    return true;
   }
 }
 

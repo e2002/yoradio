@@ -248,7 +248,7 @@ public:
     void     begin() ;                                  // Begin operation.  Sets pins correctly and prepares SPI bus.
     void     stop_mp3client();
     void     setVolume(uint8_t vol);                    // Set the player volume.Level from 0-21, higher is louder.
-    void     setTone(uint8_t* rtone);                   // Set the player baas/treble, 4 nibbles for treble gain/freq and bass gain/freq
+    void     setTone(int8_t* rtone);                   // Set the player baas/treble, 4 nibbles for treble gain/freq and bass gain/freq
     uint8_t  getVolume();                               // Get the current volume setting, higher is louder.
     void     printDetails(const char* str);             // Print configuration details to serial output.
     const char* printVersion();                         // Print ID and version of vs1053 chip

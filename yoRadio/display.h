@@ -10,7 +10,7 @@ enum displayMode_e { PLAYER, VOL, STATIONS };
 class Scroll {
   public:
     Scroll() { };
-    void init(char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor);
+    void init(const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor);
     void setText(const char *txt);
     void loop();
     void reset();

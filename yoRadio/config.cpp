@@ -331,6 +331,7 @@ bool Config::saveWifi(const char* post) {
     file.print(post);
     file.close();
     ESP.restart();
+    return true;
   }
 }
 
@@ -350,4 +351,5 @@ bool Config::initNetwork() {
     }
   }
   file.close();
+  return true;
 }

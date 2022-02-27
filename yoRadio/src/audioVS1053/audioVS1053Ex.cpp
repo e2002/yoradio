@@ -376,7 +376,7 @@ void Audio::setVolume(uint8_t vol){
 		write_register(SCI_VOL, value);
 }
 //---------------------------------------------------------------------------------------------------------------------
-void Audio::setTone(uint8_t *rtone){                       // Set bass/treble (4 nibbles)
+void Audio::setTone(int8_t *rtone){                       // Set bass/treble (4 nibbles)
 
     // Set tone characteristics.  See documentation for the 4 nibbles.
     uint16_t value=0;                                       // Value to send to SCI_BASS
@@ -400,7 +400,7 @@ void Audio::setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass
 	if(gainLowPass>15) gainLowPass=15;
 	if(gainBandPass<0) gainBandPass=0;
 	if(gainBandPass>13) gainBandPass=13;
-	uint8_t rtone[] = {map(gainHighPass, -16, 16, -8, 7), 2+gainBandPass, gainLowPass, 15-gainBandPass};
+	int8_t rtone[] = {(int8_t)map(gainHighPass, -16, 16, -8, 7), (int8_t)(2+gainBandPass), gainLowPass, (int8_t)(15-gainBandPass)};
 	setTone(rtone);
 }
 void Audio::setBalance(int8_t bal){ 

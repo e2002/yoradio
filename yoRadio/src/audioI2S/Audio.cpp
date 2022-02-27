@@ -4246,7 +4246,7 @@ void Audio::setBalance(int8_t bal){ // bal -16...16
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::setVolume(uint8_t vol) { // vol 22 steps, 0...21
-    if(vol > 256) vol = 256;
+    if(vol > 255) vol = 255;
     //volume = map(eeprom_config.volume, 0, 21, 0, 255);
     //m_vol = map(vol, 0, 254, 0, 64);
     m_vol = vol;

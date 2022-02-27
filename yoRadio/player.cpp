@@ -51,7 +51,6 @@ void Player::stopInfo() {
 }
 
 void Player::loop() {
-  //Serial.println(mode == PLAYING?"mode == PLAYING":"mode == STOPPED");
   if (mode == PLAYING) {
     Audio::loop();
   } else {
@@ -129,12 +128,16 @@ void Player::toggle() {
 
 void Player::stepVol(bool up) {
   if (up) {
-    if (config.store.volume < 254) {
-      setVol(config.store.volume + 1, false);
+    if (config.store.volume <= 254 - VOL_STEP) {
+      setVol(config.store.volume + VOL_STEP, false);
+    }else{
+      setVol(254, false);
     }
   } else {
-    if (config.store.volume > 0) {
-      setVol(config.store.volume - 1, false);
+    if (config.store.volume >= VOL_STEP) {
+      setVol(config.store.volume - VOL_STEP, false);
+    }else{
+      setVol(0, false);
     }
   }
 }

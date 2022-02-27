@@ -10,7 +10,6 @@
 
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
-#define TFT_CONTRAST    55
 
 #define PLMITEMS        7
 #define PLMITEMLENGHT   40

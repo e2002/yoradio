@@ -123,7 +123,7 @@ void DisplaySSD1306::apScreen() {
 }
 
 void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  I2CSSD1306.begin(I2C_SDA, I2C_SCL, 400000);
+  I2CSSD1306.begin(I2C_SDA, I2C_SCL, (uint32_t)400000);
   if (!begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;); // Don't proceed, loop forever
