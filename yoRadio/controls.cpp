@@ -118,7 +118,7 @@ void irLoop() {
       Serial.print(resultToHumanReadableBasic(&irResults));
       return;
     }
-    if (!irResults.repeat && irResults.command!=0) {
+    if (!irResults.repeat/* && irResults.command!=0*/) {
       irVolRepeat = 0;
     }
     switch (irVolRepeat) {

@@ -186,6 +186,9 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.293
+- IR repeat fix
+
 #### v0.4.292
 - added support for IR control
 - new options in options.h (ENC_INTERNALPULLUP, ENC_HALFQUARD, BTN_INTERNALPULLUP, VOL_STEP) _//Thanks for [Buska1968](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=113385448)_
