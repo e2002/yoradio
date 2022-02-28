@@ -189,7 +189,7 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 ---
 ## Version history
 #### v0.4.297
-- fix _"Could not decode a text frame as UTF-8"_ websocket error
+- fix _"Could not decode a text frame as UTF-8"_ websocket error _//Thanks for [Verholazila](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=113551446)_
 - fix display of non-latin characters in the web interface
 - fix css in Chrome
 
