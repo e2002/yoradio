@@ -408,9 +408,16 @@ a:hover { text-decoration: underline }
   -moz-appearance: none;
   box-sizing: border-box;
 }
-#volrange::-webkit-slider-thumb, .slider::-webkit-slider-thumb, #volrange::-moz-range-thumb, .slider::-moz-range-thumb {
+#volrange::-webkit-slider-thumb, .slider::-webkit-slider-thumb {
   width: 10px;
   -webkit-appearance: none;
+  height: 10px;
+  cursor: ew-resize;
+  background-color: transparent;
+  border: 0;
+}
+#volrange::-moz-range-thumb, .slider::-moz-range-thumb {
+  width: 10px;
   -moz-appearance: none;
   height: 10px;
   cursor: ew-resize;

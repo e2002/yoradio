@@ -18,19 +18,11 @@ function onClose(event) {
   document.getElementById('playbutton').setAttribute("class", "stopped");
   setTimeout(initWebSocket, 2000);
 }
-function cleanString(input) {
-    var output = "";
-    for (var i=0; i<input.length; i++) {
-        if (input.charCodeAt(i) <= 127 || input.charCodeAt(i) >= 160 && input.charCodeAt(i) <= 255) {
-            output += input.charAt(i);
-        }
-    }
-    return output;
-}
+
 function onMessage(event) {
   var data = JSON.parse(event.data);
   if(data.nameset) document.getElementById('nameset').innerHTML = data.nameset;
-  if(data.meta) document.getElementById('meta').innerHTML = cleanString(data.meta);
+  if(data.meta) document.getElementById('meta').innerHTML = data.meta;
   if(data.vol) {
     setVolRangeValue(document.getElementById('volrange'),data.vol);
   }

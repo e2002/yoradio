@@ -188,6 +188,11 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 ---
 ## Version history
+#### v0.4.297
+- fix _"Could not decode a text frame as UTF-8"_ websocket error
+- fix display of non-latin characters in the web interface
+- fix css in Chrome
+
 #### v0.4.293
 - IR repeat fix
 
