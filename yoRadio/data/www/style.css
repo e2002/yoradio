@@ -447,7 +447,7 @@ input[type=range]::-moz-range-track {
   scrollbar-color: #e3d25f #000;
   scrollbar-width: thin;
 }
-#playlist::-webkit-scrollbarr {
+#playlist::-webkit-scrollbar {
   width: 5px;
   height: 8px;
   background-color: #000;
