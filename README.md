@@ -168,6 +168,8 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data/wifi.csv_ and place them in the yoRadio/data/data/ folder
 2. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload
 3. Upload the sketch to the board
+4. Go to page _http://\<yoradioip\>/_ in the browser and press Ctrl+F5 to update the scripts.
+5. Well done!
 
 ---
 ## More features
