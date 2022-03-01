@@ -8,6 +8,7 @@
 - [Software dependencies](#dependencies)
 - [Hardware setup](#hardware-setup)
 - [Quick start](#quick-start)
+- [Update](#update)
 - [More features](#more-features)
 - [Version history](#version-history)
 ---
@@ -160,6 +161,13 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 **Localization:**
 Если Adafruit_GFX ещё не русифицирована, русифицировать её, заменив файл Arduino/libraries/Adafruit_GFX_Library/glcdfont.c файлом [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
+
+---
+## Update
+1. Backup your settings: \
+download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data/wifi.csv_ and place them in the yoRadio/data/data/ folder
+2. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload
+3. Upload the sketch to the board
 
 ---
 ## More features
