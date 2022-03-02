@@ -204,6 +204,9 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == VOL) {
     dsp.frameTitle("VOLUME");
   }
+  if (newmode == NUMBERS) {
+    dsp.frameTitle("STATION");
+  }
   if (newmode == STATIONS) {
     currentPlItem = config.store.lastStation;
     plCurrent.reset();
@@ -235,6 +238,10 @@ void Display::drawPlaylist() {
   plCurrent.setText(dsp.utf8Rus(buf, true));
 }
 
+void Display::drawNextStationNum(uint16_t num) {
+  dsp.drawNextStationNum(num);
+}
+
 void Display::loop() {
   switch (mode) {
     case PLAYER: {
@@ -243,6 +250,9 @@ void Display::loop() {
       }
     case VOL: {
         drawVolume();
+        break;
+      }
+    case NUMBERS: {
         break;
       }
     case STATIONS: {

@@ -5,7 +5,7 @@
 #include <Ticker.h>
 #include "config.h"
 
-enum displayMode_e { PLAYER, VOL, STATIONS };
+enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS };
 
 class Scroll {
   public:
@@ -42,6 +42,7 @@ class Display {
     uint16_t screenwidth, screenheight;
     displayMode_e mode;
     uint16_t currentPlItem;
+    uint16_t numOfNextStation;
   public:
     Display() {};
     void init();
@@ -58,6 +59,7 @@ class Display {
     void ip();
     void swichMode(displayMode_e newmode);
     void drawPlaylist();
+    void drawNextStationNum(uint16_t num);
   private:
     Ticker timer;
     Scroll meta, title1, title2, plCurrent;

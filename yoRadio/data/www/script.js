@@ -1,9 +1,12 @@
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
 var currentItem = 0;
+var wserrcnt = 0;
+var wstimeout;
 
 window.addEventListener('load', onLoad);
 function initWebSocket() {
+  clearTimeout(wstimeout);
   console.log('Trying to open a WebSocket connection...');
   websocket = new WebSocket(gateway);
   websocket.onopen    = onOpen;
@@ -12,13 +15,14 @@ function initWebSocket() {
 }
 function onOpen(event) {
   console.log('Connection opened');
+  wserrcnt=0;
 }
 function onClose(event) {
-  console.log('Connection closed');
+  //console.log('Connection closed');
+  wserrcnt++;
   document.getElementById('playbutton').setAttribute("class", "stopped");
-  setTimeout(initWebSocket, 2000);
+  wstimeout=setTimeout(initWebSocket, wserrcnt<10?2000:120000);
 }
-
 function onMessage(event) {
   var data = JSON.parse(event.data);
   if(data.nameset) document.getElementById('nameset').innerHTML = data.nameset;
@@ -138,7 +142,6 @@ function setVolRangeValue(el, val=null){
   var value = (el.value-el.min)/(el.max-el.min)*100;
   el.style.background = 'linear-gradient(to right, #bfa73e 0%, #bfa73e ' + value + '%, #272727 ' + value + '%, #272727 100%)';
 }
-
 function onRangeVolChange(value) {
 	xhr = new XMLHttpRequest();
 	xhr.open("POST","/",true);
@@ -162,10 +165,12 @@ function onRangeBalChange(el){
 }
 function showSettings(){
   document.getElementById('pleditorwrap').hidden=true;
+  document.getElementById('equalizerbg').hidden=true;
   document.getElementById('settings').hidden=false;
 }
 function showEditor(){
   document.getElementById('settings').hidden=true;
+  document.getElementById('equalizerbg').hidden=true;
   initPLEditor();
   document.getElementById('pleditorwrap').hidden=false;
 }
@@ -175,6 +180,10 @@ function doCancel() {
 }
 function doExport() {
   window.open("/data/playlist.csv");
+}
+function doWifiExport() {
+  document.getElementById('settings').hidden=true;
+  window.open("/data/wifi.csv");
 }
 function doUpload(finput) {
   var formData = new FormData();
@@ -231,7 +240,8 @@ function submitWiFi(){
   for (var i = 0; i <= items.length - 1; i++) {
     inputs=items[i].getElementsByTagName("input");
     if(inputs[0].value == "") continue;
-    output+=inputs[0].value+"\t"+inputs[1].value+"\n";
+    let ps=inputs[1].value==""?inputs[1].getAttribute('data-pass'):inputs[1].value;
+    output+=inputs[0].value+"\t"+ps+"\n";
   }
   if(output!=""){ // Well, let's say, quack.
     xhr = new XMLHttpRequest();

@@ -245,6 +245,19 @@ void DisplaySSD1306::drawVolumeBar(bool withNumber) {
   }
 }
 
+void DisplaySSD1306::drawNextStationNum(uint16_t num) {
+  setTextSize(2);
+  setTextColor(TFT_FG);
+  char numstr[7];
+  uint16_t wv, hv;
+  int16_t  x1, y1;
+  sprintf(numstr, "%d", num);
+  getTextBounds(numstr, 0, 0, &x1, &y1, &wv, &hv);
+  fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+  setCursor((swidth - wv) / 2, 24);
+  print(numstr);
+}
+
 void DisplaySSD1306::frameTitle(const char* str) {
   setTextSize(2);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);

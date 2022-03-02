@@ -9,7 +9,8 @@ void onEncDoubleClick();
 void onEncLPStart();
 void encoderLoop();
 void irLoop();
-
+void irNum(byte num);
+void irBlink();
 void controlsEvent(bool toRight);
 
 void onLeftClick();

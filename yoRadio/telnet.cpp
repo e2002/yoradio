@@ -260,7 +260,7 @@ void Telnet::on_input(const char* str, byte clientId) {
     printf(clientId, "> ");
     return;
   }
-  uint8_t sb;
+  uint16_t sb;
   if (sscanf(str, "play(%d)", &sb) == 1 || sscanf(str, "cli.play(\"%d\")", &sb) == 1 || sscanf(str, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;

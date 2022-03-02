@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.298"
+#define VERSION "0.4.315"
 
 #if __has_include("myoptions.h")
 #include "myoptions.h" // <- write your variable values here 
@@ -113,6 +113,13 @@
 #endif
 #ifndef VOL_STEP
   #define VOL_STEP      1   // Encoder vol step
+#endif
+
+#ifndef MUTE_PIN
+  #define MUTE_PIN      255   // MUTE Pin
+#endif
+#ifndef MUTE_VAL
+  #define MUTE_VAL      HIGH  // Write this to MUTE_PIN when player is stopped
 #endif
 
 /*

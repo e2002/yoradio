@@ -28,6 +28,7 @@ Player::Player() {}
 
 
 void Player::init() {
+  if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
 #if I2S_DOUT!=255
   setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
 #else
@@ -55,7 +56,8 @@ void Player::loop() {
     Audio::loop();
   } else {
     if (isRunning()) {
-      digitalWrite(LED_BUILTIN, LOW);
+      //digitalWrite(LED_BUILTIN, LOW);
+      setOutputPins(false);
       display.title("[stopped]");
       stopSong();
       stopInfo();
@@ -84,9 +86,15 @@ void Player::zeroRequest() {
   request.doSave = false;
 }
 
-void Player::play(byte stationId) {
+void Player::setOutputPins(bool isPlaying) {
+  digitalWrite(LED_BUILTIN, isPlaying);
+  if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, isPlaying?!MUTE_VAL:MUTE_VAL);
+}
+
+void Player::play(uint16_t stationId) {
   stopSong();
-  digitalWrite(LED_BUILTIN, LOW);
+  //digitalWrite(LED_BUILTIN, LOW);
+  setOutputPins(false);
   display.title("[connecting]");
   telnet.printf("##CLI.META#: %s\n", config.station.title);
   config.loadStation(stationId);
@@ -97,7 +105,8 @@ void Player::play(byte stationId) {
     mode = PLAYING;
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
-    digitalWrite(LED_BUILTIN, HIGH);
+    //digitalWrite(LED_BUILTIN, HIGH);
+    setOutputPins(true);
     requesToStart = true;
   }else{
     Serial.println("Some Unknown Bug...");

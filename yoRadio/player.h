@@ -27,7 +27,7 @@ class Player: public Audio {
     void init();
     void loop();
     void zeroRequest();
-    void play(byte stationId);
+    void play(uint16_t stationId);
     void prev();
     void next();
     void toggle();
@@ -35,6 +35,7 @@ class Player: public Audio {
     void setVol(byte volume, bool inside);
     byte volToI2S(byte volume);
     void stopInfo();
+    void setOutputPins(bool isPlaying);
 };
 
 extern Player player;

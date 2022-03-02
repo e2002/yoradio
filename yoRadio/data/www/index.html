@@ -67,34 +67,37 @@
       </div><!--player-->
       <div id="settings"%NOTAPMODE%>
         <h2>WiFi Settings</h2>
+        <form autocomplete="off">
         <ul id="credentialwrap">
           <li class="credentialitem">
             <span>1.</span>
             <div class="textinput"><label for="ssid0">SSID</label><input name="ssid" id="ssid0" type="text" value="%SSID%" maxlength="20"/ ></div>
-            <div class="textinput"><label for"pass0">Password</label><input name="pass" id="pass0" type="password" value="%PASS%" maxlength="40" /></div>
+            <div class="textinput"><label for"pass0">Password</label><input name="pass" id="pass0" type="text" data-pass="%PASS%" placeholder="**********" value="" maxlength="40" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly');" /></div>
           </li>
           <li class="credentialitem">
             <span>2.</span>
             <div class="textinput"><label for="ssid1">SSID</label><input name="ssid" id="ssid1" type="text" value="%SSID%" maxlength="20" /></div>
-            <div class="textinput"><label for"pass1">Password</label><input name="pass" id="pass1" type="password" value="%PASS%" maxlength="40" /></div>
+            <div class="textinput"><label for"pass1">Password</label><input name="pass" id="pass1" type="text" data-pass="%PASS%" placeholder="**********" value="" maxlength="40" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly');" /></div>
           </li>
           <li class="credentialitem">
             <span>3.</span>
             <div class="textinput"><label for="ssid2">SSID</label><input name="ssid" id="ssid2" type="text" value="%SSID%" maxlength="20" /></div>
-            <div class="textinput"><label for"pass2">Password</label><input name="pass" id="pass2" type="password" value="%PASS%" maxlength="40" /></div>
+            <div class="textinput"><label for"pass2">Password</label><input name="pass" id="pass2" type="text" data-pass="%PASS%" placeholder="**********" value="" maxlength="40" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly');" /></div>
           </li>
           <li class="credentialitem">
             <span>4.</span>
             <div class="textinput"><label for="ssid3">SSID</label><input name="ssid" id="ssid3" type="text" value="%SSID%" maxlength="20" /></div>
-            <div class="textinput"><label for"pass3">Password</label><input name="pass" id="pass3" type="password" value="%PASS%" maxlength="40" /></div>
+            <div class="textinput"><label for"pass3">Password</label><input name="pass" id="pass3" type="text" data-pass="%PASS%" placeholder="**********" value="" maxlength="40" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly');" /></div>
           </li>
           <li class="credentialitem">
             <span>5.</span>
             <div class="textinput"><label for="ssid4">SSID</label><input name="ssid" id="ssid4" type="text" value="%SSID%" maxlength="20" /></div>
-            <div class="textinput"><label for"pass4">Password</label><input name="pass" id="pass4" type="password" value="%PASS%" maxlength="40" /></div>
+            <div class="textinput"><label for"pass4">Password</label><input name="pass" id="pass4" type="text" data-pass="%PASS%" placeholder="**********" value="" maxlength="40" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly');" /></div>
           </li>
         </ul>
+        </form>
         <div class="formbuttons">
+          <div class="button" id="wifiexport_button" onclick="doWifiExport()"%APMODE%>Export</div>
           <div class="button" id="cancel_button" onclick="doCancel()"%APMODE%>Cancel</div>
           <div class="button" id="save_button" onclick="submitWiFi()">Save</div>
         </div>

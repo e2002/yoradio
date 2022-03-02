@@ -13,10 +13,11 @@
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
+  //digitalWrite(LED_BUILTIN, LOW);
   config.init();
   display.init();
   player.init();
+  player.setOutputPins(false);
   network.begin();
   if (network.status != CONNECTED) {
     netserver.begin();

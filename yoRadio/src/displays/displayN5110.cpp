@@ -250,6 +250,21 @@ void DisplayN5110::drawVolumeBar(bool withNumber) {
   }
 }
 
+void DisplayN5110::drawNextStationNum(uint16_t num) {
+  setTextSize(1);
+  setTextColor(TFT_FG);
+  char numstr[7];
+  uint16_t wv, hv;
+  int16_t  x1, y1;
+  sprintf(numstr, "%d", num);
+  setFont(&DS_DIGI15pt7b);
+  getTextBounds(numstr, 0, 0, &x1, &y1, &wv, &hv);
+  fillRect(TFT_FRAMEWDT, 24-10, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+  setCursor((swidth - wv) / 2, 24+8);
+  print(numstr);
+  setFont();
+}
+
 void DisplayN5110::frameTitle(const char* str) {
   setTextSize(1);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);

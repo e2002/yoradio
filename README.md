@@ -198,13 +198,20 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Version history
+#### v0.4.315
+- added support for digital buttons for the IR control \
+(num keys - enter number of station, ok - play, hash - cancel)
+- added buttons for exporting settings from the web interface 
+- added MUTE_PIN to be able to control the audio output
+- fixed js/html bugs (a [full update](#update) is required)
+
 #### v0.4.298
-- fixed playlist scrollbar in Chrome
+- fixed playlist scrollbar in Chrome (required [full update](#update))
 
 #### v0.4.297
 - fix _"Could not decode a text frame as UTF-8"_ websocket error _//Thanks for [Verholazila](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=113551446)_
 - fix display of non-latin characters in the web interface
-- fix css in Chrome
+- fix css in Chrome (a [full update](#update) is required)
 
 #### v0.4.293
 - IR repeat fix

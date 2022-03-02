@@ -33,6 +33,7 @@ class DisplayN5110: public Adafruit_PCD8544 {
     void printClock(const char* timestr);
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
+    void drawNextStationNum(uint16_t num);
     char* utf8Rus(const char* str, bool uppercase);
     void drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg);
     void getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth);

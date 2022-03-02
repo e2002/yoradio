@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "controls.h"
 #include "options.h"
 #include "config.h"
@@ -34,7 +35,7 @@ OneButton btnright(BTN_RIGHT, true, BTN_INTERNALPULLUP);
 #include <IRtext.h>
 #include <IRutils.h>
 
-byte irVolRepeat=0;
+byte irVolRepeat = 0;
 const uint16_t kCaptureBufferSize = 1024;
 const uint8_t kTimeout = IR_TIMEOUT;
 const uint16_t kMinUnknownSize = 12;
@@ -71,6 +72,7 @@ void initControls() {
   btnright.attachDoubleClick(onRightDoubleClick);
 #endif
 #if IR_PIN!=255
+  pinMode(IR_PIN, INPUT);
   assert(irutils::lowLevelSanityCheck() == 0);
 #if DECODE_HASH
   irrecv.setUnknownThreshold(kMinUnknownSize);
@@ -112,9 +114,30 @@ void encoderLoop() {
 #endif
 
 #if IR_PIN!=255
+
+void irBlink() {
+  if (player.mode == STOPPED) {
+    for(byte i=0; i<7; i++) {
+      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      delay(100);
+    }
+  }
+}
+
+void irNum(byte num) {
+  uint16_t s;
+  if (display.numOfNextStation == 0 && num == 0) return;
+  if (display.mode == PLAYER) display.swichMode(NUMBERS);
+  if (display.numOfNextStation > UINT16_MAX / 10) return;
+  s = display.numOfNextStation * 10 + num;
+  if (s > config.store.countStation) return;
+  display.numOfNextStation = s;
+  display.drawNextStationNum(s);
+}
+
 void irLoop() {
   if (irrecv.decode(&irResults)) {
-    if(IR_DEBUG) {
+    if (IR_DEBUG) {
       Serial.print(resultToHumanReadableBasic(&irResults));
       return;
     }
@@ -133,6 +156,13 @@ void irLoop() {
     }
     switch (irResults.value) {
       case IR_CODE_PLAY: {
+          irBlink();
+          if (display.mode == NUMBERS) {
+            display.swichMode(PLAYER);
+            player.play(display.numOfNextStation);
+            display.numOfNextStation = 0;
+            break;
+          }
           onEncClick();
           break;
         }
@@ -155,7 +185,52 @@ void irLoop() {
           break;
         }
       case IR_CODE_HASH: {
+          if (display.mode == NUMBERS) {
+            display.swichMode(PLAYER);
+            display.numOfNextStation = 0;
+            break;
+          }
           display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+          break;
+        }
+      case IR_CODE_NUM0: {
+          irNum(0);
+          break;
+        }
+      case IR_CODE_NUM1: {
+          irNum(1);
+          break;
+        }
+      case IR_CODE_NUM2: {
+          irNum(2);
+          break;
+        }
+      case IR_CODE_NUM3: {
+          irNum(3);
+          break;
+        }
+      case IR_CODE_NUM4: {
+          irNum(4);
+          break;
+        }
+      case IR_CODE_NUM5: {
+          irNum(5);
+          break;
+        }
+      case IR_CODE_NUM6: {
+          irNum(6);
+          break;
+        }
+      case IR_CODE_NUM7: {
+          irNum(7);
+          break;
+        }
+      case IR_CODE_NUM8: {
+          irNum(8);
+          break;
+        }
+      case IR_CODE_NUM9: {
+          irNum(9);
           break;
         }
     }
@@ -164,6 +239,10 @@ void irLoop() {
 #endif
 
 void onEncClick() {
+  if (display.mode == NUMBERS) {
+    display.numOfNextStation = 0;
+    display.swichMode(PLAYER);
+  }
   if (display.mode == PLAYER) {
     player.toggle();
   }
@@ -183,6 +262,10 @@ void onEncLPStart() {
 }
 
 void controlsEvent(bool toRight) {
+  if (display.mode == NUMBERS) {
+    display.numOfNextStation = 0;
+    display.swichMode(PLAYER);
+  }
   if (display.mode != STATIONS) {
     display.swichMode(VOL);
     player.stepVol(toRight);

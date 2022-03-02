@@ -275,6 +275,21 @@ void DisplayST7735::drawVolumeBar(bool withNumber) {
   }
 }
 
+void DisplayST7735::drawNextStationNum(uint16_t num) {
+  setTextSize(1);
+  setTextColor(TFT_FG);
+  setFont(&DS_DIGI28pt7b);
+  char numstr[7];
+  uint16_t wv, hv;
+  int16_t  x1, y1;
+  sprintf(numstr, "%d", num);
+  getTextBounds(numstr, 0, 0, &x1, &y1, &wv, &hv);
+  fillRect(TFT_FRAMEWDT, 48, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+  setCursor((swidth - wv) / 2, 48 + hv);
+  print(numstr);
+  setFont();
+}
+
 void DisplayST7735::frameTitle(const char* str) {
   setTextSize(2);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);

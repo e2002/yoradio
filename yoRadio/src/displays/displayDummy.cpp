@@ -137,6 +137,10 @@ void DisplayDummy::drawVolumeBar(bool withNumber) {
 
 }
 
+void DisplayDummy::drawNextStationNum(uint16_t num) {
+
+}
+
 void DisplayDummy::frameTitle(const char* str) {
 
 }
