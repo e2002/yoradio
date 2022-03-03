@@ -210,8 +210,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
  **MQTT_ROOT_TOPIC/command**     - Commands \
  **MQTT_ROOT_TOPIC/status**      - Player status \
  **MQTT_ROOT_TOPIC/playlist**    - Playlist URL \
- **MQTT_ROOT_TOPIC/volume**      - Current volume
-
+ **MQTT_ROOT_TOPIC/volume**      - Current volume \
  **Commands**: \
  **prev**          - prev station \
  **next**          - next station \
