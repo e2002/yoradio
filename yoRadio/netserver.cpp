@@ -6,6 +6,7 @@
 #include "display.h"
 #include "options.h"
 #include "network.h"
+#include "mqtt.h"
 
 NetServer netserver;
 
@@ -183,6 +184,9 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
         config.indexPlaylist();
         config.initPlaylist();
         getPlaylist(clientId);
+#ifdef MQTT_HOST
+        mqttPublishPlaylist();
+#endif
         break;
       }
     case STATION: {
@@ -200,6 +204,9 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
       }
     case VOLUME: {
         sprintf (buf, "{\"vol\": %d}", config.store.volume);
+#ifdef MQTT_HOST
+        if (clientId == 0) mqttPublishVolume();
+#endif
         break;
       }
     case NRSSI: {
@@ -226,6 +233,9 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
   if (strlen(buf) > 0) {
     if (clientId == 0) {
       websocket.textAll(buf);
+#ifdef MQTT_HOST
+      if(request==STATION || request==ITEM || request==TITLE || request==MODE) mqttPublishStatus();
+#endif
     } else {
       websocket.text(clientId, buf);
     }

@@ -9,6 +9,7 @@
 #include "network.h"
 #include "netserver.h"
 #include "controls.h"
+#include "mqtt.h"
 
 void setup() {
   Serial.begin(115200);
@@ -30,6 +31,9 @@ void setup() {
   player.setVol(config.store.volume, true);
   display.start();
   if(config.store.smartstart==1) player.play(config.store.lastStation);
+#ifdef MQTT_HOST
+  mqttInit();
+#endif
 }
 
 void loop() {

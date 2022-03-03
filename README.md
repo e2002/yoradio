@@ -9,6 +9,7 @@
 - [Hardware setup](#hardware-setup)
 - [Quick start](#quick-start)
 - [Update](#update)
+- [MQTT](#mqtt)
 - [More features](#more-features)
 - [Version history](#version-history)
 ---
@@ -101,7 +102,9 @@ _\** GPIOs 34-39 don't have software pullup/down functions. For encoder/buttons 
 ## Dependencies
 #### Libraries:
 **Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, IRremoteESP8266 \
-**Github**: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP)
+**Github**: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)* \
+\* _if you need MQTT support_
+
 #### Tool:
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
 
@@ -172,6 +175,12 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 5. Well done!
 
 ---
+## MQTT
+1. Copy file exsamples/mqttoptions.h to yoRadio/ directory
+2. In the mqtoptions.h file, change the options to the ones you need
+3. Well done!
+
+---
 ## More features
 - Сan add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
 - Telnet with KaRadio format output \
@@ -196,12 +205,33 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
  **sys.tzo("h:m")** _or_ **tzo(h:m)** _or_ **tzo h:m** - set timezone offset \
  **sys.tzo("h")** _or_ **tzo(h)** _or_ **tzo h** - set timezone offset in hours only
 
+- MQTT support \
+ **Topics**: \
+ **MQTT_ROOT_TOPIC/command**     - Commands \
+ **MQTT_ROOT_TOPIC/status**      - Player status \
+ **MQTT_ROOT_TOPIC/playlist**    - Playlist URL \
+ **MQTT_ROOT_TOPIC/volume**      - Current volume
+
+ **Commands**: \
+ **prev**          - prev station \
+ **next**          - next station \
+ **toggle**       - start/stop playing \
+ **stop**          - stop playing \
+ **start, play**   - start playing \
+ **boot, reboot**  - reboot \
+ **vol x**         - set volume \
+ **play x**        - play station x
 ---
 ## Version history
+#### v0.4.320
+- MQTT support
+
+<img src="images/mqtt.jpg" width="680" height="110">
+
 #### v0.4.315
 - added support for digital buttons for the IR control \
 (num keys - enter number of station, ok - play, hash - cancel)
-- added buttons for exporting settings from the web interface 
+- added buttons for exporting settings from the web interface
 - added MUTE_PIN to be able to control the audio output
 - fixed js/html bugs (a [full update](#update) is required)
 
