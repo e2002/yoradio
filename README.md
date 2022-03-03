@@ -218,6 +218,8 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
  **stop**          - stop playing \
  **start, play**   - start playing \
  **boot, reboot**  - reboot \
+ **volm**          - step vol down \
+ **volp**          - step vol up \
  **vol x**         - set volume \
  **play x**        - play station x
 ---
