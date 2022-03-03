@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define VERSION "0.4.320"
+#define VERSION "0.4.322"
 
 #if __has_include("myoptions.h")
 #include "myoptions.h" // <- write your variable values here 

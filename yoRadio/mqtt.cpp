@@ -67,41 +67,51 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 }
 
 void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
-  if (strlen(payload) == 0) return;
-  if (strcmp(payload, "prev") == 0) {
+  if (len == 0) return;
+  char buf[20];
+  strlcpy(buf, payload, len+1);
+  if (strcmp(buf, "prev") == 0) {
     player.prev();
     return;
   }
-  if (strcmp(payload, "next") == 0) {
+  if (strcmp(buf, "next") == 0) {
     player.next();
     return;
   }
-  if (strcmp(payload, "toggle") == 0) {
+  if (strcmp(buf, "toggle") == 0) {
     player.toggle();
     return;
   }
-  if (strcmp(payload, "stop") == 0) {
+  if (strcmp(buf, "stop") == 0) {
     player.mode = STOPPED;
     telnet.info();
     return;
   }
-  if (strcmp(payload, "start") == 0 || strcmp(payload, "play") == 0) {
+  if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) {
     player.play(config.store.lastStation);
     return;
   }
-  if (strcmp(payload, "boot") == 0 || strcmp(payload, "reboot") == 0) {
+  if (strcmp(buf, "boot") == 0 || strcmp(buf, "reboot") == 0) {
     ESP.restart();
     return;
   }
+  if (strcmp(buf, "volm") == 0) {
+    player.stepVol(false);
+    return;
+  }
+  if (strcmp(buf, "volp") == 0) {
+    player.stepVol(true);
+    return;
+  }
   int volume;
-  if ( sscanf(payload, "vol %d", &volume) == 1) {
+  if ( sscanf(buf, "vol %d", &volume) == 1) {
     if (volume < 0) volume = 0;
     if (volume > 254) volume = 254;
     player.setVol(volume, false);
     return;
   }
   uint16_t sb;
-  if (sscanf(payload, "play %d", &sb) == 1 ) {
+  if (sscanf(buf, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;
     player.play(sb);

@@ -222,6 +222,9 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
  **play x**        - play station x
 ---
 ## Version history
+#### v0.4.322
+- fixed garbage in MQTT payload
+
 #### v0.4.320
 - MQTT support
 
