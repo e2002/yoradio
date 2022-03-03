@@ -177,7 +177,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 ---
 ## MQTT
 1. Copy file exsamples/mqttoptions.h to yoRadio/ directory
-2. In the mqtoptions.h file, change the options to the ones you need
+2. In the mqttoptions.h file, change the options to the ones you need
 3. Well done!
 
 ---
