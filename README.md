@@ -10,6 +10,7 @@
 - [Quick start](#quick-start)
 - [Update](#update)
 - [MQTT](#mqtt)
+- [Home Assistant](#home-assistant)
 - [More features](#more-features)
 - [Version history](#version-history)
 ---
@@ -179,6 +180,17 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 1. Copy file exsamples/mqttoptions.h to yoRadio/ directory
 2. In the mqttoptions.h file, change the options to the ones you need
 3. Well done!
+
+---
+## Home Assistant
+<img src="images/ha.jpg" width="500" height="270"><br />
+
+0. Requires [MQTT integration](https://www.home-assistant.io/integrations/mqtt/)
+1. Copy directory HA/custom_components/yoradio to .homeassistant/custom_components/
+2. Add yoRadio entity into .homeassistant/configuration.yaml ([see exsample](HA/exsample_configuration.yaml))
+3. Restart Home Assistant
+4. Add Lovelace Media Player card to UI (or [mini-media-player](https://github.com/kalkih/mini-media-player) card)
+5. Well done!
 
 ---
 ## More features

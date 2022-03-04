@@ -1,0 +1,18 @@
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# yoRadio entity
+media_player:
+  - platform: yoradio
+    name: YoRadio (kitchen)
+    root_topic: yoradio/100
