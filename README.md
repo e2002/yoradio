@@ -234,6 +234,9 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
  **volp**          - step vol up \
  **vol x**         - set volume \
  **play x**        - play station x
+
+- Home Assistant support
+
 ---
 ## Version history
 #### v0.4.322
