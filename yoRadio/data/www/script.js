@@ -165,12 +165,12 @@ function onRangeBalChange(el){
 }
 function showSettings(){
   document.getElementById('pleditorwrap').hidden=true;
-  document.getElementById('equalizerbg').hidden=true;
+  document.getElementById('equalizerbg').setAttribute('class','hidden');
   document.getElementById('settings').hidden=false;
 }
 function showEditor(){
   document.getElementById('settings').hidden=true;
-  document.getElementById('equalizerbg').hidden=true;
+  document.getElementById('equalizerbg').setAttribute('class','hidden');
   initPLEditor();
   document.getElementById('pleditorwrap').hidden=false;
 }

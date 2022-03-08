@@ -239,6 +239,10 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Version history
+#### v0.4.323
+- fixed bug [Equalizer not come visible after go to playlist](https://github.com/e2002/yoradio/issues/1) \
+ (a [full update](#update) is required)
+
 #### v0.4.322
 - fixed garbage in MQTT payload
 
@@ -255,7 +259,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 - fixed js/html bugs (a [full update](#update) is required)
 
 #### v0.4.298
-- fixed playlist scrollbar in Chrome (required [full update](#update))
+- fixed playlist scrollbar in Chrome (a [full update](#update) is required)
 
 #### v0.4.297
 - fix _"Could not decode a text frame as UTF-8"_ websocket error _//Thanks for [Verholazila](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=113551446)_
