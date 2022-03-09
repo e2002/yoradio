@@ -8,7 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.4.322'
+VERSION = '0.4.323'
 
 DOMAIN = "yoradio"
 
@@ -88,6 +88,7 @@ class yoradioApi():
     else:
       file = file.split('\n')
       counter = 1
+      YORADIO_SOURCE_TYPE.clear()
       for line in file:
         res = line.split('\t')
         station = str(counter) + '. ' + res[0]
