@@ -242,6 +242,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 #### v0.4.323
 - fixed bug [Equalizer not come visible after go to playlist](https://github.com/e2002/yoradio/issues/1) \
  (a [full update](#update) is required)
+- fixed playlist filling error in home assistant component
 
 #### v0.4.322
 - fixed garbage in MQTT payload
