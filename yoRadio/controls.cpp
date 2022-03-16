@@ -6,25 +6,18 @@
 #include "display.h"
 
 long encOldPosition  = 0;
+int lpId = -1;
 
-#if BTN_LEFT!=255 || BTN_LEFT!=255 || BTN_RIGHT!=255 || ENC_BTNL!=255
+#define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_LEFT!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255
+#if ISPUSHBUTTONS
 #include "OneButton.h"
+OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN_INTERNALPULLUP}, {BTN_RIGHT, true, BTN_INTERNALPULLUP}, {ENC_BTNB, true, ENC_INTERNALPULLUP}};
+constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
-#if ENC_BTNL!=255
+#if ENC_BTNL!=255 && ENC_BTNR!=255
 #include <ESP32Encoder.h>
 ESP32Encoder encoder;
-OneButton encbutton(ENC_BTNB, true);
-#endif
-
-#if BTN_LEFT!=255
-OneButton btnleft(BTN_LEFT, true, BTN_INTERNALPULLUP);
-#endif
-#if BTN_CENTER!=255
-OneButton btncenter(BTN_CENTER, true, BTN_INTERNALPULLUP);
-#endif
-#if BTN_RIGHT!=255
-OneButton btnright(BTN_RIGHT, true, BTN_INTERNALPULLUP);
 #endif
 
 #if IR_PIN!=255
@@ -54,23 +47,28 @@ void initControls() {
   } else {
     encoder.attachFullQuad(ENC_BTNL, ENC_BTNR);
   }
-  encbutton.attachClick(onEncClick);
-  encbutton.attachDoubleClick(onEncDoubleClick);
-  encbutton.attachLongPressStart(onEncLPStart);
 #endif
-#if BTN_LEFT!=255
-  btnleft.attachClick(onLeftClick);
-  btnleft.attachDoubleClick(onLeftDoubleClick);
+#if ISPUSHBUTTONS
+  for (int i = 0; i < nrOfButtons; i++)
+  {
+    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255)) continue;
+    button[i].attachClick([](void* p) {
+      onBtnClick((int)p);
+    }, (void*)i);
+    button[i].attachDoubleClick([](void* p) {
+      onBtnDoubleClick((int)p);
+    }, (void*)i);
+    button[i].attachLongPressStart([](void* p) {
+      onBtnLongPressStart((int)p);
+    }, (void*)i);
+    button[i].attachLongPressStop([](void* p) {
+      onBtnLongPressStop((int)p);
+    }, (void*)i);
+    button[i].setClickTicks(BTN_CLICK_TICKS);
+    button[i].setPressTicks(BTN_PRESS_TICKS);
+  }
 #endif
-#if BTN_CENTER!=255
-  btncenter.attachClick(onEncClick);
-  btncenter.attachDoubleClick(onEncDoubleClick);
-  btncenter.attachLongPressStart(onEncLPStart);
-#endif
-#if BTN_RIGHT!=255
-  btnright.attachClick(onRightClick);
-  btnright.attachDoubleClick(onRightDoubleClick);
-#endif
+
 #if IR_PIN!=255
   pinMode(IR_PIN, INPUT);
   assert(irutils::lowLevelSanityCheck() == 0);
@@ -84,17 +82,17 @@ void initControls() {
 
 void loopControls() {
 #if ENC_BTNL!=255
-  encbutton.tick();
   encoderLoop();
 #endif
-#if BTN_LEFT!=255
-  btnleft.tick();
-#endif
-#if BTN_CENTER!=255
-  btncenter.tick();
-#endif
-#if BTN_RIGHT!=255
-  btnright.tick();
+#if ISPUSHBUTTONS
+  for (unsigned i = 0; i < nrOfButtons; i++)
+  {
+    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255)) continue;
+    button[i].tick();
+    if (lpId >= 0) {
+      onBtnDuringLongPress(lpId);
+    }
+  }
 #endif
 #if IR_PIN!=255
   irLoop();
@@ -114,10 +112,9 @@ void encoderLoop() {
 #endif
 
 #if IR_PIN!=255
-
 void irBlink() {
   if (player.mode == STOPPED) {
-    for(byte i=0; i<7; i++) {
+    for (byte i = 0; i < 7; i++) {
       digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       delay(100);
     }
@@ -163,7 +160,7 @@ void irLoop() {
             display.numOfNextStation = 0;
             break;
           }
-          onEncClick();
+          onBtnClick(1);
           break;
         }
       case IR_CODE_PREV: {
@@ -236,29 +233,56 @@ void irLoop() {
     }
   }
 }
-#endif
+#endif // if IR_PIN!=255
 
-void onEncClick() {
-  if (display.mode == NUMBERS) {
-    display.numOfNextStation = 0;
-    display.swichMode(PLAYER);
-  }
-  if (display.mode == PLAYER) {
-    player.toggle();
-  }
-  if (display.mode == STATIONS) {
-    display.swichMode(PLAYER);
-    player.play(display.currentPlItem);
+void onBtnLongPressStart(int id) {
+  switch (id) {
+    case 0:
+    case 2: {
+        lpId = id;
+        break;
+      }
+    case 1:
+    case 3: {
+        display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+        break;
+      }
   }
 }
 
-
-void onEncDoubleClick() {
-  display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+void onBtnLongPressStop(int id) {
+  switch (id) {
+    case 0:
+    case 2: {
+        lpId = -1;
+        break;
+      }
+  }
 }
 
-void onEncLPStart() {
-  display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+unsigned long lpdelay;
+boolean checklpdelay(int m, unsigned long &tstamp) {
+  if (millis() - tstamp > m) {
+    tstamp = millis();
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void onBtnDuringLongPress(int id) {
+  if (checklpdelay(BTN_LONGPRESS_LOOP_DELAY, lpdelay)) {
+    switch (id) {
+      case 0: {
+          controlsEvent(false);
+          break;
+        }
+      case 2: {
+          controlsEvent(true);
+          break;
+        }
+    }
+  }
 }
 
 void controlsEvent(bool toRight) {
@@ -280,20 +304,50 @@ void controlsEvent(bool toRight) {
   }
 }
 
-void onLeftClick() {
-  controlsEvent(false);
+void onBtnClick(int id) {
+  switch (id) {
+    case 0: {
+        controlsEvent(false);
+        break;
+      }
+    case 1:
+    case 3: {
+        if (display.mode == NUMBERS) {
+          display.numOfNextStation = 0;
+          display.swichMode(PLAYER);
+        }
+        if (display.mode == PLAYER) {
+          player.toggle();
+        }
+        if (display.mode == STATIONS) {
+          display.swichMode(PLAYER);
+          player.play(display.currentPlItem);
+        }
+        break;
+      }
+    case 2: {
+        controlsEvent(true);
+        break;
+      }
+  }
 }
 
-void onLeftDoubleClick() {
-  display.swichMode(PLAYER);
-  player.prev();
-}
-
-void onRightClick() {
-  controlsEvent(true);
-}
-
-void onRightDoubleClick() {
-  display.swichMode(PLAYER);
-  player.next();
+void onBtnDoubleClick(int id) {
+  switch (id) {
+    case 0: {
+        if (display.mode != PLAYER) return;
+        player.prev();
+        break;
+      }
+    case 1:
+    case 3: {
+        display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+        break;
+      }
+    case 2: {
+        if (display.mode != PLAYER) return;
+        player.next();
+        break;
+      }
+  }
 }

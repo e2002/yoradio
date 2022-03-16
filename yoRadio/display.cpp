@@ -8,18 +8,27 @@
 #include "netserver.h"
 #include "network.h"
 
-#if DSP_MODEL==0
+#if DSP_MODEL==DSP_DUMMY
 #include "src/displays/displayDummy.h"
 DisplayDummy dsp;
-#elif DSP_MODEL==1
+#elif DSP_MODEL==DSP_ST7735
 #include "src/displays/displayST7735.h"
 DisplayST7735 dsp;
-#elif DSP_MODEL==2
+#elif DSP_MODEL==DSP_SSD1306
 #include "src/displays/displaySSD1306.h"
 DisplaySSD1306 dsp;
-#elif DSP_MODEL==3
+#elif DSP_MODEL==DSP_NOKIA5110
 #include "src/displays/displayN5110.h"
 DisplayN5110 dsp;
+#elif DSP_MODEL==DSP_ST7789
+#include "src/displays/displayST7789.h"
+DisplayST7789 dsp;
+#elif DSP_MODEL==DSP_SH1106
+#include "src/displays/displaySH1106.h"
+DisplaySH1106 dsp;
+#elif DSP_MODEL==DSP_1602I2C
+#include "src/displays/displayLC1602.h"
+DisplayLC1602 dsp;
 #endif
 
 Display display;
@@ -28,28 +37,67 @@ void ticks() {
   display.clockRequest = true;
 }
 
+#ifndef STARTTIME
 #define STARTTIME  5000
-
-#if DSP_MODEL==3
-#define SCROLLDELTA 8
-#define SCROLLTIME 332
-#else
+#endif
+#ifndef STARTTIME_PL
+#define STARTTIME_PL  0
+#endif
+#ifndef SCROLLDELTA
 #define SCROLLDELTA 3
 #define SCROLLTIME 83
+#endif
+#ifndef META_SIZE
+#define META_SIZE   2
+#endif
+#ifndef TITLE_SIZE1
+#define TITLE_SIZE1  1
+#endif
+#ifndef TITLE_SIZE2
+#define TITLE_SIZE2  1
+#endif
+#ifndef TITLE_TOP1
+#define TITLE_TOP1 TFT_FRAMEWDT + META_SIZE * TFT_LINEHGHT
+#endif
+#ifndef TITLE_TOP2
+#define TITLE_TOP2 TFT_FRAMEWDT + (META_SIZE+2) * TFT_LINEHGHT
+#endif
+#ifndef TITLE_FG1
+#define TITLE_FG1 TFT_FG
+#endif
+#ifndef TITLE_FG2
+#define TITLE_FG2 TFT_FG
+#endif
+#ifndef BOOTSTR_TOP1
+#define BOOTSTR_TOP1 90
+#endif
+#ifndef BOOTSTR_TOP2
+#define BOOTSTR_TOP2 110
+#endif
+#ifndef PLCURRENT_SIZE
+#define PLCURRENT_SIZE  2
+#endif
+
+#ifndef CLOCK_SPACE
+#define DO_SCROLL (tWidth > display.screenwidth - TFT_FRAMEWDT * 2)
+#else
+#define DO_SCROLL (tWidth > (display.screenwidth - (dsp.fillSpaces?((texttop==0)?CLOCK_SPACE:VOL_SPACE):0)))
 #endif
 
 void  Scroll::init(const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
   textsize = tsize;
+  if (textsize == 0) return;
   texttop = top;
   fg = fgcolor;
   bg = bgcolor;
-  delayStartScroll=dlay;
+  delayStartScroll = dlay;
   memset(separator, 0, 4);
   strlcpy(separator, sep, 4);
   locked = false;
 }
 
 void Scroll::setText(const char *txt) {
+  if (textsize == 0) return;
   memset(text, 0, BUFLEN / 2);
   strlcpy(text, txt, BUFLEN / 2);
   getbounds(textwidth, textheight, sepwidth);
@@ -59,11 +107,16 @@ void Scroll::setText(const char *txt) {
   }
 }
 
-void Scroll::lock() { locked = true; }
+void Scroll::lock() {
+  locked = true;
+}
 
-void Scroll::unlock() { locked = false; }
+void Scroll::unlock() {
+  locked = false;
+}
 
 void Scroll::reset() {
+  if (textsize == 0) return;
   locked = false;
   clear();
   setTextParams();
@@ -73,17 +126,20 @@ void Scroll::reset() {
 }
 
 void Scroll::setTextParams() {
+  if (textsize == 0) return;
   dsp.set_TextSize(textsize);
   dsp.set_TextColor(fg, bg);
 }
 
 void Scroll::clearscrolls() {
+  if (textsize == 0) return;
   x = TFT_FRAMEWDT;
   scrolldelay = millis();
   clear();
 }
 
 void Scroll::loop() {
+  if (textsize == 0) return;
   if (checkdelay(x == TFT_FRAMEWDT ? delayStartScroll : SCROLLTIME, scrolldelay)) {
     scroll();
     sticks();
@@ -101,11 +157,12 @@ boolean Scroll::checkdelay(int m, unsigned long &tstamp) {
 }
 
 void Scroll::drawFrame() {
+  if (textsize == 0) return;
   dsp.drawScrollFrame(texttop, textheight, bg);
 }
 
 void Scroll::sticks() {
-  if (!doscroll || locked) return;
+  if (!doscroll || locked || textsize == 0) return;
   setTextParams();
   dsp.set_Cursor(x, texttop);
   dsp.printText(text);
@@ -115,46 +172,46 @@ void Scroll::sticks() {
 }
 
 void Scroll::scroll() {
-  if (!doscroll) return;
-  if (textwidth > display.screenwidth) {
+  if (!doscroll || textsize == 0) return;
+  //if (textwidth > display.screenwidth) {
     x -= SCROLLDELTA;
-    if (-x >= textwidth + sepwidth - TFT_FRAMEWDT) x = TFT_FRAMEWDT;
-  }
+    if (-x > textwidth + sepwidth - TFT_FRAMEWDT) x = TFT_FRAMEWDT;
+  //}
 }
 
 void Scroll::clear() {
+  if (textsize == 0) return;
   dsp.clearScroll(texttop, textheight, bg);
 }
 
 void Scroll::getbounds(uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+  if (textsize == 0) return;
   if (strlen(text) == 0) {
     dsp.getScrolBbounds("EMPTY", separator, textsize, tWidth, tHeight, sWidth);
   } else {
     dsp.getScrolBbounds(text, separator, textsize, tWidth, tHeight, sWidth);
   }
-  doscroll = (tWidth > display.screenwidth);
+  doscroll = DO_SCROLL;
 }
 
 void Display::init() {
   dsp.initD(screenwidth, screenheight);
   dsp.drawLogo();
-  if(DSP_MODEL==3){
-    meta.init(" * ", 1, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
-    title1.init(" * ", 1, TFT_FRAMEWDT + TFT_LINEHGHT+1, STARTTIME, TFT_FG, TFT_BG);
-    //title2.init(" * ", 1, TFT_FRAMEWDT + 2 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
-  }else{
-    meta.init(" * ", 2, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
-    title1.init(" * ", 1, TFT_FRAMEWDT + 2 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
-    title2.init(" * ", 1, TFT_FRAMEWDT + 3 * TFT_LINEHGHT, STARTTIME, TFT_FG, TFT_BG);
-  }
+  meta.init(" * ", META_SIZE, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
+  title1.init(" * ", TITLE_SIZE1, TITLE_TOP1, STARTTIME, TITLE_FG1, TFT_BG);
+  title2.init(" * ", TITLE_SIZE2, TITLE_TOP2, STARTTIME, TITLE_FG2, TFT_BG);
   int yStart = (screenheight / 2 - PLMITEMHEIGHT / 2) + 3;
-  //plCurrent.init(" * ", 2, 57, 0, TFT_BG, TFT_LOGO);
-  plCurrent.init(" * ", DSP_MODEL==3?1:2, yStart, 0, TFT_BG, TFT_LOGO);
+#ifdef PL_TOP
+  yStart=PL_TOP;
+#endif
+  plCurrent.init(" * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
   plCurrent.lock();
 }
 
 void Display::apScreen() {
+#ifndef PL_TOP
   meta.setText(dsp.utf8Rus("ёRADIO * ёRADIO * ёRADIO", false));
+#endif
   dsp.apScreen();
 }
 
@@ -193,13 +250,20 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == PLAYER) {
     meta.reset();
     title1.reset();
-    if(DSP_MODEL!=3) title2.reset();
+    if (TITLE_SIZE2 != 0) title2.reset();
     plCurrent.lock();
-    time();
+    time(true);
+#ifdef CLOCK_SPACE  // if set space for clock in 1602 displays
+    dsp.fillSpaces=true;
+    volume();
+#endif
   } else {
     meta.lock();
     title1.lock();
-    if(DSP_MODEL!=3) title2.lock();
+    if (TITLE_SIZE2 != 0) title2.lock();
+#ifdef CLOCK_SPACE
+    dsp.fillSpaces=false;
+#endif
   }
   if (newmode == VOL) {
     dsp.frameTitle("VOLUME");
@@ -222,7 +286,7 @@ void Display::drawPlayer() {
   }
   meta.loop();
   title1.loop();
-  if(DSP_MODEL!=3) title2.loop();
+  if (TITLE_SIZE2 != 0) title2.loop();
 }
 
 void Display::drawVolume() {
@@ -269,8 +333,13 @@ void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 }
 
 void Display::bootString(const char* text, byte y) {
-  dsp.centerText(text, y, TFT_LOGO, TFT_BG);
+  dsp.centerText(text, y==1?BOOTSTR_TOP1:BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
   dsp.loop();
+}
+
+void Display::bootLogo() {
+  clear();
+  dsp.drawLogo();
 }
 
 void Display::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
@@ -291,7 +360,7 @@ void Display::title(const char *str) {
   strlcpy(config.station.title, title, BUFLEN);
   if (strlen(config.station.title) > 0) {
     char* ici;
-    if ((ici = strstr(config.station.title, " - ")) != NULL && DSP_MODEL!=3) {
+    if ((ici = strstr(config.station.title, " - ")) != NULL && TITLE_SIZE2 != 0) {
       strlcpy(sng, ici + 3, BUFLEN / 2);
       strlcpy(ttl, config.station.title, strlen(config.station.title) - strlen(ici) + 1);
     } else {
@@ -299,14 +368,14 @@ void Display::title(const char *str) {
       sng[0] = '\0';
     }
     title1.setText(dsp.utf8Rus(ttl, true));
-    if(DSP_MODEL!=3) title2.setText(dsp.utf8Rus(sng, true));
+    if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
     dsp.loop();
   }
   netserver.requestOnChange(TITLE, 0);
 }
 
 void Display::heap() {
-  if(config.store.audioinfo) dsp.displayHeapForDebug();
+  if (config.store.audioinfo) dsp.displayHeapForDebug();
 }
 
 void Display::rssi() {
@@ -321,16 +390,22 @@ void Display::ip() {
   dsp.ip(WiFi.localIP().toString().c_str());
 }
 
-void Display::time() {
+void Display::time(bool redraw) {
   char timeStringBuff[20] = { 0 };
   if (!dt) {
     heap();
     rssi();
+  }
+#ifndef TFT_FULLTIME
+  if (!dt) {
     strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M", &network.timeinfo);
   } else {
     strftime(timeStringBuff, sizeof(timeStringBuff), "%H %M", &network.timeinfo);
   }
   dsp.printClock(timeStringBuff);
+#else
+  dsp.printClock(network.timeinfo, dt, redraw);
+#endif
   dt = !dt;
 }
 

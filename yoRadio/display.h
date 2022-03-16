@@ -52,9 +52,10 @@ class Display {
     void centerText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void rightText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void bootString(const char* text, byte y);
+    void bootLogo();
     void station();
     void title(const char *str);
-    void time();
+    void time(bool redraw = false);
     void volume();
     void ip();
     void swichMode(displayMode_e newmode);

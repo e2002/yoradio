@@ -122,7 +122,10 @@ void DisplayN5110::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   setContrast(TFT_CONTRAST);
   cp437(true);
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  byte tftRotate = TFT_ROTATE;
+  if(tftRotate>2) tftRotate=2;
+  if(tftRotate==1) tftRotate=0;
+  setRotation(tftRotate);
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();

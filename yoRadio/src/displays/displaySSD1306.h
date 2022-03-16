@@ -8,9 +8,11 @@
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
 
-#define PLMITEMS        5
+#define PLMITEMS        7
 #define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   18
+#define PLMITEMHEIGHT   9
+#define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
+#define PLCURRENT_SIZE  1
 
 class DisplaySSD1306: public Adafruit_SSD1306 {
   public:

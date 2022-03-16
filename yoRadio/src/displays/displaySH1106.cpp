@@ -1,7 +1,7 @@
 #include "../../options.h"
-#if DSP_MODEL==2
+#if DSP_MODEL==5
 
-#include "displaySSD1306.h"
+#include "displaySH1106.h"
 #include <Wire.h>
 #include "../../player.h"
 #include "../../config.h"
@@ -13,6 +13,8 @@
 
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
+
+const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};
 
 const unsigned char logo [] PROGMEM=
 {
@@ -26,13 +28,13 @@ const unsigned char logo [] PROGMEM=
     0x1f, 0xff, 0xe0, 0x0f, 0xff, 0xe0, 0x03, 0xff, 0xc0, 0x00, 0xfe, 0x00
 };
 
-TwoWire I2CSSD1306 = TwoWire(0);
+TwoWire I2CSH1106 = TwoWire(0);
 
-DisplaySSD1306::DisplaySSD1306(): Adafruit_SSD1306(128, 64, &I2CSSD1306, I2C_RST) {
+DisplaySH1106::DisplaySH1106(): Adafruit_SH1106G(128, 64, &I2CSH1106, -1) {
 
 }
 
-char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
+char* DisplaySH1106::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;
@@ -106,7 +108,7 @@ char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
   return strn;
 }
 
-void DisplaySSD1306::apScreen() {
+void DisplaySH1106::apScreen() {
   setTextSize(1);
   setTextColor(TFT_FG, TFT_BG);
   setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 2 * TFT_LINEHGHT);
@@ -124,10 +126,10 @@ void DisplaySSD1306::apScreen() {
   print("/");
 }
 
-void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  I2CSSD1306.begin(I2C_SDA, I2C_SCL, (uint32_t)100000);
-  if (!begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
+void DisplaySH1106::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+  I2CSH1106.begin(I2C_SDA, I2C_SCL, (uint32_t)100000);
+  if (!begin(SCREEN_ADDRESS, true)) {
+    Serial.println(F("SH1106 allocation failed"));
     for (;;); // Don't proceed, loop forever
   }
   cp437(true);
@@ -140,7 +142,7 @@ void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   sheight = screenheight;
 }
 
-void DisplaySSD1306::drawLogo() {
+void DisplaySH1106::drawLogo() {
   clearDisplay();
   drawBitmap(
     (width()  - LOGO_WIDTH ) / 2,
@@ -149,7 +151,7 @@ void DisplaySSD1306::drawLogo() {
   display();
 }
 
-void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DisplaySH1106::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
@@ -168,17 +170,17 @@ void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplaySSD1306::clearDsp() {
+void DisplaySH1106::clearDsp() {
   fillScreen(TFT_BG);
 }
 
-void DisplaySSD1306::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DisplaySH1106::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT == 0) return;
   fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
-void DisplaySSD1306::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DisplaySH1106::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(textsize);
@@ -189,16 +191,16 @@ void DisplaySSD1306::getScrolBbounds(const char* text, const char* separator, by
   sWidth = w;
 }
 
-void DisplaySSD1306::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DisplaySH1106::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   fillRect(0,  texttop, swidth, textheight, bg);
 }
 
-void DisplaySSD1306::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DisplaySH1106::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   const char* txt = text;
   getTextBounds(txt, 0, 0, &x1, &y1, &w, &h);
-  setTextColor(fg);
+  setTextColor(fg,bg);
   if(y==90) y=sheight-TFT_LINEHGHT*2-5;
   if(y==110) y=sheight-TFT_LINEHGHT;
   setCursor((swidth - w) / 2, y);
@@ -206,27 +208,42 @@ void DisplaySSD1306::centerText(const char* text, byte y, uint16_t fg, uint16_t 
   print(txt);
 }
 
-void DisplaySSD1306::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DisplaySH1106::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
-  setTextColor(fg);
+  setTextColor(fg,bg);
   setCursor(swidth - w - TFT_FRAMEWDT, y);
   fillRect(swidth - w - TFT_FRAMEWDT, y, w, h, bg);
   print(text);
 }
 
-void DisplaySSD1306::displayHeapForDebug() {
+void DisplaySH1106::displayHeapForDebug() {
 
 }
 
-void DisplaySSD1306::printClock(const char* timestr) {
+void DisplaySH1106::printClock(const char* timestr) {
   setTextSize(2);
   centerText(timestr, 34, TFT_FG, TFT_BG);
   setTextSize(1);
 }
 
-void DisplaySSD1306::drawVolumeBar(bool withNumber) {
+#define CLCLF 34
+
+void DisplaySH1106::printClock(struct tm timeinfo, bool dots, bool redraw) {
+  char timeStringBuff[20] = { 0 };
+  strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M", &timeinfo);
+  setTextSize(2);
+  setCursor(CLCLF, 34);
+  setTextColor(TFT_FG, TFT_BG);
+  print(timeStringBuff);
+  setTextSize(1);
+  setCursor(CLCLF + 6*2*5+1, 34+1);
+  sprintf(timeStringBuff, "%02d", timeinfo.tm_sec);
+  print(timeStringBuff);
+}
+
+void DisplaySH1106::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - 4;
   int16_t vWidth = swidth;
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
@@ -247,7 +264,7 @@ void DisplaySSD1306::drawVolumeBar(bool withNumber) {
   }
 }
 
-void DisplaySSD1306::drawNextStationNum(uint16_t num) {
+void DisplaySH1106::drawNextStationNum(uint16_t num) {
   setTextSize(2);
   setTextColor(TFT_FG);
   char numstr[7];
@@ -260,12 +277,12 @@ void DisplaySSD1306::drawNextStationNum(uint16_t num) {
   print(numstr);
 }
 
-void DisplaySSD1306::frameTitle(const char* str) {
+void DisplaySH1106::frameTitle(const char* str) {
   setTextSize(2);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
-void DisplaySSD1306::rssi(const char* str) {
+void DisplaySH1106::rssi(const char* str) {
   char buf[4];
   strlcpy(buf, str, strlen(str)-2);
   int16_t vTop = sheight - TFT_LINEHGHT - 4;
@@ -273,7 +290,7 @@ void DisplaySSD1306::rssi(const char* str) {
   rightText(buf, vTop, SILVER, TFT_BG);
 }
 
-void DisplaySSD1306::ip(const char* str) {
+void DisplaySH1106::ip(const char* str) {
   int16_t vTop = sheight - TFT_LINEHGHT - 4;
   setTextSize(1);
   setTextColor(SILVER, TFT_BG);
@@ -281,30 +298,30 @@ void DisplaySSD1306::ip(const char* str) {
   print(str);
 }
 
-void DisplaySSD1306::set_TextSize(uint8_t s) {
+void DisplaySH1106::set_TextSize(uint8_t s) {
   setTextSize(s);
 }
 
-void DisplaySSD1306::set_TextColor(uint16_t fg, uint16_t bg) {
+void DisplaySH1106::set_TextColor(uint16_t fg, uint16_t bg) {
   setTextColor(fg, bg);
 }
 
-void DisplaySSD1306::set_Cursor(int16_t x, int16_t y) {
+void DisplaySH1106::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplaySSD1306::printText(const char* txt) {
+void DisplaySH1106::printText(const char* txt) {
   print(txt);
 }
 
-void DisplaySSD1306::loop() {
-  if (checkdelay(83, loopdelay)) {
+void DisplaySH1106::loop() {
+  if (checkdelay(SCROLLTIME, loopdelay)) {
     display();
   }
   yield();
 }
 
-boolean DisplaySSD1306::checkdelay(int m, unsigned long &tstamp) {
+boolean DisplaySH1106::checkdelay(int m, unsigned long &tstamp) {
   if (millis() - tstamp > m) {
     tstamp = millis();
     return true;

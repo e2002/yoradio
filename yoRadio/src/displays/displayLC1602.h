@@ -1,31 +1,30 @@
-#ifndef displayN5110_h
-#define displayN5110_h
+#ifndef displayLC1602_h
+#define displayLC1602_h
 
 #include "Arduino.h"
-#include <Adafruit_GFX.h>
-#include <Adafruit_PCD8544.h>
-#include "fonts/TinyFont5.h"
-#include "fonts/TinyFont6.h"
-#include "fonts/DS_DIGI15pt7b.h"
+#include "../LiquidCrystalI2C/LiquidCrystalI2CEx.h"
 
-#define TFT_LINEHGHT    8
+#define TFT_LINEHGHT    1
 #define TFT_FRAMEWDT    0
 
-#define SCROLLDELTA 8
-#define SCROLLTIME 332
-#define META_SIZE       1
-#define TITLE_TOP1 TFT_FRAMEWDT + TFT_LINEHGHT+1
+#define PLMITEMS        1
+#define PLMITEMLENGHT   40
+#define PLMITEMHEIGHT   9
+#define TITLE_TOP1      1
 #define TITLE_SIZE2     0
+#define PL_TOP          1
 #define PLCURRENT_SIZE  1
 
+#define SCROLLDELTA 1
+#define SCROLLTIME 250
+#define BOOTSTR_TOP2    0
+#define BOOTSTR_TOP1    1
+#define STARTTIME_PL    2000
 
-#define PLMITEMS        7
-#define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   10
-
-class DisplayN5110: public Adafruit_PCD8544 {
+class DisplayLC1602: public LiquidCrystal_I2C {
   public:
-    DisplayN5110();
+    bool fillSpaces;
+    DisplayLC1602();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -39,10 +38,11 @@ class DisplayN5110: public Adafruit_PCD8544 {
     void set_Cursor(int16_t x, int16_t y);
     void printText(const char* txt);
     void printClock(const char* timestr);
+    void printClock(struct tm timeinfo, bool dots, bool redraw = false);
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
     void drawNextStationNum(uint16_t num);
-    char* utf8Rus(const char* str, bool uppercase);
+    char* utf8Rus(const char* str, bool uppercase=true);
     void drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg);
     void getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth);
     void clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg);
@@ -52,19 +52,22 @@ class DisplayN5110: public Adafruit_PCD8544 {
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop();
   private:
-    uint16_t swidth, sheight;
+    uint16_t swidth, sheight, xOffset, yOffset;
+    int16_t nextX;
     unsigned long loopdelay;
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 
-extern DisplayN5110 dsp;
+extern DisplayLC1602 dsp;
 
 /*
  * TFT COLORS
  */
-#define SILVER      BLACK
-#define TFT_BG      WHITE
-#define TFT_FG      BLACK
-#define TFT_LOGO    BLACK
+#define CLOCK_SPACE 6
+#define VOL_SPACE   3
+#define SILVER      0
+#define TFT_BG      0
+#define TFT_FG      CLOCK_SPACE
+#define TFT_LOGO    VOL_SPACE
 
 #endif

@@ -18,3 +18,9 @@
 ![ёRadio](images/img7.jpg)\
 \
 ![ёRadio](images/img8.jpg)\
+\
+![ёRadio](images/img9.jpg)\
+\
+![ёRadio](images/img10.jpg)\
+\
+![ёRadio](images/img11.jpg)\

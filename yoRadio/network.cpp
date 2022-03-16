@@ -23,16 +23,17 @@ void Network::begin() {
   WiFi.mode(WIFI_STA);
   char buf[40] = { 0 };
   while (true) {
+    display.bootLogo();
     Serial.printf("Attempt to connect to %s\n", config.ssids[ls].ssid);
     snprintf(buf, sizeof(buf) - 1, "ATTEMPT TO %s", config.ssids[ls].ssid);
-    display.bootString(buf, 110);
+    display.bootString(buf, 2);
     WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
     strcpy(buf, ".");
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       strcat(buf, ".");
-      display.bootString(buf, 90);
+      display.bootString(buf, 1);
       errcnt++;
       if (errcnt > 16) {
         errcnt = 0;
