@@ -8,7 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.4.323'
+VERSION = '0.5.010'
 
 DOMAIN = "yoradio"
 
@@ -67,16 +67,25 @@ class yoradioApi():
     self.root_topic = root_topic
 
   async def set_command(self, command):
-    self.mqtt.async_publish(self.root_topic + '/command', command)
+    try:
+      self.mqtt.async_publish(self.root_topic + '/command', command)
+    except:
+      await self.mqtt.async_publish(self.hass, self.root_topic + '/command', command)
 
   async def set_volume(self, volume):
     command = "vol " + str(volume)
-    self.mqtt.async_publish(self.root_topic + '/command', command)
+    try:
+      self.mqtt.async_publish(self.root_topic + '/command', command)
+    except:
+      await self.mqtt.async_publish(self.hass, self.root_topic + '/command', command)
 
   async def set_source(self, source):
     number = source.split('.')
     command = "play " + number[0]
-    self.mqtt.async_publish(self.root_topic + '/command', command)
+    try:
+      self.mqtt.async_publish(self.root_topic + '/command', command)
+    except:
+      await self.mqtt.async_publish(self.hass, self.root_topic + '/command', command)
 
   async def load_playlist(self, msg):
     try:
