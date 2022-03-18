@@ -1,5 +1,5 @@
 #include "../../options.h"
-#if DSP_MODEL==2
+#if DSP_MODEL==DSP_SSD1306 || DSP_MODEL==DSP_SSD1306x32
 
 #include "displaySSD1306.h"
 #include <Wire.h>
@@ -11,9 +11,10 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32 or scan it https://create.arduino.cc/projecthub/abdularbi17/how-to-scan-i2c-address-in-arduino-eaadda
 #endif
 
+#if DSP_MODEL==DSP_SSD1306
+
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
-
 const unsigned char logo [] PROGMEM=
 {
     0x06, 0x03, 0x00, 0x0f, 0x07, 0x80, 0x1f, 0x8f, 0xc0, 0x1f, 0x8f, 0xc0,
@@ -25,10 +26,11 @@ const unsigned char logo [] PROGMEM=
     0x7e, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x3f, 0xc0, 0xe0, 0x3f, 0xff, 0xe0,
     0x1f, 0xff, 0xe0, 0x0f, 0xff, 0xe0, 0x03, 0xff, 0xc0, 0x00, 0xfe, 0x00
 };
+#endif
 
 TwoWire I2CSSD1306 = TwoWire(0);
 
-DisplaySSD1306::DisplaySSD1306(): Adafruit_SSD1306(128, 64, &I2CSSD1306, I2C_RST) {
+DisplaySSD1306::DisplaySSD1306(): Adafruit_SSD1306(128, ((DSP_MODEL==DSP_SSD1306)?64:32), &I2CSSD1306, I2C_RST) {
 
 }
 
@@ -109,15 +111,17 @@ char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
 void DisplaySSD1306::apScreen() {
   setTextSize(1);
   setTextColor(TFT_FG, TFT_BG);
-  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 2 * TFT_LINEHGHT);
+  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + ((DSP_MODEL==DSP_SSD1306)?2:1) * TFT_LINEHGHT);
   print("AP NAME: ");
   print(apSsid);
-  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 3 * TFT_LINEHGHT);
+  setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + ((DSP_MODEL==DSP_SSD1306)?3:2) * TFT_LINEHGHT);
   print("PASSWORD: ");
   print(apPassword);
   setTextColor(SILVER, TFT_BG);
+#if DSP_MODEL==DSP_SSD1306
   setCursor(TFT_FRAMEWDT, sheight - TFT_LINEHGHT * 2);
   print("SETTINGS PAGE ON: ");
+#endif
   setCursor(TFT_FRAMEWDT, sheight - TFT_LINEHGHT);
   print("http://");
   print(WiFi.softAPIP().toString().c_str());
@@ -132,20 +136,30 @@ void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   }
   cp437(true);
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  byte tftRotate = TFT_ROTATE;
+  if(tftRotate>2) tftRotate=2;
+  if(tftRotate==1) tftRotate=0;
+  setRotation(tftRotate);
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();
   swidth = screenwidth;
   sheight = screenheight;
+  fillSpaces = true;
 }
 
 void DisplaySSD1306::drawLogo() {
   clearDisplay();
+#if DSP_MODEL==DSP_SSD1306
   drawBitmap(
     (width()  - LOGO_WIDTH ) / 2,
     8,
     logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
+#else
+  setTextSize(2);
+  centerText(utf8Rus("ёRadio", false), 0, TFT_FG, TFT_BG);
+  setTextSize(1);
+#endif
   display();
 }
 
@@ -153,13 +167,13 @@ void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
-  config.fillPlMenu(plMenu, currentItem - 3, PLMITEMS);
+  config.fillPlMenu(plMenu, currentItem - ((DSP_MODEL==DSP_SSD1306)?3:2), PLMITEMS);
   setTextSize(1);
   int yStart = (sheight / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
   fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) + 1, swidth, PLMITEMHEIGHT, TFT_LOGO);
   setTextColor(TFT_FG, TFT_BG);
   for (byte i = 0; i < PLMITEMS; i++) {
-    if (i == 3) {
+    if (i == ((DSP_MODEL==DSP_SSD1306)?3:2)) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
@@ -199,8 +213,6 @@ void DisplaySSD1306::centerText(const char* text, byte y, uint16_t fg, uint16_t 
   const char* txt = text;
   getTextBounds(txt, 0, 0, &x1, &y1, &w, &h);
   setTextColor(fg);
-  if(y==90) y=sheight-TFT_LINEHGHT*2-5;
-  if(y==110) y=sheight-TFT_LINEHGHT;
   setCursor((swidth - w) / 2, y);
   fillRect(0, y, swidth, h, bg);
   print(txt);
@@ -212,7 +224,7 @@ void DisplaySSD1306::rightText(const char* text, byte y, uint16_t fg, uint16_t b
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
   setTextColor(fg);
   setCursor(swidth - w - TFT_FRAMEWDT, y);
-  fillRect(swidth - w - TFT_FRAMEWDT, y, w, h, bg);
+  fillRect(swidth - w - TFT_FRAMEWDT-((DSP_MODEL==DSP_SSD1306)?0:2), y, w+((DSP_MODEL==DSP_SSD1306)?0:2), h, bg);
   print(text);
 }
 
@@ -221,18 +233,37 @@ void DisplaySSD1306::displayHeapForDebug() {
 }
 
 void DisplaySSD1306::printClock(const char* timestr) {
+#if DSP_MODEL==DSP_SSD1306
   setTextSize(2);
   centerText(timestr, 34, TFT_FG, TFT_BG);
   setTextSize(1);
+#else
+  setTextSize(1);
+  rightText(timestr, 0, TFT_FG, TFT_BG);
+#endif
+}
+
+void DisplaySSD1306::printClock(struct tm timeinfo, bool dots, bool redraw) {
+#if DSP_MODEL==DSP_SSD1306x32
+  strftime(insideClc, sizeof(insideClc), dots?" %H %M":" %H:%M", &timeinfo);
+#endif
 }
 
 void DisplaySSD1306::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - 4;
-  int16_t vWidth = swidth;
+  int16_t vWidth = swidth-TFT_FRAMEWDT*2;
+#if DSP_MODEL==DSP_SSD1306
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
   fillRect(TFT_FRAMEWDT, vTop, vWidth, 3, TFT_BG);
   drawRect(TFT_FRAMEWDT, vTop, vWidth, 3, TFT_LOGO);
   fillRect(TFT_FRAMEWDT + 1, vTop + 1, ww, 1, TFT_LOGO);
+#else
+  uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth);
+  if(fillSpaces) {
+    drawFastHLine(TFT_FRAMEWDT, sheight-1, swidth-TFT_FRAMEWDT*2, TFT_BG);
+    drawFastHLine(TFT_FRAMEWDT, sheight-1, ww, TFT_LOGO);
+  }
+#endif
   if (withNumber) {
     setTextSize(2);
     setTextColor(TFT_FG);
@@ -241,8 +272,8 @@ void DisplaySSD1306::drawVolumeBar(bool withNumber) {
     int16_t  x1, y1;
     sprintf(volstr, "%d", config.store.volume);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
-    fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
-    setCursor((swidth - wv) / 2, 24);
+    fillRect(TFT_FRAMEWDT, VOL_TOP, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+    setCursor((swidth - wv) / 2, VOL_TOP);
     print(volstr);
   }
 }
@@ -255,26 +286,28 @@ void DisplaySSD1306::drawNextStationNum(uint16_t num) {
   int16_t  x1, y1;
   sprintf(numstr, "%d", num);
   getTextBounds(numstr, 0, 0, &x1, &y1, &wv, &hv);
-  fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
-  setCursor((swidth - wv) / 2, 24);
+  fillRect(TFT_FRAMEWDT, VOL_TOP, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+  setCursor((swidth - wv) / 2, VOL_TOP);
   print(numstr);
 }
 
 void DisplaySSD1306::frameTitle(const char* str) {
-  setTextSize(2);
+  setTextSize((DSP_MODEL==DSP_SSD1306?2:1));
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
 void DisplaySSD1306::rssi(const char* str) {
+  if(!fillSpaces && DSP_MODEL==DSP_SSD1306x32) return;
   char buf[4];
   strlcpy(buf, str, strlen(str)-2);
-  int16_t vTop = sheight - TFT_LINEHGHT - 4;
+  int16_t vTop = sheight - TFT_LINEHGHT - ((DSP_MODEL==DSP_SSD1306)?4:2);
   setTextSize(1);
   rightText(buf, vTop, SILVER, TFT_BG);
 }
 
 void DisplaySSD1306::ip(const char* str) {
-  int16_t vTop = sheight - TFT_LINEHGHT - 4;
+  if(!fillSpaces && DSP_MODEL==DSP_SSD1306x32) return;
+  int16_t vTop = sheight - TFT_LINEHGHT - ((DSP_MODEL==DSP_SSD1306)?4:2);
   setTextSize(1);
   setTextColor(SILVER, TFT_BG);
   setCursor(0, vTop);
@@ -299,6 +332,9 @@ void DisplaySSD1306::printText(const char* txt) {
 
 void DisplaySSD1306::loop() {
   if (checkdelay(83, loopdelay)) {
+#if DSP_MODEL==DSP_SSD1306x32
+    if(fillSpaces) printClock(insideClc);
+#endif
     display();
   }
   yield();

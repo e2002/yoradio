@@ -14,7 +14,7 @@ DisplayDummy dsp;
 #elif DSP_MODEL==DSP_ST7735
 #include "src/displays/displayST7735.h"
 DisplayST7735 dsp;
-#elif DSP_MODEL==DSP_SSD1306
+#elif DSP_MODEL==DSP_SSD1306 || DSP_MODEL==DSP_SSD1306x32
 #include "src/displays/displaySSD1306.h"
 DisplaySSD1306 dsp;
 #elif DSP_MODEL==DSP_NOKIA5110
@@ -255,6 +255,8 @@ void Display::swichMode(displayMode_e newmode) {
     time(true);
 #ifdef CLOCK_SPACE  // if set space for clock in 1602 displays
     dsp.fillSpaces=true;
+    ip();
+    rssi();
     volume();
 #endif
   } else {

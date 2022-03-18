@@ -7,15 +7,36 @@
 
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
-
-#define PLMITEMS        7
 #define PLMITEMLENGHT   40
+
+#if DSP_MODEL==DSP_SSD1306
+#define PLMITEMS        7
 #define PLMITEMHEIGHT   9
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
 #define PLCURRENT_SIZE  1
+#define BOOTSTR_TOP1    64-TFT_LINEHGHT*2-5
+#define BOOTSTR_TOP2    64-TFT_LINEHGHT
+#define VOL_TOP     24
+#else
 
+#define PLMITEMS        5
+
+#define PLMITEMHEIGHT   10
+#define TITLE_TOP2 TFT_FRAMEWDT + 2 * TFT_LINEHGHT
+#define PLCURRENT_SIZE  1
+#define META_SIZE       1
+#define TITLE_SIZE2     0
+#define TITLE_TOP1 TFT_FRAMEWDT + META_SIZE * TFT_LINEHGHT + 3
+#define TFT_FULLTIME    1
+#define BOOTSTR_TOP1    14
+#define BOOTSTR_TOP2    24
+#define CLOCK_SPACE 38
+#define VOL_SPACE   0
+#define VOL_TOP     16
+#endif
 class DisplaySSD1306: public Adafruit_SSD1306 {
   public:
+    bool fillSpaces;
     DisplaySSD1306();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
@@ -30,6 +51,7 @@ class DisplaySSD1306: public Adafruit_SSD1306 {
     void set_Cursor(int16_t x, int16_t y);
     void printText(const char* txt);
     void printClock(const char* timestr);
+    void printClock(struct tm timeinfo, bool dots, bool redraw = false);
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
     void drawNextStationNum(uint16_t num);
@@ -45,6 +67,7 @@ class DisplaySSD1306: public Adafruit_SSD1306 {
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;
+    char insideClc[10];
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 

@@ -31,8 +31,9 @@ https://aliexpress.com/item/32965676064.html
 #### Optional:
 ##### Displays
 - **ST7735** 1.8' or 1.44' https://aliexpress.com/item/1005002822797745.html
-- or **SSD1306** 0.96' I2C https://aliexpress.com/item/1005001621806398.html
-- or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.htmlz
+- or **SSD1306** 0.96' 128x64 I2C https://aliexpress.com/item/1005001621806398.html
+- or **SSD1306** 0,91' 128x32 I2C https://aliexpress.com/item/32798439084.html
+- or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.html
 - or **ST7789** 320x240 SPI https://aliexpress.com/item/32960241206.html
 - or **SH1106** 128x64 I2C https://aliexpress.com/item/32683094040.html
 - or **1602** 16x2 I2C https://aliexpress.com/item/32305776560.html
@@ -242,6 +243,9 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Version history
+#### v0.5.020
+- added support for SSD1306 128x32 I2C displays
+
 #### v0.5.010
 - added support for ST7789 320x240 SPI displays
 - added support for SH1106 I2C displays
