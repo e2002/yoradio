@@ -64,7 +64,7 @@ void LiquidCrystal_I2C::init_priv()
   if((_sda_pin==255 && _scl_pin==255) || (_sda_pin==21 && _scl_pin==22)){
 	  Wire.begin();
 	}else{
-	  Wire.begin(_sda_pin, _scl_pin, (uint32_t)100000);
+	  Wire.begin((int)_sda_pin, (int)_scl_pin, (uint32_t)100000);
 	}
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
 	begin(_cols, _rows);

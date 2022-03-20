@@ -49,6 +49,14 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define ENC_HALFQUARD         true          /*  Experiment  with it */
 /******************************************/
 
+/*  ENCODER2  */
+//#define ENC2_BTNL              255           /*  Left rotation */
+//#define ENC2_BTNB              255           /*  Encoder button */
+//#define ENC2_BTNR              255           /*  Right rotation */
+//#define ENC2_INTERNALPULLUP    true          /*  Enable the weak pull up resistors */
+//#define ENC2_HALFQUARD         true          /*  Experiment  with it */
+/******************************************/
+
 /*  BUTTONS  */
 //#define BTN_LEFT              255           /*  VolDown, Prev */
 //#define BTN_CENTER            255           /*  Play, Stop, Show playlist */

@@ -55,6 +55,7 @@ class Display {
     void bootLogo();
     void station();
     void title(const char *str);
+    void returnTile();
     void time(bool redraw = false);
     void volume();
     void ip();

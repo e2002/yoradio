@@ -9,6 +9,7 @@
 - [Hardware setup](#hardware-setup)
 - [Quick start](#quick-start)
 - [Update](#update)
+- [Controls](Controls.md)
 - [MQTT](#mqtt)
 - [Home Assistant](#home-assistant)
 - [More features](#more-features)
@@ -230,7 +231,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
  **Commands**: \
  **prev**          - prev station \
  **next**          - next station \
- **toggle**       - start/stop playing \
+ **toggle**        - start/stop playing \
  **stop**          - stop playing \
  **start, play**   - start playing \
  **boot, reboot**  - reboot \
@@ -243,6 +244,13 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Version history
+#### v0.5.033
+- added two buttons BTN_UP, BTN_DOWN
+- added the pins for the second encoder ENC2_BTNL, ENC2_BTNB, ENC2_BTNR
+- fixed display of playlist with SSD1306 configuration
+- improvements in the displays work
+- bugs fixes, some improvements
+
 #### v0.5.020
 - added support for SSD1306 128x32 I2C displays
 

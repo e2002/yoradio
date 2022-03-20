@@ -10,17 +10,18 @@
 #define PLMITEMLENGHT   40
 
 #if DSP_MODEL==DSP_SSD1306
-#define PLMITEMS        7
-#define PLMITEMHEIGHT   9
+
+#define PLMITEMS        5
+#define PLMITEMHEIGHT   18
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
-#define PLCURRENT_SIZE  1
+#define PLCURRENT_SIZE  2
 #define BOOTSTR_TOP1    64-TFT_LINEHGHT*2-5
 #define BOOTSTR_TOP2    64-TFT_LINEHGHT
 #define VOL_TOP     24
+
 #else
 
 #define PLMITEMS        5
-
 #define PLMITEMHEIGHT   10
 #define TITLE_TOP2 TFT_FRAMEWDT + 2 * TFT_LINEHGHT
 #define PLCURRENT_SIZE  1
@@ -33,6 +34,7 @@
 #define CLOCK_SPACE 38
 #define VOL_SPACE   0
 #define VOL_TOP     16
+
 #endif
 class DisplaySSD1306: public Adafruit_SSD1306 {
   public:

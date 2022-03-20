@@ -25,4 +25,8 @@
 \
 ![ёRadio](images/img11.jpg)\
 \
-![ёRadio](images/img12.jpg)
+![ёRadio](images/img12.jpg)\
+\
+![ёRadio](images/img13.jpg)\
+\
+![ёRadio](images/img14.jpg)

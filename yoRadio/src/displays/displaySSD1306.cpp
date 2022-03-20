@@ -167,13 +167,13 @@ void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
-  config.fillPlMenu(plMenu, currentItem - ((DSP_MODEL==DSP_SSD1306)?3:2), PLMITEMS);
-  setTextSize(1);
+  config.fillPlMenu(plMenu, currentItem - 2, PLMITEMS);
+  setTextSize((DSP_MODEL==DSP_SSD1306)?2:1);
   int yStart = (sheight / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
   fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) + 1, swidth, PLMITEMHEIGHT, TFT_LOGO);
   setTextColor(TFT_FG, TFT_BG);
   for (byte i = 0; i < PLMITEMS; i++) {
-    if (i == ((DSP_MODEL==DSP_SSD1306)?3:2)) {
+    if (i == 2) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);

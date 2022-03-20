@@ -260,7 +260,9 @@ void Display::swichMode(displayMode_e newmode) {
     volume();
 #endif
   } else {
-    meta.lock();
+    if (newmode != NUMBERS) {
+      meta.lock();
+    }
     title1.lock();
     if (TITLE_SIZE2 != 0) title2.lock();
 #ifdef CLOCK_SPACE
@@ -271,7 +273,8 @@ void Display::swichMode(displayMode_e newmode) {
     dsp.frameTitle("VOLUME");
   }
   if (newmode == NUMBERS) {
-    dsp.frameTitle("STATION");
+    //dsp.frameTitle("STATION");
+    meta.reset();
   }
   if (newmode == STATIONS) {
     currentPlItem = config.store.lastStation;
@@ -305,6 +308,11 @@ void Display::drawPlaylist() {
 }
 
 void Display::drawNextStationNum(uint16_t num) {
+  char plMenu[1][40];
+  char currentItemText[40] = {0};
+  config.fillPlMenu(plMenu, num, 1);
+  strlcpy(currentItemText, plMenu[0], 39);
+  meta.setText(dsp.utf8Rus(currentItemText, true));
   dsp.drawNextStationNum(num);
 }
 
@@ -319,6 +327,7 @@ void Display::loop() {
         break;
       }
     case NUMBERS: {
+        meta.loop();
         break;
       }
     case STATIONS: {
@@ -352,6 +361,12 @@ void Display::station() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
   dsp.loop();
   netserver.requestOnChange(STATION, 0);
+}
+
+void Display::returnTile(){
+  meta.setText(dsp.utf8Rus(config.station.name, true));
+  meta.reset();
+  dsp.loop();
 }
 
 void Display::title(const char *str) {

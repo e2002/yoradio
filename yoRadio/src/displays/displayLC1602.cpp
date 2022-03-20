@@ -64,7 +64,7 @@ void DisplayLC1602::getScrolBbounds(const char* text, const char* separator, byt
 }
 
 void DisplayLC1602::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
-  for(uint16_t x=0; x<swidth-controlspaces[texttop]; x++){
+  for(uint16_t x=0; x<swidth-(fillSpaces?controlspaces[texttop]:0); x++){
     setCursor(x, texttop);
     print(" ");
   }
@@ -111,7 +111,7 @@ void DisplayLC1602::drawVolumeBar(bool withNumber) {
 void DisplayLC1602::drawNextStationNum(uint16_t num) {
   char numstr[7];
   sprintf(numstr, "%d", num);
-  centerText("       ", 1, 0, 0);
+  clearScroll(1, 0, 0);
   centerText(numstr, 1, TFT_LOGO, TFT_BG);
 }
 

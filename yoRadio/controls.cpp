@@ -6,18 +6,24 @@
 #include "display.h"
 
 long encOldPosition  = 0;
+long enc2OldPosition  = 0;
 int lpId = -1;
 
-#define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_LEFT!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255
+#define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_CENTER!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255 || BTN_UP!=255 || BTN_DOWN!=255 || ENC2_BTNB!=255
 #if ISPUSHBUTTONS
 #include "OneButton.h"
-OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN_INTERNALPULLUP}, {BTN_RIGHT, true, BTN_INTERNALPULLUP}, {ENC_BTNB, true, ENC_INTERNALPULLUP}};
+OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN_INTERNALPULLUP}, {BTN_RIGHT, true, BTN_INTERNALPULLUP}, {ENC_BTNB, true, ENC_INTERNALPULLUP}, {BTN_UP, true, BTN_INTERNALPULLUP}, {BTN_DOWN, true, BTN_INTERNALPULLUP}, {ENC2_BTNB, true, ENC2_INTERNALPULLUP}};
 constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
-#if ENC_BTNL!=255 && ENC_BTNR!=255
+#if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
 #include <ESP32Encoder.h>
+#if (ENC_BTNL!=255 && ENC_BTNR!=255)
 ESP32Encoder encoder;
+#endif
+#if (ENC2_BTNL!=255 && ENC2_BTNR!=255)
+ESP32Encoder encoder2;
+#endif
 #endif
 
 #if IR_PIN!=255
@@ -41,17 +47,25 @@ decode_results irResults;
 
 void initControls() {
 #if ENC_BTNL!=255
-  ESP32Encoder::useInternalWeakPullResistors = ENC_INTERNALPULLUP ? UP : DOWN;
+  encoder.useInternalWeakPullResistors = ENC_INTERNALPULLUP ? UP : DOWN;
   if (ENC_HALFQUARD) {
     encoder.attachHalfQuad(ENC_BTNL, ENC_BTNR);
   } else {
     encoder.attachFullQuad(ENC_BTNL, ENC_BTNR);
   }
 #endif
+#if ENC2_BTNL!=255
+  encoder2.useInternalWeakPullResistors = ENC2_INTERNALPULLUP ? UP : DOWN;
+  if (ENC2_HALFQUARD) {
+    encoder2.attachHalfQuad(ENC2_BTNL, ENC2_BTNR);
+  } else {
+    encoder2.attachFullQuad(ENC2_BTNL, ENC2_BTNR);
+  }
+#endif
 #if ISPUSHBUTTONS
   for (int i = 0; i < nrOfButtons; i++)
   {
-    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255)) continue;
+    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255)) continue;
     button[i].attachClick([](void* p) {
       onBtnClick((int)p);
     }, (void*)i);
@@ -84,14 +98,20 @@ void loopControls() {
 #if ENC_BTNL!=255
   encoderLoop();
 #endif
+#if ENC2_BTNL!=255
+  encoder2Loop();
+#endif
 #if ISPUSHBUTTONS
   for (unsigned i = 0; i < nrOfButtons; i++)
   {
-    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255)) continue;
+    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255)) continue;
     button[i].tick();
     if (lpId >= 0) {
+      if(DSP_MODEL==DSP_DUMMY && (lpId==4 || lpId==5)) continue;
       onBtnDuringLongPress(lpId);
+      yield();
     }
+    yield();
   }
 #endif
 #if IR_PIN!=255
@@ -106,6 +126,22 @@ void encoderLoop() {
   if (encNewPosition != 0 && encNewPosition != encOldPosition) {
     encOldPosition = encNewPosition;
     encoder.setCount(0);
+    controlsEvent(encNewPosition > 0);
+  }
+}
+#endif
+
+#if ENC2_BTNL!=255
+void encoder2Loop() {
+  long encNewPosition = encoder2.getCount() / 2;
+  if (encNewPosition != 0 && encNewPosition != enc2OldPosition) {
+    enc2OldPosition = encNewPosition;
+    encoder2.setCount(0);
+    uint8_t bp = 2;
+    if(ENC2_BTNB!=255){
+      bp = digitalRead(ENC2_BTNB);
+    }
+    if(bp==HIGH && display.mode!=STATIONS) display.swichMode(STATIONS);
     controlsEvent(encNewPosition > 0);
   }
 }
@@ -183,6 +219,7 @@ void irLoop() {
         }
       case IR_CODE_HASH: {
           if (display.mode == NUMBERS) {
+            display.returnTile();
             display.swichMode(PLAYER);
             display.numOfNextStation = 0;
             break;
@@ -236,14 +273,16 @@ void irLoop() {
 #endif // if IR_PIN!=255
 
 void onBtnLongPressStart(int id) {
-  switch (id) {
-    case 0:
-    case 2: {
+  switch ((controlEvt_e)id) {
+    case EVT_BTNLEFT:
+    case EVT_BTNRIGHT:
+    case EVT_BTNUP:
+    case EVT_BTNDOWN:{
         lpId = id;
         break;
       }
-    case 1:
-    case 3: {
+    case EVT_BTNCENTER:
+    case EVT_ENCBTNB: {
         display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
         break;
       }
@@ -251,9 +290,11 @@ void onBtnLongPressStart(int id) {
 }
 
 void onBtnLongPressStop(int id) {
-  switch (id) {
-    case 0:
-    case 2: {
+  switch ((controlEvt_e)id) {
+    case EVT_BTNLEFT:
+    case EVT_BTNRIGHT:
+    case EVT_BTNUP:
+    case EVT_BTNDOWN:{
         lpId = -1;
         break;
       }
@@ -272,13 +313,23 @@ boolean checklpdelay(int m, unsigned long &tstamp) {
 
 void onBtnDuringLongPress(int id) {
   if (checklpdelay(BTN_LONGPRESS_LOOP_DELAY, lpdelay)) {
-    switch (id) {
-      case 0: {
+    switch ((controlEvt_e)id) {
+      case EVT_BTNLEFT: {
           controlsEvent(false);
           break;
         }
-      case 2: {
+      case EVT_BTNRIGHT: {
           controlsEvent(true);
+          break;
+        }
+      case EVT_BTNUP:
+      case EVT_BTNDOWN: {
+          if (display.mode == PLAYER) {
+            display.swichMode(STATIONS);
+          }
+          if (display.mode == STATIONS) {
+            controlsEvent(id==EVT_BTNDOWN);
+          }
           break;
         }
     }
@@ -305,13 +356,14 @@ void controlsEvent(bool toRight) {
 }
 
 void onBtnClick(int id) {
-  switch (id) {
-    case 0: {
+  switch ((controlEvt_e)id) {
+    case EVT_BTNLEFT: {
         controlsEvent(false);
         break;
       }
-    case 1:
-    case 3: {
+    case EVT_BTNCENTER:
+    case EVT_ENCBTNB:
+    case EVT_ENC2BTNB: {
         if (display.mode == NUMBERS) {
           display.numOfNextStation = 0;
           display.swichMode(PLAYER);
@@ -325,26 +377,45 @@ void onBtnClick(int id) {
         }
         break;
       }
-    case 2: {
+    case EVT_BTNRIGHT: {
         controlsEvent(true);
+        break;
+      }
+    case EVT_BTNUP:
+    case EVT_BTNDOWN: {
+        if(DSP_MODEL==DSP_DUMMY){
+          if(id==EVT_BTNUP){
+            player.next();
+          }else{
+            player.prev();
+          }
+        }else{
+          if (display.mode == PLAYER) {
+            display.swichMode(STATIONS);
+          }
+          if (display.mode == STATIONS) {
+            controlsEvent(id==EVT_BTNDOWN);
+          }
+        }
         break;
       }
   }
 }
 
 void onBtnDoubleClick(int id) {
-  switch (id) {
-    case 0: {
+  switch ((controlEvt_e)id) {
+    case EVT_BTNLEFT: {
         if (display.mode != PLAYER) return;
         player.prev();
         break;
       }
-    case 1:
-    case 3: {
+    case EVT_BTNCENTER:
+    case EVT_ENCBTNB:
+    case EVT_ENC2BTNB: {
         display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
         break;
       }
-    case 2: {
+    case EVT_BTNRIGHT: {
         if (display.mode != PLAYER) return;
         player.next();
         break;
