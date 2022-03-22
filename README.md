@@ -13,6 +13,7 @@
 - [MQTT](#mqtt)
 - [Home Assistant](#home-assistant)
 - [More features](#more-features)
+- [Plugins](#plugins)
 - [Version history](#version-history)
 ---
 <img src="images/img0.jpg" width="830" height="443">
