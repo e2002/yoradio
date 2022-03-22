@@ -243,8 +243,16 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 - Home Assistant support
 
 ---
+## Plugins
+At the moment, you can display additional information on the display by writing a few additional functions. There is no documentation yet, you will have to deal with the example, which is in file [exsamples/displayhandlers.ino](exsamples/displayhandlers.ino).\
+Work is in progress...
+
+---
 ## Version history
-#### v0.5.033
+#### v0.5.070
+- added something similar to plugins
+
+#### v0.5.035
 - added two buttons BTN_UP, BTN_DOWN
 - added the pins for the second encoder ENC2_BTNL, ENC2_BTNB, ENC2_BTNR
 - fixed display of playlist with SSD1306 configuration

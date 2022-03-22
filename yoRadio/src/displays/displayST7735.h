@@ -14,9 +14,9 @@
 #define PLMITEMHEIGHT   22
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
 
-class DisplayST7735: public Adafruit_ST7735 {
+class DspCore: public Adafruit_ST7735 {
   public:
-    DisplayST7735();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -47,7 +47,7 @@ class DisplayST7735: public Adafruit_ST7735 {
 
 };
 
-extern DisplayST7735 dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

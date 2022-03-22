@@ -13,18 +13,18 @@
 
 const byte controlspaces[] = { CLOCK_SPACE, VOL_SPACE };
 
-DisplayLC1602::DisplayLC1602(): LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL) {
+DspCore::DspCore(): LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL) {
 
 }
 
-void DisplayLC1602::apScreen() {
+void DspCore::apScreen() {
   setCursor(0,0);
   print("YORADIO AP MODE");
   setCursor(0,1);
   print(WiFi.softAPIP().toString().c_str());
 }
 
-void DisplayLC1602::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   init();
   backlight();
   screenwidth = 16;
@@ -34,11 +34,11 @@ void DisplayLC1602::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   fillSpaces = true;
 }
 
-void DisplayLC1602::drawLogo() {
+void DspCore::drawLogo() {
 
 }
 
-void DisplayLC1602::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   centerText("NEXT STATION", 0, 0, 0);
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
@@ -49,34 +49,34 @@ void DisplayLC1602::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplayLC1602::clearDsp() {
+void DspCore::clearDsp() {
   clear();
 }
 
-void DisplayLC1602::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
 
 }
 
-void DisplayLC1602::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   tWidth = strlen(text);
   tHeight = 1;
   sWidth = strlen(separator);
 }
 
-void DisplayLC1602::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   for(uint16_t x=0; x<swidth-(fillSpaces?controlspaces[texttop]:0); x++){
     setCursor(x, texttop);
     print(" ");
   }
 }
 
-void DisplayLC1602::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   byte x=(strlen(text)>swidth)?0:(swidth-strlen(text))/2;
   setCursor(x, y);
   print(text);
 }
 
-void DisplayLC1602::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   byte x=swidth-strlen(text);
   setCursor(x-1, y);
   print(" ");
@@ -84,19 +84,19 @@ void DisplayLC1602::rightText(const char* text, byte y, uint16_t fg, uint16_t bg
   print(text);
 }
 
-void DisplayLC1602::displayHeapForDebug() {
+void DspCore::displayHeapForDebug() {
 
 }
 
-void DisplayLC1602::printClock(const char* timestr) {
+void DspCore::printClock(const char* timestr) {
   rightText(timestr, 0, 0, 0);
 }
 
-void DisplayLC1602::printClock(struct tm timeinfo, bool dots, bool redraw) {
+void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw) {
 
 }
 
-void DisplayLC1602::drawVolumeBar(bool withNumber) {
+void DspCore::drawVolumeBar(bool withNumber) {
   char volstr[4];
   sprintf(volstr, "%02d", config.store.volume);
   if (withNumber) {;
@@ -108,34 +108,34 @@ void DisplayLC1602::drawVolumeBar(bool withNumber) {
   }
 }
 
-void DisplayLC1602::drawNextStationNum(uint16_t num) {
+void DspCore::drawNextStationNum(uint16_t num) {
   char numstr[7];
   sprintf(numstr, "%d", num);
   clearScroll(1, 0, 0);
   centerText(numstr, 1, TFT_LOGO, TFT_BG);
 }
 
-void DisplayLC1602::frameTitle(const char* str) {
+void DspCore::frameTitle(const char* str) {
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
-void DisplayLC1602::rssi(const char* str) {
+void DspCore::rssi(const char* str) {
 
 }
 
-void DisplayLC1602::ip(const char* str) {
+void DspCore::ip(const char* str) {
 
 }
 
-void DisplayLC1602::set_TextSize(uint8_t s) {
+void DspCore::set_TextSize(uint8_t s) {
 
 }
 
-void DisplayLC1602::set_TextColor(uint16_t fg, uint16_t bg) {
+void DspCore::set_TextColor(uint16_t fg, uint16_t bg) {
 
 }
 
-void DisplayLC1602::set_Cursor(int16_t x, int16_t y) {
+void DspCore::set_Cursor(int16_t x, int16_t y) {
   if(x<0) {
     xOffset=-x;
     x=0;
@@ -147,7 +147,7 @@ void DisplayLC1602::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplayLC1602::printText(const char* txt) {
+void DspCore::printText(const char* txt) {
   char tmp[swidth+1] = {0};
   int16_t numchars = fillSpaces?swidth-controlspaces[yOffset]:swidth;
   strlcpy(tmp, txt+xOffset, numchars+1-nextX);
@@ -158,14 +158,14 @@ void DisplayLC1602::printText(const char* txt) {
   setCursor(nextX, yOffset);
 }
 
-void DisplayLC1602::loop() {
+void DspCore::loop() {
   if (checkdelay(SCROLLTIME, loopdelay)) {
     //display();
   }
   yield();
 }
 
-boolean DisplayLC1602::checkdelay(int m, unsigned long & tstamp) {
+boolean DspCore::checkdelay(int m, unsigned long & tstamp) {
   if (millis() - tstamp > m) {
     tstamp = millis();
     return true;
@@ -174,7 +174,7 @@ boolean DisplayLC1602::checkdelay(int m, unsigned long & tstamp) {
   }
 }
 
-char* DisplayLC1602::utf8Rus(const char* str, bool uppercase) {
+char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   static char newStr[BUFLEN];

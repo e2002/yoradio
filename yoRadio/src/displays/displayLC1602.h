@@ -21,10 +21,10 @@
 #define BOOTSTR_TOP1    1
 #define STARTTIME_PL    2000
 
-class DisplayLC1602: public LiquidCrystal_I2C {
+class DspCore: public LiquidCrystal_I2C {
   public:
     bool fillSpaces;
-    DisplayLC1602();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -58,7 +58,7 @@ class DisplayLC1602: public LiquidCrystal_I2C {
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 
-extern DisplayLC1602 dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

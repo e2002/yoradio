@@ -30,11 +30,11 @@ const unsigned char logo [] PROGMEM=
 
 TwoWire I2CSH1106 = TwoWire(0);
 
-DisplaySH1106::DisplaySH1106(): Adafruit_SH1106G(128, 64, &I2CSH1106, -1) {
+DspCore::DspCore(): Adafruit_SH1106G(128, 64, &I2CSH1106, -1) {
 
 }
 
-char* DisplaySH1106::utf8Rus(const char* str, bool uppercase) {
+char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;
@@ -108,7 +108,7 @@ char* DisplaySH1106::utf8Rus(const char* str, bool uppercase) {
   return strn;
 }
 
-void DisplaySH1106::apScreen() {
+void DspCore::apScreen() {
   setTextSize(1);
   setTextColor(TFT_FG, TFT_BG);
   setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + 2 * TFT_LINEHGHT);
@@ -126,7 +126,7 @@ void DisplaySH1106::apScreen() {
   print("/");
 }
 
-void DisplaySH1106::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   I2CSH1106.begin(I2C_SDA, I2C_SCL, (uint32_t)100000);
   if (!begin(SCREEN_ADDRESS, true)) {
     Serial.println(F("SH1106 allocation failed"));
@@ -142,7 +142,7 @@ void DisplaySH1106::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   sheight = screenheight;
 }
 
-void DisplaySH1106::drawLogo() {
+void DspCore::drawLogo() {
   clearDisplay();
   drawBitmap(
     (width()  - LOGO_WIDTH ) / 2,
@@ -151,7 +151,7 @@ void DisplaySH1106::drawLogo() {
   display();
 }
 
-void DisplaySH1106::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
@@ -170,17 +170,17 @@ void DisplaySH1106::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplaySH1106::clearDsp() {
+void DspCore::clearDsp() {
   fillScreen(TFT_BG);
 }
 
-void DisplaySH1106::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT == 0) return;
   fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
-void DisplaySH1106::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(textsize);
@@ -191,11 +191,11 @@ void DisplaySH1106::getScrolBbounds(const char* text, const char* separator, byt
   sWidth = w;
 }
 
-void DisplaySH1106::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   fillRect(0,  texttop, swidth, textheight, bg);
 }
 
-void DisplaySH1106::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   const char* txt = text;
@@ -208,7 +208,7 @@ void DisplaySH1106::centerText(const char* text, byte y, uint16_t fg, uint16_t b
   print(txt);
 }
 
-void DisplaySH1106::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
@@ -218,11 +218,11 @@ void DisplaySH1106::rightText(const char* text, byte y, uint16_t fg, uint16_t bg
   print(text);
 }
 
-void DisplaySH1106::displayHeapForDebug() {
+void DspCore::displayHeapForDebug() {
 
 }
 
-void DisplaySH1106::printClock(const char* timestr) {
+void DspCore::printClock(const char* timestr) {
   setTextSize(2);
   centerText(timestr, 34, TFT_FG, TFT_BG);
   setTextSize(1);
@@ -230,7 +230,7 @@ void DisplaySH1106::printClock(const char* timestr) {
 
 #define CLCLF 34
 
-void DisplaySH1106::printClock(struct tm timeinfo, bool dots, bool redraw) {
+void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw) {
   char timeStringBuff[20] = { 0 };
   strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M", &timeinfo);
   setTextSize(2);
@@ -243,7 +243,7 @@ void DisplaySH1106::printClock(struct tm timeinfo, bool dots, bool redraw) {
   print(timeStringBuff);
 }
 
-void DisplaySH1106::drawVolumeBar(bool withNumber) {
+void DspCore::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - 4;
   int16_t vWidth = swidth;
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
@@ -264,7 +264,7 @@ void DisplaySH1106::drawVolumeBar(bool withNumber) {
   }
 }
 
-void DisplaySH1106::drawNextStationNum(uint16_t num) {
+void DspCore::drawNextStationNum(uint16_t num) {
   setTextSize(2);
   setTextColor(TFT_FG);
   char numstr[7];
@@ -277,12 +277,12 @@ void DisplaySH1106::drawNextStationNum(uint16_t num) {
   print(numstr);
 }
 
-void DisplaySH1106::frameTitle(const char* str) {
+void DspCore::frameTitle(const char* str) {
   setTextSize(2);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
-void DisplaySH1106::rssi(const char* str) {
+void DspCore::rssi(const char* str) {
   char buf[4];
   strlcpy(buf, str, strlen(str)-2);
   int16_t vTop = sheight - TFT_LINEHGHT - 4;
@@ -290,7 +290,7 @@ void DisplaySH1106::rssi(const char* str) {
   rightText(buf, vTop, SILVER, TFT_BG);
 }
 
-void DisplaySH1106::ip(const char* str) {
+void DspCore::ip(const char* str) {
   int16_t vTop = sheight - TFT_LINEHGHT - 4;
   setTextSize(1);
   setTextColor(SILVER, TFT_BG);
@@ -298,30 +298,30 @@ void DisplaySH1106::ip(const char* str) {
   print(str);
 }
 
-void DisplaySH1106::set_TextSize(uint8_t s) {
+void DspCore::set_TextSize(uint8_t s) {
   setTextSize(s);
 }
 
-void DisplaySH1106::set_TextColor(uint16_t fg, uint16_t bg) {
+void DspCore::set_TextColor(uint16_t fg, uint16_t bg) {
   setTextColor(fg, bg);
 }
 
-void DisplaySH1106::set_Cursor(int16_t x, int16_t y) {
+void DspCore::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplaySH1106::printText(const char* txt) {
+void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DisplaySH1106::loop() {
+void DspCore::loop() {
   if (checkdelay(SCROLLTIME, loopdelay)) {
     display();
   }
   yield();
 }
 
-boolean DisplaySH1106::checkdelay(int m, unsigned long &tstamp) {
+boolean DspCore::checkdelay(int m, unsigned long &tstamp) {
   if (millis() - tstamp > m) {
     tstamp = millis();
     return true;

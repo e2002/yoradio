@@ -11,11 +11,11 @@
 const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};
 const char *mnths[12] = {"января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"};
 
-DisplayST7789::DisplayST7789(): Adafruit_ST7789(&SPI, TFT_CS, TFT_DC, TFT_RST) {
+DspCore::DspCore(): Adafruit_ST7789(&SPI, TFT_CS, TFT_DC, TFT_RST) {
 
 }
 
-char* DisplayST7789::utf8Rus(const char* str, bool uppercase) {
+char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;
@@ -89,7 +89,7 @@ char* DisplayST7789::utf8Rus(const char* str, bool uppercase) {
   return strn;
 }
 
-void DisplayST7789::apScreen() {
+void DspCore::apScreen() {
   setTextSize(TITLE_SIZE1);
   setTextColor(TFT_FG, TFT_BG);
   setCursor(TFT_FRAMEWDT, TITLE_TOP1);
@@ -108,7 +108,7 @@ void DisplayST7789::apScreen() {
   drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, SILVER);
 }
 
-void DisplayST7789::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   init(240,320);
   invertDisplay(TFT_INVERT);
   cp437(true);
@@ -122,13 +122,13 @@ void DisplayST7789::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   sheight = screenheight;
 }
 
-void DisplayST7789::drawLogo() {
+void DspCore::drawLogo() {
   drawRGBBitmap((swidth - 99) / 2, (sheight-64)/2 - TFT_LINEHGHT*2, bootlogo2, 99, 64);
 }
 
 // http://greekgeeks.net/#maker-tools_convertColor
 uint16_t iclrs[] = { 0x738E /*707070*/, 0x52AA /*575757*/, 0x39C7, 0x18E3 };
-void DisplayST7789::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
@@ -147,17 +147,17 @@ void DisplayST7789::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplayST7789::clearDsp() {
+void DspCore::clearDsp() {
   fillScreen(TFT_BG);
 }
 
-void DisplayST7789::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT==0) return;
   fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
-void DisplayST7789::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(textsize);
@@ -168,11 +168,11 @@ void DisplayST7789::getScrolBbounds(const char* text, const char* separator, byt
   sWidth = w;
 }
 
-void DisplayST7789::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   fillRect(0,  texttop, swidth, textheight, bg);
 }
 
-void DisplayST7789::centerText(const char* text, uint16_t y, uint16_t fg, uint16_t bg) {
+void DspCore::centerText(const char* text, uint16_t y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   const char* txt = text;
@@ -185,7 +185,7 @@ void DisplayST7789::centerText(const char* text, uint16_t y, uint16_t fg, uint16
   print(txt);
 }
 
-void DisplayST7789::rightText(const char* text, uint16_t y, uint16_t fg, uint16_t bg, bool fliprect, uint16_t delta) {
+void DspCore::rightText(const char* text, uint16_t y, uint16_t fg, uint16_t bg, bool fliprect, uint16_t delta) {
   int16_t  x1, y1;
   uint16_t w, h;
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
@@ -195,7 +195,7 @@ void DisplayST7789::rightText(const char* text, uint16_t y, uint16_t fg, uint16_
   print(text);
 }
 
-void DisplayST7789::displayHeapForDebug() {
+void DspCore::displayHeapForDebug() {
   int16_t vTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT * 2 - 2;
   setTextSize(1);
   setTextColor(DARK_GRAY, TFT_BG);
@@ -215,7 +215,7 @@ void DisplayST7789::displayHeapForDebug() {
 #endif
 }
 
-void DisplayST7789::printClock(const char* timestr) {
+void DspCore::printClock(const char* timestr) {
 
 }
 
@@ -224,7 +224,7 @@ uint8_t clsp = 24;
 uint16_t clleft = 0;
 uint16_t clwidth = 0;
 
-void DisplayST7789::printClock(struct tm timeinfo, bool dots, bool redraw){
+void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
   char timeBuf[50] = { 0 };
   strftime(timeBuf, sizeof(timeBuf), "%H:%M", &timeinfo);
   if(strstr(oldTimeBuf, timeBuf)==NULL || redraw){
@@ -266,7 +266,7 @@ void DisplayST7789::printClock(struct tm timeinfo, bool dots, bool redraw){
   print(timeBuf);
 }
 
-void DisplayST7789::drawVolumeBar(bool withNumber) {
+void DspCore::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - TFT_FRAMEWDT * 2;
   int16_t volTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT - 2;
   int16_t vWidth = swidth - TFT_FRAMEWDT *2;
@@ -296,7 +296,7 @@ void DisplayST7789::drawVolumeBar(bool withNumber) {
   }
 }
 
-void DisplayST7789::drawNextStationNum(uint16_t num) {
+void DspCore::drawNextStationNum(uint16_t num) {
   setTextSize(1);
   setTextColor(TFT_FG);
   setFont(&DS_DIGI42pt7b);
@@ -311,13 +311,13 @@ void DisplayST7789::drawNextStationNum(uint16_t num) {
   setFont();
 }
 
-void DisplayST7789::frameTitle(const char* str) {
+void DspCore::frameTitle(const char* str) {
   setTextSize(META_SIZE);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
   drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, SILVER);
 }
 
-void DisplayST7789::rssi(const char* str) {
+void DspCore::rssi(const char* str) {
   int16_t vTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT - 2;
   char buf[20];
   sprintf(buf, "RSSI:%s", str);
@@ -325,7 +325,7 @@ void DisplayST7789::rssi(const char* str) {
   rightText(buf, vTop, SILVER, TFT_BG);
 }
 
-void DisplayST7789::ip(const char* str) {
+void DspCore::ip(const char* str) {
   int16_t vTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT - 2;
   char buf[30];
   sprintf(buf, "IP: %s", str);
@@ -335,23 +335,23 @@ void DisplayST7789::ip(const char* str) {
   print(buf);
 }
 
-void DisplayST7789::set_TextSize(uint8_t s) {
+void DspCore::set_TextSize(uint8_t s) {
   setTextSize(s);
 }
 
-void DisplayST7789::set_TextColor(uint16_t fg, uint16_t bg) {
+void DspCore::set_TextColor(uint16_t fg, uint16_t bg) {
   setTextColor(fg, bg);
 }
 
-void DisplayST7789::set_Cursor(int16_t x, int16_t y) {
+void DspCore::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplayST7789::printText(const char* txt) {
+void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DisplayST7789::loop() {
+void DspCore::loop() {
 
 }
 

@@ -30,11 +30,11 @@ const unsigned char logo [] PROGMEM=
 
 TwoWire I2CSSD1306 = TwoWire(0);
 
-DisplaySSD1306::DisplaySSD1306(): Adafruit_SSD1306(128, ((DSP_MODEL==DSP_SSD1306)?64:32), &I2CSSD1306, I2C_RST) {
+DspCore::DspCore(): Adafruit_SSD1306(128, ((DSP_MODEL==DSP_SSD1306)?64:32), &I2CSSD1306, I2C_RST) {
 
 }
 
-char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
+char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;
@@ -108,7 +108,7 @@ char* DisplaySSD1306::utf8Rus(const char* str, bool uppercase) {
   return strn;
 }
 
-void DisplaySSD1306::apScreen() {
+void DspCore::apScreen() {
   setTextSize(1);
   setTextColor(TFT_FG, TFT_BG);
   setCursor(TFT_FRAMEWDT, TFT_FRAMEWDT + ((DSP_MODEL==DSP_SSD1306)?2:1) * TFT_LINEHGHT);
@@ -128,7 +128,7 @@ void DisplaySSD1306::apScreen() {
   print("/");
 }
 
-void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   I2CSSD1306.begin(I2C_SDA, I2C_SCL, (uint32_t)100000);
   if (!begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
@@ -148,7 +148,7 @@ void DisplaySSD1306::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   fillSpaces = true;
 }
 
-void DisplaySSD1306::drawLogo() {
+void DspCore::drawLogo() {
   clearDisplay();
 #if DSP_MODEL==DSP_SSD1306
   drawBitmap(
@@ -163,7 +163,7 @@ void DisplaySSD1306::drawLogo() {
   display();
 }
 
-void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
@@ -182,17 +182,17 @@ void DisplaySSD1306::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplaySSD1306::clearDsp() {
+void DspCore::clearDsp() {
   fillScreen(TFT_BG);
 }
 
-void DisplaySSD1306::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT == 0) return;
   fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
-void DisplaySSD1306::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(textsize);
@@ -203,11 +203,11 @@ void DisplaySSD1306::getScrolBbounds(const char* text, const char* separator, by
   sWidth = w;
 }
 
-void DisplaySSD1306::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   fillRect(0,  texttop, swidth, textheight, bg);
 }
 
-void DisplaySSD1306::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   const char* txt = text;
@@ -218,7 +218,7 @@ void DisplaySSD1306::centerText(const char* text, byte y, uint16_t fg, uint16_t 
   print(txt);
 }
 
-void DisplaySSD1306::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
@@ -228,11 +228,11 @@ void DisplaySSD1306::rightText(const char* text, byte y, uint16_t fg, uint16_t b
   print(text);
 }
 
-void DisplaySSD1306::displayHeapForDebug() {
+void DspCore::displayHeapForDebug() {
 
 }
 
-void DisplaySSD1306::printClock(const char* timestr) {
+void DspCore::printClock(const char* timestr) {
 #if DSP_MODEL==DSP_SSD1306
   setTextSize(2);
   centerText(timestr, 34, TFT_FG, TFT_BG);
@@ -243,13 +243,13 @@ void DisplaySSD1306::printClock(const char* timestr) {
 #endif
 }
 
-void DisplaySSD1306::printClock(struct tm timeinfo, bool dots, bool redraw) {
+void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw) {
 #if DSP_MODEL==DSP_SSD1306x32
   strftime(insideClc, sizeof(insideClc), dots?" %H %M":" %H:%M", &timeinfo);
 #endif
 }
 
-void DisplaySSD1306::drawVolumeBar(bool withNumber) {
+void DspCore::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - 4;
   int16_t vWidth = swidth-TFT_FRAMEWDT*2;
 #if DSP_MODEL==DSP_SSD1306
@@ -278,7 +278,7 @@ void DisplaySSD1306::drawVolumeBar(bool withNumber) {
   }
 }
 
-void DisplaySSD1306::drawNextStationNum(uint16_t num) {
+void DspCore::drawNextStationNum(uint16_t num) {
   setTextSize(2);
   setTextColor(TFT_FG);
   char numstr[7];
@@ -291,12 +291,12 @@ void DisplaySSD1306::drawNextStationNum(uint16_t num) {
   print(numstr);
 }
 
-void DisplaySSD1306::frameTitle(const char* str) {
+void DspCore::frameTitle(const char* str) {
   setTextSize((DSP_MODEL==DSP_SSD1306?2:1));
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
-void DisplaySSD1306::rssi(const char* str) {
+void DspCore::rssi(const char* str) {
   if(!fillSpaces && DSP_MODEL==DSP_SSD1306x32) return;
   char buf[4];
   strlcpy(buf, str, strlen(str)-2);
@@ -305,7 +305,7 @@ void DisplaySSD1306::rssi(const char* str) {
   rightText(buf, vTop, SILVER, TFT_BG);
 }
 
-void DisplaySSD1306::ip(const char* str) {
+void DspCore::ip(const char* str) {
   if(!fillSpaces && DSP_MODEL==DSP_SSD1306x32) return;
   int16_t vTop = sheight - TFT_LINEHGHT - ((DSP_MODEL==DSP_SSD1306)?4:2);
   setTextSize(1);
@@ -314,23 +314,23 @@ void DisplaySSD1306::ip(const char* str) {
   print(str);
 }
 
-void DisplaySSD1306::set_TextSize(uint8_t s) {
+void DspCore::set_TextSize(uint8_t s) {
   setTextSize(s);
 }
 
-void DisplaySSD1306::set_TextColor(uint16_t fg, uint16_t bg) {
+void DspCore::set_TextColor(uint16_t fg, uint16_t bg) {
   setTextColor(fg, bg);
 }
 
-void DisplaySSD1306::set_Cursor(int16_t x, int16_t y) {
+void DspCore::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplaySSD1306::printText(const char* txt) {
+void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DisplaySSD1306::loop() {
+void DspCore::loop() {
   if (checkdelay(83, loopdelay)) {
 #if DSP_MODEL==DSP_SSD1306x32
     if(fillSpaces) printClock(insideClc);
@@ -340,7 +340,7 @@ void DisplaySSD1306::loop() {
   yield();
 }
 
-boolean DisplaySSD1306::checkdelay(int m, unsigned long &tstamp) {
+boolean DspCore::checkdelay(int m, unsigned long &tstamp) {
   if (millis() - tstamp > m) {
     tstamp = millis();
     return true;

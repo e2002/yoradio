@@ -10,9 +10,9 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
 
-class DisplayDummy {
+class DspCore {
   public:
-    DisplayDummy();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -43,7 +43,7 @@ class DisplayDummy {
 
 };
 
-extern DisplayDummy dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

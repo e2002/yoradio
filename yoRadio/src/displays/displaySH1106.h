@@ -17,9 +17,9 @@
 #define SCROLLDELTA 5
 #define SCROLLTIME 110
 
-class DisplaySH1106: public Adafruit_SH1106G {
+class DspCore: public Adafruit_SH1106G {
   public:
-    DisplaySH1106();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -52,7 +52,7 @@ class DisplaySH1106: public Adafruit_SH1106G {
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 
-extern DisplaySH1106 dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

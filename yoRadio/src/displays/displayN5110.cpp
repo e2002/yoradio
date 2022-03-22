@@ -20,11 +20,11 @@ const unsigned char logo [] PROGMEM=
 	0xe0, 0x01, 0xff, 0xc0
 };
 
-DisplayN5110::DisplayN5110(): Adafruit_PCD8544(TFT_DC, TFT_CS, TFT_RST) {
+DspCore::DspCore(): Adafruit_PCD8544(TFT_DC, TFT_CS, TFT_RST) {
 
 }
 
-char* DisplayN5110::utf8Rus(const char* str, bool uppercase) {
+char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;
@@ -97,7 +97,7 @@ char* DisplayN5110::utf8Rus(const char* str, bool uppercase) {
   return strn;
 }
 
-void DisplayN5110::apScreen() {
+void DspCore::apScreen() {
   setTextSize(1);
   setTextColor(TFT_FG, TFT_BG);
   setFont(&TinyFont6);
@@ -117,7 +117,7 @@ void DisplayN5110::apScreen() {
   setFont();
 }
 
-void DisplayN5110::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   begin();
   setContrast(TFT_CONTRAST);
   cp437(true);
@@ -133,13 +133,13 @@ void DisplayN5110::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   sheight = screenheight;
 }
 
-void DisplayN5110::drawLogo() {
+void DspCore::drawLogo() {
   clearDisplay();
   drawBitmap((width()  - LOGO_WIDTH ) / 2, 0, logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display();
 }
 
-void DisplayN5110::drawPlaylist(uint16_t currentItem, char* currentItemText) {
+void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
@@ -158,17 +158,17 @@ void DisplayN5110::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   }
 }
 
-void DisplayN5110::clearDsp() {
+void DspCore::clearDsp() {
   fillScreen(TFT_BG);
 }
 
-void DisplayN5110::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT == 0) return;
   fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
-void DisplayN5110::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
+void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(textsize);
@@ -179,11 +179,11 @@ void DisplayN5110::getScrolBbounds(const char* text, const char* separator, byte
   sWidth = w;
 }
 
-void DisplayN5110::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
+void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   fillRect(0,  texttop, swidth, textheight, bg);
 }
 
-void DisplayN5110::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   const char* txt = text;
@@ -203,7 +203,7 @@ void DisplayN5110::centerText(const char* text, byte y, uint16_t fg, uint16_t bg
   setFont();
 }
 
-void DisplayN5110::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
+void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   int16_t  x1, y1;
   uint16_t w, h;
   getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
@@ -213,11 +213,11 @@ void DisplayN5110::rightText(const char* text, byte y, uint16_t fg, uint16_t bg)
   print(text);
 }
 
-void DisplayN5110::displayHeapForDebug() {
+void DspCore::displayHeapForDebug() {
 
 }
 
-void DisplayN5110::printClock(const char* timestr) {
+void DspCore::printClock(const char* timestr) {
   int16_t  x1, y1;
   uint16_t w, h;
   setTextSize(1);
@@ -230,7 +230,7 @@ void DisplayN5110::printClock(const char* timestr) {
   setFont();
 }
 
-void DisplayN5110::drawVolumeBar(bool withNumber) {
+void DspCore::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - 3;
   int16_t vWidth = swidth;
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
@@ -253,7 +253,7 @@ void DisplayN5110::drawVolumeBar(bool withNumber) {
   }
 }
 
-void DisplayN5110::drawNextStationNum(uint16_t num) {
+void DspCore::drawNextStationNum(uint16_t num) {
   setTextSize(1);
   setTextColor(TFT_FG);
   char numstr[7];
@@ -268,12 +268,12 @@ void DisplayN5110::drawNextStationNum(uint16_t num) {
   setFont();
 }
 
-void DisplayN5110::frameTitle(const char* str) {
+void DspCore::frameTitle(const char* str) {
   setTextSize(1);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
 }
 
-void DisplayN5110::rssi(const char* str) {
+void DspCore::rssi(const char* str) {
   char buf[4];
   strlcpy(buf, str, strlen(str)-2);
   int16_t vTop = sheight - TFT_LINEHGHT - 2;
@@ -283,7 +283,7 @@ void DisplayN5110::rssi(const char* str) {
   setFont();
 }
 
-void DisplayN5110::ip(const char* str) {
+void DspCore::ip(const char* str) {
   int16_t vTop = sheight - TFT_LINEHGHT - 2;
   setTextSize(1);
   setTextColor(SILVER, TFT_BG);
@@ -293,30 +293,30 @@ void DisplayN5110::ip(const char* str) {
   setFont();
 }
 
-void DisplayN5110::set_TextSize(uint8_t s) {
+void DspCore::set_TextSize(uint8_t s) {
   setTextSize(s);
 }
 
-void DisplayN5110::set_TextColor(uint16_t fg, uint16_t bg) {
+void DspCore::set_TextColor(uint16_t fg, uint16_t bg) {
   setTextColor(fg, bg);
 }
 
-void DisplayN5110::set_Cursor(int16_t x, int16_t y) {
+void DspCore::set_Cursor(int16_t x, int16_t y) {
   setCursor(x, y);
 }
 
-void DisplayN5110::printText(const char* txt) {
+void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DisplayN5110::loop() {
+void DspCore::loop() {
   if (checkdelay(83, loopdelay)) {
     display();
   }
   yield();
 }
 
-boolean DisplayN5110::checkdelay(int m, unsigned long &tstamp) {
+boolean DspCore::checkdelay(int m, unsigned long &tstamp) {
   if (millis() - tstamp > m) {
     tstamp = millis();
     return true;

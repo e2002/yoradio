@@ -23,9 +23,9 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   10
 
-class DisplayN5110: public Adafruit_PCD8544 {
+class DspCore: public Adafruit_PCD8544 {
   public:
-    DisplayN5110();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -57,7 +57,7 @@ class DisplayN5110: public Adafruit_PCD8544 {
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 
-extern DisplayN5110 dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

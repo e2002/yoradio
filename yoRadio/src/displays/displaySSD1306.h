@@ -36,10 +36,10 @@
 #define VOL_TOP     16
 
 #endif
-class DisplaySSD1306: public Adafruit_SSD1306 {
+class DspCore: public Adafruit_SSD1306 {
   public:
     bool fillSpaces;
-    DisplaySSD1306();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -73,7 +73,7 @@ class DisplaySSD1306: public Adafruit_SSD1306 {
     boolean checkdelay(int m, unsigned long &tstamp);
 };
 
-extern DisplaySSD1306 dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

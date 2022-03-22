@@ -8,29 +8,7 @@
 #include "netserver.h"
 #include "network.h"
 
-#if DSP_MODEL==DSP_DUMMY
-#include "src/displays/displayDummy.h"
-DisplayDummy dsp;
-#elif DSP_MODEL==DSP_ST7735
-#include "src/displays/displayST7735.h"
-DisplayST7735 dsp;
-#elif DSP_MODEL==DSP_SSD1306 || DSP_MODEL==DSP_SSD1306x32
-#include "src/displays/displaySSD1306.h"
-DisplaySSD1306 dsp;
-#elif DSP_MODEL==DSP_NOKIA5110
-#include "src/displays/displayN5110.h"
-DisplayN5110 dsp;
-#elif DSP_MODEL==DSP_ST7789
-#include "src/displays/displayST7789.h"
-DisplayST7789 dsp;
-#elif DSP_MODEL==DSP_SH1106
-#include "src/displays/displaySH1106.h"
-DisplaySH1106 dsp;
-#elif DSP_MODEL==DSP_1602I2C
-#include "src/displays/displayLC1602.h"
-DisplayLC1602 dsp;
-#endif
-
+DspCore dsp;
 Display display;
 
 void ticks() {
@@ -206,6 +184,7 @@ void Display::init() {
 #endif
   plCurrent.init(" * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
   plCurrent.lock();
+  if(dsp_on_init) dsp_on_init();
 }
 
 void Display::apScreen() {
@@ -229,6 +208,7 @@ void Display::start() {
   rssi();
   time();
   timer.attach_ms(1000, ticks);
+  if(dsp_on_start) dsp_on_start(&dsp);
   // Экстреминатус секвестирован
 }
 
@@ -281,6 +261,7 @@ void Display::swichMode(displayMode_e newmode) {
     plCurrent.reset();
     drawPlaylist();
   }
+  if(dsp_on_newmode) dsp_on_newmode(newmode);
 }
 
 void Display::drawPlayer() {
@@ -336,6 +317,7 @@ void Display::loop() {
       }
   }
   dsp.loop();
+  if(dsp_on_loop) dsp_on_loop();
   yield();
 }
 
@@ -408,6 +390,7 @@ void Display::ip() {
 }
 
 void Display::time(bool redraw) {
+  if(dsp_before_clock) if(!dsp_before_clock(&dsp, dt)) return;
   char timeStringBuff[20] = { 0 };
   if (!dt) {
     heap();
@@ -424,6 +407,7 @@ void Display::time(bool redraw) {
   dsp.printClock(network.timeinfo, dt, redraw);
 #endif
   dt = !dt;
+  if(dsp_after_clock) dsp_after_clock(&dsp, dt);
 }
 
 void Display::volume() {

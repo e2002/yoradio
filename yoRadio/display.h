@@ -5,6 +5,22 @@
 #include <Ticker.h>
 #include "config.h"
 
+#if DSP_MODEL==DSP_DUMMY
+#include "src/displays/displayDummy.h"
+#elif DSP_MODEL==DSP_ST7735
+#include "src/displays/displayST7735.h"
+#elif DSP_MODEL==DSP_SSD1306 || DSP_MODEL==DSP_SSD1306x32
+#include "src/displays/displaySSD1306.h"
+#elif DSP_MODEL==DSP_NOKIA5110
+#include "src/displays/displayN5110.h"
+#elif DSP_MODEL==DSP_ST7789
+#include "src/displays/displayST7789.h"
+#elif DSP_MODEL==DSP_SH1106
+#include "src/displays/displaySH1106.h"
+#elif DSP_MODEL==DSP_1602I2C
+#include "src/displays/displayLC1602.h"
+#endif
+
 enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS };
 
 class Scroll {
@@ -76,5 +92,12 @@ class Display {
 };
 
 extern Display display;
+
+extern __attribute__((weak)) bool dsp_before_clock(DspCore *dsp, bool dots);
+extern __attribute__((weak)) void dsp_after_clock(DspCore *dsp, bool dots);
+extern __attribute__((weak)) void dsp_on_init();
+extern __attribute__((weak)) void dsp_on_loop();
+extern __attribute__((weak)) void dsp_on_start(DspCore *dsp);
+extern __attribute__((weak)) void dsp_on_newmode(displayMode_e newmode);
 
 #endif

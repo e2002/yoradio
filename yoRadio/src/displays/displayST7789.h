@@ -25,9 +25,9 @@
 #define TITLE_TOP2 TFT_FRAMEWDT + (META_SIZE+2) * TFT_LINEHGHT + 8
 #define TITLE_FG2 SILVER
 
-class DisplayST7789: public Adafruit_ST7789 {
+class DspCore: public Adafruit_ST7789 {
   public:
-    DisplayST7789();
+    DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
     void initD(uint16_t &screenwidth, uint16_t &screenheight);
@@ -61,7 +61,7 @@ class DisplayST7789: public Adafruit_ST7789 {
 
 };
 
-extern DisplayST7789 dsp;
+extern DspCore dsp;
 
 /*
  * TFT COLORS

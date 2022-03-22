@@ -7,7 +7,7 @@
 - [Encoders](#encoders)
 - [IR receiver](#ir-receiver)
 - [Joystick](#joystic)
-- [Back to Readme](Readme.md)
+- [Back to README](README.md)
 
 ---
 ### Buttons
