@@ -1,36 +1,27 @@
-#ifndef displayLC1602_h
-#define displayLC1602_h
+#ifndef displaySSD1305_h
+#define displaySSD1305_h
 
 #include "Arduino.h"
-#if DSP_MODEL==DSP_1602I2C
-#include "../LiquidCrystalI2C/LiquidCrystalI2CEx.h"
-#else
-#include <LiquidCrystal.h>
-#endif
-#define TFT_LINEHGHT    1
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1305.h>
+
+#define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
 
-#define PLMITEMS        1
+#define PLMITEMS        7
 #define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   9
-#define TITLE_TOP1      1
-#define TITLE_SIZE2     0
-#define PL_TOP          1
+#define PLMITEMHEIGHT   10
+#define META_SIZE       1
+#define TITLE_TOP1 TFT_FRAMEWDT + TFT_LINEHGHT
+#define TITLE_TOP2 TFT_FRAMEWDT + 2 * TFT_LINEHGHT
 #define PLCURRENT_SIZE  1
+#define TFT_FULLTIME    1
+#define SCROLLDELTA 3
+#define SCROLLTIME 83
+#define FPS        50
 
-#define SCROLLDELTA 1
-#define SCROLLTIME 250
-#define BOOTSTR_TOP2    0
-#define BOOTSTR_TOP1    1
-#define STARTTIME_PL    2000
-
-#if DSP_MODEL==DSP_1602I2C
-class DspCore: public LiquidCrystal_I2C {
-#else
-class DspCore: public LiquidCrystal {
-#endif
+class DspCore: public Adafruit_SSD1305 {
   public:
-    bool fillSpaces;
     DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
     uint16_t clockY;
@@ -49,7 +40,7 @@ class DspCore: public LiquidCrystal {
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
     void drawNextStationNum(uint16_t num);
-    char* utf8Rus(const char* str, bool uppercase=true);
+    char* utf8Rus(const char* str, bool uppercase);
     void drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg);
     void getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth);
     void clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg);
@@ -59,8 +50,7 @@ class DspCore: public LiquidCrystal {
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop();
   private:
-    uint16_t swidth, sheight, xOffset, yOffset;
-    int16_t nextX;
+    uint16_t swidth, sheight;
     unsigned long loopdelay;
     boolean checkdelay(int m, unsigned long &tstamp);
 };
@@ -70,11 +60,9 @@ extern DspCore dsp;
 /*
  * TFT COLORS
  */
-#define CLOCK_SPACE 6
-#define VOL_SPACE   3
-#define SILVER      0
-#define TFT_BG      0
-#define TFT_FG      CLOCK_SPACE
-#define TFT_LOGO    VOL_SPACE
+#define SILVER      WHITE
+#define TFT_BG      BLACK
+#define TFT_FG      WHITE
+#define TFT_LOGO    WHITE
 
 #endif

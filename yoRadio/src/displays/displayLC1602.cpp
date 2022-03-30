@@ -1,6 +1,6 @@
 #include "../../options.h"
 
-#if DSP_MODEL==DSP_1602I2C
+#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_1602
 
 #include "displayLC1602.h"
 #include "../../player.h"
@@ -13,10 +13,15 @@
 
 const byte controlspaces[] = { CLOCK_SPACE, VOL_SPACE };
 
+#if DSP_MODEL==DSP_1602I2C
 DspCore::DspCore(): LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL) {
 
 }
+#else
+DspCore::DspCore(): LiquidCrystal(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7) {
 
+}
+#endif
 void DspCore::apScreen() {
   setCursor(0,0);
   print("YORADIO AP MODE");
@@ -25,8 +30,12 @@ void DspCore::apScreen() {
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+#if DSP_MODEL==DSP_1602I2C
   init();
   backlight();
+#else
+  begin(16, 2);
+#endif
   screenwidth = 16;
   screenheight = 2;
   swidth = screenwidth;

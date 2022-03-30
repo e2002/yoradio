@@ -1,24 +1,31 @@
-#ifndef displayST7735_h
-#define displayST7735_h
+#ifndef displayILI9341_h
+#define displayILI9341_h
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
-#include "fonts/DS_DIGI28pt7b.h"
+#include <Adafruit_ILI9341.h>
+// https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+#include "fonts/DS_DIGI42pt7b.h"
 
 #define TFT_LINEHGHT    10
-#define TFT_FRAMEWDT    4
+#define TFT_FRAMEWDT    8
+#define META_SIZE       3
+#define TITLE_SIZE1     2
+#define TITLE_SIZE2     2
 
-#define PLMITEMS        7
+#define SCROLLDELTA 4
+#define SCROLLTIME 60
+
+#define PLMITEMS        9
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
-#define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
-#define TITLE_FG2       SILVER
+#define TFT_FULLTIME    1
 
-#define SCROLLDELTA 3
-#define SCROLLTIME 67
+#define TITLE_TOP1 TFT_FRAMEWDT + META_SIZE * TFT_LINEHGHT + 8
+#define TITLE_TOP2 TFT_FRAMEWDT + (META_SIZE+2) * TFT_LINEHGHT + 8
+#define TITLE_FG2 SILVER
 
-class DspCore: public Adafruit_ST7735 {
+class DspCore: public Adafruit_ILI9341 {
   public:
     DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];
@@ -27,13 +34,14 @@ class DspCore: public Adafruit_ST7735 {
     void apScreen();
     void drawLogo();
     void clearDsp();
-    void centerText(const char* text, byte y, uint16_t fg, uint16_t bg);
-    void rightText(const char* text, byte y, uint16_t fg, uint16_t bg);
+    void centerText(const char* text, uint16_t y, uint16_t fg, uint16_t bg);
+    void rightText(const char* text, uint16_t y, uint16_t fg, uint16_t bg, bool fliprect=false, uint16_t delta = 0);
     void set_TextSize(uint8_t s);
     void set_TextColor(uint16_t fg, uint16_t bg);
     void set_Cursor(int16_t x, int16_t y);
     void printText(const char* txt);
     void printClock(const char* timestr);
+    void printClock(struct tm timeinfo, bool dots, bool redraw = false);
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
     void drawNextStationNum(uint16_t num);
@@ -48,6 +56,9 @@ class DspCore: public Adafruit_ST7735 {
     void loop();
   private:
     uint16_t swidth, sheight;
+    char oldTimeBuf[20];
+    uint8_t oldVolume;
+    uint16_t wot, hot;
 
 };
 

@@ -10,14 +10,18 @@
 
 #define PLMITEMS        7
 #define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   9
+#define PLMITEMHEIGHT   10
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
 #define PLCURRENT_SIZE  1
 #define TFT_FULLTIME    1
-#define SCROLLDELTA 5
-#define SCROLLTIME 110
+#define SCROLLDELTA 3
+#define SCROLLTIME 83
 
+#if DSP_MODEL==DSP_SH1106
 class DspCore: public Adafruit_SH1106G {
+#else
+class DspCore: public Adafruit_SH1107 {
+#endif
   public:
     DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];

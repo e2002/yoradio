@@ -40,6 +40,7 @@ void Player::init() {
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
   mode = STOPPED;
+  setOutputPins(false);
   requesToStart = true;
   zeroRequest();
 }
@@ -58,7 +59,9 @@ void Player::loop() {
     if (isRunning()) {
       //digitalWrite(LED_BUILTIN, LOW);
       setOutputPins(false);
-      display.title("[stopped]");
+      //display.title("[stopped]");
+      config.setTitle("[stopped]");
+      netserver.requestOnChange(TITLE, 0);
       stopSong();
       stopInfo();
     }
@@ -72,7 +75,8 @@ void Player::loop() {
   }
   if (request.volume >= 0) {
     config.setVolume(request.volume, request.doSave);
-    display.volume();
+    //display.volume();
+    display.refreshVolume = true;
     telnet.printf("##CLI.VOL#: %d\n", config.store.volume);
     Audio::setVolume(volToI2S(request.volume));
     zeroRequest();
@@ -95,11 +99,17 @@ void Player::play(uint16_t stationId) {
   stopSong();
   //digitalWrite(LED_BUILTIN, LOW);
   setOutputPins(false);
-  display.title("[connecting]");
-  telnet.printf("##CLI.META#: %s\n", config.station.title);
+  //display.title("[connecting]");
+
+  config.setTitle("[connecting]");
+  //display.refreshTitle = true;
+  netserver.requestOnChange(TITLE, 0);
+  //telnet.printf("##CLI.META#: %s\n", config.station.title);
   config.loadStation(stationId);
   setVol(config.store.volume, true);
-  display.station();
+  //display.station();
+  display.refreshStation = true;
+  netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
   if (connecttohost(config.station.url)) {
     mode = PLAYING;
@@ -129,7 +139,7 @@ void Player::next() {
 void Player::toggle() {
   if (mode == PLAYING) {
     mode = STOPPED;
-    display.title("[stopped]");
+    //display.title("[stopped]");
   } else {
     request.station = config.store.lastStation;
   }
@@ -162,7 +172,15 @@ void Player::setVol(byte volume, bool inside) {
   if (inside) {
     setVolume(volToI2S(volume));
   } else {
+#if CORE_FOR_LOOP_CONTROLS==255
     request.volume = volume;
     request.doSave = true;
+#else
+    config.setVolume(volume, true);
+    //display.volume();
+    display.refreshVolume = true;
+    telnet.printf("##CLI.VOL#: %d\n", config.store.volume);
+    Audio::setVolume(volToI2S(volume));
+#endif
   }
 }

@@ -1,7 +1,8 @@
 void audio_info(const char *info) {
   if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
-  if (strstr(info, "failed!") != NULL) {
-    display.title("[Request failed!]");
+  if (strstr(info, "failed!") != NULL || strstr(info, "404") != NULL) {
+    config.setTitle("[request failed]");
+    //config.setTitle(info);
     player.mode = STOPPED;
     player.stopInfo();
   }
@@ -27,25 +28,17 @@ bool printable(const char *info) {
 void audio_showstation(const char *info) {
   if (strlen(info) > 0) {
     bool p = printable(info);
-    display.title(p?info:"*****");
-    if (player.requesToStart) {
-      telnet.info();
-      player.requesToStart = false;
-    } else {
-      telnet.printf("##CLI.ICY0#: %s\n", p?info:"*****");
-    }
+    //display.title(p?info:"*****");
+    config.setTitle(p?info:"*****");
+    netserver.requestOnChange(TITLE, 0);
   }
 }
 
 void audio_showstreamtitle(const char *info) {
   if (strlen(info) > 0) {
     bool p = printable(info);
-    display.title(p?info:"*****");
-    if (player.requesToStart) {
-      telnet.info();
-      player.requesToStart = false;
-    } else {
-      telnet.printf("##CLI.META#: %s\n> ", p?info:"*****");
-    }
+    //display.title(p?info:"*****");
+    config.setTitle(p?info:"*****");
+    netserver.requestOnChange(TITLE, 0);
   }
 }

@@ -26,6 +26,11 @@ ESP32Encoder encoder2;
 #endif
 #endif
 
+#if TS_CS!=255
+#include <XPT2046_Touchscreen.h>
+XPT2046_Touchscreen ts(TS_CS);
+#endif
+
 #if IR_PIN!=255
 #include <assert.h>
 #include <IRrecv.h>
@@ -82,7 +87,10 @@ void initControls() {
     button[i].setPressTicks(BTN_PRESS_TICKS);
   }
 #endif
-
+#if TS_CS!=255
+  ts.begin();
+  ts.setRotation(TS_ROTATE);
+#endif
 #if IR_PIN!=255
   pinMode(IR_PIN, INPUT);
   assert(irutils::lowLevelSanityCheck() == 0);
@@ -107,7 +115,7 @@ void loopControls() {
     if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255)) continue;
     button[i].tick();
     if (lpId >= 0) {
-      if(DSP_MODEL==DSP_DUMMY && (lpId==4 || lpId==5)) continue;
+      if (DSP_MODEL == DSP_DUMMY && (lpId == 4 || lpId == 5)) continue;
       onBtnDuringLongPress(lpId);
       yield();
     }
@@ -116,6 +124,9 @@ void loopControls() {
 #endif
 #if IR_PIN!=255
   irLoop();
+#endif
+#if TS_CS!=255
+  touchLoop();
 #endif
   yield();
 }
@@ -138,10 +149,10 @@ void encoder2Loop() {
     enc2OldPosition = encNewPosition;
     encoder2.setCount(0);
     uint8_t bp = 2;
-    if(ENC2_BTNB!=255){
+    if (ENC2_BTNB != 255) {
       bp = digitalRead(ENC2_BTNB);
     }
-    if(bp==HIGH && display.mode!=STATIONS) display.swichMode(STATIONS);
+    if (bp == HIGH && display.mode != STATIONS) display.swichMode(STATIONS);
     controlsEvent(encNewPosition > 0);
   }
 }
@@ -160,7 +171,8 @@ void irBlink() {
 void irNum(byte num) {
   uint16_t s;
   if (display.numOfNextStation == 0 && num == 0) return;
-  if (display.mode == PLAYER) display.swichMode(NUMBERS);
+  //if (display.mode == PLAYER) display.swichMode(NUMBERS);
+  display.swichMode(NUMBERS);
   if (display.numOfNextStation > UINT16_MAX / 10) return;
   s = display.numOfNextStation * 10 + num;
   if (s > config.store.countStation) return;
@@ -192,7 +204,9 @@ void irLoop() {
           irBlink();
           if (display.mode == NUMBERS) {
             display.swichMode(PLAYER);
-            player.play(display.numOfNextStation);
+            //player.play(display.numOfNextStation);
+            player.request.station = display.numOfNextStation;
+            player.request.doSave = true;
             display.numOfNextStation = 0;
             break;
           }
@@ -272,12 +286,124 @@ void irLoop() {
 }
 #endif // if IR_PIN!=255
 
+#if TS_CS!=255
+#ifndef TS_X_MIN
+  #define TS_X_MIN              400
+#endif
+#ifndef TS_X_MAX
+  #define TS_X_MAX              3800
+#endif
+#ifndef TS_Y_MIN
+  #define TS_Y_MIN              260
+#endif
+#ifndef TS_Y_MAX
+  #define TS_Y_MAX              3800
+#endif
+#ifndef TS_STEPS
+  #define TS_STEPS              70
+#endif
+
+boolean wastouched = true;
+unsigned long touchdelay;
+uint16_t touchVol, touchStation;
+uint16_t oldTouchP[2];
+tsDirection_e direct;
+unsigned long touchLongPress;
+
+tsDirection_e tsDirection(uint16_t x, uint16_t y) {
+  int16_t dX = x - oldTouchP[0];
+  int16_t dY = y - oldTouchP[1];
+  if (abs(dX) > 20 || abs(dY) > 20) {
+    if (abs(dX) > abs(dY)) {
+      if (dX > 0) {
+        return TSD_RIGHT;
+      } else {
+        return TSD_LEFT;
+      }
+    } else {
+      if (dY > 0) {
+        return TSD_DOWN;
+      } else {
+        return TSD_UP;
+      }
+    }
+  } else {
+    return TDS_REQUEST;
+  }
+}
+
+void touchLoop() {
+  if (!checklpdelay(100, touchdelay)) return;
+  boolean istouched = ts.touched();
+  if (istouched) {
+    TS_Point p = ts.getPoint();
+    uint16_t touchX = map(p.x, TS_X_MIN, TS_X_MAX, 0, display.screenwidth);
+    uint16_t touchY = map(p.y, TS_Y_MIN, TS_Y_MAX, 0, display.screenheight);
+    if (!wastouched) { /*     START TOUCH     */
+      oldTouchP[0] = touchX;
+      oldTouchP[1] = touchY;
+      touchVol = touchX;
+      touchStation = touchY;
+      direct = TDS_REQUEST;
+      touchLongPress=millis();
+    } else { /*     SWIPE TOUCH     */
+      direct = tsDirection(touchX, touchY);
+      switch (direct) {
+        case TSD_LEFT:
+        case TSD_RIGHT: {
+            if(display.mode==PLAYER || display.mode==VOL){
+              int16_t xDelta = map(abs(touchVol - touchX), 0, display.screenwidth, 0, TS_STEPS);
+              Serial.println(touchVol - touchX);
+              display.swichMode(VOL);
+              if (xDelta>1) {
+                controlsEvent((touchVol - touchX)<0);
+                touchVol = touchX;
+              }
+            }
+            break;
+          }
+        case TSD_UP:
+        case TSD_DOWN: {
+            if(display.mode==PLAYER || display.mode==STATIONS){
+              int16_t yDelta = map(abs(touchStation - touchY), 0, display.screenheight, 0, TS_STEPS);
+              display.swichMode(STATIONS);
+              if (yDelta>1) {
+                controlsEvent((touchStation - touchY)>0);
+                touchStation = touchY;
+              }
+            }
+            break;
+          }
+      }
+    }
+    if (TS_DBG) {
+      Serial.print(", x = ");
+      Serial.print(p.x);
+      Serial.print(", y = ");
+      Serial.println(p.y);
+    }
+  } else {
+    if (wastouched) {/*     END TOUCH     */
+      if (direct == TDS_REQUEST) {
+        if(millis()-touchLongPress < BTN_PRESS_TICKS){
+          onBtnClick(EVT_BTNCENTER);
+        }else{
+          display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+        }
+      }
+      direct = TSD_STAY;
+    }
+  }
+  wastouched = istouched;
+}
+#endif // if TS_CS!=255
+
 void onBtnLongPressStart(int id) {
   switch ((controlEvt_e)id) {
     case EVT_BTNLEFT:
     case EVT_BTNRIGHT:
     case EVT_BTNUP:
-    case EVT_BTNDOWN:{
+    case EVT_BTNDOWN: {
         lpId = id;
         break;
       }
@@ -294,7 +420,7 @@ void onBtnLongPressStop(int id) {
     case EVT_BTNLEFT:
     case EVT_BTNRIGHT:
     case EVT_BTNUP:
-    case EVT_BTNDOWN:{
+    case EVT_BTNDOWN: {
         lpId = -1;
         break;
       }
@@ -328,7 +454,7 @@ void onBtnDuringLongPress(int id) {
             display.swichMode(STATIONS);
           }
           if (display.mode == STATIONS) {
-            controlsEvent(id==EVT_BTNDOWN);
+            controlsEvent(id == EVT_BTNDOWN);
           }
           break;
         }
@@ -373,7 +499,9 @@ void onBtnClick(int id) {
         }
         if (display.mode == STATIONS) {
           display.swichMode(PLAYER);
-          player.play(display.currentPlItem);
+          //player.play(display.currentPlItem);
+          player.request.station = display.currentPlItem;
+          player.request.doSave = true;
         }
         break;
       }
@@ -383,18 +511,18 @@ void onBtnClick(int id) {
       }
     case EVT_BTNUP:
     case EVT_BTNDOWN: {
-        if(DSP_MODEL==DSP_DUMMY){
-          if(id==EVT_BTNUP){
+        if (DSP_MODEL == DSP_DUMMY) {
+          if (id == EVT_BTNUP) {
             player.next();
-          }else{
+          } else {
             player.prev();
           }
-        }else{
+        } else {
           if (display.mode == PLAYER) {
             display.swichMode(STATIONS);
           }
           if (display.mode == STATIONS) {
-            controlsEvent(id==EVT_BTNDOWN);
+            controlsEvent(id == EVT_BTNDOWN);
           }
         }
         break;

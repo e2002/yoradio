@@ -1,7 +1,7 @@
 #include "config.h"
 #include <EEPROM.h>
 #include <SPIFFS.h>
-
+#include "display.h"
 Config config;
 
 void Config::init() {
@@ -128,6 +128,17 @@ byte Config::setLastSSID(byte val) {
   return store.lastSSID;
 }
 
+void Config::setTitle(const char* title){
+  memset(config.station.title, 0, BUFLEN);
+  strlcpy(config.station.title, title, BUFLEN);
+  display.refreshTitle = true;
+}
+
+void Config::setStation(const char* station){
+  memset(config.station.name, 0, BUFLEN);
+  strlcpy(config.station.name, station, BUFLEN);
+}
+    
 void Config::indexPlaylist() {
   File playlist = SPIFFS.open(PLAYLIST_PATH, "r");
   if (!playlist) {

@@ -152,8 +152,8 @@ void Scroll::sticks() {
 void Scroll::scroll() {
   if (!doscroll || textsize == 0) return;
   //if (textwidth > display.screenwidth) {
-    x -= SCROLLDELTA;
-    if (-x > textwidth + sepwidth - TFT_FRAMEWDT) x = TFT_FRAMEWDT;
+  x -= SCROLLDELTA;
+  if (-x > textwidth + sepwidth - TFT_FRAMEWDT) x = TFT_FRAMEWDT;
   //}
 }
 
@@ -180,11 +180,11 @@ void Display::init() {
   title2.init(" * ", TITLE_SIZE2, TITLE_TOP2, STARTTIME, TITLE_FG2, TFT_BG);
   int yStart = (screenheight / 2 - PLMITEMHEIGHT / 2) + 3;
 #ifdef PL_TOP
-  yStart=PL_TOP;
+  yStart = PL_TOP;
 #endif
   plCurrent.init(" * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
   plCurrent.lock();
-  if(dsp_on_init) dsp_on_init();
+  if (dsp_on_init) dsp_on_init();
 }
 
 void Display::apScreen() {
@@ -196,20 +196,25 @@ void Display::apScreen() {
 
 void Display::start() {
   clear();
+  refreshTitle = false;
+  refreshStation = false;
+  refreshVolume = false;
   if (network.status != CONNECTED) {
     apScreen();
     return;
   }
   mode = PLAYER;
-  title("[READY]");
+  config.setTitle("[READY]");
+  //title("[READY]");
+  loop();
   ip();
   volume();
   station();
   rssi();
   time();
   timer.attach_ms(1000, ticks);
-  if(dsp_on_start) dsp_on_start(&dsp);
-  // Экстреминатус секвестирован
+  if (dsp_on_start) dsp_on_start(&dsp);
+  // Экстреминатус секвестирован /*дважды*/ трижды
 }
 
 void Display::clear() {
@@ -234,7 +239,7 @@ void Display::swichMode(displayMode_e newmode) {
     plCurrent.lock();
     time(true);
 #ifdef CLOCK_SPACE  // if set space for clock in 1602 displays
-    dsp.fillSpaces=true;
+    dsp.fillSpaces = true;
     ip();
     rssi();
     volume();
@@ -246,7 +251,7 @@ void Display::swichMode(displayMode_e newmode) {
     title1.lock();
     if (TITLE_SIZE2 != 0) title2.lock();
 #ifdef CLOCK_SPACE
-    dsp.fillSpaces=false;
+    dsp.fillSpaces = false;
 #endif
   }
   if (newmode == VOL) {
@@ -261,7 +266,7 @@ void Display::swichMode(displayMode_e newmode) {
     plCurrent.reset();
     drawPlaylist();
   }
-  if(dsp_on_newmode) dsp_on_newmode(newmode);
+  if (dsp_on_newmode) dsp_on_newmode(newmode);
 }
 
 void Display::drawPlayer() {
@@ -298,6 +303,18 @@ void Display::drawNextStationNum(uint16_t num) {
 }
 
 void Display::loop() {
+  if(refreshStation){
+    refreshStation = false;
+    station();
+  }
+  if(refreshTitle){
+    refreshTitle = false;
+    title();
+  }
+  if(refreshVolume){
+    refreshVolume = false;
+    volume();
+  }
   switch (mode) {
     case PLAYER: {
         drawPlayer();
@@ -317,7 +334,7 @@ void Display::loop() {
       }
   }
   dsp.loop();
-  if(dsp_on_loop) dsp_on_loop();
+  if (dsp_on_loop) dsp_on_loop();
   yield();
 }
 
@@ -326,7 +343,7 @@ void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 }
 
 void Display::bootString(const char* text, byte y) {
-  dsp.centerText(text, y==1?BOOTSTR_TOP1:BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
+  dsp.centerText(text, y == 1 ? BOOTSTR_TOP1 : BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
   dsp.loop();
 }
 
@@ -342,21 +359,22 @@ void Display::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 void Display::station() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
   dsp.loop();
-  netserver.requestOnChange(STATION, 0);
+  //netserver.requestOnChange(STATION, 0);
 }
 
-void Display::returnTile(){
+void Display::returnTile() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
   meta.reset();
   dsp.loop();
 }
 
-void Display::title(const char *str) {
-  const char *title = str;
+void Display::title() {
+  /*
+  memset(config.station.title, 0, BUFLEN);
+  strlcpy(config.station.title, str, BUFLEN);
+  */
   char ttl[BUFLEN / 2] = { 0 };
   char sng[BUFLEN / 2] = { 0 };
-  memset(config.station.title, 0, BUFLEN);
-  strlcpy(config.station.title, title, BUFLEN);
   if (strlen(config.station.title) > 0) {
     char* ici;
     if ((ici = strstr(config.station.title, " - ")) != NULL && TITLE_SIZE2 != 0) {
@@ -368,9 +386,10 @@ void Display::title(const char *str) {
     }
     title1.setText(dsp.utf8Rus(ttl, true));
     if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
+
     dsp.loop();
   }
-  netserver.requestOnChange(TITLE, 0);
+  //netserver.requestOnChange(TITLE, 0);
 }
 
 void Display::heap() {
@@ -390,7 +409,7 @@ void Display::ip() {
 }
 
 void Display::time(bool redraw) {
-  if(dsp_before_clock) if(!dsp_before_clock(&dsp, dt)) return;
+  if (dsp_before_clock) if (!dsp_before_clock(&dsp, dt)) return;
   char timeStringBuff[20] = { 0 };
   if (!dt) {
     heap();
@@ -407,10 +426,11 @@ void Display::time(bool redraw) {
   dsp.printClock(network.timeinfo, dt, redraw);
 #endif
   dt = !dt;
-  if(dsp_after_clock) dsp_after_clock(&dsp, dt);
+  if (dsp_after_clock) dsp_after_clock(&dsp, dt);
 }
 
 void Display::volume() {
   dsp.drawVolumeBar(mode == VOL);
-  netserver.requestOnChange(VOLUME, 0);
+  //netserver.requestOnChange(VOLUME, 0);
+  netserver.volRequest = true;
 }

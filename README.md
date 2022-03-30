@@ -36,15 +36,23 @@ https://aliexpress.com/item/32965676064.html
 - or **SSD1306** 0.96' 128x64 I2C https://aliexpress.com/item/1005001621806398.html
 - or **SSD1306** 0,91' 128x32 I2C https://aliexpress.com/item/32798439084.html
 - or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.html
-- or **ST7789** 320x240 SPI https://aliexpress.com/item/32960241206.html
-- or **SH1106** 128x64 I2C https://aliexpress.com/item/32683094040.html
+- or **ST7789** 2.4' 320x240 SPI https://aliexpress.com/item/32960241206.html
+- or **SH1106** 1.3' 128x64 I2C https://aliexpress.com/item/32683094040.html
 - or **1602** 16x2 I2C https://aliexpress.com/item/32305776560.html
+- or **1602** 16x2 without I2C https://aliexpress.com/item/32305776560.html
+- or **SSD1327** 1.5' 128x128 I2C https://aliexpress.com/item/1005001414175498.html
+- or **ILI9341** 3.2'320x240 SPI https://aliexpress.com/item/33048191074.html
+- or **SSD1305 (SSD1309)** 2.4' 128x64 SPI https://aliexpress.com/item/32950307344.html
+- or **SH1107** 0.96' 128x64 I2C https://aliexpress.com/item/4000551696674.html
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
 - Encoder https://www.aliexpress.com/item/32873198060.html
+- Joystick https://aliexpress.com/item/4000681560472.html \
+https://aliexpress.com/item/4000699838567.html
 - IR Control https://www.aliexpress.com/item/32562721229.html \
 https://www.aliexpress.com/item/33009687492.html
+- Touchscreen https://aliexpress.com/item/33048191074.html
 
 ---
 ## Connection tables
@@ -75,6 +83,27 @@ https://www.aliexpress.com/item/33009687492.html
 | SDA | 13* | I2C_SDA |
 | SCL | 14* | I2C_SCL |
 
+| LCD 1602 | ESP-32 | options.h |
+| ------ | ------ | ------ |
+| GND | GND | - |
+| VCC | +5v | - |
+| RS | any* | LCD_RS |
+| E | any* | LCD_E |
+| D4 | any* | LCD_D4 |
+| D5 | any* | LCD_D5 |
+| D6 | any* | LCD_D6 |
+| D7 | any* | LCD_D7 |
+
+| Touchscreen | ESP-32 | options.h |
+| ------ | ------ | ------ |
+| GND | GND | - |
+| VCC | +3.3v | - |
+| CLK | 18 | - |
+| DIN | 23 | - |
+| DO | 19 | - |
+| IRQ | N/C | - |
+| CS | any* | TS_CS |
+
 | I2S DAC | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND       | GND | - |
@@ -97,18 +126,19 @@ https://www.aliexpress.com/item/33009687492.html
 
 _\#\# Important! You must choose between I2S DAC and VS1053 by disabling the second module in the settings (see below)_
 
-| Buttons, Encoder, LED, IR | ESP-32 | options.h |
+| Buttons, Encoder, LED, IR, Joystick | ESP-32 | options.h |
 | ------ | ------ | ------ |
 | GND       | GND | - |
-| PIN       | * | ENC_BTNx, BTN_xxx, LED_BUILTIN, IR_PIN  |
+| PIN       | any* | ENC_BTNx, BTN_xxx, LED_BUILTIN, IR_PIN  |
 
-_\* Any free pin, configured in options.h_ \
-_\** GPIOs 34-39 don't have software pullup/down functions. For encoder/buttons use an external pullup resistor, 10 kOhm works here_
+_\* Any free pin, configured in myoptions.h_ \
+_\** GPIOs 34-39 don't have software pullup/down functions. For encoder/buttons use an external pullup resistor, 10 kOhm works here._ \
+_\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 
 ---
 ## Dependencies
 #### Libraries:
-**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, (\* depending on display model), ESP32Encoder, OneButton, IRremoteESP8266 \
+**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, (\* depending on display model), ESP32Encoder, OneButton, IRremoteESP8266, XPT2046_Touchscreen \
 **Github**: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)* \
 \* _if you need MQTT support_
 
@@ -250,6 +280,13 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.010
+- added displays [SSD1327](https://aliexpress.com/item/1005001414175498.html), [ILI9341](https://aliexpress.com/item/33048191074.html), [SSD1305/SSD1309](https://aliexpress.com/item/32950307344.html), [SH1107](https://aliexpress.com/item/4000551696674.html), [1602](https://aliexpress.com/item/32685016568.html)
+- added [touchscreen](Controls.md#touchscreen) support
+- tasks are divided into cores, now the sound is not interrupted when selecting stations / volume
+- increased speed of some displays
+- optimization of algorithms, bugs fixes
+
 #### v0.5.070
 - added something similar to plugins
 

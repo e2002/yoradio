@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "player.h"
+#include "telnet.h"
 #include "display.h"
 #include "options.h"
 #include "network.h"
@@ -23,6 +24,7 @@ byte ssidCount;
 
 bool NetServer::begin() {
   importRequest = false;
+  volRequest = false;
   webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     ssidCount = 0;
     request->send(SPIFFS, "/www/index.html", String(), false, processor);
@@ -46,11 +48,11 @@ bool NetServer::begin() {
   webserver.begin();
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
-  
+
   //echo -n "helle?" | socat - udp-datagram:255.255.255.255:44490,broadcast
   if (udp.listen(44490)) {
     udp.onPacket([](AsyncUDPPacket packet) {
-      if(strcmp((char*)packet.data(),"helle?")==0)
+      if (strcmp((char*)packet.data(), "helle?") == 0)
         packet.println(WiFi.localIP());
     });
   }
@@ -68,6 +70,13 @@ void NetServer::loop() {
       requestOnChange(PLAYLIST, 0);
     }
     importRequest = false;
+  }
+  if (volRequest) {
+    requestOnChange(VOLUME, 0);
+    volRequest = false;
+  }
+  if(rssi<255){
+    requestOnChange(NRSSI, 0);
   }
   yield();
 }
@@ -88,7 +97,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len) {
 
 void NetServer::setRSSI(int val) {
   rssi = val;
-  requestOnChange(NRSSI, 0);
+  //requestOnChange(NRSSI, 0);
 }
 
 void NetServer::getPlaylist(uint8_t clientId) {
@@ -200,6 +209,12 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
       }
     case TITLE: {
         sprintf (buf, "{\"meta\": \"%s\"}", config.station.title);
+        if (player.requesToStart) {
+          telnet.info();
+          player.requesToStart = false;
+        } else {
+          telnet.printf("##CLI.META#: %s\n> ", config.station.title);
+        }
         break;
       }
     case VOLUME: {
@@ -211,6 +226,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
       }
     case NRSSI: {
         sprintf (buf, "{\"rssi\": %d}", rssi);
+        rssi=255;
         break;
       }
     case BITRATE: {
@@ -234,7 +250,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
     if (clientId == 0) {
       websocket.textAll(buf);
 #ifdef MQTT_HOST
-      if(request==STATION || request==ITEM || request==TITLE || request==MODE) mqttPublishStatus();
+      if (request == STATION || request == ITEM || request == TITLE || request == MODE) mqttPublishStatus();
 #endif
     } else {
       websocket.text(clientId, buf);
@@ -328,7 +344,8 @@ void handleHTTPPost(AsyncWebServerRequest * request) {
   }
   if (request->hasParam("stop", true)) {
     player.mode = STOPPED;
-    display.title("[stopped]");
+    //display.title("[stopped]");
+    config.setTitle("[stopped]");
     request->send(200);
     return;
   }

@@ -60,6 +60,8 @@ class Config {
     byte setLastStation(byte val);
     byte setCountStation(byte val);
     byte setLastSSID(byte val);
+    void setTitle(const char* title);
+    void setStation(const char* station);
     bool parseCSV(const char* line, char* name, char* url, int &ovol);
     bool parseJSON(const char* line, char* name, char* url, int &ovol);
     bool parseWsCommand(const char* line, char* cmd, char* val, byte cSize);

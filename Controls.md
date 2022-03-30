@@ -6,7 +6,8 @@
 - [Buttons](#buttons)
 - [Encoders](#encoders)
 - [IR receiver](#ir-receiver)
-- [Joystick](#joystic)
+- [Joystick](#joystick)
+- [Touchscreen](#touchscreen)
 - [Back to README](README.md)
 
 ---
@@ -64,5 +65,12 @@ You can connect one or two encoders to replace/complete the buttons. One encoder
 You can use a joystick [like this](https://aliexpress.com/item/4000681560472.html) instead of connecting five buttons
 
 <img src="images/joystick.jpg" width="300" height="300"><br />
+
+---
+### Touchscreen
+- Swipe horizontally: volume control
+- Swipe vertically: station selection
+- Tap: in PLAYER mode - start/stop playback, in PLAYLIST mode - select
+- Long tap: in PLAYLIST mode - cancel
 
 ---

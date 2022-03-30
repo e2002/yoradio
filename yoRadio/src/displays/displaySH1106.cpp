@@ -1,5 +1,5 @@
 #include "../../options.h"
-#if DSP_MODEL==5
+#if DSP_MODEL==DSP_SH1106 || DSP_MODEL==DSP_SH1107
 
 #include "displaySH1106.h"
 #include <Wire.h>
@@ -29,11 +29,15 @@ const unsigned char logo [] PROGMEM=
 };
 
 TwoWire I2CSH1106 = TwoWire(0);
-
+#if DSP_MODEL==DSP_SH1106
 DspCore::DspCore(): Adafruit_SH1106G(128, 64, &I2CSH1106, -1) {
 
 }
+#else
+DspCore::DspCore(): Adafruit_SH1107(64, 128, &I2CSH1106, -1) {
 
+}
+#endif
 char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
@@ -127,14 +131,22 @@ void DspCore::apScreen() {
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  I2CSH1106.begin(I2C_SDA, I2C_SCL, (uint32_t)100000);
+  I2CSH1106.begin(I2C_SDA, I2C_SCL);
   if (!begin(SCREEN_ADDRESS, true)) {
-    Serial.println(F("SH1106 allocation failed"));
+    Serial.println(F("SH110X allocation failed"));
     for (;;); // Don't proceed, loop forever
   }
   cp437(true);
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  byte tftRotate = TFT_ROTATE;
+#if DSP_MODEL==DSP_SH1106
+  if(tftRotate>2) tftRotate=2;
+  if(tftRotate==1) tftRotate=0;
+#else
+  if(tftRotate>=2) tftRotate=3;
+  if(tftRotate==0) tftRotate=1;
+#endif
+  setRotation(tftRotate);
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();

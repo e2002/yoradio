@@ -19,6 +19,18 @@
 #include "src/displays/displaySH1106.h"
 #elif DSP_MODEL==DSP_1602I2C
 #include "src/displays/displayLC1602.h"
+#elif DSP_MODEL==DSP_SSD1327
+#include "src/displays/displaySSD1327.h"
+#elif DSP_MODEL==DSP_ILI9341
+#include "src/displays/displayILI9341.h"
+#elif DSP_MODEL==DSP_SSD1305
+#include "src/displays/displaySSD1305.h"
+#elif DSP_MODEL==DSP_SH1107
+#include "src/displays/displaySH1106.h"
+#elif DSP_MODEL==DSP_1602
+#include "src/displays/displayLC1602.h"
+#elif DSP_MODEL==DSP_CUSTOM
+#include "src/displays/displayCustom.h"
 #endif
 
 enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS };
@@ -59,6 +71,7 @@ class Display {
     displayMode_e mode;
     uint16_t currentPlItem;
     uint16_t numOfNextStation;
+    bool refreshTitle, refreshStation, refreshVolume;
   public:
     Display() {};
     void init();
@@ -69,12 +82,7 @@ class Display {
     void rightText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void bootString(const char* text, byte y);
     void bootLogo();
-    void station();
-    void title(const char *str);
     void returnTile();
-    void time(bool redraw = false);
-    void volume();
-    void ip();
     void swichMode(displayMode_e newmode);
     void drawPlaylist();
     void drawNextStationNum(uint16_t num);
@@ -85,10 +93,14 @@ class Display {
     unsigned long volDelay;
     void heap();
     void rssi();
+    void station();
+    void title();
+    void volume();
+    void ip();
+    void time(bool redraw = false);
     void apScreen();
     void drawPlayer();
     void drawVolume();
-    
 };
 
 extern Display display;
