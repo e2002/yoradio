@@ -14,7 +14,7 @@
 #if CORE_FOR_LOOP_CONTROLS != 255
 TaskHandle_t TaskCore0;
 #ifndef CORE_FOR_LOOP_STACK_SIZE
-#define CORE_FOR_LOOP_STACK_SIZE  16384
+#define CORE_FOR_LOOP_STACK_SIZE  8192
 #endif
 #endif
 
