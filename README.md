@@ -280,6 +280,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.012
+- fixed choppy playback
+
 #### v0.6.010
 - added displays [SSD1327](https://aliexpress.com/item/1005001414175498.html), [ILI9341](https://aliexpress.com/item/33048191074.html), [SSD1305/SSD1309](https://aliexpress.com/item/32950307344.html), [SH1107](https://aliexpress.com/item/4000551696674.html), [1602](https://aliexpress.com/item/32685016568.html)
 - added [touchscreen](Controls.md#touchscreen) support
