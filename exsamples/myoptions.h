@@ -9,6 +9,10 @@ Uncomment the lines you need, to override the default value and set the values a
 The connection tables are located here https://github.com/e2002/yoradio#connection-tables
 
 ********************************************************/
+/*  CORE_FOR_LOOP_CONTROLS. See description/available values in the options.h file  */
+/*  This setting was added to eliminate audio jerking when adjusting the volume/playlist. The default value is 2  */
+#define CORE_FOR_LOOP_CONTROLS      2
+/******************************************/
 
 /*  DSP_MODEL. See description/available values in the options.h file  */
 /*  This option is required. Use DSP_DUMMY if no display is connected */
@@ -65,6 +69,25 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define BTN_LONGPRESS_LOOP_DELAY    200     /*  Delay between calling DuringLongPress event */
 //#define BTN_CLICK_TICKS    300              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
 //#define BTN_PRESS_TICKS    500              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
+/******************************************/
+
+/*  LCD DISPLAY 1602  */
+//#define LCD_RS                255           /*  RS Pin */
+//#define LCD_E                 255           /*  E Pin  */
+//#define LCD_D4                255           /*  D4 Pin */
+//#define LCD_D5                255           /*  D5 Pin */
+//#define LCD_D6                255           /*  D6 Pin */
+//#define LCD_D7                255           /*  D7 Pin */
+/******************************************/
+
+/*  TOUCHSCREEN  */
+/*  SPI PINS. CLK must be connected to pin 18
+              DIN must be connected to pin 23
+              DO  must be connected to pin 19
+              IRQ - not connected */
+//#define TS_CS                 255           /*  Touch screen CS pin
+//#define TS_ROTATE             1             /*  Touch screen rotation. 0 - 0, 1 - 90, 2 - 180, 3 - 270 degrees */
+//#define TS_DBG                false         /*  Generate debug to Serial output */
 /******************************************/
 
 /*  Other settings.  */
