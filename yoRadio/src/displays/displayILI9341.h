@@ -13,8 +13,10 @@
 #define TITLE_SIZE1     2
 #define TITLE_SIZE2     2
 
+#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 4
-#define SCROLLTIME 60
+#define SCROLLTIME 40
+#endif
 
 #define PLMITEMS        9
 #define PLMITEMLENGHT   40
@@ -53,7 +55,7 @@ class DspCore: public Adafruit_ILI9341 {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop();
+    void loop(bool force=false);
   private:
     uint16_t swidth, sheight;
     char oldTimeBuf[20];

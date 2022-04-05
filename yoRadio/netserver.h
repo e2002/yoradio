@@ -10,7 +10,7 @@ enum requestType_e { PLAYLIST, STATION, ITEM, TITLE, VOLUME, NRSSI, BITRATE, MOD
 class NetServer {
   public:
     uint8_t playlistrequest; // ClientId want the playlist
-    bool importRequest, volRequest;
+    bool importRequest;
   public:
     NetServer() {};
     bool begin();

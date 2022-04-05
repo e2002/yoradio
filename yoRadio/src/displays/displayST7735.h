@@ -15,8 +15,12 @@
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
 #define TITLE_FG2       SILVER
 
+#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 3
-#define SCROLLTIME 67
+#define SCROLLTIME 65
+#endif
+
+#define TFT_FULLTIME    1
 
 class DspCore: public Adafruit_ST7735 {
   public:
@@ -34,6 +38,7 @@ class DspCore: public Adafruit_ST7735 {
     void set_Cursor(int16_t x, int16_t y);
     void printText(const char* txt);
     void printClock(const char* timestr);
+    void printClock(struct tm timeinfo, bool dots, bool redraw = false);
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
     void drawNextStationNum(uint16_t num);
@@ -45,10 +50,15 @@ class DspCore: public Adafruit_ST7735 {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop();
+    void loop(bool force=false);
   private:
     uint16_t swidth, sheight;
-
+    char oldTimeBuf[20];
+    uint16_t wot, hot, dot;
+    int16_t x, y;
+    uint16_t cwidth, cheight;
+    void setClockBounds();
+    byte getPw(uint16_t ncwidth);
 };
 
 extern DspCore dsp;

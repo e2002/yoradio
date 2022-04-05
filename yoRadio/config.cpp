@@ -2,11 +2,13 @@
 #include <EEPROM.h>
 #include <SPIFFS.h>
 #include "display.h"
+#include "player.h"
 Config config;
 
 void Config::init() {
+  EEPROM.begin(EEPROM_SIZE);
   eepromRead(EEPROM_START, store);
-  if (store.tz_set!=57){ // update to v0.4.200
+  if (store.tz_set != 57) { // update to v0.4.200
     store.tz_set = 57;
     store.tzHour = 3;
     store.tzMin = 0;
@@ -29,22 +31,17 @@ void Config::init() {
 template <class T> int Config::eepromWrite(int ee, const T& value) {
   const byte* p = (const byte*)(const void*)&value;
   int i;
-  EEPROM.begin(EEPROM_SIZE);
   for (i = 0; i < sizeof(value); i++)
     EEPROM.write(ee++, *p++);
   EEPROM.commit();
-  delay(20);
-  EEPROM.end();
   return i;
 }
 
 template <class T> int Config::eepromRead(int ee, T& value) {
   byte* p = (byte*)(void*)&value;
-  int i;
-  EEPROM.begin(EEPROM_SIZE);
+  int i;;
   for (i = 0; i < sizeof(value); i++)
     *p++ = EEPROM.read(ee++);
-  EEPROM.end();
   return i;
 }
 
@@ -67,13 +64,13 @@ void Config::setDefaults() {
 }
 
 void Config::setTimezone(int8_t tzh, int8_t tzm) {
-  store.tzHour=tzh;
-  store.tzMin=tzm;
+  store.tzHour = tzh;
+  store.tzMin = tzm;
   save();
 }
 
 void Config::setTimezoneOffset(uint16_t tzo) {
-  store.timezoneOffset=tzo;
+  store.timezoneOffset = tzo;
   save();
 }
 
@@ -87,7 +84,11 @@ void Config::save() {
 
 byte Config::setVolume(byte val, bool dosave) {
   store.volume = val;
-  if (dosave) save();
+  if (dosave) {
+    //save();
+    EEPROM.write(EEPROM_START + sizeof(store.config_set), store.volume);
+    EEPROM.commit();
+  }
   return store.volume;
 }
 
@@ -128,17 +129,17 @@ byte Config::setLastSSID(byte val) {
   return store.lastSSID;
 }
 
-void Config::setTitle(const char* title){
+void Config::setTitle(const char* title) {
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
-  display.refreshTitle = true;
+  display.title();
 }
 
-void Config::setStation(const char* station){
+void Config::setStation(const char* station) {
   memset(config.station.name, 0, BUFLEN);
   strlcpy(config.station.name, station, BUFLEN);
 }
-    
+
 void Config::indexPlaylist() {
   File playlist = SPIFFS.open(PLAYLIST_PATH, "r");
   if (!playlist) {
@@ -244,16 +245,16 @@ bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {
   char *tmpe;
   const char* cursor = line;
   char buf[5];
-  tmpe=strstr(cursor, "\t");
-  if(tmpe==NULL) return false;
-  strlcpy(name, cursor, tmpe-cursor+1);
-  if(strlen(name)==0) return false;
-  cursor=tmpe+1;
-  tmpe=strstr(cursor, "\t");
-  if(tmpe==NULL) return false;
-  strlcpy(url, cursor, tmpe-cursor+1);
-  if(strlen(url)==0) return false;
-  cursor=tmpe+1;
+  tmpe = strstr(cursor, "\t");
+  if (tmpe == NULL) return false;
+  strlcpy(name, cursor, tmpe - cursor + 1);
+  if (strlen(name) == 0) return false;
+  cursor = tmpe + 1;
+  tmpe = strstr(cursor, "\t");
+  if (tmpe == NULL) return false;
+  strlcpy(url, cursor, tmpe - cursor + 1);
+  if (strlen(url) == 0) return false;
+  cursor = tmpe + 1;
   if (strlen(cursor) == 0) return false;
   strlcpy(buf, cursor, 4);
   ovol = atoi(buf);
@@ -264,68 +265,68 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
   char* tmps, *tmpe;
   const char* cursor = line;
   char port[8], host[254], file[254];
-  tmps=strstr(cursor, "\":\"");
-  if(tmps==NULL) return false;
-  tmpe=strstr(tmps, "\",\"");
-  if(tmpe==NULL) return false;
-  strlcpy(name, tmps+3, tmpe-tmps-3+1);
-  if(strlen(name)==0) return false;
-  cursor=tmpe+3;
-  tmps=strstr(cursor, "\":\"");
-  if(tmps==NULL) return false;
-  tmpe=strstr(tmps, "\",\"");
-  if(tmpe==NULL) return false;
-  strlcpy(host, tmps+3, tmpe-tmps-3+1);
-  if(strlen(host)==0) return false;
-  if(strstr(host,"http://")==NULL && strstr(host,"https://")==NULL) {
+  tmps = strstr(cursor, "\":\"");
+  if (tmps == NULL) return false;
+  tmpe = strstr(tmps, "\",\"");
+  if (tmpe == NULL) return false;
+  strlcpy(name, tmps + 3, tmpe - tmps - 3 + 1);
+  if (strlen(name) == 0) return false;
+  cursor = tmpe + 3;
+  tmps = strstr(cursor, "\":\"");
+  if (tmps == NULL) return false;
+  tmpe = strstr(tmps, "\",\"");
+  if (tmpe == NULL) return false;
+  strlcpy(host, tmps + 3, tmpe - tmps - 3 + 1);
+  if (strlen(host) == 0) return false;
+  if (strstr(host, "http://") == NULL && strstr(host, "https://") == NULL) {
     sprintf(file, "http://%s", host);
-    strlcpy(host, file, strlen(file)+1);
+    strlcpy(host, file, strlen(file) + 1);
   }
-  cursor=tmpe+3;
-  tmps=strstr(cursor, "\":\"");
-  if(tmps==NULL) return false;
-  tmpe=strstr(tmps, "\",\"");
-  if(tmpe==NULL) return false;
-  strlcpy(file, tmps+3, tmpe-tmps-3+1);
-  cursor=tmpe+3;
-  tmps=strstr(cursor, "\":\"");
-  if(tmps==NULL) return false;
-  tmpe=strstr(tmps, "\",\"");
-  if(tmpe==NULL) return false;
-  strlcpy(port, tmps+3, tmpe-tmps-3+1);
+  cursor = tmpe + 3;
+  tmps = strstr(cursor, "\":\"");
+  if (tmps == NULL) return false;
+  tmpe = strstr(tmps, "\",\"");
+  if (tmpe == NULL) return false;
+  strlcpy(file, tmps + 3, tmpe - tmps - 3 + 1);
+  cursor = tmpe + 3;
+  tmps = strstr(cursor, "\":\"");
+  if (tmps == NULL) return false;
+  tmpe = strstr(tmps, "\",\"");
+  if (tmpe == NULL) return false;
+  strlcpy(port, tmps + 3, tmpe - tmps - 3 + 1);
   int p = atoi(port);
-  if(p>0){
+  if (p > 0) {
     sprintf(url, "%s:%d%s", host, p, file);
-  }else{
+  } else {
     sprintf(url, "%s%s", host, file);
   }
-  cursor=tmpe+3;
-  tmps=strstr(cursor, "\":\"");
-  if(tmps==NULL) return false;
-  tmpe=strstr(tmps, "\"}");
-  if(tmpe==NULL) return false;
-  strlcpy(port, tmps+3, tmpe-tmps-3+1);
+  cursor = tmpe + 3;
+  tmps = strstr(cursor, "\":\"");
+  if (tmps == NULL) return false;
+  tmpe = strstr(tmps, "\"}");
+  if (tmpe == NULL) return false;
+  strlcpy(port, tmps + 3, tmpe - tmps - 3 + 1);
   ovol = atoi(port);
   return true;
 }
 
 bool Config::parseWsCommand(const char* line, char* cmd, char* val, byte cSize) {
   char *tmpe;
-  tmpe=strstr(line, "=");
-  if(tmpe==NULL) return false;
+  tmpe = strstr(line, "=");
+  if (tmpe == NULL) return false;
   memset(cmd, 0, cSize);
-  strlcpy(cmd, line, tmpe-line+1);
-  if (strlen(tmpe+1) == 0) return false;
+  strlcpy(cmd, line, tmpe - line + 1);
+  if (strlen(tmpe + 1) == 0) return false;
   memset(val, 0, cSize);
-  strlcpy(val, tmpe+1, tmpe+1-line+1);
+  strlcpy(val, tmpe + 1, tmpe + 1 - line + 1);
   return true;
 }
 
 bool Config::parseSsid(const char* line, char* ssid, char* pass) {
   char *tmpe;
-  tmpe=strstr(line, "\t");
-  if(tmpe==NULL) return false;
-  uint16_t pos= tmpe-line;
+  tmpe = strstr(line, "\t");
+  if (tmpe == NULL) return false;
+  uint16_t pos = tmpe - line;
   if (pos > 19 || strlen(line) > 61) return false;
   memset(ssid, 0, 20);
   strlcpy(ssid, line, pos + 1);

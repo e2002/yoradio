@@ -140,16 +140,17 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   config.fillPlMenu(plMenu, currentItem - 4, PLMITEMS);
   setTextSize(2);
   int yStart = (sheight / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
-  fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) - 1, swidth, PLMITEMHEIGHT + 2, TFT_LOGO);
+
   for (byte i = 0; i < PLMITEMS; i++) {
     if (i == 4) {
+      //fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) - 1, swidth, PLMITEMHEIGHT + 2, TFT_LOGO);
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setTextColor(iclrs[abs(i - 4)-1], TFT_BG);
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
+      fillRect(0, yStart + i * PLMITEMHEIGHT - 1, swidth, PLMITEMHEIGHT - 2, TFT_BG);
       print(utf8Rus(plMenu[i], true));
     }
-    yield();
   }
 }
 
@@ -159,9 +160,8 @@ void DspCore::clearDsp() {
 
 void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
   if (TFT_FRAMEWDT==0) return;
-  fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
   fillRect(swidth - TFT_FRAMEWDT, texttop, TFT_FRAMEWDT, textheight, bg);
-  yield();
+  fillRect(0, texttop, TFT_FRAMEWDT, textheight, bg);
 }
 
 void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
@@ -176,7 +176,7 @@ void DspCore::getScrolBbounds(const char* text, const char* separator, byte text
 }
 
 void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
-  fillRect(0,  texttop, swidth, textheight, bg);
+  fillRect(0,  texttop-4, swidth, textheight+7, bg);
   yield();
 }
 
@@ -364,10 +364,9 @@ void DspCore::set_Cursor(int16_t x, int16_t y) {
 
 void DspCore::printText(const char* txt) {
   print(txt);
-  yield();
 }
 
-void DspCore::loop() {
+void DspCore::loop(bool force) {
 
 }
 

@@ -24,4 +24,6 @@ class Network {
 
 extern Network network;
 
+extern __attribute__((weak)) void network_on_connect();
+
 #endif

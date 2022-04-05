@@ -13,10 +13,27 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
-
+/*
+#ifdef DSP_FPS
+#if DSP_FPS!=0
+#define SCROLLDELTA (DSP_FPS>30)?3:(80/DSP_FPS)
+#define SCROLLTIME  (DSP_FPS>30)?34:(1000/DSP_FPS)
+#else
 #define SCROLLDELTA     4
 #define SCROLLTIME      83
 #define LOOP_DELAY      83
+#endif
+#else
+#define SCROLLDELTA     4
+#define SCROLLTIME      83
+#define LOOP_DELAY      40
+#endif
+*/
+#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
+#define SCROLLDELTA     4
+#define SCROLLTIME      83
+#define LOOP_DELAY      60
+#endif
 
 class DspCore: public Adafruit_SSD1327 {
   public:
@@ -46,7 +63,7 @@ class DspCore: public Adafruit_SSD1327 {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop();
+    void loop(bool force=false);
   private:
     uint16_t swidth, sheight;
     int16_t x, y;
@@ -60,12 +77,18 @@ class DspCore: public Adafruit_SSD1327 {
 
 extern DspCore dsp;
 
+      /*
+      SSD1327_GRAYTABLE,
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+      0x07, 0x08, 0x10, 0x18, 0x20, 0x2f, 0x38, 0x3f,
+      */
+
 /*
  * TFT COLORS
  */
-#define SILVER      0x7
-#define TFT_BG      0x0
-#define TFT_FG      0x8
-#define TFT_LOGO    0xF
+#define SILVER      0x07
+#define TFT_BG      0x00
+#define TFT_FG      0x08
+#define TFT_LOGO    0x3f
 
 #endif

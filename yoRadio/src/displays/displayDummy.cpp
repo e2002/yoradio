@@ -169,7 +169,7 @@ void DspCore::printText(const char* txt) {
 
 }
 
-void DspCore::loop() {
+void DspCore::loop(bool force) {
 
 }
 

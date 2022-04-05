@@ -9,7 +9,9 @@
 #ifndef _vs1053_ext
 #define _vs1053_ext
 
+#ifndef AUDIOBUFFER_MULTIPLIER
 #define AUDIOBUFFER_MULTIPLIER 13
+#endif
 
 #define VS1053VOLM 128				// 128 or 96 only
 #define VS1053VOL(v) (VS1053VOLM==128?log10(((float)v+1)) * 50.54571334 + 128:log10(((float)v+1)) * 64.54571334 + 96)
@@ -269,7 +271,7 @@ public:
 		bool isRunning() {/*Serial.printf("m_f_running=%d\n", m_f_running); */return m_f_running;}
 		void setBalance(int8_t bal = 0);
 		void setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass);
-		
+
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}
     bool endsWith (const char* base, const char* str) {

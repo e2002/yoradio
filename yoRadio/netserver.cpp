@@ -24,7 +24,7 @@ byte ssidCount;
 
 bool NetServer::begin() {
   importRequest = false;
-  volRequest = false;
+
   webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     ssidCount = 0;
     request->send(SPIFFS, "/www/index.html", String(), false, processor);
@@ -70,10 +70,6 @@ void NetServer::loop() {
       requestOnChange(PLAYLIST, 0);
     }
     importRequest = false;
-  }
-  if (volRequest) {
-    requestOnChange(VOLUME, 0);
-    volRequest = false;
   }
   if(rssi<255){
     requestOnChange(NRSSI, 0);
@@ -209,9 +205,9 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
       }
     case TITLE: {
         sprintf (buf, "{\"meta\": \"%s\"}", config.station.title);
-        if (player.requesToStart) {
+        if (player.requestToStart) {
           telnet.info();
-          player.requesToStart = false;
+          player.requestToStart = false;
         } else {
           telnet.printf("##CLI.META#: %s\n> ", config.station.title);
         }

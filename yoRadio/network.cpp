@@ -55,6 +55,7 @@ void Network::begin() {
   status = CONNECTED;
   requestTimeSync();
   ntimer.attach_ms(TSYNC_DELAY, syncTime);
+  if (network_on_connect) network_on_connect();
 }
 
 void Network::requestTimeSync(bool withTelnetOutput) {

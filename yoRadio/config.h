@@ -2,7 +2,7 @@
 #define config_h
 #include "Arduino.h"
 
-#define EEPROM_SIZE   1024
+#define EEPROM_SIZE   32
 #define EEPROM_START  0
 #define BUFLEN        140
 #define PLAYLIST_PATH "/data/playlist.csv"

@@ -280,6 +280,14 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.110
+- the logic of division by cores has been changed
+- fixed choppy playback (again)
+- improvements in the stability of the web interface
+- increased smoothness of the encoder
+- bug fixes
+- bug fixes
+
 #### v0.6.012
 - fixed choppy playback
 

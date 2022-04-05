@@ -16,9 +16,11 @@
 #define TITLE_TOP2 TFT_FRAMEWDT + 2 * TFT_LINEHGHT
 #define PLCURRENT_SIZE  1
 #define TFT_FULLTIME    1
+
+#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 3
 #define SCROLLTIME 83
-#define FPS        50
+#endif
 
 class DspCore: public Adafruit_SSD1305 {
   public:
@@ -48,7 +50,7 @@ class DspCore: public Adafruit_SSD1305 {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop();
+    void loop(bool force=false);
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

@@ -14,6 +14,10 @@
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
 
+#ifndef I2CFREQ_HZ
+#define I2CFREQ_HZ   4000000UL
+#endif
+
 const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};
 
 const unsigned char logo [] PROGMEM=
@@ -30,7 +34,7 @@ const unsigned char logo [] PROGMEM=
 
 TwoWire I2CSH1106 = TwoWire(0);
 #if DSP_MODEL==DSP_SH1106
-DspCore::DspCore(): Adafruit_SH1106G(128, 64, &I2CSH1106, -1) {
+DspCore::DspCore(): Adafruit_SH1106G(128, 64, &I2CSH1106, -1, I2CFREQ_HZ) {
 
 }
 #else
@@ -177,9 +181,11 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
+      fillRect(0, yStart + i * PLMITEMHEIGHT, swidth, PLMITEMHEIGHT - 1, TFT_BG);
       print(utf8Rus(plMenu[i], true));
     }
   }
+  display();
 }
 
 void DspCore::clearDsp() {
@@ -218,6 +224,7 @@ void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   setCursor((swidth - w) / 2, y);
   fillRect(0, y, swidth, h, bg);
   print(txt);
+  display();
 }
 
 void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
@@ -246,13 +253,14 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw) {
   char timeStringBuff[20] = { 0 };
   strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M", &timeinfo);
   setTextSize(2);
-  setCursor(CLCLF, 34);
+  setCursor(CLCLF, (DSP_MODEL==DSP_SH1107)?30:34);
   setTextColor(TFT_FG, TFT_BG);
   print(timeStringBuff);
   setTextSize(1);
-  setCursor(CLCLF + 6*2*5+1, 34+1);
+  setCursor(CLCLF + 6*2*5+1, (DSP_MODEL==DSP_SH1107)?30+1:34+1);
   sprintf(timeStringBuff, "%02d", timeinfo.tm_sec);
   print(timeStringBuff);
+  display();
 }
 
 void DspCore::drawVolumeBar(bool withNumber) {
@@ -270,10 +278,11 @@ void DspCore::drawVolumeBar(bool withNumber) {
     int16_t  x1, y1;
     sprintf(volstr, "%d", config.store.volume);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
-    fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+    fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);;
     setCursor((swidth - wv) / 2, 24);
     print(volstr);
   }
+  display();
 }
 
 void DspCore::drawNextStationNum(uint16_t num) {
@@ -287,6 +296,7 @@ void DspCore::drawNextStationNum(uint16_t num) {
   fillRect(TFT_FRAMEWDT, 24, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
   setCursor((swidth - wv) / 2, 24);
   print(numstr);
+  display();
 }
 
 void DspCore::frameTitle(const char* str) {
@@ -324,13 +334,13 @@ void DspCore::set_Cursor(int16_t x, int16_t y) {
 
 void DspCore::printText(const char* txt) {
   print(txt);
+  display();
 }
 
-void DspCore::loop() {
-  if (checkdelay(SCROLLTIME, loopdelay)) {
-    display();
+void DspCore::loop(bool force) {
+  if (checkdelay(SCROLLTIME, loopdelay) || force) {
+    //display();
   }
-  yield();
 }
 
 boolean DspCore::checkdelay(int m, unsigned long &tstamp) {

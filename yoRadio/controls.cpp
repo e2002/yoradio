@@ -103,6 +103,7 @@ void initControls() {
 }
 
 void loopControls() {
+  if(display.mode==LOST) return;
 #if ENC_BTNL!=255
   encoderLoop();
 #endif
@@ -204,9 +205,9 @@ void irLoop() {
           irBlink();
           if (display.mode == NUMBERS) {
             display.swichMode(PLAYER);
-            //player.play(display.numOfNextStation);
-            player.request.station = display.numOfNextStation;
-            player.request.doSave = true;
+            player.play(display.numOfNextStation);
+            //player.request.station = display.numOfNextStation;
+            //player.request.doSave = true;
             display.numOfNextStation = 0;
             break;
           }
@@ -300,7 +301,7 @@ void irLoop() {
   #define TS_Y_MAX              3800
 #endif
 #ifndef TS_STEPS
-  #define TS_STEPS              70
+  #define TS_STEPS              40
 #endif
 
 boolean wastouched = true;
@@ -351,9 +352,9 @@ void touchLoop() {
       switch (direct) {
         case TSD_LEFT:
         case TSD_RIGHT: {
+            touchLongPress=millis();
             if(display.mode==PLAYER || display.mode==VOL){
               int16_t xDelta = map(abs(touchVol - touchX), 0, display.screenwidth, 0, TS_STEPS);
-              Serial.println(touchVol - touchX);
               display.swichMode(VOL);
               if (xDelta>1) {
                 controlsEvent((touchVol - touchX)<0);
@@ -364,6 +365,7 @@ void touchLoop() {
           }
         case TSD_UP:
         case TSD_DOWN: {
+            touchLongPress=millis();
             if(display.mode==PLAYER || display.mode==STATIONS){
               int16_t yDelta = map(abs(touchStation - touchY), 0, display.screenheight, 0, TS_STEPS);
               display.swichMode(STATIONS);
@@ -385,7 +387,7 @@ void touchLoop() {
   } else {
     if (wastouched) {/*     END TOUCH     */
       if (direct == TDS_REQUEST) {
-        if(millis()-touchLongPress < BTN_PRESS_TICKS){
+        if(millis()-touchLongPress < BTN_PRESS_TICKS*2){
           onBtnClick(EVT_BTNCENTER);
         }else{
           display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
@@ -473,10 +475,10 @@ void controlsEvent(bool toRight) {
   }
   if (display.mode == STATIONS) {
     int p = toRight ? display.currentPlItem + 1 : display.currentPlItem - 1;
-    if (p < 1) p = 1;
-    if (p > config.store.countStation) p = config.store.countStation;
+    if (p < 1) p = config.store.countStation;
+    if (p > config.store.countStation) p = 1;
     display.currentPlItem = p;
-    display.clear();
+    //display.clear();
     display.drawPlaylist();
   }
 }
@@ -499,9 +501,9 @@ void onBtnClick(int id) {
         }
         if (display.mode == STATIONS) {
           display.swichMode(PLAYER);
-          //player.play(display.currentPlItem);
-          player.request.station = display.currentPlItem;
-          player.request.doSave = true;
+          player.play(display.currentPlItem);
+          //player.request.station = display.currentPlItem;
+          //player.request.doSave = true;
         }
         break;
       }

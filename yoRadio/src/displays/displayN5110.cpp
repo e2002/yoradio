@@ -153,6 +153,7 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
+      fillRect(0, yStart + i * PLMITEMHEIGHT, swidth, PLMITEMHEIGHT - 1, TFT_BG);
       print(utf8Rus(plMenu[i], true));
     }
   }
@@ -309,11 +310,10 @@ void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DspCore::loop() {
-  if (checkdelay(83, loopdelay)) {
+void DspCore::loop(bool force) {
+  if (checkdelay(SCROLLTIME, loopdelay) || force) {
     display();
   }
-  yield();
 }
 
 boolean DspCore::checkdelay(int m, unsigned long &tstamp) {

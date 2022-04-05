@@ -21,10 +21,6 @@ void ticks() {
 #ifndef STARTTIME_PL
 #define STARTTIME_PL  0
 #endif
-#ifndef SCROLLDELTA
-#define SCROLLDELTA 3
-#define SCROLLTIME 83
-#endif
 #ifndef META_SIZE
 #define META_SIZE   2
 #endif
@@ -62,8 +58,11 @@ void ticks() {
 #define DO_SCROLL (tWidth > (display.screenwidth - (dsp.fillSpaces?((texttop==0)?CLOCK_SPACE:VOL_SPACE):0)))
 #endif
 
-void  Scroll::init(const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
+byte currentScrollId = 0;   /* one scroll on one time */
+
+void  Scroll::init(byte ScrollId, const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
   textsize = tsize;
+  id = ScrollId;
   if (textsize == 0) return;
   texttop = top;
   fg = fgcolor;
@@ -77,12 +76,17 @@ void  Scroll::init(const char *sep, byte tsize, byte top, uint16_t dlay, uint16_
 void Scroll::setText(const char *txt) {
   if (textsize == 0) return;
   memset(text, 0, BUFLEN / 2);
-  strlcpy(text, txt, BUFLEN / 2);
+  strlcpy(text, txt, BUFLEN / 2 - 1);
   getbounds(textwidth, textheight, sepwidth);
+  if (doscroll) {
+    memset(text2, 0, BUFLEN + 10);
+    sprintf(text2, "%s%s%s", text, separator, text);
+  }
   if (!locked) {
     clearscrolls();
     reset();
   }
+  lockRequest = false;
 }
 
 void Scroll::lock() {
@@ -99,8 +103,9 @@ void Scroll::reset() {
   clear();
   setTextParams();
   dsp.set_Cursor(TFT_FRAMEWDT, texttop);
-  dsp.printText(text);
+  dsp.printText(doscroll ? text2 : text);
   drawFrame();
+  if (currentScrollId == id) currentScrollId = 0;
 }
 
 void Scroll::setTextParams() {
@@ -113,11 +118,17 @@ void Scroll::clearscrolls() {
   if (textsize == 0) return;
   x = TFT_FRAMEWDT;
   scrolldelay = millis();
-  clear();
+  //clear();
 }
 
 void Scroll::loop() {
+  if (lockRequest) {
+    return;
+  }
   if (textsize == 0) return;
+  if (currentScrollId != 0 && currentScrollId != id) {
+    return;
+  }
   if (checkdelay(x == TFT_FRAMEWDT ? delayStartScroll : SCROLLTIME, scrolldelay)) {
     scroll();
     sticks();
@@ -143,17 +154,25 @@ void Scroll::sticks() {
   if (!doscroll || locked || textsize == 0) return;
   setTextParams();
   dsp.set_Cursor(x, texttop);
-  dsp.printText(text);
-  dsp.printText(separator);
-  dsp.printText(text);
-  drawFrame();
+  dsp.printText(text2);
+
+  //dsp.printText(separator);
+  //dsp.printText(text);
+  if (x == TFT_FRAMEWDT) drawFrame();
 }
 
 void Scroll::scroll() {
   if (!doscroll || textsize == 0) return;
+
   //if (textwidth > display.screenwidth) {
   x -= SCROLLDELTA;
-  if (-x > textwidth + sepwidth - TFT_FRAMEWDT) x = TFT_FRAMEWDT;
+  if (-x > textwidth + sepwidth - TFT_FRAMEWDT) {
+    x = TFT_FRAMEWDT;
+    drawFrame();
+    currentScrollId = 0;
+  } else {
+    currentScrollId = id;
+  }
   //}
 }
 
@@ -175,14 +194,14 @@ void Scroll::getbounds(uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
 void Display::init() {
   dsp.initD(screenwidth, screenheight);
   dsp.drawLogo();
-  meta.init(" * ", META_SIZE, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
-  title1.init(" * ", TITLE_SIZE1, TITLE_TOP1, STARTTIME, TITLE_FG1, TFT_BG);
-  title2.init(" * ", TITLE_SIZE2, TITLE_TOP2, STARTTIME, TITLE_FG2, TFT_BG);
+  meta.init(1, " * ", META_SIZE, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
+  title1.init(2, " * ", TITLE_SIZE1, TITLE_TOP1, STARTTIME, TITLE_FG1, TFT_BG);
+  title2.init(3, " * ", TITLE_SIZE2, TITLE_TOP2, STARTTIME, TITLE_FG2, TFT_BG);
   int yStart = (screenheight / 2 - PLMITEMHEIGHT / 2) + 3;
 #ifdef PL_TOP
   yStart = PL_TOP;
 #endif
-  plCurrent.init(" * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
+  plCurrent.init(4, " * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
   plCurrent.lock();
   if (dsp_on_init) dsp_on_init();
 }
@@ -196,9 +215,6 @@ void Display::apScreen() {
 
 void Display::start() {
   clear();
-  refreshTitle = false;
-  refreshStation = false;
-  refreshVolume = false;
   if (network.status != CONNECTED) {
     apScreen();
     return;
@@ -214,7 +230,7 @@ void Display::start() {
   time();
   timer.attach_ms(1000, ticks);
   if (dsp_on_start) dsp_on_start(&dsp);
-  // Экстреминатус секвестирован /*дважды*/ трижды
+  // Экстреминатус секвестирован /*дважды*/ /*трижды*/ четырежды
 }
 
 void Display::clear() {
@@ -233,9 +249,11 @@ void Display::swichMode(displayMode_e newmode) {
     volume();
   }
   if (newmode == PLAYER) {
+    currentScrollId = 0;
     meta.reset();
     title1.reset();
     if (TITLE_SIZE2 != 0) title2.reset();
+    player.loop();
     plCurrent.lock();
     time(true);
 #ifdef CLOCK_SPACE  // if set space for clock in 1602 displays
@@ -244,6 +262,7 @@ void Display::swichMode(displayMode_e newmode) {
     rssi();
     volume();
 #endif
+    dsp.loop(true);
   } else {
     if (newmode != NUMBERS) {
       meta.lock();
@@ -257,6 +276,9 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == VOL) {
     dsp.frameTitle("VOLUME");
   }
+  if (newmode == LOST) {
+    dsp.frameTitle("* LOST *");
+  }
   if (newmode == NUMBERS) {
     //dsp.frameTitle("STATION");
     meta.reset();
@@ -264,6 +286,7 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == STATIONS) {
     currentPlItem = config.store.lastStation;
     plCurrent.reset();
+    currentScrollId = 0;
     drawPlaylist();
   }
   if (dsp_on_newmode) dsp_on_newmode(newmode);
@@ -287,10 +310,26 @@ void Display::drawVolume() {
   }
 }
 
-void Display::drawPlaylist() {
+TaskHandle_t drawPlaylistTaskHandle = NULL;
+bool taskDone = true;
+void getPlaylist( void * pvParameters ) {
   char buf[PLMITEMLENGHT];
-  dsp.drawPlaylist(currentPlItem, buf);
-  plCurrent.setText(dsp.utf8Rus(buf, true));
+  display.plCurrent.lockRequest = true;
+  dsp.drawPlaylist(display.currentPlItem, buf);
+  display.plCurrent.setText(dsp.utf8Rus(buf, true));
+  taskDone = true;
+  vTaskDelete( NULL );
+}
+
+void Display::drawPlaylist() {
+  while (!taskDone) player.loop();
+  taskDone = false;
+  xTaskCreatePinnedToCore(getPlaylist, "getPlaylist0", 4096, NULL, 1, &drawPlaylistTaskHandle, 0);
+  /*
+    char buf[PLMITEMLENGHT];
+    dsp.drawPlaylist(currentPlItem, buf);
+    plCurrent.setText(dsp.utf8Rus(buf, true));
+  */
 }
 
 void Display::drawNextStationNum(uint16_t num) {
@@ -303,18 +342,6 @@ void Display::drawNextStationNum(uint16_t num) {
 }
 
 void Display::loop() {
-  if(refreshStation){
-    refreshStation = false;
-    station();
-  }
-  if(refreshTitle){
-    refreshTitle = false;
-    title();
-  }
-  if(refreshVolume){
-    refreshVolume = false;
-    volume();
-  }
   switch (mode) {
     case PLAYER: {
         drawPlayer();
@@ -344,7 +371,7 @@ void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 
 void Display::bootString(const char* text, byte y) {
   dsp.centerText(text, y == 1 ? BOOTSTR_TOP1 : BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
-  dsp.loop();
+  dsp.loop(true);
 }
 
 void Display::bootLogo() {
@@ -358,20 +385,26 @@ void Display::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 
 void Display::station() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
-  dsp.loop();
+#ifdef DEBUG_TITLES
+  meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
+#endif
+  dsp.loop(true);
   //netserver.requestOnChange(STATION, 0);
 }
 
 void Display::returnTile() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
+#ifdef DEBUG_TITLES
+  meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
+#endif
   meta.reset();
-  dsp.loop();
+  dsp.loop(true);
 }
 
 void Display::title() {
   /*
-  memset(config.station.title, 0, BUFLEN);
-  strlcpy(config.station.title, str, BUFLEN);
+    memset(config.station.title, 0, BUFLEN);
+    strlcpy(config.station.title, str, BUFLEN);
   */
   char ttl[BUFLEN / 2] = { 0 };
   char sng[BUFLEN / 2] = { 0 };
@@ -380,14 +413,19 @@ void Display::title() {
     if ((ici = strstr(config.station.title, " - ")) != NULL && TITLE_SIZE2 != 0) {
       strlcpy(sng, ici + 3, BUFLEN / 2);
       strlcpy(ttl, config.station.title, strlen(config.station.title) - strlen(ici) + 1);
+
     } else {
       strlcpy(ttl, config.station.title, BUFLEN / 2);
       sng[0] = '\0';
     }
+#ifdef DEBUG_TITLES
+    strlcpy(ttl, "Duis aute irure dolor in reprehenderit in voluptate velit", BUFLEN / 2);
+    strlcpy(sng, "Excepteur sint occaecat cupidatat non proident", BUFLEN / 2);
+#endif
     title1.setText(dsp.utf8Rus(ttl, true));
     if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
 
-    dsp.loop();
+    dsp.loop(true);
   }
   //netserver.requestOnChange(TITLE, 0);
 }
@@ -408,10 +446,27 @@ void Display::ip() {
   dsp.ip(WiFi.localIP().toString().c_str());
 }
 
+void Display::checkConnection() {
+  if (WiFi.status() != WL_CONNECTED) {
+    bool playing = player.mode == PLAYING;
+    swichMode(LOST);
+    if (playing) player.mode = STOPPED;
+    WiFi.disconnect();
+    ip();
+    WiFi.reconnect();
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+    }
+    swichMode(PLAYER);
+    if (playing) player.play(config.store.lastStation);
+  }
+}
+
 void Display::time(bool redraw) {
   if (dsp_before_clock) if (!dsp_before_clock(&dsp, dt)) return;
   char timeStringBuff[20] = { 0 };
   if (!dt) {
+    checkConnection();
     heap();
     rssi();
   }
@@ -429,8 +484,22 @@ void Display::time(bool redraw) {
   if (dsp_after_clock) dsp_after_clock(&dsp, dt);
 }
 
+TaskHandle_t drawVolumeTaskHandle = NULL;
+bool taskVDone = true;
+void drawVolumeTask( void * pvParameters ) {
+  delay(20);    /*  but it's too fast 0__o   */
+  dsp.drawVolumeBar(true);
+  taskVDone = true;
+  vTaskDelete( NULL );
+}
+
 void Display::volume() {
-  dsp.drawVolumeBar(mode == VOL);
-  //netserver.requestOnChange(VOLUME, 0);
-  netserver.volRequest = true;
+  if (mode == VOL) {
+    while (!taskVDone) player.loop();
+    taskVDone = false;
+    xTaskCreatePinnedToCore(drawVolumeTask, "drawVolumeTask0", 2048, NULL, 1, &drawVolumeTaskHandle, 0);
+  } else {
+    dsp.drawVolumeBar(false);
+  }
+  netserver.requestOnChange(VOLUME, 0);
 }

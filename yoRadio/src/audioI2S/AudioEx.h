@@ -30,7 +30,9 @@
 #include <FFat.h>
 #endif // SDFATFS_USED
 
+#ifndef AUDIOBUFFER_MULTIPLIER
 #define AUDIOBUFFER_MULTIPLIER 13
+#endif
 
 #ifdef SDFATFS_USED
 typedef File32 File;

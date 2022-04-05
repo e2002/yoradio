@@ -33,20 +33,22 @@
 #include "src/displays/displayCustom.h"
 #endif
 
-enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS };
+enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST };
 
 class Scroll {
   public:
     Scroll() { };
-    void init(const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor);
+    void init(byte ScrollId, const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor);
     void setText(const char *txt);
     void loop();
     void reset();
     void lock();
     void unlock();
+    bool lockRequest;
   private:
-    byte textsize, texttop;
+    byte textsize, texttop, id;
     char text[BUFLEN/2];
+    char text2[BUFLEN+10];
     char separator[4];
     uint16_t fg, bg;
     uint16_t delayStartScroll;
@@ -71,13 +73,16 @@ class Display {
     displayMode_e mode;
     uint16_t currentPlItem;
     uint16_t numOfNextStation;
-    bool refreshTitle, refreshStation, refreshVolume;
+    Scroll plCurrent;
   public:
     Display() {};
     void init();
     void clear();
     void loop();
     void start();
+    void station();
+    void title();
+    void volume();
     void centerText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void rightText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void bootString(const char* text, byte y);
@@ -88,19 +93,17 @@ class Display {
     void drawNextStationNum(uint16_t num);
   private:
     Ticker timer;
-    Scroll meta, title1, title2, plCurrent;
+    Scroll meta, title1, title2;
     bool dt;              // dots
     unsigned long volDelay;
     void heap();
     void rssi();
-    void station();
-    void title();
-    void volume();
     void ip();
     void time(bool redraw = false);
     void apScreen();
     void drawPlayer();
     void drawVolume();
+    void checkConnection();
 };
 
 extern Display display;

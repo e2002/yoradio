@@ -52,6 +52,7 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
+
   config.fillPlMenu(plMenu, currentItem, PLMITEMS);
   for (byte i = 0; i < PLMITEMS; i++) {
     strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
@@ -167,11 +168,10 @@ void DspCore::printText(const char* txt) {
   setCursor(nextX, yOffset);
 }
 
-void DspCore::loop() {
+void DspCore::loop(bool force) {
   if (checkdelay(SCROLLTIME, loopdelay)) {
     //display();
   }
-  yield();
 }
 
 boolean DspCore::checkdelay(int m, unsigned long & tstamp) {

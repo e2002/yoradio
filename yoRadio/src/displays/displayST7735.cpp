@@ -8,42 +8,6 @@
 #include "../../config.h"
 #include "../../network.h"
 
-class GFXClock {
-  public:
-    GFXClock() {};
-    uint16_t init(Adafruit_ST7735 &tftd, const GFXfont *font, uint16_t fgcolor, uint16_t bgcolor ) {
-      _dsp = &tftd;
-      tftd.setFont(font);
-      tftd.getTextBounds("88:88", 0, 0, &x, &y, &cwidth, &cheight);
-      tftd.setFont();
-      fg = fgcolor;
-      bg = bgcolor;
-      swidth = tftd.width();
-      _canvas = new GFXcanvas1(swidth, cheight + 3);
-      _canvas->setFont(font);
-      _canvas->setTextWrap(false);
-      _canvas->setTextColor(WHITE);
-      uint16_t header = TFT_FRAMEWDT + 4 * TFT_LINEHGHT;
-      uint16_t footer = TFT_FRAMEWDT * 2 + TFT_LINEHGHT + 5;
-      clockY = header + (tftd.height() - header - footer) / 2 - cheight / 2;
-      return cheight;
-    }
-    void print(const char* timestr) {
-      _canvas->fillScreen(BLACK);
-      _canvas->getTextBounds(timestr, 0, 0, &x, &y, &cwidth, &cheight);
-      _canvas->setCursor((swidth - cwidth) / 2 - 4, cheight);
-      _canvas->print(timestr);
-      _dsp->drawBitmap(0, clockY , _canvas->getBuffer(), swidth, cheight + 3, fg, bg);
-    }
-  private:
-    int16_t x, y;
-    uint16_t cwidth, cheight, fg, bg, clockY, swidth;
-    GFXcanvas1 *_canvas;
-    Adafruit_ST7735 *_dsp;
-};
-
-GFXClock gclock;
-
 DspCore::DspCore(): Adafruit_ST7735(&SPI, TFT_CS, TFT_DC, TFT_RST) {
 
 }
@@ -150,7 +114,7 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   screenheight = height();
   swidth = screenwidth;
   sheight = screenheight;
-  gclock.init(dsp, &DS_DIGI28pt7b, TFT_LOGO, BLACK);
+  setClockBounds();
 }
 
 void DspCore::drawLogo() {
@@ -178,6 +142,7 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
+      fillRect(0, yStart + i * PLMITEMHEIGHT - 1, swidth, PLMITEMHEIGHT - 4, TFT_BG);
       print(utf8Rus(plMenu[i], true));
     }
   }
@@ -248,8 +213,67 @@ void DspCore::displayHeapForDebug() {
 #endif
 }
 
+void DspCore::setClockBounds(){
+  setFont(&DS_DIGI28pt7b);
+  setTextSize(1);
+  getTextBounds("88:88", 0, 0, &x, &y, &cwidth, &cheight);
+  uint16_t header = TFT_FRAMEWDT + 4 * TFT_LINEHGHT;
+  uint16_t footer = TFT_FRAMEWDT * 2 + TFT_LINEHGHT + 5;
+  clockY = header + (sheight - header - footer) / 2 - cheight / 2;
+  setFont();
+}
+
 void DspCore::printClock(const char* timestr) {
-  gclock.print(timestr);
+
+}
+
+byte DspCore::getPw(uint16_t ncwidth){
+  byte pw = 6;
+  if(ncwidth<35) pw = 7;
+  if(ncwidth<20) pw = 8;
+  return pw;
+}
+
+void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
+  char timeBuf[50] = { 0 };
+  char tmpBuf[4] = { 0 };
+  uint16_t ncwidth, ncheight;
+  strftime(timeBuf, sizeof(timeBuf), "%H %M", &timeinfo);
+  setTextSize(1);
+    setFont(&DS_DIGI28pt7b);
+  if(strstr(oldTimeBuf, timeBuf)==NULL || redraw){
+    getTextBounds(oldTimeBuf, 0, 0, &x, &y, &wot, &hot);
+    setCursor((swidth - wot) / 2 - 4, clockY+28+6);
+    setTextColor(TFT_BG);
+    print(oldTimeBuf);
+    dot = (swidth - wot) / 2 - 4;
+    /*  dots  */
+    strlcpy(tmpBuf, oldTimeBuf, 3);
+    getTextBounds(tmpBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
+    dot = dot + ncwidth + getPw(ncwidth);
+    setCursor(dot, clockY+28+6);
+    print(":");
+    /*  dots  */
+
+    strlcpy(oldTimeBuf, timeBuf, 20);
+    setTextSize(1);
+    getTextBounds(timeBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
+    setTextColor(TFT_LOGO);
+    setCursor((swidth - ncwidth) / 2 - 4, clockY+28+6);
+    dot = (swidth - ncwidth) / 2 - 4;
+    setTextSize(1);
+    print(timeBuf);
+    /*  dots  */
+    strftime(timeBuf, sizeof(timeBuf), "%H", &timeinfo);
+    getTextBounds(timeBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
+    dot = dot + ncwidth + getPw(ncwidth);
+    /*  dots  */
+  }
+  setCursor(dot, clockY+28+6);
+  setTextColor(dots?TFT_BG:TFT_LOGO);
+  print(":");
+  setFont();
+  yield();
 }
 
 void DspCore::drawVolumeBar(bool withNumber) {
@@ -325,7 +349,7 @@ void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DspCore::loop() {
+void DspCore::loop(bool force) {
 
 }
 

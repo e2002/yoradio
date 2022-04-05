@@ -15,6 +15,7 @@
 
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
+
 const unsigned char logo [] PROGMEM=
 {
     0x06, 0x03, 0x00, 0x0f, 0x07, 0x80, 0x1f, 0x8f, 0xc0, 0x1f, 0x8f, 0xc0,
@@ -28,9 +29,13 @@ const unsigned char logo [] PROGMEM=
 };
 #endif
 
+#ifndef I2CFREQ_HZ
+#define I2CFREQ_HZ   4000000UL
+#endif
+
 TwoWire I2CSSD1306 = TwoWire(0);
 
-DspCore::DspCore(): Adafruit_SSD1306(128, ((DSP_MODEL==DSP_SSD1306)?64:32), &I2CSSD1306, I2C_RST) {
+DspCore::DspCore(): Adafruit_SSD1306(128, ((DSP_MODEL==DSP_SSD1306)?64:32), &I2CSSD1306, I2C_RST, I2CFREQ_HZ) {
 
 }
 
@@ -177,6 +182,7 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
+      fillRect(0, yStart + i * PLMITEMHEIGHT, swidth, PLMITEMHEIGHT - 1, TFT_BG);
       print(utf8Rus(plMenu[i], true));
     }
   }
@@ -330,8 +336,8 @@ void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DspCore::loop() {
-  if (checkdelay(83, loopdelay)) {
+void DspCore::loop(bool force) {
+  if (checkdelay(83, loopdelay) || force) {
 #if DSP_MODEL==DSP_SSD1306x32
     if(fillSpaces) printClock(insideClc);
 #endif

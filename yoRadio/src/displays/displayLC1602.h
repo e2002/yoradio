@@ -20,6 +20,7 @@
 
 #define SCROLLDELTA 1
 #define SCROLLTIME 250
+
 #define BOOTSTR_TOP2    0
 #define BOOTSTR_TOP1    1
 #define STARTTIME_PL    2000
@@ -57,7 +58,7 @@ class DspCore: public LiquidCrystal {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop();
+    void loop(bool force=false);
   private:
     uint16_t swidth, sheight, xOffset, yOffset;
     int16_t nextX;

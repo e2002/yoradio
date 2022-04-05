@@ -9,10 +9,6 @@ Uncomment the lines you need, to override the default value and set the values a
 The connection tables are located here https://github.com/e2002/yoradio#connection-tables
 
 ********************************************************/
-/*  CORE_FOR_LOOP_CONTROLS. See description/available values in the options.h file  */
-/*  This setting was added to eliminate audio jerking when adjusting the volume/playlist. The default value is 2  */
-#define CORE_FOR_LOOP_CONTROLS      2
-/******************************************/
 
 /*  DSP_MODEL. See description/available values in the options.h file  */
 /*  This option is required. Use DSP_DUMMY if no display is connected */

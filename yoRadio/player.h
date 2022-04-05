@@ -9,24 +9,22 @@
 #endif
 
 enum audioMode_e { PLAYING, STOPPED };
-
 struct audiorequest_t
 {
   uint16_t station;
   int volume;
   bool doSave;
 };
-
 class Player: public Audio {
   public:
-    audioMode_e mode;
-    audiorequest_t request; 
-    bool requesToStart;
+    audioMode_e mode; 
+    audiorequest_t request;
+    bool requestToStart;
+    void zeroRequest();
   public:
     Player();
     void init();
     void loop();
-    void zeroRequest();
     void play(uint16_t stationId);
     void prev();
     void next();

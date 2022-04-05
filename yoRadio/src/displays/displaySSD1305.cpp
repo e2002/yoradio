@@ -13,6 +13,10 @@
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
 
+#ifndef DEF_SPI_FREQ
+#define DEF_SPI_FREQ        7000000UL      /*  set it to 0 for system default */
+#endif
+
 const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};
 
 const unsigned char logo [] PROGMEM=
@@ -27,7 +31,7 @@ const unsigned char logo [] PROGMEM=
     0x1f, 0xff, 0xe0, 0x0f, 0xff, 0xe0, 0x03, 0xff, 0xc0, 0x00, 0xfe, 0x00
 };
 
-DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, 7000000UL) {
+DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {
 
 }
 
@@ -161,6 +165,7 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
+      fillRect(0, yStart + i * PLMITEMHEIGHT, swidth, PLMITEMHEIGHT - 1, TFT_BG);
       print(utf8Rus(plMenu[i], true));
     }
   }
@@ -303,11 +308,10 @@ void DspCore::printText(const char* txt) {
   print(txt);
 }
 
-void DspCore::loop() {
-  if (checkdelay(FPS, loopdelay)) {
+void DspCore::loop(bool force) {
+  if (checkdelay(SCROLLTIME, loopdelay) || force) {
     display();
   }
-  yield();
 }
 
 boolean DspCore::checkdelay(int m, unsigned long &tstamp) {

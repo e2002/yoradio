@@ -11,8 +11,13 @@
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
 
-#define SCROLLDELTA 8
-#define SCROLLTIME 332
+#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
+//#define SCROLLDELTA 8
+//#define SCROLLTIME 332
+#define SCROLLDELTA 4
+#define SCROLLTIME 250
+#endif
+
 #define META_SIZE       1
 #define TITLE_TOP1 TFT_FRAMEWDT + TFT_LINEHGHT+1
 #define TITLE_SIZE2     0
@@ -50,7 +55,7 @@ class DspCore: public Adafruit_PCD8544 {
     void rssi(const char* str);
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop();
+    void loop(bool force=false);
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;
