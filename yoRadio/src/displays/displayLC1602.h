@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #if DSP_MODEL==DSP_1602I2C
+#define LCD_I2C
 #include "../LiquidCrystalI2C/LiquidCrystalI2CEx.h"
 #else
 #include <LiquidCrystal.h>
@@ -25,7 +26,9 @@
 #define BOOTSTR_TOP1    1
 #define STARTTIME_PL    2000
 
-#if DSP_MODEL==DSP_1602I2C
+#define IP_INST_VOL
+
+#ifdef LCD_I2C
 class DspCore: public LiquidCrystal_I2C {
 #else
 class DspCore: public LiquidCrystal {

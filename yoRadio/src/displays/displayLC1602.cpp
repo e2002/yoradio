@@ -13,7 +13,7 @@
 
 const byte controlspaces[] = { CLOCK_SPACE, VOL_SPACE };
 
-#if DSP_MODEL==DSP_1602I2C
+#ifdef LCD_I2C
 DspCore::DspCore(): LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL) {
 
 }
@@ -30,7 +30,7 @@ void DspCore::apScreen() {
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-#if DSP_MODEL==DSP_1602I2C
+#ifdef LCD_I2C
   init();
   backlight();
 #else

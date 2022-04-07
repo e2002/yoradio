@@ -89,9 +89,10 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 /*  Other settings.  */
 //#define DTYPE             INITR_BLACKTAB    /*  ST7735 display submodel */
                                             /*  Could be one of: */
-                                            /*  INITR_BLACKTAB        1.8' https://aliexpress.ru/item/1005002822797745.html  */
+                                            /*  INITR_BLACKTAB        1.8' https://aliexpress.com/item/1005002822797745.html  */
                                             /*  (See this note If INITR_BLACKTAB have a noisy line on one side of the screen https://github.com/e2002/yoradio#note-if-initr_blacktab-dsp-have-a-noisy-line-on-one-side-of-the-screen-then-in-adafruit_st7735cpp ) */
-                                            /*  INITR_144GREENTAB     // 1.44' https://aliexpress.ru/item/1005002822797745.html  */
+                                            /*  INITR_144GREENTAB     // 1.44' https://aliexpress.com/item/1005002822797745.html  */
+                                            /*  INITR_MINI160x80      // 0.96' 160x80 ST7735S   https://????  */
                                             /*  INITR_GREENTAB  */
                                             /*  INITR_REDTAB  */
 //#define LED_BUILTIN       2                 /*  LED Pin */

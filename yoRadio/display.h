@@ -29,6 +29,8 @@
 #include "src/displays/displaySH1106.h"
 #elif DSP_MODEL==DSP_1602
 #include "src/displays/displayLC1602.h"
+#elif DSP_MODEL==DSP_GC9106
+#include "src/displays/displayGC9106.h"
 #elif DSP_MODEL==DSP_CUSTOM
 #include "src/displays/displayCustom.h"
 #endif

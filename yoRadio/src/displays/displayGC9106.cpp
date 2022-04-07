@@ -1,18 +1,18 @@
 #include "../../options.h"
-#if DSP_MODEL==DSP_ST7735
+#if DSP_MODEL==DSP_GC9106
 
-#include "displayST7735.h"
+#include "displayGC9106.h"
 #include <SPI.h>
-#ifdef DSP_MINI
 #include "fonts/bootlogo40.h"
-#else
-#include "fonts/bootlogo.h"
-#endif
 #include "../../player.h"
 #include "../../config.h"
 #include "../../network.h"
 
-DspCore::DspCore(): Adafruit_ST7735(&SPI, TFT_CS, TFT_DC, TFT_RST) {
+#ifndef DEF_SPI_FREQ
+#define DEF_SPI_FREQ        16000000UL      /*  set it to 0 for system default */
+#endif
+
+DspCore::DspCore(): Adafruit_GC9106Ex(TFT_CS, TFT_DC, TFT_RST) {
 
 }
 
@@ -109,9 +109,9 @@ void DspCore::apScreen() {
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  initR(DTYPE);
+  begin(DEF_SPI_FREQ);
   cp437(true);
-  invertDisplay((DTYPE==INITR_MINI160x80)?TFT_INVERT:!TFT_INVERT);
+  invertDisplay(!TFT_INVERT);
   fillScreen(TFT_BG);
   setRotation(TFT_ROTATE);
   setTextWrap(false);
@@ -123,11 +123,7 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
 }
 
 void DspCore::drawLogo() {
-#ifdef DSP_MINI
   drawRGBBitmap((swidth - 62) / 2, 5, bootlogo40, 62, 40);
-#else
-  drawRGBBitmap((swidth - 99) / 2, 18, bootlogo2, 99, 64);
-#endif
 }
 
 // http://greekgeeks.net/#maker-tools_convertColor
@@ -203,25 +199,7 @@ void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 }
 
 void DspCore::displayHeapForDebug() {
-#ifndef DSP_MINI
-  int16_t vTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT * 2 - 2;
-  setTextSize(1);
-  setTextColor(DARK_GRAY, TFT_BG);
-  setCursor(TFT_FRAMEWDT, vTop);
-  fillRect(TFT_FRAMEWDT, vTop, swidth - TFT_FRAMEWDT / 2, 7, TFT_BG);
-  print(ESP.getFreeHeap());
-  print(" / ");
-  print(ESP.getMaxAllocHeap());
-#if VS1053_CS==255
-  // audio buffer;
-  fillRect(0, sheight - 2, swidth, 2, TFT_BG);
-  int astored = player.inBufferFilled();
-  int afree = player.inBufferFree();
-  int aprcnt = 100 * astored / (astored + afree);
-  byte sbw = map(aprcnt, 0, 100 , 0, swidth);
-  fillRect(0, sheight - 2, sbw, 2, SILVER);
-#endif
-#endif
+
 }
 
 void DspCore::setClockBounds(){
@@ -230,8 +208,7 @@ void DspCore::setClockBounds(){
   getTextBounds("88:88", 0, 0, &x, &y, &cwidth, &cheight);
   uint16_t header = TFT_FRAMEWDT + 4 * TFT_LINEHGHT;
   uint16_t footer = TFT_FRAMEWDT * 2 + TFT_LINEHGHT + 5;
-  clockY = header + (sheight - header - footer) / 2 - cheight / 2;
-  if(DTYPE==INITR_MINI160x80) clockY = clockY-6;
+  clockY = header + (sheight - header - footer) / 2 - cheight / 2 - 6;
   setFont();
 }
 
@@ -287,26 +264,15 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
   setFont();
   yield();
 }
-#ifdef DSP_MINI
+
 #define VTOP  TITLE_TOP1+6
-#else
-#define VTOP  48
-#endif
+
 void DspCore::drawVolumeBar(bool withNumber) {
-#ifdef DSP_MINI
   int16_t vTop = sheight - TFT_FRAMEWDT - 2;
   int16_t vWidth = swidth - TFT_FRAMEWDT * 2;
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth);
   fillRect(TFT_FRAMEWDT, vTop, vWidth, 2, TFT_BG);
   fillRect(TFT_FRAMEWDT, vTop, ww, 2, TFT_LOGO);
-#else
-  int16_t vTop = sheight - TFT_FRAMEWDT - 6;
-  int16_t vWidth = swidth - TFT_FRAMEWDT * 2;
-  uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
-  fillRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, TFT_BG);
-  drawRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, TFT_LOGO);
-  fillRect(TFT_FRAMEWDT + 1, vTop - 1, ww, 5, TFT_LOGO);
-#endif
   if (withNumber) {
     setTextSize(1);
     setTextColor(TFT_FG);

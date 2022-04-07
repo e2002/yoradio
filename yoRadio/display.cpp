@@ -274,7 +274,11 @@ void Display::swichMode(displayMode_e newmode) {
 #endif
   }
   if (newmode == VOL) {
+#ifdef IP_INST_VOL
+    dsp.frameTitle(WiFi.localIP().toString().c_str());
+#else
     dsp.frameTitle("VOLUME");
+#endif
   }
   if (newmode == LOST) {
     dsp.frameTitle("* LOST *");
@@ -487,7 +491,7 @@ void Display::time(bool redraw) {
 TaskHandle_t drawVolumeTaskHandle = NULL;
 bool taskVDone = true;
 void drawVolumeTask( void * pvParameters ) {
-  delay(20);    /*  but it's too fast 0__o   */
+  delay(50);    /*  but it's too fast 0__o   */
   dsp.drawVolumeBar(true);
   taskVDone = true;
   vTaskDelete( NULL );

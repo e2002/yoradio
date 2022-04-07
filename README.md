@@ -44,6 +44,7 @@ https://aliexpress.com/item/32965676064.html
 - or **ILI9341** 3.2'320x240 SPI https://aliexpress.com/item/33048191074.html
 - or **SSD1305 (SSD1309)** 2.4' 128x64 SPI https://aliexpress.com/item/32950307344.html
 - or **SH1107** 0.96' 128x64 I2C https://aliexpress.com/item/4000551696674.html
+- or **GC9106** 0.96' 160x80 SPI https://aliexpress.com/item/32947890530.html
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
@@ -280,6 +281,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.120
+- added support for GC9106 160x80 SPI displays
+- fixed compiling error with DSP_DUMMY option
+- fixed compiling error with DSP_1602I2C / DSP_1602 option
+
 #### v0.6.110
 - the logic of division by cores has been changed
 - fixed choppy playback (again)

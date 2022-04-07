@@ -1,28 +1,18 @@
-#ifndef displayST7735_h
-#define displayST7735_h
+#ifndef displayGC9106_h
+#define displayGC9106_h
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
+/*    https://github.com/prenticedavid/Adafruit_GC9102_kbv    */
+#include "../Adafruit_GC9106Ex/Adafruit_GC9106Ex.h"
 #include "fonts/DS_DIGI28pt7b.h"
 
 #define TFT_LINEHGHT    10
-#if DTYPE==INITR_MINI160x80
 #define TFT_FRAMEWDT    0
-#define DSP_MINI
-#else
-#define TFT_FRAMEWDT    4
-#endif
 
 #define PLMITEMS        7
 #define PLMITEMLENGHT   40
-#if DTYPE==INITR_MINI160x80
 #define PLMITEMHEIGHT   19
-#else
-#define PLMITEMHEIGHT   21
-#endif
-#define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
-#define TITLE_FG2       SILVER
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 3
@@ -31,14 +21,13 @@
 
 #define TFT_FULLTIME    1
 
-#if DTYPE==INITR_MINI160x80
 #define TITLE_SIZE2     0
 #define TITLE_TOP1 TFT_FRAMEWDT + 2 * TFT_LINEHGHT-3
+
 #define BOOTSTR_TOP1 50
 #define BOOTSTR_TOP2 65
-#endif
 
-class DspCore: public Adafruit_ST7735 {
+class DspCore: public Adafruit_GC9106Ex {
   public:
     DspCore();
     char plMenu[PLMITEMS][PLMITEMLENGHT];

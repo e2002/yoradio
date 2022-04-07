@@ -10,6 +10,11 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
 
+#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
+#define SCROLLDELTA 3
+#define SCROLLTIME 60
+#endif
+
 class DspCore {
   public:
     DspCore();
