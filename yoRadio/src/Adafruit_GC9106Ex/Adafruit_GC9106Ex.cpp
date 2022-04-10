@@ -22,6 +22,9 @@
  *
  */
 
+#include "../../options.h"
+#if DSP_MODEL==DSP_GC9106
+
 #include "Adafruit_GC9106Ex.h"
 #ifndef ARDUINO_STM32_FEATHER
 #include "pins_arduino.h"
@@ -309,4 +312,4 @@ void Adafruit_GC9106Ex::setAddrWindow(uint16_t x1, uint16_t y1, uint16_t w,
   SPI_WRITE16(y2);
   writeCommand(GC9106_RAMWR); // Write to RAM
 }
-
+#endif

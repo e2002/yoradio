@@ -281,6 +281,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.121
+- fixed compiling error with DSP_GC9106 option
+
 #### v0.6.120
 - added support for GC9106 160x80 SPI displays
 - fixed compiling error with DSP_DUMMY option
