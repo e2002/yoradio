@@ -59,10 +59,10 @@ void Player::loop() {
     if (isRunning()) {
       //digitalWrite(LED_BUILTIN, LOW);
       setOutputPins(false);
-      //display.title("[stopped]");
       config.setTitle(display.mode==LOST?"":"[stopped]");
       netserver.requestOnChange(TITLE, 0);
-      stopSong();
+      //stopSong();
+      setDefaults();
       stopInfo();
     }
   }
@@ -78,7 +78,8 @@ void Player::loop() {
     telnet.printf("##CLI.VOL#: %d\n", config.store.volume);
     Audio::setVolume(volToI2S(request.volume));
     zeroRequest();
-    display.volume();
+    display.putRequest({DRAWVOL, 0});
+    netserver.requestOnChange(VOLUME, 0);
   }
 }
 
@@ -94,17 +95,17 @@ void Player::setOutputPins(bool isPlaying) {
 }
 
 void Player::play(uint16_t stationId) {
-  stopSong();
+  //stopSong();
+  setDefaults();
   setOutputPins(false);
   config.setTitle("[connecting]");
   netserver.requestOnChange(TITLE, 0);
   //telnet.printf("##CLI.META#: %s\n", config.station.title);
   config.loadStation(stationId);
   setVol(config.store.volume, true);
-  display.station();
+  display.putRequest({NEWSTATION, 0});
   netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
-  display.loop();
   if (connecttohost(config.station.url)) {
     mode = PLAYING;
     config.setSmartStart(1);
@@ -113,8 +114,7 @@ void Player::play(uint16_t stationId) {
     requestToStart = true;
   }else{
     Serial.println("some unknown bug...");
-  }
-  display.loop();
+  };
 }
 
 void Player::prev() {

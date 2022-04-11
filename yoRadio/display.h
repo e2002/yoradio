@@ -37,6 +37,16 @@
 
 enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST };
 
+enum displayRequestType_e { NEWMODE, CLOCK, NEWTITLE, RETURNTITLE, NEWSTATION, NEXTSTATION, DRAWPLAYLIST, DRAWVOL };
+struct requestParams_t
+{
+  displayRequestType_e type;
+  int payload;
+};
+
+#ifndef DUMMYDISPLAY
+void loopCore0( void * pvParameters );
+
 class Scroll {
   public:
     Scroll() { };
@@ -50,7 +60,6 @@ class Scroll {
   private:
     byte textsize, texttop, id;
     char text[BUFLEN/2];
-    char text2[BUFLEN+10];
     char separator[4];
     uint16_t fg, bg;
     uint16_t delayStartScroll;
@@ -67,37 +76,51 @@ class Scroll {
     void setTextParams();
     void drawFrame();
 };
+#endif
 
 class Display {
   public:
-    bool clockRequest;
     uint16_t screenwidth, screenheight;
     displayMode_e mode;
     uint16_t currentPlItem;
     uint16_t numOfNextStation;
+#ifndef DUMMYDISPLAY
     Scroll plCurrent;
+#endif
+    bool busy;
   public:
     Display() {};
+#ifndef DUMMYDISPLAY
     void init();
-    void clear();
     void loop();
-    void start();
-    void station();
-    void title();
-    void volume();
+    void start(bool reboot=false);
+    void stop();
+    void resetQueue();
     void centerText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void rightText(const char* text, byte y, uint16_t fg, uint16_t bg);
     void bootString(const char* text, byte y);
     void bootLogo();
-    void returnTile();
-    void swichMode(displayMode_e newmode);
-    void drawPlaylist();
-    void drawNextStationNum(uint16_t num);
+    void putRequest(requestParams_t request);
+#else
+    void init(){};
+    void loop(){};
+    void start(bool reboot=false){};
+    void stop(){};
+    void resetQueue(){};
+    void centerText(const char* text, byte y, uint16_t fg, uint16_t bg){};
+    void rightText(const char* text, byte y, uint16_t fg, uint16_t bg){};
+    void bootString(const char* text, byte y){};
+    void bootLogo(){};
+    void putRequest(requestParams_t request){};
+#endif
+#ifndef DUMMYDISPLAY
   private:
     Ticker timer;
     Scroll meta, title1, title2;
+    bool clockRequest;
     bool dt;              // dots
     unsigned long volDelay;
+    void clear();
     void heap();
     void rssi();
     void ip();
@@ -106,6 +129,15 @@ class Display {
     void drawPlayer();
     void drawVolume();
     void checkConnection();
+    void swichMode(displayMode_e newmode);
+    void drawPlaylist();
+    void volume();
+    void title();
+    void station();
+    void drawNextStationNum(uint16_t num);
+    void returnTile();
+    void createCore0Task();
+#endif
 };
 
 extern Display display;
@@ -113,7 +145,7 @@ extern Display display;
 extern __attribute__((weak)) bool dsp_before_clock(DspCore *dsp, bool dots);
 extern __attribute__((weak)) void dsp_after_clock(DspCore *dsp, bool dots);
 extern __attribute__((weak)) void dsp_on_init();
-extern __attribute__((weak)) void dsp_on_loop();
+extern __attribute__((weak)) void dsp_on_loop(DspCore *dsp);
 extern __attribute__((weak)) void dsp_on_start(DspCore *dsp);
 extern __attribute__((weak)) void dsp_on_newmode(displayMode_e newmode);
 

@@ -30,10 +30,15 @@
 #endif
 */
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-#define SCROLLDELTA     4
+/*#define SCROLLDELTA     5
 #define SCROLLTIME      83
-#define LOOP_DELAY      60
+#define LOOP_DELAY      100*/
+#define SCROLLDELTA     2
+#define SCROLLTIME      30
+#define LOOP_DELAY      33
 #endif
+
+#define TFT_FULLTIME    1
 
 class DspCore: public Adafruit_SSD1327 {
   public:
@@ -52,6 +57,7 @@ class DspCore: public Adafruit_SSD1327 {
     void set_Cursor(int16_t x, int16_t y);
     void printText(const char* txt);
     void printClock(const char* timestr);
+    void printClock(struct tm timeinfo, bool dots, bool redraw = false);
     void displayHeapForDebug();
     void drawVolumeBar(bool withNumber);
     void drawNextStationNum(uint16_t num);
@@ -70,9 +76,10 @@ class DspCore: public Adafruit_SSD1327 {
     uint16_t cwidth, cheight;
     unsigned long loopdelay;
     char oldTimeBuf[20];
-    uint16_t wot, hot;
+    uint16_t wot, hot, dot;
     boolean checkdelay(int m, unsigned long &tstamp);
     void setClockBounds();
+    byte getPw(uint16_t ncwidth);
 };
 
 extern DspCore dsp;
@@ -86,9 +93,12 @@ extern DspCore dsp;
 /*
  * TFT COLORS
  */
+#define DARK_GRAY   0x01
 #define SILVER      0x07
 #define TFT_BG      0x00
 #define TFT_FG      0x08
 #define TFT_LOGO    0x3f
+#define ORANGE      0x02
+#define PINK        0x02
 
 #endif

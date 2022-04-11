@@ -1,6 +1,9 @@
 #include "Arduino.h"
 
 #include "options.h"
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
+#endif
 #include "config.h"
 #include "telnet.h"
 #include "player.h"
@@ -42,6 +45,6 @@ void loop() {
     player.loop();
     loopControls();
   }
-  display.loop();
+//  display.loop();
   netserver.loop();
 }

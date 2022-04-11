@@ -11,6 +11,7 @@ class NetServer {
   public:
     uint8_t playlistrequest; // ClientId want the playlist
     bool importRequest;
+    bool resumePlay;
   public:
     NetServer() {};
     bool begin();
@@ -22,6 +23,7 @@ class NetServer {
   private:
     requestType_e request;
     int rssi;
+    
     void getPlaylist(uint8_t clientId);
     bool importPlaylist();
 };

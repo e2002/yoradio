@@ -9,6 +9,10 @@
 #include "network.h"
 #include "mqtt.h"
 
+#ifndef MIN_MALLOC
+#define MIN_MALLOC 24112
+#endif
+
 NetServer netserver;
 
 AsyncWebServer webserver(80);
@@ -27,9 +31,21 @@ bool NetServer::begin() {
 
   webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     ssidCount = 0;
+    int mcb = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    int mci = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    log_i("[yoradio] webserver.on / - MALLOC_CAP_INTERNAL=%d, MALLOC_CAP_8BIT=%d", mci, mcb);
+    netserver.resumePlay = mcb < MIN_MALLOC;
+    if (netserver.resumePlay) {
+      player.toggle();
+      while (player.isRunning()) {
+        delay(10);
+      }
+    }
     request->send(SPIFFS, "/www/index.html", String(), false, processor);
   });
+
   webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=31536000");
+
   webserver.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
     handleHTTPPost(request);
   });
@@ -71,10 +87,9 @@ void NetServer::loop() {
     }
     importRequest = false;
   }
-  if(rssi<255){
+  if (rssi < 255) {
     requestOnChange(NRSSI, 0);
   }
-  yield();
 }
 
 void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len) {
@@ -97,28 +112,17 @@ void NetServer::setRSSI(int val) {
 }
 
 void NetServer::getPlaylist(uint8_t clientId) {
-  String dataString = "";
-  File file = SPIFFS.open(PLAYLIST_PATH, "r");
-  if (!file || file.isDirectory()) {
-    return;
+  char buf[160] = {0};
+  sprintf(buf, "{\"file\": \"http://%s%s\"}", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
+  if (clientId == 0) {
+    websocket.textAll(buf);
+  } else {
+    websocket.text(clientId, buf);
   }
-  char sName[BUFLEN], sUrl[BUFLEN], pOvol[30];
-  int sOvol;
-  while (file.available()) {
-    String line = file.readStringUntil('\n');
-    if (config.parseCSV(line.c_str(), sName, sUrl, sOvol)) {
-      sprintf(pOvol, "%d", sOvol);
-      dataString += "{\"name\":\"" + String(sName) + "\",\"url\":\"" + String(sUrl) + "\",\"ovol\":" + String(pOvol) + "},";
-    }
+  if (resumePlay) {
+    resumePlay = false;
+    player.toggle();
   }
-  if (dataString.length() > 0) {
-    if (clientId == 0) {
-      websocket.textAll("{\"file\": [" + dataString.substring(0, dataString.length() - 1) + "]}");
-    } else {
-      websocket.text(clientId, "{\"file\": [" + dataString.substring(0, dataString.length() - 1) + "]}");
-    }
-  }
-  file.close();
 }
 
 bool NetServer::savePlaylist(const char* post) {
@@ -222,7 +226,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
       }
     case NRSSI: {
         sprintf (buf, "{\"rssi\": %d}", rssi);
-        rssi=255;
+        rssi = 255;
         break;
       }
     case BITRATE: {
@@ -293,6 +297,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   switch (type) {
     case WS_EVT_CONNECT:
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+
       netserver.requestOnChange(STATION, client->id());
       netserver.requestOnChange(TITLE, client->id());
       netserver.requestOnChange(VOLUME, client->id());
@@ -301,6 +306,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
       netserver.requestOnChange(BITRATE, client->id());
       netserver.requestOnChange(MODE, client->id());
       netserver.playlistrequest = client->id();
+
       break;
     case WS_EVT_DISCONNECT:
       Serial.printf("WebSocket client #%u disconnected\n", client->id());

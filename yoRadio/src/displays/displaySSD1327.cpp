@@ -3,7 +3,7 @@
 
 #include "displaySSD1327.h"
 #include <Wire.h>
-#include "fonts/bootlogo.h"
+#include "fonts/bootlogobw.h"
 #include "../../player.h"
 #include "../../config.h"
 #include "../../network.h"
@@ -133,7 +133,7 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
 }
 
 void DspCore::drawLogo() {
-  drawRGBBitmap((swidth - 99) / 2, 18, bootlogo2, 99, 64);
+  drawGrayscaleBitmap((swidth - 99) / 2, 18, bootlogobw, 99, 64);
 }
 
 #define CLR_ITEM1    0xA
@@ -159,7 +159,7 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
       print(utf8Rus(plMenu[i], true));
     }
   }
-  display();
+  //display();
 }
 
 void DspCore::clearDsp() {
@@ -197,7 +197,7 @@ void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
   setCursor((swidth - w) / 2, y);
   fillRect(0, y, swidth, h, bg);
   print(txt);
-  display();
+  //display();
 }
 
 void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
@@ -212,7 +212,23 @@ void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 }
 
 void DspCore::displayHeapForDebug() {
-
+  int16_t vTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT * 2 - 2;
+  setTextSize(1);
+  setTextColor(DARK_GRAY, TFT_BG);
+  setCursor(TFT_FRAMEWDT, vTop);
+  fillRect(TFT_FRAMEWDT, vTop, swidth - TFT_FRAMEWDT / 2, 7, TFT_BG);
+  print(ESP.getFreeHeap());
+  print(" / ");
+  print(ESP.getMaxAllocHeap());
+#if VS1053_CS==255
+  // audio buffer;
+  fillRect(0, sheight - 2, swidth, 2, TFT_BG);
+  int astored = player.inBufferFilled();
+  int afree = player.inBufferFree();
+  int aprcnt = 100 * astored / (astored + afree);
+  byte sbw = map(aprcnt, 0, 100 , 0, swidth);
+  fillRect(0, sheight - 2, sbw, 2, DARK_GRAY);
+#endif
 }
 
 void DspCore::setClockBounds(){
@@ -226,7 +242,7 @@ void DspCore::setClockBounds(){
 }
 
 void DspCore::printClock(const char* timestr) {
-  uint16_t ncwidth, ncheight;
+/*  uint16_t ncwidth, ncheight;
   setFont(&DS_DIGI28pt7b);
   setTextSize(1);
   getTextBounds(oldTimeBuf, 0, 0, &x, &y, &wot, &hot);
@@ -240,11 +256,60 @@ void DspCore::printClock(const char* timestr) {
   setCursor((swidth - ncwidth) / 2 - 4, clockY+28+6);
   print(timestr);
   setFont();
+  //display();*/
+}
+
+byte DspCore::getPw(uint16_t ncwidth){
+  byte pw = 6;
+  if(ncwidth<35) pw = 7;
+  if(ncwidth<20) pw = 8;
+  return pw;
+}
+
+void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
+  char timeBuf[50] = { 0 };
+  char tmpBuf[4] = { 0 };
+  uint16_t ncwidth, ncheight;
+  strftime(timeBuf, sizeof(timeBuf), "%H %M", &timeinfo);
+  setTextSize(1);
+    setFont(&DS_DIGI28pt7b);
+  if(strstr(oldTimeBuf, timeBuf)==NULL || redraw){
+    getTextBounds(oldTimeBuf, 0, 0, &x, &y, &wot, &hot);
+    setCursor((swidth - wot) / 2 - 4, clockY+28+6);
+    setTextColor(TFT_BG);
+    print(oldTimeBuf);
+    dot = (swidth - wot) / 2 - 4;
+    /*  dots  */
+    strlcpy(tmpBuf, oldTimeBuf, 3);
+    getTextBounds(tmpBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
+    dot = dot + ncwidth + getPw(ncwidth);
+    setCursor(dot, clockY+28+6);
+    print(":");
+    /*  dots  */
+
+    strlcpy(oldTimeBuf, timeBuf, 20);
+    setTextSize(1);
+    getTextBounds(timeBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
+    setTextColor(TFT_LOGO);
+    setCursor((swidth - ncwidth) / 2 - 4, clockY+28+6);
+    dot = (swidth - ncwidth) / 2 - 4;
+    setTextSize(1);
+    print(timeBuf);
+    /*  dots  */
+    strftime(timeBuf, sizeof(timeBuf), "%H", &timeinfo);
+    getTextBounds(timeBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
+    dot = dot + ncwidth + getPw(ncwidth);
+    /*  dots  */
+  }
+  setCursor(dot, clockY+28+6);
+  setTextColor(dots?TFT_BG:TFT_LOGO);
+  print(":");
+  setFont();
   display();
 }
 
 void DspCore::drawVolumeBar(bool withNumber) {
-  if (withNumber) delay(150); /*  buuuut iiiiit's toooooo faaaast 0000__oooo !!111 ommm____nomm____nomm   */
+  //if (withNumber) delay(150); /*  buuuut iiiiit's toooooo faaaast 0000__oooo !!111 ommm____nomm____nomm   */
   int16_t vTop = sheight - TFT_FRAMEWDT * 2;
   int16_t vWidth = swidth - TFT_FRAMEWDT - 4;
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
@@ -267,7 +332,7 @@ void DspCore::drawVolumeBar(bool withNumber) {
     print(volstr);
     setFont();
   }
-  display();
+  //display();
 }
 
 void DspCore::drawNextStationNum(uint16_t num) {
@@ -283,7 +348,7 @@ void DspCore::drawNextStationNum(uint16_t num) {
   setCursor((swidth - wv) / 2, 48 + hv);
   print(numstr);
   setFont();
-  display();
+  //display();
 }
 
 void DspCore::frameTitle(const char* str) {
@@ -320,12 +385,12 @@ void DspCore::set_Cursor(int16_t x, int16_t y) {
 
 void DspCore::printText(const char* txt) {
   print(txt);
-  display();
+  //display();
 }
 
 void DspCore::loop(bool force) {
   if (checkdelay(LOOP_DELAY, loopdelay) || force) {
-    //display();
+    display();
   }
   yield();
 }

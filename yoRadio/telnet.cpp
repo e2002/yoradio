@@ -136,7 +136,6 @@ void Telnet::on_connect(const char* str, byte clientId) {
 }
 
 void Telnet::info() {
-  byte volume;
   telnet.printf("##CLI.INFO#\n");
   char timeStringBuff[50];
   strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S+03:00", &network.timeinfo);
@@ -201,7 +200,7 @@ void Telnet::on_input(const char* str, byte clientId) {
     printf(clientId, "##CLI.AUDIOINFO#: %d\n> ", config.store.audioinfo > 0);
     return;
   }
-  byte ainfo;
+  int ainfo;
   if (sscanf(str, "audioinfo(%d)", &ainfo) == 1 || sscanf(str, "cli.audioinfo(\"%d\")", &ainfo) == 1 || sscanf(str, "audioinfo %d", &ainfo) == 1) {
     config.store.audioinfo = ainfo > 0;
     printf(clientId, "new audioinfo value is: %d\n> ", config.store.audioinfo);
@@ -212,9 +211,9 @@ void Telnet::on_input(const char* str, byte clientId) {
     printf(clientId, "##CLI.SMARTSTART#: %d\n> ", config.store.smartstart);
     return;
   }
-  byte sstart;
+  int sstart;
   if (sscanf(str, "smartstart(%d)", &sstart) == 1 || sscanf(str, "cli.smartstart(\"%d\")", &sstart) == 1 || sscanf(str, "smartstart %d", &sstart) == 1) {
-    config.store.smartstart = sstart;
+    config.store.smartstart = (byte)sstart;
     printf(clientId, "new smartstart value is: %d\n> ", config.store.audioinfo);
     config.save();
     return;
@@ -260,24 +259,25 @@ void Telnet::on_input(const char* str, byte clientId) {
     printf(clientId, "> ");
     return;
   }
-  uint16_t sb;
+  int sb;
   if (sscanf(str, "play(%d)", &sb) == 1 || sscanf(str, "cli.play(\"%d\")", &sb) == 1 || sscanf(str, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;
-    player.play(sb);
+    player.play((uint16_t)sb);
     return;
   }
   if (strcmp(str, "sys.tzo") == 0 || strcmp(str, "tzo") == 0) {
     printf(clientId, "##SYS.TZO#: %d:%d\n> ", config.store.tzHour, config.store.tzMin);
     return;
   }
-  int16_t tzh, tzm;
+  //int16_t tzh, tzm;
+  int tzh, tzm;
   if (sscanf(str, "tzo(%d:%d)", &tzh, &tzm) == 2 || sscanf(str, "sys.tzo(\"%d:%d\")", &tzh, &tzm) == 2 || sscanf(str, "tzo %d:%d", &tzh, &tzm) == 2) {
     if (tzh < -12) tzh = -12;
     if (tzh > 14) tzh = 14;
     if (tzm < 0) tzm = 0;
     if (tzm > 59) tzm = 59;
-    config.setTimezone(tzh, tzm);
+    config.setTimezone((int8_t)tzh, (int8_t)tzm);
     if(tzh<0){
       printf(clientId, "new timezone offset: %03d:%02d\n", config.store.tzHour, config.store.tzMin);
     }else{
@@ -289,7 +289,7 @@ void Telnet::on_input(const char* str, byte clientId) {
   if (sscanf(str, "tzo(%d)", &tzh) == 1 || sscanf(str, "sys.tzo(\"%d\")", &tzh) == 1 || sscanf(str, "tzo %d", &tzh) == 1) {
     if (tzh < -12) tzh = -12;
     if (tzh > 14) tzh = 14;
-    config.setTimezone(tzh, 0);
+    config.setTimezone((int8_t)tzh, 0);
     if(tzh<0){
       printf(clientId, "new timezone offset: %03d:%02d\n", config.store.tzHour, config.store.tzMin);
     }else{

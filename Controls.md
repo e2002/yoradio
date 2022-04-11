@@ -47,7 +47,7 @@ You can connect one or two encoders to replace/complete the buttons. One encoder
 - ENCODER2\
  rotate left: (ENC2_BTNL) if not pressed - switch to PLAYLIST mode and move up, if pressed - volume down\
  rotate right: (ENC2_BTNR) if not pressed - switch to PLAYLIST mode and move down, if pressed - volume up\
- click, dblclick: (ENC2_BTNB) same as BTN_CENTER
+ click, dblclick: (ENC2_BTNB) toggle between PLAYER/VOLUME mode
 
 ---
 ### IR receiver

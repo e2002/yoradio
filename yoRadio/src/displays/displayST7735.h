@@ -25,8 +25,8 @@
 #define TITLE_FG2       SILVER
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-#define SCROLLDELTA 3
-#define SCROLLTIME 65
+#define SCROLLDELTA 2
+#define SCROLLTIME 30
 #endif
 
 #define TFT_FULLTIME    1

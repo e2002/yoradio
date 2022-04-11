@@ -11,8 +11,9 @@
 DspCore dsp;
 Display display;
 
+#ifndef DUMMYDISPLAY
 void ticks() {
-  display.clockRequest = true;
+  display.putRequest({CLOCK,0});
 }
 
 #ifndef STARTTIME
@@ -58,6 +59,10 @@ void ticks() {
 #define DO_SCROLL (tWidth > (display.screenwidth - (dsp.fillSpaces?((texttop==0)?CLOCK_SPACE:VOL_SPACE):0)))
 #endif
 
+#ifndef CORE_STACK_SIZE
+#define CORE_STACK_SIZE  1024*3
+#endif
+
 byte currentScrollId = 0;   /* one scroll on one time */
 
 void  Scroll::init(byte ScrollId, const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
@@ -78,10 +83,6 @@ void Scroll::setText(const char *txt) {
   memset(text, 0, BUFLEN / 2);
   strlcpy(text, txt, BUFLEN / 2 - 1);
   getbounds(textwidth, textheight, sepwidth);
-  if (doscroll) {
-    memset(text2, 0, BUFLEN + 10);
-    sprintf(text2, "%s%s%s", text, separator, text);
-  }
   if (!locked) {
     clearscrolls();
     reset();
@@ -103,7 +104,7 @@ void Scroll::reset() {
   clear();
   setTextParams();
   dsp.set_Cursor(TFT_FRAMEWDT, texttop);
-  dsp.printText(doscroll ? text2 : text);
+  dsp.printText(text);
   drawFrame();
   if (currentScrollId == id) currentScrollId = 0;
 }
@@ -133,7 +134,6 @@ void Scroll::loop() {
     scroll();
     sticks();
   }
-  yield();
 }
 
 boolean Scroll::checkdelay(int m, unsigned long &tstamp) {
@@ -154,10 +154,9 @@ void Scroll::sticks() {
   if (!doscroll || locked || textsize == 0) return;
   setTextParams();
   dsp.set_Cursor(x, texttop);
-  dsp.printText(text2);
-
-  //dsp.printText(separator);
-  //dsp.printText(text);
+  dsp.printText(text);
+  dsp.printText(separator);
+  dsp.printText(text);
   if (x == TFT_FRAMEWDT) drawFrame();
 }
 
@@ -191,6 +190,33 @@ void Scroll::getbounds(uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
   doscroll = DO_SCROLL;
 }
 
+
+TaskHandle_t TaskCore0;
+QueueHandle_t displayQueue;
+
+void Display::createCore0Task(){
+  xTaskCreatePinnedToCore(
+      loopCore0,                  /* Task function. */
+      "TaskCore0",                /* name of task. */
+      CORE_STACK_SIZE,            /* Stack size of task */
+      NULL,                       /* parameter of the task */
+      4,                          /* no one flies higher than the Toruk */
+      &TaskCore0,                 /* Task handle to keep track of created task */
+      !xPortGetCoreID());         /* pin task to core 0 */  
+  //delay(500);
+}
+
+void loopCore0( void * pvParameters ){
+  delay(500);
+  while(!display.busy){
+    if(displayQueue==NULL) break;
+    display.loop();
+    vTaskDelay(10);
+  }
+  vTaskDelete( NULL );
+  TaskCore0=NULL;
+}
+
 void Display::init() {
   dsp.initD(screenwidth, screenheight);
   dsp.drawLogo();
@@ -213,24 +239,43 @@ void Display::apScreen() {
   dsp.apScreen();
 }
 
-void Display::start() {
+void Display::stop() {
+  busy = true;
+  swichMode(PLAYER);
+  timer.detach();
+  resetQueue();
+  vQueueDelete(displayQueue);
+  displayQueue=NULL;
+  delay(100);
+  bootLogo();
+  bootString("reloading", 1);
+  busy = false;
+}
+
+void Display::start(bool reboot) {
+  busy = false;
+  displayQueue = xQueueCreate( 5, sizeof( requestParams_t ) );
+  createCore0Task();
+
   clear();
   if (network.status != CONNECTED) {
     apScreen();
     return;
   }
   mode = PLAYER;
-  config.setTitle("[READY]");
-  //title("[READY]");
-  loop();
+  if(!reboot){
+    config.setTitle("[READY]");
+    //loop();
+  }
   ip();
   volume();
   station();
   rssi();
-  time();
+  time(reboot);
+  if(reboot) title();
   timer.attach_ms(1000, ticks);
   if (dsp_on_start) dsp_on_start(&dsp);
-  // Экстреминатус секвестирован /*дважды*/ /*трижды*/ четырежды
+  // Экстреминатус секвестирован /*дважды*/ /*трижды*/ /*четырежды*/ пятирежды
 }
 
 void Display::clear() {
@@ -253,7 +298,7 @@ void Display::swichMode(displayMode_e newmode) {
     meta.reset();
     title1.reset();
     if (TITLE_SIZE2 != 0) title2.reset();
-    player.loop();
+    //player.loop();
     plCurrent.lock();
     time(true);
 #ifdef CLOCK_SPACE  // if set space for clock in 1602 displays
@@ -314,26 +359,14 @@ void Display::drawVolume() {
   }
 }
 
-TaskHandle_t drawPlaylistTaskHandle = NULL;
-bool taskDone = true;
-void getPlaylist( void * pvParameters ) {
-  char buf[PLMITEMLENGHT];
-  display.plCurrent.lockRequest = true;
-  dsp.drawPlaylist(display.currentPlItem, buf);
-  display.plCurrent.setText(dsp.utf8Rus(buf, true));
-  taskDone = true;
-  vTaskDelete( NULL );
+void Display::resetQueue(){
+  xQueueReset(displayQueue);
 }
 
 void Display::drawPlaylist() {
-  while (!taskDone) player.loop();
-  taskDone = false;
-  xTaskCreatePinnedToCore(getPlaylist, "getPlaylist0", 4096, NULL, 1, &drawPlaylistTaskHandle, 0);
-  /*
-    char buf[PLMITEMLENGHT];
-    dsp.drawPlaylist(currentPlItem, buf);
-    plCurrent.setText(dsp.utf8Rus(buf, true));
-  */
+  char buf[PLMITEMLENGHT];
+  dsp.drawPlaylist(currentPlItem, buf);
+  plCurrent.setText(dsp.utf8Rus(buf, true));
 }
 
 void Display::drawNextStationNum(uint16_t num) {
@@ -345,7 +378,55 @@ void Display::drawNextStationNum(uint16_t num) {
   dsp.drawNextStationNum(num);
 }
 
+void Display::putRequest(requestParams_t request){
+  if(displayQueue==NULL) return;
+  xQueueSend(displayQueue, &request, portMAX_DELAY);
+}
+
 void Display::loop() {
+  if(displayQueue==NULL) return;
+  requestParams_t request;
+  if(xQueueReceive(displayQueue, &request, 20)){
+    switch (request.type){
+      case NEWMODE: {
+        swichMode((displayMode_e)request.payload);
+        break;
+      }
+      case CLOCK: {
+        clockRequest = true;
+        break;
+      }
+      case NEWTITLE: {
+        title();
+        break;
+      }
+      case RETURNTITLE: {
+        returnTile();
+        break;
+      }
+      case NEWSTATION: {
+        station();
+        break;
+      }
+      case NEXTSTATION: {
+        drawNextStationNum((displayMode_e)request.payload);
+        break;
+      }
+      case DRAWPLAYLIST: {
+        int p = request.payload ? currentPlItem + 1 : currentPlItem - 1;
+        if (p < 1) p = config.store.countStation;
+        if (p > config.store.countStation) p = 1;
+        currentPlItem = p;
+        drawPlaylist();
+        break;
+      }
+      case DRAWVOL: {
+        volume();
+        break;
+      }
+    }
+  }
+
   switch (mode) {
     case PLAYER: {
         drawPlayer();
@@ -365,8 +446,7 @@ void Display::loop() {
       }
   }
   dsp.loop();
-  if (dsp_on_loop) dsp_on_loop();
-  yield();
+  if (dsp_on_loop) dsp_on_loop(&dsp);
 }
 
 void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
@@ -374,6 +454,7 @@ void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 }
 
 void Display::bootString(const char* text, byte y) {
+  dsp.set_TextSize(1);
   dsp.centerText(text, y == 1 ? BOOTSTR_TOP1 : BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
   dsp.loop(true);
 }
@@ -392,7 +473,7 @@ void Display::station() {
 #ifdef DEBUG_TITLES
   meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
 #endif
-  dsp.loop(true);
+  //dsp.loop(true);
   //netserver.requestOnChange(STATION, 0);
 }
 
@@ -402,7 +483,7 @@ void Display::returnTile() {
   meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
 #endif
   meta.reset();
-  dsp.loop(true);
+  //dsp.loop(true);
 }
 
 void Display::title() {
@@ -429,7 +510,7 @@ void Display::title() {
     title1.setText(dsp.utf8Rus(ttl, true));
     if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
 
-    dsp.loop(true);
+    //dsp.loop(true);
   }
   //netserver.requestOnChange(TITLE, 0);
 }
@@ -488,22 +569,9 @@ void Display::time(bool redraw) {
   if (dsp_after_clock) dsp_after_clock(&dsp, dt);
 }
 
-TaskHandle_t drawVolumeTaskHandle = NULL;
-bool taskVDone = true;
-void drawVolumeTask( void * pvParameters ) {
-  delay(50);    /*  but it's too fast 0__o   */
-  dsp.drawVolumeBar(true);
-  taskVDone = true;
-  vTaskDelete( NULL );
+void Display::volume() {
+  dsp.drawVolumeBar(mode == VOL);
+  //netserver.requestOnChange(VOLUME, 0);
 }
 
-void Display::volume() {
-  if (mode == VOL) {
-    while (!taskVDone) player.loop();
-    taskVDone = false;
-    xTaskCreatePinnedToCore(drawVolumeTask, "drawVolumeTask0", 2048, NULL, 1, &drawVolumeTaskHandle, 0);
-  } else {
-    dsp.drawVolumeBar(false);
-  }
-  netserver.requestOnChange(VOLUME, 0);
-}
+#endif // DUMMYDISPLAY

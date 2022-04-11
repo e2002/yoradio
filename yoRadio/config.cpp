@@ -132,7 +132,7 @@ byte Config::setLastSSID(byte val) {
 void Config::setTitle(const char* title) {
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
-  display.title();
+  display.putRequest({NEWTITLE, 0});
 }
 
 void Config::setStation(const char* station) {

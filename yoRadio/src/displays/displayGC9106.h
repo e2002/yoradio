@@ -16,7 +16,7 @@
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 3
-#define SCROLLTIME 65
+#define SCROLLTIME 30
 #endif
 
 #define TFT_FULLTIME    1

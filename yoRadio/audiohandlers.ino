@@ -1,6 +1,6 @@
 void audio_info(const char *info) {
   if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
-  if (strstr(info, "failed!") != NULL || strstr(info, "404") != NULL) {
+  if (strstr(info, "failed!") != NULL || strstr(info, " 404") != NULL) {
     config.setTitle("[request failed]");
     //config.setTitle(info);
     player.mode = STOPPED;
@@ -28,7 +28,6 @@ bool printable(const char *info) {
 void audio_showstation(const char *info) {
   if (strlen(info) > 0) {
     bool p = printable(info);
-    //display.title(p?info:"*****");
     config.setTitle(p?info:"*****");
     netserver.requestOnChange(TITLE, 0);
   }
@@ -37,7 +36,6 @@ void audio_showstation(const char *info) {
 void audio_showstreamtitle(const char *info) {
   if (strlen(info) > 0) {
     bool p = printable(info);
-    //display.title(p?info:"*****");
     config.setTitle(p?info:"*****");
     netserver.requestOnChange(TITLE, 0);
   }

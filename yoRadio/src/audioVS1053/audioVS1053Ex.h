@@ -237,7 +237,7 @@ protected:
     bool     readMetadata(uint8_t b, bool first = false);
     void     UTF8toASCII(char* str);
     void     unicode2utf8(char* buff, uint32_t len);
-    void     setDefaults();
+    //void     setDefaults();
     void     loadUserCode();
 
 
@@ -271,7 +271,7 @@ public:
 		bool isRunning() {/*Serial.printf("m_f_running=%d\n", m_f_running); */return m_f_running;}
 		void setBalance(int8_t bal = 0);
 		void setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass);
-
+    void     setDefaults();
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}
     bool endsWith (const char* base, const char* str) {

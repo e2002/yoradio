@@ -3614,7 +3614,7 @@ void Audio::showstreamtitle(const char* ml) {
         }
         free(sTit);
     }
-
+    sTit_remember = 0;
     idx1 = indexOf(ml, "StreamUrl=", 0);
     idx2 = indexOf(ml, ";", idx1);
     if(idx1 >= 0 && idx2 > idx1){                                               // StreamURL found
@@ -4246,7 +4246,7 @@ void Audio::setBalance(int8_t bal){ // bal -16...16
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::setVolume(uint8_t vol) { // vol 22 steps, 0...21
-    if(vol > 255) vol = 255;
+    if(vol > 255) vol = 254;
     //volume = map(eeprom_config.volume, 0, 21, 0, 255);
     //m_vol = map(vol, 0, 254, 0, 64);
     m_vol = vol;

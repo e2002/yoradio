@@ -14,8 +14,8 @@
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 //#define SCROLLDELTA 8
 //#define SCROLLTIME 332
-#define SCROLLDELTA 4
-#define SCROLLTIME 250
+#define SCROLLDELTA 5
+#define SCROLLTIME 200
 #endif
 
 #define META_SIZE       1

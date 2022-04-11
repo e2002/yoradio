@@ -14,8 +14,8 @@
 #define TITLE_SIZE2     2
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-#define SCROLLDELTA 5
-#define SCROLLTIME 50
+#define SCROLLDELTA 3
+#define SCROLLTIME 30
 #endif
 
 #define PLMITEMS        9

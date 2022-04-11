@@ -185,7 +185,8 @@ public:
     uint32_t getAudioFileDuration();
     uint32_t getAudioCurrentTime();
     uint32_t getTotalPlayingTime();
-
+    void setDefaults();
+    
     esp_err_t i2s_mclk_pin_select(const uint8_t pin);
     uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
     uint32_t inBufferFree();   // returns the number of free bytes in the inputbuffer
@@ -197,7 +198,7 @@ private:
     void UTF8toASCII(char* str);
     bool latinToUTF8(char* buff, size_t bufflen);
     void httpPrint(const char* url);
-    void setDefaults(); // free buffers and set defaults
+    //void setDefaults(); // free buffers and set defaults
     void initInBuff();
     void processLocalFile();
     void processWebStream();

@@ -281,8 +281,15 @@ Work is in progress...
 
 ---
 ## Version history
-#### v0.6.121
-- fixed compiling error with DSP_GC9106 option
+#### v0.6.200
+- please backup your playlist and wifi settings before updating (export)
+- accelerated displays up to ~30fps (everything except LCD)
+- corrections/additions in the WEB interface (a [full update](#update) is required)
+- rewrote [plugin example](https://github.com/e2002/yoradio/blob/main/exsamples/displayhandlers.ino)
+- fixed compilation errors on macOS
+- changed the logic of the second encoder (switching to the volume control mode by double click)
+- optimization, bug fixes
+- probably some other things that I forgot about %)
 
 #### v0.6.120
 - added support for GC9106 160x80 SPI displays

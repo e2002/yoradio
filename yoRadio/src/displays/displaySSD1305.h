@@ -18,8 +18,8 @@
 #define TFT_FULLTIME    1
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-#define SCROLLDELTA 3
-#define SCROLLTIME 83
+#define SCROLLDELTA 2
+#define SCROLLTIME 35
 #endif
 
 class DspCore: public Adafruit_SSD1305 {

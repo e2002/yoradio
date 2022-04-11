@@ -9,7 +9,7 @@
 #include "../../network.h"
 
 #ifndef DEF_SPI_FREQ
-#define DEF_SPI_FREQ        16000000UL      /*  set it to 0 for system default */
+#define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
 #endif
 
 DspCore::DspCore(): Adafruit_GC9106Ex(TFT_CS, TFT_DC, TFT_RST) {
@@ -113,7 +113,10 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   cp437(true);
   invertDisplay(!TFT_INVERT);
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  byte tftRotate = TFT_ROTATE;
+  if(tftRotate>1) tftRotate=3;
+  if(tftRotate==0) tftRotate=1;
+  setRotation(tftRotate);
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();

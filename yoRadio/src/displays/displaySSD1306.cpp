@@ -337,7 +337,7 @@ void DspCore::printText(const char* txt) {
 }
 
 void DspCore::loop(bool force) {
-  if (checkdelay(83, loopdelay) || force) {
+  if (checkdelay(SCROLLTIME, loopdelay) || force) {
 #if DSP_MODEL==DSP_SSD1306x32
     if(fillSpaces) printClock(insideClc);
 #endif

@@ -536,7 +536,7 @@ void Audio::showstreamtitle(const char* ml) {
         }
         free(sTit);
     }
-
+    sTit_remember = 0;
     idx1 = indexOf(ml, "StreamUrl=", 0);
     idx2 = indexOf(ml, ";", idx1);
     if(idx1 >= 0 && idx2 > idx1){                                               // StreamURL found

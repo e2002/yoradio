@@ -11,7 +11,7 @@
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 2
-#define SCROLLTIME 40
+#define SCROLLTIME 35
 #endif
 
 #if DSP_MODEL==DSP_SSD1306

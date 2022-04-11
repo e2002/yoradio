@@ -153,7 +153,7 @@ void encoder2Loop() {
     if (ENC2_BTNB != 255) {
       bp = digitalRead(ENC2_BTNB);
     }
-    if (bp == HIGH && display.mode != STATIONS) display.swichMode(STATIONS);
+    if (bp == HIGH && display.mode == PLAYER) display.putRequest({NEWMODE, STATIONS}); //display.swichMode(STATIONS);
     controlsEvent(encNewPosition > 0);
   }
 }
@@ -172,13 +172,12 @@ void irBlink() {
 void irNum(byte num) {
   uint16_t s;
   if (display.numOfNextStation == 0 && num == 0) return;
-  //if (display.mode == PLAYER) display.swichMode(NUMBERS);
-  display.swichMode(NUMBERS);
+  display.putRequest({NEWMODE, NUMBERS});
   if (display.numOfNextStation > UINT16_MAX / 10) return;
   s = display.numOfNextStation * 10 + num;
   if (s > config.store.countStation) return;
   display.numOfNextStation = s;
-  display.drawNextStationNum(s);
+  display.putRequest({NEXTSTATION, s});
 }
 
 void irLoop() {
@@ -204,10 +203,8 @@ void irLoop() {
       case IR_CODE_PLAY: {
           irBlink();
           if (display.mode == NUMBERS) {
-            display.swichMode(PLAYER);
+            display.putRequest({NEWMODE, PLAYER});
             player.play(display.numOfNextStation);
-            //player.request.station = display.numOfNextStation;
-            //player.request.doSave = true;
             display.numOfNextStation = 0;
             break;
           }
@@ -234,12 +231,12 @@ void irLoop() {
         }
       case IR_CODE_HASH: {
           if (display.mode == NUMBERS) {
-            display.returnTile();
-            display.swichMode(PLAYER);
+            display.putRequest({RETURNTITLE, 0});
+            display.putRequest({NEWMODE, PLAYER});
             display.numOfNextStation = 0;
             break;
           }
-          display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+          display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
           break;
         }
       case IR_CODE_NUM0: {
@@ -355,7 +352,7 @@ void touchLoop() {
             touchLongPress=millis();
             if(display.mode==PLAYER || display.mode==VOL){
               int16_t xDelta = map(abs(touchVol - touchX), 0, display.screenwidth, 0, TS_STEPS);
-              display.swichMode(VOL);
+              display.putRequest({NEWMODE, VOL});
               if (xDelta>1) {
                 controlsEvent((touchVol - touchX)<0);
                 touchVol = touchX;
@@ -368,7 +365,7 @@ void touchLoop() {
             touchLongPress=millis();
             if(display.mode==PLAYER || display.mode==STATIONS){
               int16_t yDelta = map(abs(touchStation - touchY), 0, display.screenheight, 0, TS_STEPS);
-              display.swichMode(STATIONS);
+              display.putRequest({NEWMODE, STATIONS});
               if (yDelta>1) {
                 controlsEvent((touchStation - touchY)>0);
                 touchStation = touchY;
@@ -390,7 +387,7 @@ void touchLoop() {
         if(millis()-touchLongPress < BTN_PRESS_TICKS*2){
           onBtnClick(EVT_BTNCENTER);
         }else{
-          display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+          display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
         }
       }
       direct = TSD_STAY;
@@ -411,9 +408,15 @@ void onBtnLongPressStart(int id) {
       }
     case EVT_BTNCENTER:
     case EVT_ENCBTNB: {
-        display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+        display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
         break;
       }
+    case EVT_ENC2BTNB: {
+        display.putRequest({NEWMODE, display.mode == PLAYER ? VOL : PLAYER});
+        break;
+      }
+    default:
+        break;
   }
 }
 
@@ -426,6 +429,8 @@ void onBtnLongPressStop(int id) {
         lpId = -1;
         break;
       }
+    default:
+        break;
   }
 }
 
@@ -453,13 +458,15 @@ void onBtnDuringLongPress(int id) {
       case EVT_BTNUP:
       case EVT_BTNDOWN: {
           if (display.mode == PLAYER) {
-            display.swichMode(STATIONS);
+            display.putRequest({NEWMODE, STATIONS});
           }
           if (display.mode == STATIONS) {
             controlsEvent(id == EVT_BTNDOWN);
           }
           break;
         }
+      default:
+          break;
     }
   }
 }
@@ -467,19 +474,16 @@ void onBtnDuringLongPress(int id) {
 void controlsEvent(bool toRight) {
   if (display.mode == NUMBERS) {
     display.numOfNextStation = 0;
-    display.swichMode(PLAYER);
+    display.putRequest({NEWMODE, PLAYER});
   }
   if (display.mode != STATIONS) {
-    display.swichMode(VOL);
+    display.putRequest({NEWMODE, VOL});
     player.stepVol(toRight);
   }
   if (display.mode == STATIONS) {
-    int p = toRight ? display.currentPlItem + 1 : display.currentPlItem - 1;
-    if (p < 1) p = config.store.countStation;
-    if (p > config.store.countStation) p = 1;
-    display.currentPlItem = p;
-    //display.clear();
-    display.drawPlaylist();
+    display.resetQueue();
+    display.putRequest({DRAWPLAYLIST, toRight});
+    
   }
 }
 
@@ -494,16 +498,14 @@ void onBtnClick(int id) {
     case EVT_ENC2BTNB: {
         if (display.mode == NUMBERS) {
           display.numOfNextStation = 0;
-          display.swichMode(PLAYER);
+          display.putRequest({NEWMODE, PLAYER});
         }
         if (display.mode == PLAYER) {
           player.toggle();
         }
         if (display.mode == STATIONS) {
-          display.swichMode(PLAYER);
+          display.putRequest({NEWMODE, PLAYER});
           player.play(display.currentPlItem);
-          //player.request.station = display.currentPlItem;
-          //player.request.doSave = true;
         }
         break;
       }
@@ -521,7 +523,7 @@ void onBtnClick(int id) {
           }
         } else {
           if (display.mode == PLAYER) {
-            display.swichMode(STATIONS);
+            display.putRequest({NEWMODE, STATIONS});
           }
           if (display.mode == STATIONS) {
             controlsEvent(id == EVT_BTNDOWN);
@@ -542,7 +544,7 @@ void onBtnDoubleClick(int id) {
     case EVT_BTNCENTER:
     case EVT_ENCBTNB:
     case EVT_ENC2BTNB: {
-        display.swichMode(display.mode == PLAYER ? STATIONS : PLAYER);
+        display.putRequest({NEWMODE, display.mode == PLAYER ? VOL : PLAYER});
         break;
       }
     case EVT_BTNRIGHT: {
@@ -550,5 +552,7 @@ void onBtnDoubleClick(int id) {
         player.next();
         break;
       }
+    default:
+        break;
   }
 }

@@ -20,8 +20,8 @@
 #endif
 
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-#define SCROLLDELTA 3
-#define SCROLLTIME 60
+#define SCROLLDELTA 2
+#define SCROLLTIME 35
 #endif
 
 #if DSP_MODEL==DSP_SH1106

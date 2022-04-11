@@ -21,7 +21,6 @@
  * BSD license, all text here must be included in any redistribution.
  *
  */
-
 #include "../../options.h"
 #if DSP_MODEL==DSP_GC9106
 
