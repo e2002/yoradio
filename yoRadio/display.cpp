@@ -444,6 +444,8 @@ void Display::loop() {
         plCurrent.loop();
         break;
       }
+    default:
+        break;
   }
   dsp.loop();
   if (dsp_on_loop) dsp_on_loop(&dsp);

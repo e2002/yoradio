@@ -153,7 +153,10 @@ void encoder2Loop() {
     if (ENC2_BTNB != 255) {
       bp = digitalRead(ENC2_BTNB);
     }
-    if (bp == HIGH && display.mode == PLAYER) display.putRequest({NEWMODE, STATIONS}); //display.swichMode(STATIONS);
+    if (bp == HIGH && display.mode == PLAYER) {
+      display.putRequest({NEWMODE, STATIONS});
+      while(display.mode != STATIONS) {delay(5);}
+    }
     controlsEvent(encNewPosition > 0);
   }
 }

@@ -33,6 +33,7 @@ bool NetServer::begin() {
     ssidCount = 0;
     int mcb = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     int mci = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    (void)mci;
     log_i("[yoradio] webserver.on / - MALLOC_CAP_INTERNAL=%d, MALLOC_CAP_8BIT=%d", mci, mcb);
     netserver.resumePlay = mcb < MIN_MALLOC;
     if (netserver.resumePlay) {

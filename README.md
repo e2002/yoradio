@@ -281,6 +281,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.202
+- fixed errors in the operation of the second encoder
+- rewrote [plugin example](https://github.com/e2002/yoradio/blob/main/exsamples/displayhandlers.ino)
+- fixed compilation errors on macOS #2
+
 #### v0.6.200
 - please backup your playlist and wifi settings before updating (export)
 - accelerated displays up to ~30fps (everything except LCD)

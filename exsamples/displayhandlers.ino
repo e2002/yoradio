@@ -134,7 +134,7 @@ void updateWeather() {
     NULL,                         /* parameter of the task */
     0,                            /* priority of the task */
     &weatherUpdateTaskHandle,     /* Task handle to keep track of created task */
-    1);                           /* pin task to core CORE_FOR_LOOP_CONTROLS */
+    0);                           /* pin task to core CORE_FOR_LOOP_CONTROLS */
 }
 
 /***********************************************
