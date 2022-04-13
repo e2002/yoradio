@@ -231,7 +231,13 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count) {
     }
     while (playlist.available()) {
       if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
+#ifdef PL_WITH_NUMBERS
+        char buf[BUFLEN];
+        sprintf(buf, "%d %s", (int)(from+c), sName);
+        strlcpy(plmenu[c], buf, 39);
+#else
         strlcpy(plmenu[c], sName, 39);
+#endif
         c++;
       }
       if (c >= count) break;

@@ -14,7 +14,7 @@
 #define LOGO_HEIGHT 32
 
 #ifndef DEF_SPI_FREQ
-#define DEF_SPI_FREQ        7000000UL      /*  set it to 0 for system default */
+#define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
 #endif
 
 const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};

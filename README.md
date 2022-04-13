@@ -148,8 +148,8 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 
 ---
 ## Hardware setup
-Hardware is connected in the **[options.h](yoRadio/options.h)** file. \
-_so that the settings are not overwritten when updating git, you need to put the file **myoptions.h** ([exsample](exsamples/myoptions.h)) in the root of the project and make settings in it_ \
+Dont edit the options.h! \
+Hardware is adjustment in the **[myoptions.h](exsamples/myoptions.h)** file. \
 
 **Important!**
 You must choose between I2S DAC and VS1053 by disabling the second module in the settings:
@@ -163,13 +163,7 @@ You must choose between I2S DAC and VS1053 by disabling the second module in the
 ````
 Define display model:
 ````c++
-/* DISPLAY MODEL
- * 0 - DUMMY
- * 1 - ST7735
- * 2 - SSD1306
- * 3 - NOKIA5110
- */
-#define DSP_MODEL  1
+#define DSP_MODEL  DSP_ST7735 /*  default - DSP_DUMMY  */
 ````
 The ST7735 display submodel:
 ````c++
@@ -193,6 +187,9 @@ Rotation of the display:
 
 ---
 ## Quick start
+<img src="images/board3.jpg" width="830" height="400"><br />
+
+0. **[Arduino core for the ESP32](https://github.com/espressif/arduino-esp32) v2.0.0 or higgest is required!**
 1. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload ([it's here](images/board2.jpg))
 2. Upload the sketch to the board ([example of the board settings](images/board.jpg))
 3. Connect to yoRadioAP acces point with password 12345987, go to http://192.168.4.1/ configure and wifi connections.  \
@@ -281,16 +278,22 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.210
+- fixed choppy playback on DSP_ST7735 displays used with VS1053
+- new option PL_WITH_NUMBERS (show the number of station in the playlist)
+- fixed compiling error with DSP_DUMMY option
+- correction of displays GC9106 and SSD1305
+
 #### v0.6.202
 - fixed errors in the operation of the second encoder
-- rewrote [plugin example](https://github.com/e2002/yoradio/blob/main/exsamples/displayhandlers.ino)
+- rewrote [plugin example](exsamples/displayhandlers.ino)
 - fixed compilation errors on macOS #2
 
 #### v0.6.200
 - please backup your playlist and wifi settings before updating (export)
 - accelerated displays up to ~30fps (everything except LCD)
 - corrections/additions in the WEB interface (a [full update](#update) is required)
-- rewrote [plugin example](https://github.com/e2002/yoradio/blob/main/exsamples/displayhandlers.ino)
+- rewrote [plugin example](exsamples/displayhandlers.ino)
 - fixed compilation errors on macOS
 - changed the logic of the second encoder (switching to the volume control mode by double click)
 - optimization, bug fixes

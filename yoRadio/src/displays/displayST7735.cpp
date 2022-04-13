@@ -12,6 +12,10 @@
 #include "../../config.h"
 #include "../../network.h"
 
+#ifndef DEF_SPI_FREQ
+#define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
+#endif
+
 DspCore::DspCore(): Adafruit_ST7735(&SPI, TFT_CS, TFT_DC, TFT_RST) {
 
 }
@@ -110,6 +114,7 @@ void DspCore::apScreen() {
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   initR(DTYPE);
+  if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   cp437(true);
   invertDisplay((DTYPE==INITR_MINI160x80)?TFT_INVERT:!TFT_INVERT);
   fillScreen(TFT_BG);

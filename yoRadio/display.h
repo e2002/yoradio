@@ -1,5 +1,6 @@
 #ifndef display_h
 #define display_h
+#include "options.h"
 
 #include "Arduino.h"
 #include <Ticker.h>

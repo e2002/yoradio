@@ -9,7 +9,7 @@
 #include "../../network.h"
 
 #ifndef DEF_SPI_FREQ
-#define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
+#define DEF_SPI_FREQ        40000000      /*  set it to 0 for system default */
 #endif
 
 DspCore::DspCore(): Adafruit_GC9106Ex(TFT_CS, TFT_DC, TFT_RST) {
