@@ -149,7 +149,7 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 ---
 ## Hardware setup
 Dont edit the options.h! \
-Hardware is adjustment in the **[myoptions.h](exsamples/myoptions.h)** file. 
+Hardware is adjustment in the **[myoptions.h](exsamples/myoptions.h)** file.
 
 **Important!**
 You must choose between I2S DAC and VS1053 by disabling the second module in the settings:
@@ -191,7 +191,7 @@ Rotation of the display:
 
 0. **[Arduino core for the ESP32](https://github.com/espressif/arduino-esp32) v2.0.0 or higgest is required!**
 1. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload ([it's here](images/board2.jpg))
-2. Upload the sketch to the board ([example of the board settings](images/board.jpg))
+2. Upload the sketch to the board
 3. Connect to yoRadioAP acces point with password 12345987, go to http://192.168.4.1/ configure and wifi connections.  \
 _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRadio/data/data/wifi.csv](yoRadio/data/data/wifi.csv) file (tab-separated values, one line per access point) before uploading the sketch data in step 1_
 4. After successful connection go to http://\<yoipaddress\>/ , add stations to playlist (or import WebStations.txt from KaRadio)
