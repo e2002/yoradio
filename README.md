@@ -149,7 +149,7 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 ---
 ## Hardware setup
 Dont edit the options.h! \
-Hardware is adjustment in the **[myoptions.h](exsamples/myoptions.h)** file. \
+Hardware is adjustment in the **[myoptions.h](exsamples/myoptions.h)** file. 
 
 **Important!**
 You must choose between I2S DAC and VS1053 by disabling the second module in the settings:
