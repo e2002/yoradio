@@ -533,27 +533,10 @@ void Display::ip() {
   dsp.ip(WiFi.localIP().toString().c_str());
 }
 
-void Display::checkConnection() {
-  if (WiFi.status() != WL_CONNECTED) {
-    bool playing = player.mode == PLAYING;
-    swichMode(LOST);
-    if (playing) player.mode = STOPPED;
-    WiFi.disconnect();
-    ip();
-    WiFi.reconnect();
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-    }
-    swichMode(PLAYER);
-    if (playing) player.play(config.store.lastStation);
-  }
-}
-
 void Display::time(bool redraw) {
   if (dsp_before_clock) if (!dsp_before_clock(&dsp, dt)) return;
   char timeStringBuff[20] = { 0 };
   if (!dt) {
-    checkConnection();
     heap();
     rssi();
   }

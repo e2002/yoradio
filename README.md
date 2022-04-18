@@ -278,6 +278,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.220
+- new option PLAYER_FORCE_MONO (with i2S DAC only)
+- change default scroll speed in DSP_NOKIA5110
+- improved reconnect to WiFi on connection loss
+
 #### v0.6.210
 - fixed choppy playback on DSP_ST7735 displays used with VS1053
 - new option PL_WITH_NUMBERS (show the number of station in the playlist)

@@ -14,6 +14,9 @@
 #include "controls.h"
 #include "mqtt.h"
 
+unsigned long checkMillis = 0;
+unsigned long checkInterval = 3000;
+
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -28,6 +31,9 @@ void setup() {
   }
   netserver.begin();
   telnet.begin();
+#if PLAYER_FORCE_MONO
+  player.forceMono(true);
+#endif
   player.setVol(config.store.volume, true);
   initControls();
   display.start();
@@ -44,7 +50,26 @@ void loop() {
     telnet.loop();
     player.loop();
     loopControls();
+    checkConnection();
   }
 //  display.loop();
   netserver.loop();
+}
+
+void checkConnection(){
+  if ((WiFi.status() != WL_CONNECTED) && (millis() - checkMillis >=checkInterval)) {
+    bool playing = player.isRunning();
+    if (playing) player.mode = STOPPED;
+    display.putRequest({NEWMODE, LOST});
+    Serial.println("Lost connection, reconnecting...");
+    while(true){
+      if (WiFi.status() == WL_CONNECTED) break;
+      WiFi.disconnect();
+      WiFi.reconnect();
+      delay(3000);
+    }
+    display.putRequest({NEWMODE, PLAYER});
+    if (playing) player.request.station = config.store.lastStation;
+    checkMillis = millis();
+  }
 }

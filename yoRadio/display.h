@@ -129,7 +129,6 @@ class Display {
     void apScreen();
     void drawPlayer();
     void drawVolume();
-    void checkConnection();
     void swichMode(displayMode_e newmode);
     void drawPlaylist();
     void volume();

@@ -103,6 +103,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define MUTE_PIN          255               /*  MUTE Pin */
 //#define MUTE_VAL          HIGH              /*  Write this to MUTE_PIN when player is stopped */
 //#define PL_WITH_NUMBERS                     /*  show the number of station in the playlist  */
+//#define PLAYER_FORCE_MONO false             /*  mono option on boot - false stereo, true mono  */
 
 /******************************************/
 
