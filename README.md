@@ -216,7 +216,9 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 2. Get firmware binary: Sketch → Export compiled binary
 3. Get SPIFFS binary: disconnect ESP32 from your computer, click on **ESP32 Data Sketch Upload**. \
  You will get an error and file path
+ 
  <img src="images/getspiffs.jpg" width="830" height="208">
+
 4. Go to page _http://\<yoradioip\>/update_ and upload yoRadio.ino.esp32.bin and yoRadio.spiffs.bin in turn, checking the appropriate upload options.
 5. Well done!
 
