@@ -328,6 +328,9 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == LOST) {
     dsp.frameTitle("* LOST *");
   }
+  if (newmode == UPDATING) {
+    dsp.frameTitle("* UPDATING *");
+  }
   if (newmode == NUMBERS) {
     //dsp.frameTitle("STATION");
     meta.reset();

@@ -8,6 +8,7 @@
 #include "options.h"
 #include "network.h"
 #include "mqtt.h"
+#include <Update.h>
 
 #ifndef MIN_MALLOC
 #define MIN_MALLOC 24112
@@ -24,7 +25,14 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 void handleHTTPPost(AsyncWebServerRequest * request);
 
-byte ssidCount;
+byte  ssidCount;
+bool  shouldReboot  = false;
+
+char* updateError(){
+  static char ret[140] = {0};
+  sprintf(ret, "Update failed with error (%d)<br /> %s", (int)Update.getError(), Update.errorString());
+  return ret;
+}
 
 bool NetServer::begin() {
   importRequest = false;
@@ -62,6 +70,40 @@ bool NetServer::begin() {
   webserver.on("/upload", HTTP_POST, [](AsyncWebServerRequest * request) {
     //request->send(200);
   }, handleUpload);
+  webserver.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/www/update.html", String(), false, processor);
+  });
+  webserver.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
+    shouldReboot = !Update.hasError();
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot?"OK": updateError());
+    response->addHeader("Connection", "close");
+    request->send(response);
+  },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+    if(!index){
+      int target = (request->getParam("updatetarget", true)->value() == "spiffs") ? U_SPIFFS : U_FLASH;
+      Serial.printf("Update Start: %s\n", filename.c_str());
+      player.mode = STOPPED;
+      display.putRequest({NEWMODE, UPDATING});
+      if(!Update.begin(UPDATE_SIZE_UNKNOWN, target)){
+        Update.printError(Serial);
+        request->send(200, "text/html", updateError());
+      }
+    }
+    if(!Update.hasError()){
+      if(Update.write(data, len) != len){
+        Update.printError(Serial);
+        request->send(200, "text/html", updateError());
+      }
+    }
+    if(final){
+      if(Update.end(true)){
+        Serial.printf("Update Success: %uB\n", index+len);
+      } else {
+        Update.printError(Serial);
+        request->send(200, "text/html", updateError());
+      }
+    }
+  });
   webserver.begin();
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
@@ -77,6 +119,11 @@ bool NetServer::begin() {
 }
 
 void NetServer::loop() {
+  if(shouldReboot){
+    Serial.println("Rebooting...");
+    delay(100);
+    ESP.restart();
+  }
   websocket.cleanupClients();
   if (playlistrequest > 0) {
     requestOnChange(PLAYLIST, playlistrequest);

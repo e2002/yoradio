@@ -9,6 +9,7 @@
 - [Hardware setup](#hardware-setup)
 - [Quick start](#quick-start)
 - [Update](#update)
+- [Update over web-interface](#update-over-web-interface)
 - [Controls](Controls.md)
 - [MQTT](#mqtt)
 - [Home Assistant](#home-assistant)
@@ -209,6 +210,16 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 4. Go to page _http://\<yoradioip\>/_ in the browser and press Ctrl+F5 to update the scripts.
 5. Well done!
 
+## Update over web-interface
+1. Backup your settings: \
+download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data/wifi.csv_ and place them in the yoRadio/data/data/ folder
+2. Get firmware binary: Sketch → Export compiled binary
+3. Get SPIFFS binary: disconnect ESP32 from your computer, click on **ESP32 Data Sketch Upload**. \
+ You will get an error and file path
+ <img src="images/getspiffs.jpg" width="830" height="208">
+4. Go to page _http://\<yoradioip\>/update_ and upload yoRadio.ino.esp32.bin and yoRadio.spiffs.bin in turn, checking the appropriate upload options.
+5. Well done!
+
 ---
 ## MQTT
 1. Copy file exsamples/mqttoptions.h to yoRadio/ directory
@@ -278,6 +289,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.250
+- added update via web-interface \
+ **Attention! Full firmware with chip re-partitioning is required!** see [board setup example](#quick-start)
+- fixed choppy when switching stations via Home Assistant
+
 #### v0.6.220
 - new option PLAYER_FORCE_MONO (with i2S DAC only)
 - change default scroll speed in DSP_NOKIA5110

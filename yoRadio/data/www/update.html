@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=0.25">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" type="image/png" href="elogo.png">
+  <link rel="icon" type="image/png" href="elogo.png">
+  <link rel="stylesheet" title="base" href="style.css" type="text/css">
+  <title>ёRadio-update</title>
+  <style>
+  </style>
+  </head>
+<body>
+  <div class="content">
+    <div class="logo"></div>
+    <div class="playerwrap">
+      <div class="player" id="uploaderwrap">
+        <div id="uploadstatus">Please choose firmware or SPIFFS *.bin file</div>
+        <form id="updateform" method="POST" action="/update" enctype="multipart/form-data">
+          <div class="row">
+            <label for="uploadtype1"><input type="radio" id="uploadtype1" name="updatetarget" value="fw" checked /><span class="checkmark"></span> firmware</label>
+            <label for="contactChoice2"><input type="radio" id="uploadtype2" name="updatetarget" value="spiffs" /><span class="checkmark"></span> SPIFFS</label>
+          </div>
+          <div class="row rowinput">
+            <input id="binfile" type="file" accept=".bin,.hex" name="update" />
+            <input type="button" class="button" value="Update" onclick="doUpdate(this)">
+          </div>
+        </form>
+        <progress id="updateprogress" max="100" value="70" hidden></progress>
+        <a href="/" class="button" id="update_cancel_button">Cancel</a>
+      </div><!--player-->
+    </div><!--playerwrap-->
+    <div id="copy">powered by <a target="_blank" href="https://github.com/e2002/yoradio/">ёRadio</a> | v%VERSION%</div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

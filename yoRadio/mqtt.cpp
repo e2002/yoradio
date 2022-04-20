@@ -88,7 +88,8 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     return;
   }
   if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) {
-    player.play(config.store.lastStation);
+    //player.play(config.store.lastStation);
+    player.request.station = config.store.lastStation;
     return;
   }
   if (strcmp(buf, "boot") == 0 || strcmp(buf, "reboot") == 0) {
@@ -114,7 +115,9 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   if (sscanf(buf, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;
-    player.play(sb);
+    //player.play(sb);
+    player.request.station = sb;
+    player.request.doSave = true;
     return;
   }
 }

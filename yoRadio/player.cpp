@@ -59,7 +59,7 @@ void Player::loop() {
     if (isRunning()) {
       //digitalWrite(LED_BUILTIN, LOW);
       setOutputPins(false);
-      config.setTitle(display.mode==LOST?"":"[stopped]");
+      config.setTitle((display.mode==LOST || display.mode==UPDATING)?"":"[stopped]");
       netserver.requestOnChange(TITLE, 0);
       //stopSong();
       setDefaults();

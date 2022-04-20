@@ -36,7 +36,7 @@
 #include "src/displays/displayCustom.h"
 #endif
 
-enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST };
+enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING };
 
 enum displayRequestType_e { NEWMODE, CLOCK, NEWTITLE, RETURNTITLE, NEWSTATION, NEXTSTATION, DRAWPLAYLIST, DRAWVOL };
 struct requestParams_t

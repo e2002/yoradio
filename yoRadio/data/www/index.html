@@ -15,7 +15,11 @@
     <div class="logo"></div>
     <div id="navbar"%APMODE%>
       <div class="playerbytton navbutton" id="playlistbutton" onclick="showEditor()"></div>
-      <div class="playerbytton navbutton" id="settingsbutton" onclick="showSettings()"></div>
+      <div class="playerbytton navbutton" id="settingsbutton" onclick="event.stopPropagation(); showSettings()"></div>
+      <div id="settingspopup" class="hidden">
+        <div class="button" id="settingsbuttonwifi" onclick="showSettingsWifi()">Wi-Fi</div>
+        <div class="button" id="settingsbuttonupload" onclick="showSettingsUoload()">Update</div>
+      </div>
     </div>
     <div class="playerwrap">
       <div class="player">
