@@ -291,6 +291,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.263
+- fixed encoder internal pullup
+
 #### v0.6.262
 - change encoder library to [ai-esp32-rotary-encoder](https://github.com/igorantolic/ai-esp32-rotary-encoder) (injected to project)
 - added new option VOL_ACCELERATION - volume adjustment acceleration by encoder (see [myoptions.h](exsamples/myoptions.h) for exsample)

@@ -87,8 +87,8 @@ yoEncoder::yoEncoder(uint8_t encoder_APin, uint8_t encoder_BPin, uint8_t encoder
 	this->encoderBPin = encoder_BPin;
 	this->encoderSteps = encoderSteps;
 
-	pinMode(this->encoderAPin, internalPullup?INPUT_PULLUP:INPUT_PULLDOWN);
-	pinMode(this->encoderBPin, internalPullup?INPUT_PULLUP:INPUT_PULLDOWN);
+	pinMode(this->encoderAPin, internalPullup?INPUT_PULLUP:INPUT);
+	pinMode(this->encoderBPin, internalPullup?INPUT_PULLUP:INPUT);
 }
 
 void yoEncoder::setBoundaries(long minEncoderValue, long maxEncoderValue, bool circleValues)
