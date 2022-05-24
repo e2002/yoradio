@@ -16,13 +16,28 @@ OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN
 constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
+#if ENC_HALFQUARD==false
+#define ENCODER_STEPS 4
+#elif ENC_HALFQUARD==true
+#define ENCODER_STEPS 2
+#elif ENC_HALFQUARD==255
+#define ENCODER_STEPS 1
+#endif
+#if ENC2_HALFQUARD==false
+#define ENCODER2_STEPS 4
+#elif ENC2_HALFQUARD==true
+#define ENCODER2_STEPS 2
+#elif ENC2_HALFQUARD==255
+#define ENCODER2_STEPS 1
+#endif
+
 #if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-#include <ESP32Encoder.h>
+#include "src/yoEncoder/yoEncoder.h"
 #if (ENC_BTNL!=255 && ENC_BTNR!=255)
-ESP32Encoder encoder;
+yoEncoder encoder = yoEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
 #endif
 #if (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-ESP32Encoder encoder2;
+yoEncoder encoder2 = yoEncoder(ENC2_BTNL, ENC2_BTNR, ENCODER2_STEPS, ENC2_INTERNALPULLUP);
 #endif
 #endif
 
@@ -50,23 +65,34 @@ IRrecv irrecv(IR_PIN, kCaptureBufferSize, kTimeout, true);
 decode_results irResults;
 #endif
 
-void initControls() {
 #if ENC_BTNL!=255
-  encoder.useInternalWeakPullResistors = ENC_INTERNALPULLUP ? UP : DOWN;
-  if (ENC_HALFQUARD) {
-    encoder.attachHalfQuad(ENC_BTNL, ENC_BTNR);
-  } else {
-    encoder.attachFullQuad(ENC_BTNL, ENC_BTNR);
-  }
+void IRAM_ATTR readEncoderISR()
+{
+  encoder.readEncoder_ISR();
+}
 #endif
 #if ENC2_BTNL!=255
-  encoder2.useInternalWeakPullResistors = ENC2_INTERNALPULLUP ? UP : DOWN;
-  if (ENC2_HALFQUARD) {
-    encoder2.attachHalfQuad(ENC2_BTNL, ENC2_BTNR);
-  } else {
-    encoder2.attachFullQuad(ENC2_BTNL, ENC2_BTNR);
-  }
+void IRAM_ATTR readEncoder2ISR()
+{
+  encoder2.readEncoder_ISR();
+}
 #endif
+
+void initControls() {
+  
+#if ENC_BTNL!=255
+  encoder.begin();
+  encoder.setup(readEncoderISR);
+  encoder.setBoundaries(0, 254, true);
+  encoder.setAcceleration(VOL_ACCELERATION);
+#endif
+#if ENC2_BTNL!=255
+  encoder2.begin();
+  encoder2.setup(readEncoder2ISR);
+  encoder2.setBoundaries(0, 254, true);
+  encoder2.setAcceleration(VOL_ACCELERATION);
+#endif
+
 #if ISPUSHBUTTONS
   for (int i = 0; i < nrOfButtons; i++)
   {
@@ -134,30 +160,28 @@ void loopControls() {
 
 #if ENC_BTNL!=255
 void encoderLoop() {
-  long encNewPosition = encoder.getCount() / 2;
-  if (encNewPosition != 0 && encNewPosition != encOldPosition) {
-    encOldPosition = encNewPosition;
-    encoder.setCount(0);
-    controlsEvent(encNewPosition > 0);
+  int8_t encoderDelta = encoder.encoderChanged();
+  if (encoderDelta!=0)
+  {
+    controlsEvent(encoderDelta > 0, encoderDelta);
   }
 }
 #endif
 
 #if ENC2_BTNL!=255
 void encoder2Loop() {
-  long encNewPosition = encoder2.getCount() / 2;
-  if (encNewPosition != 0 && encNewPosition != enc2OldPosition) {
-    enc2OldPosition = encNewPosition;
-    encoder2.setCount(0);
+  int8_t encoderDelta = encoder2.encoderChanged();
+  if (encoderDelta!=0)
+  {
     uint8_t bp = 2;
     if (ENC2_BTNB != 255) {
       bp = digitalRead(ENC2_BTNB);
     }
     if (bp == HIGH && display.mode == PLAYER) {
       display.putRequest({NEWMODE, STATIONS});
-      while(display.mode != STATIONS) {delay(5);}
+      while(display.mode != STATIONS) {delay(10);}
     }
-    controlsEvent(encNewPosition > 0);
+    controlsEvent(encoderDelta > 0, encoderDelta);
   }
 }
 #endif
@@ -474,14 +498,21 @@ void onBtnDuringLongPress(int id) {
   }
 }
 
-void controlsEvent(bool toRight) {
+void controlsEvent(bool toRight, int8_t volDelta) {
   if (display.mode == NUMBERS) {
     display.numOfNextStation = 0;
     display.putRequest({NEWMODE, PLAYER});
   }
   if (display.mode != STATIONS) {
     display.putRequest({NEWMODE, VOL});
-    player.stepVol(toRight);
+    if(volDelta!=0){
+      int nv = config.store.volume+volDelta;
+      if(nv<0) nv=0;
+      if(nv>254) nv=254;
+      player.setVol((byte)nv, false);
+    }else{
+      player.stepVol(toRight);
+    }
   }
   if (display.mode == STATIONS) {
     display.resetQueue();

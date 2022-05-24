@@ -232,7 +232,7 @@ esp_err_t Audio::I2Sstop(uint8_t i2s_num) {
 //---------------------------------------------------------------------------------------------------------------------
 esp_err_t Audio::i2s_mclk_pin_select(const uint8_t pin) {
     if(pin != 0 && pin != 1 && pin != 3) {
-        ESP_LOGE(TAG, "Only support GPIO0/GPIO1/GPIO3, gpio_num:%d", pin);
+        //ESP_LOGE(TAG, "Only support GPIO0/GPIO1/GPIO3, gpio_num:%d", pin);
         return ESP_ERR_INVALID_ARG;
     }
     switch(pin){
@@ -348,7 +348,7 @@ void Audio::httpPrint(const char* url) {
     strcat(resp, " HTTP/1.1\r\n");
     strcat(resp, "Host: ");
     strcat(resp,  host);
-    strcat(resp, "\r\nUser-Agent: ESP32 audioI2S\r\n");
+    strcat(resp, "\r\nUser-Agent: Mozilla/5.0\r\n");
     strcat(resp, "icy-metadata: 1\r\n");
     strcat(resp, "Accept-Encoding: identity\r\n");
     strcat(resp, "Connection: Keep-Alive\r\n\r\n");
@@ -522,7 +522,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 //    strcat(resp, "Transfer-Encoding: \r\n");  // otherwise the server assumes gzip compression
     strcat(resp, "Connection: keep-alive\r\n\r\n");
 
-    const uint32_t TIMEOUT_MS{350};
+    const uint32_t TIMEOUT_MS{3700};
     uint32_t wtf;
     if(m_f_ssl == false) {
         uint32_t t = millis();

@@ -54,13 +54,15 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define ENC2_BTNB              255           /*  Encoder button */
 //#define ENC2_BTNR              255           /*  Right rotation */
 //#define ENC2_INTERNALPULLUP    true          /*  Enable the weak pull up resistors */
-//#define ENC2_HALFQUARD         true          /*  Experiment  with it */
+//#define ENC2_HALFQUARD         false         /*  (true, false, 255) Experiment  with it */
 /******************************************/
 
 /*  BUTTONS  */
 //#define BTN_LEFT              255           /*  VolDown, Prev */
 //#define BTN_CENTER            255           /*  Play, Stop, Show playlist */
 //#define BTN_RIGHT             255           /*  VolUp, Next */
+//#define BTN_UP                255           /*  Prev, Move Up */
+//#define BTN_DOWN              255           /*  Next, Move Down */
 //#define BTN_INTERNALPULLUP    true          /*  Enable the weak pull up resistors */
 //#define BTN_LONGPRESS_LOOP_DELAY    200     /*  Delay between calling DuringLongPress event */
 //#define BTN_CLICK_TICKS    300              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
@@ -100,6 +102,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define TFT_CONTRAST      55                /*  Nokia 5110 contrast */
 //#define TFT_INVERT        true              /*  Invert the display colors (usually true) */
 //#define VOL_STEP          1                 /*  Volume control step */
+//#define VOL_ACCELERATION  200               /*  Encoder vol acceleration; 0 or 1 means disabled acceleration */
 //#define MUTE_PIN          255               /*  MUTE Pin */
 //#define MUTE_VAL          HIGH              /*  Write this to MUTE_PIN when player is stopped */
 //#define PL_WITH_NUMBERS                     /*  show the number of station in the playlist  */
@@ -129,4 +132,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define IR_CODE_NUM9          0xFF5AA5
 //#define IR_CODE_HASH          0xFF52AD         /*  Toggle playlist mode */
 //#define IR_CODE_AST           0xFF42BD         /*  Not used */
+
+
+/******************************************/
+
+
 #endif

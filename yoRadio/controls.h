@@ -16,7 +16,7 @@ void irLoop();
 void touchLoop();
 void irNum(byte num);
 void irBlink();
-void controlsEvent(bool toRight);
+void controlsEvent(bool toRight, int8_t volDelta = 0);
 
 void onBtnClick(int id);
 void onBtnDoubleClick(int id);

@@ -140,7 +140,7 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 ---
 ## Dependencies
 #### Libraries:
-**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, (\* depending on display model), ESP32Encoder, OneButton, IRremoteESP8266, XPT2046_Touchscreen \
+**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, (\* depending on display model), OneButton, IRremoteESP8266, XPT2046_Touchscreen \
 **Github**: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)* \
 \* _if you need MQTT support_
 
@@ -216,7 +216,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 2. Get firmware binary: Sketch → Export compiled binary
 3. Get SPIFFS binary: disconnect ESP32 from your computer, click on **ESP32 Data Sketch Upload**. \
  You will get an error and file path
- 
+
  <img src="images/getspiffs.jpg" width="830" height="208">
 
 4. Go to page _http://\<yoradioip\>/update_ and upload yoRadio.ino.esp32.bin and yoRadio.spiffs.bin in turn, checking the appropriate upload options.
@@ -291,6 +291,12 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.262
+- change encoder library to [ai-esp32-rotary-encoder](https://github.com/igorantolic/ai-esp32-rotary-encoder) (injected to project)
+- added new option VOL_ACCELERATION - volume adjustment acceleration by encoder (see [myoptions.h](exsamples/myoptions.h) for exsample)
+- fixed connection error with http-stations on esp32-core v2.0.3
+- fixed css errors (a [full update](#update-over-web-interface) is required)
+
 #### v0.6.250
 - added update via web-interface \
  **Attention! Full firmware with chip re-partitioning is required!** see [board setup example](#quick-start)

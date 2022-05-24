@@ -1640,7 +1640,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     strcat(resp, "\r\n");
     strcat(resp, "Connection: keep-alive\r\n\r\n");
 
-    const uint32_t TIMEOUT_MS{350};
+    const uint32_t TIMEOUT_MS{3700};
     uint32_t wtf;
     if(m_f_ssl == false) {
         uint32_t t = millis();
