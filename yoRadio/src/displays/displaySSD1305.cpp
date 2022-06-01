@@ -1,5 +1,5 @@
 #include "../../options.h"
-#if DSP_MODEL==DSP_SSD1305
+#if DSP_MODEL==DSP_SSD1305 || DSP_MODEL==DSP_SSD1305I2C
 
 #include "displaySSD1305.h"
 #include "../../player.h"
@@ -31,10 +31,17 @@ const unsigned char logo [] PROGMEM=
     0x1f, 0xff, 0xe0, 0x0f, 0xff, 0xe0, 0x03, 0xff, 0xc0, 0x00, 0xfe, 0x00
 };
 
+#if DSP_MODEL==DSP_SSD1305
 DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {
 
 }
+#else
+#include <Wire.h>
+TwoWire I2CSSD1305 = TwoWire(0);
+DspCore::DspCore(): Adafruit_SSD1305(128, 64, &I2CSSD1305, -1){
 
+}
+#endif
 char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
@@ -128,8 +135,11 @@ void DspCore::apScreen() {
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+#if DSP_MODEL==DSP_SSD1305I2C
+  I2CSSD1305.begin(I2C_SDA, I2C_SCL);
+#endif
   if (!begin(SCREEN_ADDRESS)) {
-    Serial.println(F("SH1106 allocation failed"));
+    Serial.println(F("SSD1305 allocation failed"));
     for (;;); // Don't proceed, loop forever
   }
   cp437(true);

@@ -2,31 +2,58 @@
 #define displayLC1602_h
 
 #include "Arduino.h"
-#if DSP_MODEL==DSP_1602I2C
+
+#if DSP_MODEL==DSP_2004 || DSP_MODEL==DSP_2004I2C
+#define LCD_2004
+#endif
+
+#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_2004I2C
 #define LCD_I2C
 #include "../LiquidCrystalI2C/LiquidCrystalI2CEx.h"
 #else
 #include <LiquidCrystal.h>
 #endif
+
+#ifdef LCD_I2C
+#ifdef LCD_2004
+#define DSP_INIT LiquidCrystal_I2C(SCREEN_ADDRESS, 20, 4, I2C_SDA, I2C_SCL)
+#else
+#define DSP_INIT LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL)
+#endif
+#else
+#define DSP_INIT LiquidCrystal(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7)
+#endif
+
+
 #define TFT_LINEHGHT    1
 #define TFT_FRAMEWDT    0
 
-#define PLMITEMS        1
+
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   9
 #define TITLE_TOP1      1
+#ifdef LCD_2004
+#define PLMITEMS        3
+#define TITLE_TOP2      2
+#define PL_TOP          2
+#define BOOTSTR_TOP2    1
+#define BOOTSTR_TOP1    2
+#else
+#define PLMITEMS        1
 #define TITLE_SIZE2     0
+#define IP_INST_VOL
 #define PL_TOP          1
+#define BOOTSTR_TOP2    0
+#define BOOTSTR_TOP1    1
+#endif
+
 #define PLCURRENT_SIZE  1
 
 #define SCROLLDELTA 1
 #define SCROLLTIME 250
 
-#define BOOTSTR_TOP2    0
-#define BOOTSTR_TOP1    1
-#define STARTTIME_PL    2000
 
-#define IP_INST_VOL
+#define STARTTIME_PL    2000
 
 #ifdef LCD_I2C
 class DspCore: public LiquidCrystal_I2C {
@@ -75,7 +102,11 @@ extern DspCore dsp;
  * TFT COLORS
  */
 #define CLOCK_SPACE 6
+#ifdef LCD_2004
+#define VOL_SPACE   0
+#else
 #define VOL_SPACE   3
+#endif
 #define SILVER      0
 #define TFT_BG      0
 #define TFT_FG      CLOCK_SPACE

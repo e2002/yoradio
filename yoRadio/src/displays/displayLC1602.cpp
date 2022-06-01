@@ -1,6 +1,6 @@
 #include "../../options.h"
 
-#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_1602
+#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_1602 || DSP_MODEL==DSP_2004 || DSP_MODEL==DSP_2004I2C
 
 #include "displayLC1602.h"
 #include "../../player.h"
@@ -13,20 +13,21 @@
 
 const byte controlspaces[] = { CLOCK_SPACE, VOL_SPACE };
 
-#ifdef LCD_I2C
-DspCore::DspCore(): LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL) {
+DspCore::DspCore(): DSP_INIT {}
 
-}
-#else
-DspCore::DspCore(): LiquidCrystal(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7) {
-
-}
-#endif
 void DspCore::apScreen() {
   setCursor(0,0);
   print("YORADIO AP MODE");
   setCursor(0,1);
   print(WiFi.softAPIP().toString().c_str());
+#ifdef LCD_2004
+  setCursor(0, 2);
+  print("AP NAME: ");
+  print(apSsid);
+  setCursor(0, 3);
+  print("PASSWORD: ");
+  print(apPassword);
+#endif
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
@@ -34,10 +35,21 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   init();
   backlight();
 #else
+#ifdef LCD_2004
+  begin(20, 4);
+#else
   begin(16, 2);
 #endif
+#endif
+
+#ifdef LCD_2004
+  screenwidth = 20;
+  screenheight = 4;
+#else
   screenwidth = 16;
   screenheight = 2;
+#endif
+
   swidth = screenwidth;
   sheight = screenheight;
   fillSpaces = true;
@@ -52,11 +64,27 @@ void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
-
+#ifdef LCD_2004
+  config.fillPlMenu(plMenu, currentItem-1, PLMITEMS);
+  for (byte i = 0; i < PLMITEMS; i++) {
+    if (i == 1) {
+      strlcpy(currentItemText, ">", 2);
+      //strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
+      strlcat(currentItemText, plMenu[i], PLMITEMLENGHT - 2);
+    } else {
+      char tmp[swidth+1] = {0};
+      strlcpy(tmp, utf8Rus(plMenu[i], true), swidth);
+      clearScroll(1 + i, 0, 0);
+      setCursor(1, 1 + i);
+      print(tmp);
+    }
+  }
+#else
   config.fillPlMenu(plMenu, currentItem, PLMITEMS);
   for (byte i = 0; i < PLMITEMS; i++) {
     strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
   }
+#endif
 }
 
 void DspCore::clearDsp() {
@@ -113,8 +141,13 @@ void DspCore::drawVolumeBar(bool withNumber) {
     centerText("   ", 1, 0, 0);
     centerText(volstr, 1, TFT_LOGO, TFT_BG);
   }else{
+#ifdef LCD_2004
+    rightText("   ", 3, 0, 0);
+    rightText(volstr, 3, TFT_LOGO, TFT_BG);
+#else
     rightText("   ", 1, 0, 0);
     rightText(volstr, 1, TFT_LOGO, TFT_BG);
+#endif
   }
 }
 
@@ -134,7 +167,10 @@ void DspCore::rssi(const char* str) {
 }
 
 void DspCore::ip(const char* str) {
-
+#ifdef LCD_2004
+  setCursor(0, 3);
+  print(str);
+#endif
 }
 
 void DspCore::set_TextSize(uint8_t s) {

@@ -143,10 +143,7 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   cp437(true);
   fillScreen(TFT_BG);
   byte tftRotate = TFT_ROTATE;
-#if DSP_MODEL==DSP_SH1106
-  if(tftRotate>2) tftRotate=2;
-  if(tftRotate==1) tftRotate=0;
-#else
+#if DSP_MODEL==DSP_SH1107
   if(tftRotate>=2) tftRotate=3;
   if(tftRotate==0) tftRotate=1;
 #endif

@@ -18,17 +18,17 @@
 #include "src/displays/displayST7789.h"
 #elif DSP_MODEL==DSP_SH1106
 #include "src/displays/displaySH1106.h"
-#elif DSP_MODEL==DSP_1602I2C
+#elif DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_2004I2C
 #include "src/displays/displayLC1602.h"
 #elif DSP_MODEL==DSP_SSD1327
 #include "src/displays/displaySSD1327.h"
 #elif DSP_MODEL==DSP_ILI9341
 #include "src/displays/displayILI9341.h"
-#elif DSP_MODEL==DSP_SSD1305
+#elif DSP_MODEL==DSP_SSD1305 || DSP_MODEL==DSP_SSD1305I2C
 #include "src/displays/displaySSD1305.h"
 #elif DSP_MODEL==DSP_SH1107
 #include "src/displays/displaySH1106.h"
-#elif DSP_MODEL==DSP_1602
+#elif DSP_MODEL==DSP_1602 || DSP_MODEL==DSP_2004
 #include "src/displays/displayLC1602.h"
 #elif DSP_MODEL==DSP_GC9106
 #include "src/displays/displayGC9106.h"

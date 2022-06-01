@@ -39,13 +39,15 @@ https://aliexpress.com/item/32965676064.html
 - or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.html
 - or **ST7789** 2.4' 320x240 SPI https://aliexpress.com/item/32960241206.html
 - or **SH1106** 1.3' 128x64 I2C https://aliexpress.com/item/32683094040.html
-- or **1602** 16x2 I2C https://aliexpress.com/item/32305776560.html
-- or **1602** 16x2 without I2C https://aliexpress.com/item/32305776560.html
+- or **LCD1602** 16x2 I2C https://aliexpress.com/item/32305776560.html
+- or **LCD1602** 16x2 without I2C https://aliexpress.com/item/32305776560.html
 - or **SSD1327** 1.5' 128x128 I2C https://aliexpress.com/item/1005001414175498.html
 - or **ILI9341** 3.2'320x240 SPI https://aliexpress.com/item/33048191074.html
-- or **SSD1305 (SSD1309)** 2.4' 128x64 SPI https://aliexpress.com/item/32950307344.html
+- or **SSD1305 (SSD1309)** 2.4' 128x64 SPI/I2C https://aliexpress.com/item/32950307344.html
 - or **SH1107** 0.96' 128x64 I2C https://aliexpress.com/item/4000551696674.html
 - or **GC9106** 0.96' 160x80 SPI (looks like ST7735S, but it's not him) https://aliexpress.com/item/32947890530.html
+- or **LCD2004** 20x4 I2C https://aliexpress.com/item/32783128355.html
+- or **LCD2004** 20x4 without I2C https://aliexpress.com/item/32783128355.html
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
@@ -291,6 +293,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.278
+- added support for LCD2004 displays
+- added support for SSD1305/SSD1309 I2C displays
+- fixed rotation of SH1106 display
+
 #### v0.6.263
 - fixed encoder internal pullup
 
