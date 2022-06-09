@@ -346,7 +346,9 @@ void Display::swichMode(displayMode_e newmode) {
 
 void Display::drawPlayer() {
   if (clockRequest) {
-    getLocalTime(&network.timeinfo);
+    //getLocalTime(&network.timeinfo);
+    network.timeinfo.tm_sec ++;
+    mktime(&network.timeinfo);
     time();
     clockRequest = false;
   }

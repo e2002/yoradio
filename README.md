@@ -293,6 +293,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.290
+- fixed interface blocking error when synchronizing time
+- time sync optimization
+- new option **SNTP_SERVER**, to set your custom server for synchronization (see [myoptions.h](exsamples/myoptions.h) for exsample)
+
 #### v0.6.278
 - added support for LCD2004 displays
 - added support for SSD1305/SSD1309 I2C displays

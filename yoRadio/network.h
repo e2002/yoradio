@@ -5,7 +5,8 @@
 
 #define apSsid      "yoRadioAP"
 #define apPassword  "12345987"
-#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
+//#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
+#define TSYNC_DELAY 3600000     // 1000*60*60   = 1 hour
 
 enum n_Status_e { CONNECTED, SOFT_AP, FAILED };
 
@@ -18,7 +19,7 @@ class Network {
     void begin();
     void requestTimeSync(bool withTelnetOutput=false);
   private:
-    Ticker ntimer;
+    Ticker ntimer, stimer;
     void raiseSoftAP();
 };
 

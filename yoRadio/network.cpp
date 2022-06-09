@@ -11,6 +11,10 @@ void syncTime() {
   network.requestTimeSync(true);
 }
 
+void getFirstTime() {
+  getLocalTime(&network.timeinfo);
+}
+
 void Network::begin() {
   config.initNetwork();
   if (config.ssidsCount == 0) {
@@ -53,13 +57,15 @@ void Network::begin() {
   }
   digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
-  requestTimeSync();
+  configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
+  //getLocalTime(&timeinfo);
+  stimer.once_ms(200,getFirstTime); 
   ntimer.attach_ms(TSYNC_DELAY, syncTime);
   if (network_on_connect) network_on_connect();
 }
 
 void Network::requestTimeSync(bool withTelnetOutput) {
-  configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), "pool.ntp.org", "ru.pool.ntp.org");
+  //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), "pool.ntp.org", "ru.pool.ntp.org");
   if (withTelnetOutput) {
     getLocalTime(&timeinfo);
     char timeStringBuff[50];

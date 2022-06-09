@@ -107,6 +107,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define MUTE_VAL          HIGH              /*  Write this to MUTE_PIN when player is stopped */
 //#define PL_WITH_NUMBERS                     /*  show the number of station in the playlist  */
 //#define PLAYER_FORCE_MONO false             /*  mono option on boot - false stereo, true mono  */
+//#define SNTP_SERVER       "pool.ntp.org", "0.ru.pool.ntp.org"  // custom ntp servers min 1 max 3 comma separated values
 
 /******************************************/
 
