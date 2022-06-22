@@ -509,7 +509,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     strcat(resp, "GET ");
     strcat(resp, extension);
-    strcat(resp, " HTTP/1.0\r\n");
+    strcat(resp, " HTTP/1.1\r\n");
     strcat(resp, "Host: ");
     strcat(resp, hostwoext);
     strcat(resp, "\r\n");
@@ -517,7 +517,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     strcat(resp, "Authorization: Basic ");
     strcat(resp, authorization);
     strcat(resp, "\r\n");
-    strcat(resp, "User-Agent: ESP32 audioI2S\r\n");
+    strcat(resp, "User-Agent: Mozilla/5.0\r\n");
 //    strcat(resp, "Accept-Encoding: gzip;q=0\r\n");  // otherwise the server assumes gzip compression
 //    strcat(resp, "Transfer-Encoding: \r\n");  // otherwise the server assumes gzip compression
     strcat(resp, "Connection: keep-alive\r\n\r\n");
@@ -541,7 +541,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
             wtf = millis();
             while(!client.connected()){
             	if(millis()-wtf>TIMEOUT_MS * 2){
-            		sprintf(chbuf, "Request %s failed! with WTF", m_lastHost);
+            		sprintf(chbuf, "Request %s failed with timeout!", m_lastHost);
 								if(audio_info) audio_info(chbuf);
 								return false;
 								break;
@@ -556,7 +556,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     if(m_f_ssl == true) {
         uint32_t t = millis();
         if(clientsecure.connect(hostwoext, port, TIMEOUT_MS_SSL)) {
-//            clientsecure.setNoDelay(true);
+            clientsecure.setNoDelay(true);
             // if(audio_info) audio_info("SSL/TLS Connected to server");
             clientsecure.print(resp);
             uint32_t dt = millis() - t;
@@ -571,16 +571,8 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
             //while(!clientsecure.connected()){;} // wait until the connection is established
             wtf = millis();
             while(!clientsecure.connected()){
-            	/*wtf++;
-            	if(wtf>1000){
-            		wtf=0;
-        		    sprintf(chbuf, "Request %s failed! with WTF", m_lastHost);
-								if(audio_info) audio_info(chbuf);
-								return false;
-								break;
-            	}*/
             	if(millis()-wtf>TIMEOUT_MS_SSL){
-            		sprintf(chbuf, "Request %s failed! with WTF", m_lastHost);
+            		sprintf(chbuf, "Request %s failed with timeout!", m_lastHost);
 								if(audio_info) audio_info(chbuf);
 								return false;
 								break;

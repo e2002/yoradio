@@ -48,6 +48,7 @@ https://aliexpress.com/item/32965676064.html
 - or **GC9106** 0.96' 160x80 SPI (looks like ST7735S, but it's not him) https://aliexpress.com/item/32947890530.html
 - or **LCD2004** 20x4 I2C https://aliexpress.com/item/32783128355.html
 - or **LCD2004** 20x4 without I2C https://aliexpress.com/item/32783128355.html
+- or **ILI9225** 2.0' 220x176 SPI https://aliexpress.com/item/32952021835.html
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
@@ -142,7 +143,7 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 ---
 ## Dependencies
 #### Libraries:
-**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, (\* depending on display model), OneButton, IRremoteESP8266, XPT2046_Touchscreen \
+**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, TFT_22_ILI9225\* (\* depending on display model), OneButton, IRremoteESP8266, XPT2046_Touchscreen \
 **Github**: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)* \
 \* _if you need MQTT support_
 
@@ -293,6 +294,15 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.313
+- added support for ILI9225 220x176 SPI displays
+- added support for I2S internal DAC, option I2S_INTERNAL (see [myoptions.h](exsamples/myoptions.h) for exsample) \
+ _(this option worked only with esp32 core version==2.0.0)_
+- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](exsamples/myoptions.h) for exsample)
+- fixed MQTT connection when WiFi reconnected
+- fixed date display for ILI9341 displays
+- fixed garbage on volume control with displays ILI9341
+
 #### v0.6.290
 - fixed interface blocking error when synchronizing time
 - time sync optimization

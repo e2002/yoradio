@@ -10,7 +10,7 @@
 
 Player player;
 
-#if VS1053_CS!=255
+#if VS1053_CS!=255 && !I2S_INTERNAL
 Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {
 
 }
@@ -22,15 +22,20 @@ void ResetChip(){
   delay(100);
 }
 #else
+#if !I2S_INTERNAL
 Player::Player() {}
+#else
+Player::Player(): Audio(true, I2S_DAC_CHANNEL_BOTH_EN)  {}
 #endif
-
+#endif
 
 
 void Player::init() {
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
 #if I2S_DOUT!=255
+#if !I2S_INTERNAL
   setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+#endif
 #else
   SPI.begin();
   if(VS1053_RST>0) ResetChip();

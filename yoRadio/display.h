@@ -34,6 +34,8 @@
 #include "src/displays/displayGC9106.h"
 #elif DSP_MODEL==DSP_CUSTOM
 #include "src/displays/displayCustom.h"
+#elif DSP_MODEL==DSP_ILI9225
+#include "src/displays/displayILI9225.h"
 #endif
 
 enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING };

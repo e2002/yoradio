@@ -19,7 +19,7 @@ class Network {
     void begin();
     void requestTimeSync(bool withTelnetOutput=false);
   private:
-    Ticker ntimer, stimer;
+    Ticker ntimer, stimer, rtimer;
     void raiseSoftAP();
 };
 

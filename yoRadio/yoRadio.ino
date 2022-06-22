@@ -71,5 +71,8 @@ void checkConnection(){
     display.putRequest({NEWMODE, PLAYER});
     if (playing) player.request.station = config.store.lastStation;
     checkMillis = millis();
+#ifdef MQTT_HOST
+    connectToMqtt();
+#endif
   }
 }

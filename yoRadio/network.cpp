@@ -15,6 +15,10 @@ void getFirstTime() {
   getLocalTime(&network.timeinfo);
 }
 
+void rebootTime() {
+  ESP.restart();
+}
+
 void Network::begin() {
   config.initNetwork();
   if (config.ssidsCount == 0) {
@@ -57,6 +61,7 @@ void Network::begin() {
   }
   digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
+  WiFi.setSleep(false);
   configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
   //getLocalTime(&timeinfo);
   stimer.once_ms(200,getFirstTime); 
@@ -83,4 +88,7 @@ void Network::raiseSoftAP() {
   WiFi.softAP(apSsid, apPassword);
   Serial.printf("\n\nRunning in AP mode.\nConnect to AP %s with password %s for settings.\n\n", apSsid, apPassword);
   status = SOFT_AP;
+#if SOFT_AP_REBOOT_DELAY>0
+  rtimer.attach_ms(SOFT_AP_REBOOT_DELAY, rebootTime);
+#endif
 }

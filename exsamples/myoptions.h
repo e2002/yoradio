@@ -19,7 +19,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
               SDA(MOSI, DIN, SDI) must be connected to pin 23  */
 //#define TFT_CS            5                 /*  SPI CS pin  */
 //#define TFT_RST           15                /*  SPI RST pin.  set to -1 and connect to Esp EN pin */
-//#define TFT_DC            4                 /*  SPI DC pin  */
+//#define TFT_DC            4                 /*  SPI DC/RS pin  */
 /******************************************/
 
 /*  I2C PINS  */
@@ -107,7 +107,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define MUTE_VAL          HIGH              /*  Write this to MUTE_PIN when player is stopped */
 //#define PL_WITH_NUMBERS                     /*  show the number of station in the playlist  */
 //#define PLAYER_FORCE_MONO false             /*  mono option on boot - false stereo, true mono  */
-//#define SNTP_SERVER       "pool.ntp.org", "0.ru.pool.ntp.org"  // custom ntp servers min 1 max 3 comma separated values
+//#define SNTP_SERVER       "pool.ntp.org", "0.ru.pool.ntp.org"  /*  custom ntp servers min 1 max 3 comma separated values  */
+//#define I2S_INTERNAL      false             /*  If true - use esp32 internal DAC  */
+//#define SOFT_AP_REBOOT_DELAY      0         /*  Delay in milliseconds after which ESP is rebooting if it is in softAP mode (0 - disabled)  */
 
 /******************************************/
 
