@@ -5,7 +5,7 @@
 
 **************************************************************/
 
-#if (DSP_MODEL==DSP_ST7735) || (DSP_MODEL==DSP_ST7789) || (DSP_MODEL==DSP_SSD1327) || (DSP_MODEL==DSP_ILI9341)
+#if (DSP_MODEL==DSP_ST7735) || (DSP_MODEL==DSP_ST7789) || (DSP_MODEL==DSP_SSD1327) || (DSP_MODEL==DSP_ILI9341) || (DSP_MODEL==DSP_ILI9225)
 
 #define WEATHER_REQUEST_INTERVAL          1800 //30min
 #define WEATHER_REQUEST_INTERVAL_FAULTY   30
@@ -158,6 +158,8 @@ void dsp_on_start(DspCore *dsp) {
 void dsp_on_init() {
   if (DSP_MODEL == DSP_ST7735 || (DSP_MODEL == DSP_SSD1327)) {
     hello.init(5, " * ", 1, TFT_LINEHGHT * 4 + 6, 0, ORANGE, TFT_BG);
+  }else if(DSP_MODEL == DSP_ILI9225){
+    hello.init(5, " * ", 1, TFT_LINEHGHT * 6 + 5, 0, ORANGE, TFT_BG);
   } else {
     hello.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, ORANGE, TFT_BG);
   }

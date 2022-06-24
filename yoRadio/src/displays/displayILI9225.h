@@ -8,9 +8,12 @@
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    4
 #define META_SIZE       2
+#ifndef TITLE_SIZE1
 #define TITLE_SIZE1     1
+#endif
+#ifndef TITLE_SIZE2
 #define TITLE_SIZE2     1
-
+#endif
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 #define SCROLLDELTA 3
 #define SCROLLTIME 30
@@ -20,9 +23,12 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
 #define TFT_FULLTIME    1
-
+#ifndef TITLE_TOP1
 #define TITLE_TOP1 TFT_FRAMEWDT + META_SIZE * TFT_LINEHGHT + 8
+#endif
+#ifndef TITLE_TOP2
 #define TITLE_TOP2 TFT_FRAMEWDT + (META_SIZE+2) * TFT_LINEHGHT
+#endif
 #define TITLE_FG2 SILVER
 
 class DspCore: public TFT_22_ILI9225 {
@@ -56,14 +62,6 @@ class DspCore: public TFT_22_ILI9225 {
     void loop(bool force=false);
     void setFont(uint8_t* font, bool monoSp=false );
     void setFont(const GFXfont *f = NULL);
-  private:
-    uint16_t swidth, sheight;
-    uint16_t bgcolor, fgcolor;
-    int16_t  cursorx, cursory;
-    bool gFont;
-    char oldTimeBuf[20];
-    uint8_t oldVolume;
-    uint16_t wot, hot;
     void setTextSize(uint8_t s);
     void setTextColor(uint16_t fg, uint16_t bg=0x0000);
     void setCursor(int16_t x, int16_t y);
@@ -72,6 +70,15 @@ class DspCore: public TFT_22_ILI9225 {
                      int16_t *y1, uint16_t *w, uint16_t *h);
     void fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
                         uint16_t color);
+  private:
+    uint16_t swidth, sheight;
+    uint16_t bgcolor, fgcolor;
+    int16_t  cursorx, cursory;
+    bool gFont;
+    char oldTimeBuf[20];
+    uint8_t oldVolume;
+    uint16_t wot, hot;
+
 };
 
 extern DspCore dsp;

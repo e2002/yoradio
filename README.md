@@ -294,11 +294,15 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.320
+- fixed ILI9225 display bug when used with VS1053B module
+- fixed ILI9225 plugin support
+
 #### v0.6.313
 - added support for ILI9225 220x176 SPI displays
-- added support for I2S internal DAC, option I2S_INTERNAL (see [myoptions.h](exsamples/myoptions.h##L111) for exsample) \
+- added support for I2S internal DAC, option I2S_INTERNAL (see [myoptions.h](exsamples/myoptions.h#L111) for exsample) \
  _(this option worked only with esp32 core version==2.0.0)_
-- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](exsamples/myoptions.h##L112) for exsample)
+- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](exsamples/myoptions.h#L112) for exsample)
 - fixed MQTT connection when WiFi reconnected
 - fixed date display for ILI9341 displays
 - fixed garbage on volume control with displays ILI9341

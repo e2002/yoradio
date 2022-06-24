@@ -13,7 +13,7 @@ const char *mnths[12] = {"января","февраля","марта","апре�
 extern unsigned char yofont5x7[];
 extern unsigned char yofont10x14[];
 
-SPIClass hspi(VSPI);
+//SPIClass hspi(VSPI);
 
 DspCore::DspCore(): TFT_22_ILI9225(TFT_RST, TFT_DC, TFT_CS, 0) {
 
@@ -179,8 +179,8 @@ void DspCore::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  hspi.begin();
-  begin(hspi);
+  //hspi.begin();
+  begin();
   invert(TFT_INVERT);
   setBackgroundColor(TFT_BG);
   clear();

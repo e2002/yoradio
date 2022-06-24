@@ -202,7 +202,7 @@ void Display::createCore0Task(){
       NULL,                       /* parameter of the task */
       4,                          /* no one flies higher than the Toruk */
       &TaskCore0,                 /* Task handle to keep track of created task */
-      !xPortGetCoreID());         /* pin task to core 0 */  
+      (DSP_MODEL==DSP_ILI9225 && VS1053_CS!=255)?xPortGetCoreID():!xPortGetCoreID());         /* pin task to core 0 */  
   //delay(500);
 }
 

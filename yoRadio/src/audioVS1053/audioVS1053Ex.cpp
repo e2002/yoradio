@@ -1634,6 +1634,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     strcat(resp, "Host: ");
     strcat(resp, hostwoext);
     strcat(resp, "\r\n");
+    strcat(resp, "User-Agent: Mozilla/5.0 \r\n");
     strcat(resp, "Icy-MetaData:1\r\n");
     strcat(resp, "Authorization: Basic ");
     strcat(resp, authorization);
