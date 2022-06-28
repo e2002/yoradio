@@ -146,9 +146,12 @@ extern Display display;
 
 extern __attribute__((weak)) bool dsp_before_clock(DspCore *dsp, bool dots);
 extern __attribute__((weak)) void dsp_after_clock(DspCore *dsp, bool dots);
+extern __attribute__((weak)) bool dsp_before_ip(DspCore *dsp);
+extern __attribute__((weak)) bool dsp_before_rssi(DspCore *dsp);
 extern __attribute__((weak)) void dsp_on_init();
 extern __attribute__((weak)) void dsp_on_loop(DspCore *dsp);
 extern __attribute__((weak)) void dsp_on_start(DspCore *dsp);
 extern __attribute__((weak)) void dsp_on_newmode(displayMode_e newmode);
+extern __attribute__((weak)) void player_on_station_change();
 
 #endif

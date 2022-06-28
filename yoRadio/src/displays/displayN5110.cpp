@@ -10,6 +10,9 @@
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 28
 
+#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
+#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+
 const unsigned char logo [] PROGMEM=
 {
 	0x07, 0x03, 0x80, 0x0f, 0x87, 0xc0, 0x0f, 0x87, 0xc0, 0x0f, 0x87, 0xc0, 0x0f, 0x87, 0xc0, 0x07,
@@ -115,6 +118,18 @@ void DspCore::apScreen() {
   print(WiFi.softAPIP().toString().c_str());
   print("/");
   setFont();
+}
+
+void DspCore::command(uint8_t c) {
+  TAKE_MUTEX();
+  Adafruit_PCD8544::command(c);
+  GIVE_MUTEX();
+}
+
+void DspCore::data(uint8_t c) {
+  TAKE_MUTEX();
+  Adafruit_PCD8544::data(c);
+  GIVE_MUTEX();
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {

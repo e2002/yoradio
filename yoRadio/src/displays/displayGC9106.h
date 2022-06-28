@@ -56,6 +56,14 @@ class DspCore: public Adafruit_GC9106Ex {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    virtual void startWrite(void);
+    virtual void endWrite(void);
+    /*virtual void sendCommand(uint8_t commandByte, uint8_t *dataBytes,
+                 uint8_t numDataBytes);
+    virtual void sendCommand(uint8_t commandByte, const uint8_t *dataBytes = NULL,
+                     uint8_t numDataBytes = 0);
+    virtual void sendCommand16(uint16_t commandWord, const uint8_t *dataBytes = NULL,
+                       uint8_t numDataBytes = 0);*/
   private:
     uint16_t swidth, sheight;
     char oldTimeBuf[20];

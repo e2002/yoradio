@@ -13,6 +13,8 @@ const char *mnths[12] = {"января","февраля","марта","апре�
 extern unsigned char yofont5x7[];
 extern unsigned char yofont10x14[];
 
+#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
+#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
 //SPIClass hspi(VSPI);
 
 DspCore::DspCore(): TFT_22_ILI9225(TFT_RST, TFT_DC, TFT_CS, 0) {
@@ -109,7 +111,9 @@ void DspCore::apScreen() {
   print("http://");
   print(WiFi.softAPIP().toString().c_str());
   print("/");
+  TAKE_MUTEX();
   drawLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, TITLE_TOP1-8, SILVER);
+  GIVE_MUTEX();
 }
 
 void DspCore::setTextSize(uint8_t s){
@@ -132,11 +136,14 @@ void DspCore::setCursor(int16_t x, int16_t y){
 }
 
 uint16_t DspCore::print(const char* s){
+  TAKE_MUTEX();
   if(gFont){
     drawGFXText(cursorx, cursory, s, fgcolor);
+    GIVE_MUTEX();
     return 0;
   }else{
     cursorx=drawText(cursorx, cursory, s, fgcolor);
+    GIVE_MUTEX();
     return cursorx;
   }
 }
@@ -175,7 +182,9 @@ void DspCore::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     h=h+y;
     y=0;
   }
+  TAKE_MUTEX();
   fillRectangle(x, y, x+w, y+h, color);
+  GIVE_MUTEX();
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
@@ -323,10 +332,11 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
     setTextColor(TFT_FG, TFT_BG);
     setCursor(clleft+wot+clsp, cltop-hot+22);
     print(utf8Rus(dow[timeinfo.tm_wday], false));
+    TAKE_MUTEX();
     drawLine(clleft+wot+clsp/2, cltop-34, clleft+wot+clsp/2, cltop+1, SILVER); //vert
     drawLine(clleft+wot+clsp/2, cltop-hot+20, clleft+wot+clsp/2+35, cltop-hot+20, SILVER); //hor
     drawLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, TITLE_TOP1-8, SILVER);
-
+    GIVE_MUTEX();
     sprintf(timeBuf, "%2d %s %d", timeinfo.tm_mday,mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
     uint16_t wdate, hdate;
     getTextBounds(timeBuf, 0, 0, &x1, &y1, &wdate, &hdate);
@@ -392,7 +402,9 @@ void DspCore::drawNextStationNum(uint16_t num) {
 void DspCore::frameTitle(const char* str) {
   setTextSize(META_SIZE);
   centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
+  TAKE_MUTEX();
   drawLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, TITLE_TOP1-8, SILVER);
+  GIVE_MUTEX();
 }
 
 void DspCore::rssi(const char* str) {

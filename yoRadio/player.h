@@ -38,5 +38,8 @@ class Player: public Audio {
 
 extern Player player;
 
+extern __attribute__((weak)) void player_on_start_play();
+extern __attribute__((weak)) void player_on_stop_play();
+extern __attribute__((weak)) void player_on_track_change();
 
 #endif

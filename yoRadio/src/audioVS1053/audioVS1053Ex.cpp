@@ -188,15 +188,18 @@ void Audio::control_mode_off()
 {
     CS_HIGH();                                  // End control mode
     spi_VS1053->endTransaction();                       // Allow other SPI users
+    xSemaphoreGive(mutex_pl);
 }
 void Audio::control_mode_on()
 {
+    xSemaphoreTake(mutex_pl, portMAX_DELAY);
     spi_VS1053->beginTransaction(VS1053_SPI);           // Prevent other SPI users
     DCS_HIGH();                                 // Bring slave in control mode
     CS_LOW();
 }
 void Audio::data_mode_on()
 {
+    xSemaphoreTake(mutex_pl, portMAX_DELAY);
     spi_VS1053->beginTransaction(VS1053_SPI);           // Prevent other SPI users
     CS_HIGH();                                  // Bring slave in data mode
     DCS_LOW();
@@ -206,6 +209,7 @@ void Audio::data_mode_off()
     //digitalWrite(dcs_pin, HIGH);              // End data mode
     DCS_HIGH();
     spi_VS1053->endTransaction();                       // Allow other SPI users
+    xSemaphoreGive(mutex_pl);
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint16_t Audio::read_register(uint8_t _reg)
@@ -307,6 +311,7 @@ void Audio::begin(){
     pinMode(dreq_pin, INPUT);                               // DREQ is an input
     pinMode(cs_pin, OUTPUT);                                // The SCI and SDI signals
     pinMode(dcs_pin, OUTPUT);
+    mutex_pl = xSemaphoreCreateMutex();
     DCS_HIGH();
     CS_HIGH();
     delay(100);

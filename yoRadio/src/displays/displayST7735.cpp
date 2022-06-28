@@ -16,6 +16,9 @@
 #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
 #endif
 
+#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
+#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+
 DspCore::DspCore(): Adafruit_ST7735(&SPI, TFT_CS, TFT_DC, TFT_RST) {
 
 }
@@ -360,6 +363,16 @@ void DspCore::ip(const char* str) {
   setTextColor(SILVER, TFT_BG);
   setCursor(4, vTop);
   print(str);
+}
+
+void DspCore::startWrite(void) {
+  TAKE_MUTEX();
+  Adafruit_ST7735::startWrite();
+}
+
+void DspCore::endWrite(void) {
+  Adafruit_ST7735::endWrite();
+  GIVE_MUTEX();
 }
 
 void DspCore::set_TextSize(uint8_t s) {

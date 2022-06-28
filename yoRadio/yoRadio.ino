@@ -17,9 +17,11 @@
 unsigned long checkMillis = 0;
 unsigned long checkInterval = 3000;
 
+extern __attribute__((weak)) void yoradio_on_setup();
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
+  if (yoradio_on_setup) yoradio_on_setup();
   config.init();
   display.init();
   player.init();

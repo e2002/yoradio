@@ -130,6 +130,7 @@ void initControls() {
 
 void loopControls() {
   if(display.mode==LOST || display.mode==UPDATING) return;
+  if (ctrls_on_loop) ctrls_on_loop();
 #if ENC_BTNL!=255
   encoderLoop();
 #endif

@@ -202,8 +202,7 @@ void Display::createCore0Task(){
       NULL,                       /* parameter of the task */
       4,                          /* no one flies higher than the Toruk */
       &TaskCore0,                 /* Task handle to keep track of created task */
-      (DSP_MODEL==DSP_ILI9225 && VS1053_CS!=255)?xPortGetCoreID():!xPortGetCoreID());         /* pin task to core 0 */  
-  //delay(500);
+      !xPortGetCoreID());         /* pin task to core 0 */
 }
 
 void loopCore0( void * pvParameters ){
@@ -518,6 +517,7 @@ void Display::title() {
     if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
 
     //dsp.loop(true);
+    if (player_on_track_change) player_on_track_change();
   }
   //netserver.requestOnChange(TITLE, 0);
 }
@@ -527,14 +527,16 @@ void Display::heap() {
 }
 
 void Display::rssi() {
-  char buf[20];
   int rssi = WiFi.RSSI();
+  netserver.setRSSI(rssi);
+  if (dsp_before_rssi) if (!dsp_before_rssi(&dsp)) return;
+  char buf[20];
   sprintf(buf, "%ddBm", rssi);
   dsp.rssi(buf);
-  netserver.setRSSI(rssi);
 }
 
 void Display::ip() {
+  if (dsp_before_ip) if (!dsp_before_ip(&dsp)) return;
   dsp.ip(WiFi.localIP().toString().c_str());
 }
 

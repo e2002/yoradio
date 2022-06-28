@@ -25,4 +25,6 @@ void onBtnLongPressStart(int id);
 void onBtnLongPressStop(int id);
 tsDirection_e tsDirection(uint16_t x, uint16_t y);
 
+extern __attribute__((weak)) void ctrls_on_loop();
+
 #endif

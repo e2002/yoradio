@@ -69,6 +69,7 @@ void Player::loop() {
       //stopSong();
       setDefaults();
       stopInfo();
+      if (player_on_stop_play) player_on_stop_play();
     }
   }
   if (request.station > 0) {
@@ -76,6 +77,7 @@ void Player::loop() {
       config.setLastStation(request.station);
     }
     play(request.station);
+    if (player_on_station_change) player_on_station_change();
     zeroRequest();
   }
   if (request.volume >= 0) {
@@ -104,6 +106,7 @@ void Player::play(uint16_t stationId) {
   setDefaults();
   setOutputPins(false);
   config.setTitle("[connecting]");
+  config.station.bitrate=0;
   netserver.requestOnChange(TITLE, 0);
   //telnet.printf("##CLI.META#: %s\n", config.station.title);
   config.loadStation(stationId);
@@ -117,6 +120,7 @@ void Player::play(uint16_t stationId) {
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
     requestToStart = true;
+    if (player_on_start_play) player_on_start_play();
   }else{
     Serial.println("some unknown bug...");
   };

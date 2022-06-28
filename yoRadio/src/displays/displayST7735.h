@@ -67,6 +67,8 @@ class DspCore: public Adafruit_ST7735 {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    virtual void startWrite(void);
+    virtual void endWrite(void);
   private:
     uint16_t swidth, sheight;
     char oldTimeBuf[20];

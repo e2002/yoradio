@@ -266,6 +266,7 @@ public:
     uint32_t getFilePos();
     uint32_t getAudioDataStartPos();
     bool     setFilePos(uint32_t pos);
+    SemaphoreHandle_t mutex_pl=NULL;
     size_t   bufferFilled();
     size_t   bufferFree();
 		bool isRunning() {/*Serial.printf("m_f_running=%d\n", m_f_running); */return m_f_running;}

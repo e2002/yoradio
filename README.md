@@ -289,11 +289,17 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Plugins
-At the moment, you can display additional information on the display by writing a few additional functions. There is no documentation yet, you will have to deal with the example, which is in file [exsamples/displayhandlers.ino](exsamples/displayhandlers.ino).\
+At the moment, you can display additional information on the display by writing a few additional functions. There is no documentation yet, you will have to deal with the example, which is in file [exsamples/plugins/displayhandlers.ino](exsamples/plugins/displayhandlers.ino).\
 Work is in progress...
 
 ---
 ## Version history
+#### v0.6.344
+- fixed SPI-display bugs when used with VS1053B module
+- added example plugin for analog volume control ([exsamples/plugins/analogvolume.ino](exsamples/plugins/analogvolume.ino))
+- added example plugin for backlight control depending on playback ([exsamples/plugins/backlightcontrols.ino](exsamples/plugins/backlightcontrols.ino))
+- added example plugin for replase a RSSI to bitrate information alternately ([exsamples/plugins/rssibitrate.ino](exsamples/plugins/rssibitrate.ino))
+
 #### v0.6.320
 - fixed ILI9225 display bug when used with VS1053B module
 - fixed ILI9225 plugin support
@@ -344,14 +350,14 @@ Work is in progress...
 
 #### v0.6.202
 - fixed errors in the operation of the second encoder
-- rewrote [plugin example](exsamples/displayhandlers.ino)
+- rewrote [plugin example](exsamples/plugins/displayhandlers.ino)
 - fixed compilation errors on macOS #2
 
 #### v0.6.200
 - please backup your playlist and wifi settings before updating (export)
 - accelerated displays up to ~30fps (everything except LCD)
 - corrections/additions in the WEB interface (a [full update](#update) is required)
-- rewrote [plugin example](exsamples/displayhandlers.ino)
+- rewrote [plugin example](exsamples/plugins/displayhandlers.ino)
 - fixed compilation errors on macOS
 - changed the logic of the second encoder (switching to the volume control mode by double click)
 - optimization, bug fixes

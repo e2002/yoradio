@@ -9,8 +9,11 @@
 #include "../../network.h"
 
 #ifndef DEF_SPI_FREQ
-#define DEF_SPI_FREQ        40000000      /*  set it to 0 for system default */
+#define DEF_SPI_FREQ        24000000      /*  set it to 0 for system default */
 #endif
+
+#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
+#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
 
 DspCore::DspCore(): Adafruit_GC9106Ex(TFT_CS, TFT_DC, TFT_RST) {
 
@@ -325,6 +328,36 @@ void DspCore::ip(const char* str) {
   setCursor(4, vTop);
   print(str);
 }
+
+void DspCore::startWrite(void) {
+  TAKE_MUTEX();
+  Adafruit_GC9106Ex::startWrite();
+}
+
+void DspCore::endWrite(void) {
+  Adafruit_GC9106Ex::endWrite();
+  GIVE_MUTEX();
+}
+
+/*
+void DspCore::sendCommand(uint8_t commandByte, uint8_t *dataBytes, uint8_t numDataBytes) {
+  TAKE_MUTEX();
+  Adafruit_GC9106Ex::sendCommand(commandByte, dataBytes, numDataBytes);
+  GIVE_MUTEX();
+}
+
+void DspCore::sendCommand(uint8_t commandByte, const uint8_t *dataBytes, uint8_t numDataBytes) {
+  TAKE_MUTEX();
+  Adafruit_GC9106Ex::sendCommand(commandByte, dataBytes, numDataBytes);
+  GIVE_MUTEX();
+}
+
+void DspCore::sendCommand16(uint16_t commandWord, const uint8_t *dataBytes, uint8_t numDataBytes) {
+  TAKE_MUTEX();
+  Adafruit_GC9106Ex::sendCommand16(commandWord, dataBytes, numDataBytes);
+  GIVE_MUTEX();
+}*/
+
 
 void DspCore::set_TextSize(uint8_t s) {
   setTextSize(s);

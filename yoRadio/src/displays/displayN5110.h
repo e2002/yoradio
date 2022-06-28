@@ -56,6 +56,8 @@ class DspCore: public Adafruit_PCD8544 {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    virtual void command(uint8_t c);
+    virtual void data(uint8_t c);
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

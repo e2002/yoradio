@@ -11,6 +11,9 @@
 const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};
 const char *mnths[12] = {"января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"};
 
+#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
+#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+
 DspCore::DspCore(): Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST) {
 
 }
@@ -303,7 +306,7 @@ void DspCore::drawVolumeBar(bool withNumber) {
     print(volstr);*/
     sprintf(volstr, "%d", oldVolume);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
-    fillRect((swidth - wv) / 2 - 12, (sheight-hv)/2, wv+24, hv, TFT_BG);
+    fillRect((swidth - wv) / 2 - 12, (sheight-hv)/2, wv+24, hv+4, TFT_BG);
 
     setTextColor(TFT_FG);
     sprintf(volstr, "%d", config.store.volume);
@@ -353,6 +356,16 @@ void DspCore::ip(const char* str) {
   setTextColor(SILVER, TFT_BG);
   setCursor(TFT_FRAMEWDT, vTop);
   print(buf);
+}
+
+void DspCore::startWrite(void) {
+  TAKE_MUTEX();
+  Adafruit_ILI9341::startWrite();
+}
+
+void DspCore::endWrite(void) {
+  Adafruit_ILI9341::endWrite();
+  GIVE_MUTEX();
 }
 
 void DspCore::set_TextSize(uint8_t s) {
