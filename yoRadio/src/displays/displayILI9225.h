@@ -70,6 +70,8 @@ class DspCore: public TFT_22_ILI9225 {
                      int16_t *y1, uint16_t *w, uint16_t *h);
     void fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
                         uint16_t color);
+    int16_t width(void) { return (int16_t)maxX(); }
+    int16_t height(void) { return (int16_t)maxY(); }
   private:
     uint16_t swidth, sheight;
     uint16_t bgcolor, fgcolor;

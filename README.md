@@ -294,6 +294,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.345
+- fix compilation error in rssibitrate plugin with ILI9225 display
+
 #### v0.6.344
 - fixed SPI-display bugs when used with VS1053B module
 - added example plugin for analog volume control ([exsamples/plugins/analogvolume.ino](exsamples/plugins/analogvolume.ino))
