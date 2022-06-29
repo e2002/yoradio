@@ -294,6 +294,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.348
+- fixed display bugs in the rssibitrate plugin
+- fixed some compilation warnings
+
 #### v0.6.345
 - fix compilation error in rssibitrate plugin with ILI9225 display
 
