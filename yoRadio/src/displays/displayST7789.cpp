@@ -1,5 +1,5 @@
 #include "../../options.h"
-#if DSP_MODEL==4
+#if DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_240
 
 #include "displayST7789.h"
 #include <SPI.h>
@@ -11,7 +11,6 @@
 #ifndef DEF_SPI_FREQ
 #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
 #endif
-
 const char *dow[7] = {"вс","пн","вт","ср","чт","пт","сб"};
 const char *mnths[12] = {"января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"};
 
@@ -116,7 +115,7 @@ void DspCore::apScreen() {
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
-  init(240,320);
+  init(240,(DSP_MODEL==DSP_ST7789)?320:240);
   if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   invertDisplay(TFT_INVERT);
   cp437(true);
@@ -269,6 +268,9 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
 
     sprintf(timeBuf, "%2d %s %d", timeinfo.tm_mday,mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
     setTextSize(1);
+    uint16_t wdate, hdate;
+    getTextBounds(timeBuf, 0, 0, &x1, &y1, &wdate, &hdate);
+    fillRect(swidth - wdate - TFT_FRAMEWDT-20, cltop+10, wdate+20, hdate, TFT_BG);
     rightText(utf8Rus(timeBuf,true), cltop+10, TFT_FG, TFT_BG, false, swidth>240?12:0);
     drawFastVLine(clleft+wot+clsp/2+3, cltop-hot, hot+3, SILVER);
     drawFastHLine(clleft+wot+clsp/2+3, cltop-hot+29, 42, SILVER);

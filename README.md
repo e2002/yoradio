@@ -38,6 +38,7 @@ https://aliexpress.com/item/32965676064.html
 - or **SSD1306** 0,91' 128x32 I2C https://aliexpress.com/item/32798439084.html
 - or **Nokia5110** 84x48 SPI https://aliexpress.com/item/1005001621837569.html
 - or **ST7789** 2.4' 320x240 SPI https://aliexpress.com/item/32960241206.html
+- or **ST7789** 1.3' 240x240 SPI https://aliexpress.com/item/32996979276.html
 - or **SH1106** 1.3' 128x64 I2C https://aliexpress.com/item/32683094040.html
 - or **LCD1602** 16x2 I2C https://aliexpress.com/item/32305776560.html
 - or **LCD1602** 16x2 without I2C https://aliexpress.com/item/32305776560.html
@@ -294,6 +295,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.355
+- added support for ST7789 1.3' 240x240 SPI displays \
+  _!!! Important !!! This display requires further development when used in conjunction with the VS1053 module. \
+  See this link for details https://www.instructables.com/Adding-CS-Pin-to-13-LCD/_
+
 #### v0.6.348
 - fixed display bugs in the rssibitrate plugin
 - fixed some compilation warnings
