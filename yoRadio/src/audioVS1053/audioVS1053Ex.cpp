@@ -537,6 +537,7 @@ void Audio::showstreamtitle(const char* ml) {
             uint8_t pos = 12;                                                   // remove "StreamTitle="
             if(sTit[pos] == '\'') pos++;                                        // remove leading  \'
             if(sTit[strlen(sTit) - 1] == '\'') sTit[strlen(sTit) -1] = '\0';    // remove trailing \'
+            if(sTit[pos]==0xEF && sTit[pos+1] == 0xBB && sTit[pos+2] == 0xBF) pos+=3; // remove ZERO WIDTH NO-BREAK SPACE
             if(audio_showstreamtitle) audio_showstreamtitle(sTit + pos);
         }
         free(sTit);

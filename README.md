@@ -295,6 +295,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.357
+- remove ZERO WIDTH NO-BREAK SPACE (BOM, ZWNBSP) from stream title
+
 #### v0.6.355
 - added support for ST7789 1.3' 240x240 SPI displays \
   _!!! Important !!! This display requires further development when used in conjunction with the VS1053 module. \
