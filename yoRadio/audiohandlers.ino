@@ -2,7 +2,10 @@ void audio_info(const char *info) {
   if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
   if (strstr(info, "failed!") != NULL || strstr(info, " 404") != NULL) {
     config.setTitle("[request failed]");
-    //config.setTitle(info);
+    netserver.requestOnChange(TITLE, 0);
+    player.setOutputPins(false);
+    player.setDefaults();
+    if (player_on_stop_play) player_on_stop_play();
     player.mode = STOPPED;
     player.stopInfo();
   }
