@@ -295,6 +295,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.400
+- fixed compilation errors with esp32 core 2.0.4
+
 #### v0.6.380
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - fixed a bug when saving a playlist with special characters in the name and url

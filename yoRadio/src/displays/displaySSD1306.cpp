@@ -257,6 +257,7 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw) {
 
 void DspCore::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - 4;
+  (void)vTop;
   int16_t vWidth = swidth-TFT_FRAMEWDT*2;
 #if DSP_MODEL==DSP_SSD1306
   uint8_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);

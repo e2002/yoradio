@@ -13,7 +13,7 @@ bool dsp_before_rssi(DspCore *dsp){
   char buf[20];                                                           /* buffer for the bitrate string */
   uint16_t w, h;                                                          /* width & height of the bitrate string */
   int16_t vTop = dsp->height() - TFT_FRAMEWDT * 2 - TFT_LINEHGHT - 2;     /* vTop - Y cordnate of the bitrate string */;
-  sprintf(buf, "RSSI:000dBm", config.station.bitrate);
+  sprintf(buf, "RSSI:000dBm");
   dsp->setTextSize(1);
   dsp->getTextBounds(buf, 0, 0, &x1, &y1, &w, &h);
   dsp->fillRect(dsp->width() - w - TFT_FRAMEWDT /* left */, vTop /* top */, w /* width */, TFT_LINEHGHT-2 /* height */, TFT_BG /* background color */);

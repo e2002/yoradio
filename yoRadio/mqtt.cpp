@@ -19,7 +19,7 @@ void mqttInit() {
   mqttClient.onConnect(onMqttConnect);
   mqttClient.onDisconnect(onMqttDisconnect);
   mqttClient.onMessage(onMqttMessage);
-  if(MQTT_USER!="") mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
+  if(strlen(MQTT_USER)>0) mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
   connectToMqtt();
 }
@@ -35,7 +35,7 @@ void onMqttConnect(bool sessionPresent) {
 
 void mqttPublishStatus() {
   if(mqttClient.connected()){
-    char topic[140], status[255];
+    char topic[140], status[BUFLEN*3];
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
     sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\"}", player.mode==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title);
     mqttClient.publish(topic, 0, true, status);
@@ -111,12 +111,13 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     player.setVol(volume, false);
     return;
   }
-  uint16_t sb;
+  //uint16_t sb;
+  int sb;
   if (sscanf(buf, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;
     //player.play(sb);
-    player.request.station = sb;
+    player.request.station = (uint16_t)sb;
     player.request.doSave = true;
     return;
   }

@@ -355,6 +355,7 @@ void DspCore::drawVolumeBar(bool withNumber) {
   int16_t vTop = sheight - TFT_FRAMEWDT * 2;
   int16_t volTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT - 2;
   int16_t vWidth = swidth - TFT_FRAMEWDT *2;
+  (void)volTop;
   uint16_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
   fillRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, TFT_BG);
   drawRectangle(TFT_FRAMEWDT, vTop - 2, TFT_FRAMEWDT+vWidth, 6+vTop - 2, TFT_LOGO);

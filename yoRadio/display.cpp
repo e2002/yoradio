@@ -543,6 +543,7 @@ void Display::ip() {
 void Display::time(bool redraw) {
   if (dsp_before_clock) if (!dsp_before_clock(&dsp, dt)) return;
   char timeStringBuff[20] = { 0 };
+  (void)timeStringBuff;
   if (!dt) {
     heap();
     rssi();

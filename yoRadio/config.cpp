@@ -232,7 +232,7 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count) {
     while (playlist.available()) {
       if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
 #ifdef PL_WITH_NUMBERS
-        char buf[BUFLEN];
+        char buf[BUFLEN+10];
         sprintf(buf, "%d %s", (int)(from+c), sName);
         strlcpy(plmenu[c], buf, 39);
 #else
@@ -270,7 +270,7 @@ bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {
 bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
   char* tmps, *tmpe;
   const char* cursor = line;
-  char port[8], host[254], file[254];
+  char port[8], host[246], file[254];
   tmps = strstr(cursor, "\":\"");
   if (tmps == NULL) return false;
   tmpe = strstr(tmps, "\",\"");

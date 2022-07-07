@@ -34,7 +34,8 @@ private:
 	uint8_t encoderBPin;
 	long encoderSteps;
 
-	long _minEncoderValue = -1 << 15;
+	//long _minEncoderValue = -1 << 15;
+	long _minEncoderValue = -32768;
 	long _maxEncoderValue = 1 << 15;
 
 	uint8_t old_AB;

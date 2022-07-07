@@ -401,6 +401,8 @@ void touchLoop() {
             }
             break;
           }
+        default:
+            break;
       }
     }
     if (TS_DBG) {

@@ -25,7 +25,7 @@ Ticker ticker;
  ***********************************************/
 Scroll hello;
 
-char weather[140] = { 0 };
+char weather[254] = { 0 };
 bool weatherRequest = false;
 TaskHandle_t weatherUpdateTaskHandle;
 
