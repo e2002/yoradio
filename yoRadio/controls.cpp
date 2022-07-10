@@ -4,6 +4,7 @@
 #include "config.h"
 #include "player.h"
 #include "display.h"
+#include "netserver.h"
 
 long encOldPosition  = 0;
 long enc2OldPosition  = 0;
@@ -210,8 +211,12 @@ void irNum(byte num) {
 
 void irLoop() {
   if (irrecv.decode(&irResults)) {
-    if (IR_DEBUG) {
+    if(irResults.value<256) return;
+    if (netserver.irRecordEnable) {
       Serial.print(resultToHumanReadableBasic(&irResults));
+      Serial.println("--------------------------");
+      config.ircodes.irVals[config.irindex][config.irchck]=irResults.value;
+      netserver.irToWs(typeToString(irResults.decode_type, irResults.repeat).c_str(), irResults.value);
       return;
     }
     if (!irResults.repeat/* && irResults.command!=0*/) {
@@ -227,88 +232,99 @@ void irLoop() {
           break;
         }
     }
-    switch (irResults.value) {
-      case IR_CODE_PLAY: {
-          irBlink();
-          if (display.mode == NUMBERS) {
-            display.putRequest({NEWMODE, PLAYER});
-            player.play(display.numOfNextStation);
-            display.numOfNextStation = 0;
-            break;
-          }
-          onBtnClick(1);
+    for(int target=0; target<17; target++){
+      for(int j=0; j<3; j++){
+        if(config.ircodes.irVals[target][j]==irResults.value){
+          switch (target){
+            case IR_PLAY: {
+                irBlink();
+                if (display.mode == NUMBERS) {
+                  display.putRequest({NEWMODE, PLAYER});
+                  player.play(display.numOfNextStation);
+                  display.numOfNextStation = 0;
+                  break;
+                }
+                onBtnClick(1);
+                break;
+              }
+            case IR_PREV: {
+                player.prev();
+                break;
+              }
+            case IR_NEXT: {
+                player.next();
+                break;
+              }
+            case IR_UP: {
+                controlsEvent(display.mode == STATIONS ? false : true);
+                irVolRepeat = 1;
+                break;
+              }
+            case IR_DOWN: {
+                controlsEvent(display.mode == STATIONS ? true : false);
+                irVolRepeat = 2;
+                break;
+              }
+            case IR_HASH: {
+                if (display.mode == NUMBERS) {
+                  display.putRequest({RETURNTITLE, 0});
+                  display.putRequest({NEWMODE, PLAYER});
+                  display.numOfNextStation = 0;
+                  break;
+                }
+                display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
+                break;
+              }
+            case IR_0: {
+                irNum(0);
+                break;
+              }
+            case IR_1: {
+                irNum(1);
+                break;
+              }
+            case IR_2: {
+                irNum(2);
+                break;
+              }
+            case IR_3: {
+                irNum(3);
+                break;
+              }
+            case IR_4: {
+                irNum(4);
+                break;
+              }
+            case IR_5: {
+                irNum(5);
+                break;
+              }
+            case IR_6: {
+                irNum(6);
+                break;
+              }
+            case IR_7: {
+                irNum(7);
+                break;
+              }
+            case IR_8: {
+                irNum(8);
+                break;
+              }
+            case IR_9: {
+                irNum(9);
+                break;
+              }
+            case IR_AST: {
+                break;
+              }
+          } /* switch (target) */
+          target=17;
           break;
-        }
-      case IR_CODE_PREV: {
-          player.prev();
-          break;
-        }
-      case IR_CODE_NEXT: {
-          player.next();
-          break;
-        }
-      case IR_CODE_VOLUP: {
-          controlsEvent(display.mode == STATIONS ? false : true);
-          irVolRepeat = 1;
-          break;
-        }
-      case IR_CODE_VOLDN: {
-          controlsEvent(display.mode == STATIONS ? true : false);
-          irVolRepeat = 2;
-          break;
-        }
-      case IR_CODE_HASH: {
-          if (display.mode == NUMBERS) {
-            display.putRequest({RETURNTITLE, 0});
-            display.putRequest({NEWMODE, PLAYER});
-            display.numOfNextStation = 0;
-            break;
-          }
-          display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
-          break;
-        }
-      case IR_CODE_NUM0: {
-          irNum(0);
-          break;
-        }
-      case IR_CODE_NUM1: {
-          irNum(1);
-          break;
-        }
-      case IR_CODE_NUM2: {
-          irNum(2);
-          break;
-        }
-      case IR_CODE_NUM3: {
-          irNum(3);
-          break;
-        }
-      case IR_CODE_NUM4: {
-          irNum(4);
-          break;
-        }
-      case IR_CODE_NUM5: {
-          irNum(5);
-          break;
-        }
-      case IR_CODE_NUM6: {
-          irNum(6);
-          break;
-        }
-      case IR_CODE_NUM7: {
-          irNum(7);
-          break;
-        }
-      case IR_CODE_NUM8: {
-          irNum(8);
-          break;
-        }
-      case IR_CODE_NUM9: {
-          irNum(9);
-          break;
-        }
-    }
-  }
+        } /* if(config.ircodes.irVals[target][j]==irResults.value) */
+      }   /* for(int j=0; j<3; j++) */
+    }     /* for(int target=0; target<16; target++) */
+  }       /* if (irrecv.decode(&irResults)) */
 }
 #endif // if IR_PIN!=255
 

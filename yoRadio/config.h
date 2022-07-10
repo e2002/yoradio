@@ -1,14 +1,16 @@
 #ifndef config_h
 #define config_h
 #include "Arduino.h"
+#include "options.h"
 
-#define EEPROM_SIZE   32
-#define EEPROM_START  0
-#define BUFLEN        140
-#define PLAYLIST_PATH "/data/playlist.csv"
-#define SSIDS_PATH "/data/wifi.csv"
-#define TMP_PATH "/data/tmpfile.txt"
-#define INDEX_PATH "/data/index.dat"
+#define EEPROM_SIZE       768
+#define EEPROM_START      0
+#define EEPROM_START_IR   100
+#define BUFLEN            140
+#define PLAYLIST_PATH     "/data/playlist.csv"
+#define SSIDS_PATH        "/data/wifi.csv"
+#define TMP_PATH          "/data/tmpfile.txt"
+#define INDEX_PATH        "/data/index.dat"
 
 struct config_t
 {
@@ -29,6 +31,14 @@ struct config_t
   uint16_t timezoneOffset;
 };
 
+#if IR_PIN!=255
+struct ircodes_t
+{
+  unsigned int ir_set; //must be 4224
+  uint64_t irVals[20][3];
+};
+#endif
+
 struct station_t
 {
   char name[BUFLEN];
@@ -48,11 +58,19 @@ class Config {
   public:
     config_t store;
     station_t station;
+#if IR_PIN!=255
+    int irindex;
+    uint8_t irchck;
+    ircodes_t ircodes;
+#endif
     neworkItem ssids[5];
     byte ssidsCount;
   public:
     Config() {};
     void save();
+#if IR_PIN!=255
+    void saveIR();
+#endif
     void init();
     byte setVolume(byte val, bool dosave);
     void setTone(int8_t bass, int8_t middle, int8_t trebble); 

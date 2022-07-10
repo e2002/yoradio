@@ -295,6 +295,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.450
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
+- adding an IR remote control has been moved to the web-interface (more info in [Controls.md](Controls.md#ir-receiver))
+- fixed broken internal DAC on esp32 core 2.0.3 and highest
+
 #### v0.6.400
 - fixed compilation errors with esp32 core 2.0.4
 

@@ -20,6 +20,11 @@ class NetServer {
     void setRSSI(int val);
     void onWsMessage(void *arg, uint8_t *data, size_t len);
     bool savePlaylist(const char* post);
+#if IR_PIN!=255
+    bool irRecordEnable;
+    void irToWs(const char* protocol, uint64_t irvalue);
+    void irValsToWs();
+#endif
   private:
     requestType_e request;
     int rssi;

@@ -51,14 +51,27 @@ You can connect one or two encoders to replace/complete the buttons. One encoder
 
 ---
 ### IR receiver
-- IR_CODE_PLAY: start/stop playing
-- IR_CODE_PREV: previous station
-- IR_CODE_NEXT: next station
-- IR_CODE_VOLUP: volume up, longpress - quick volume up
-- IR_CODE_VOLDN: volume down, longpress - quick volume down
-- IR_CODE_HASH: toggle between PLAYER/PLAYLIST mode
-- IR_CODE_NUM0-NUM9:\
- Start entering the station number. To finish input and start playback, press the play button. To cancel, press hash.
+Starting from version 0.6.450, adding an IR remote control has been moved to the web interface. Can be added for up to three remotes.
+1. go to Settings - IR (fig.1)
+2. press the button you need on the left to record the IR code (fig.2)
+
+<img src="images/irRecorder01.png" width="830" height="490"><br>
+
+3. select the slot on the right and press the button on the physical IR remote (fig.3). Avoid the inscription "UNKNOWN" (fig.4)
+
+<img src="images/irRecorder02.png" width="830" height="490"><br>
+
+4. repeat steps 2 and 3 for other buttons
+5. select BACK, select DONE
+
+**Button assignment:**
+- &#9199; - start/stop playing
+- &#9194; - previous station
+- &#9193; - next station
+- &#9650; - volume up, longpress - quick volume up
+- &#9660; - volume down, longpress - quick volume down
+- &nbsp;**\#**  &nbsp;- toggle between PLAYER/PLAYLIST mode
+- **0-9** - Start entering the station number. To finish input and start playback, press the play button. To cancel, press hash.
 
 ---
 ### Joystick

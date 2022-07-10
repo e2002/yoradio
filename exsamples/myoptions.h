@@ -115,27 +115,8 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 
 /*  IR control  */
 //#define IR_PIN                255
-//#define IR_DEBUG              0               /*  Set this to 1, capture ir codes from serial, insert the captured codes below and set this back to 0 */
 //#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 exsample https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
 //#define IR_TLP                40              /*  see kTolerancePercentage description in IRremoteESP8266 exsample https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
-//#define IR_CODE_PLAY          0xFF02FD
-//#define IR_CODE_PREV          0xFF22DD
-//#define IR_CODE_NEXT          0xFFC23DP
-//#define IR_CODE_VOLUP         0xFF629D
-//#define IR_CODE_VOLDN         0xFFA857
-//#define IR_CODE_NUM0          0xFF4AB5
-//#define IR_CODE_NUM1          0xFF6897
-//#define IR_CODE_NUM2          0xFF9867
-//#define IR_CODE_NUM3          0xFFB04F
-//#define IR_CODE_NUM4          0xFF30CF
-//#define IR_CODE_NUM5          0xFF18E7
-//#define IR_CODE_NUM6          0xFF7A85
-//#define IR_CODE_NUM7          0xFF10EF
-//#define IR_CODE_NUM8          0xFF38C7
-//#define IR_CODE_NUM9          0xFF5AA5
-//#define IR_CODE_HASH          0xFF52AD         /*  Toggle playlist mode */
-//#define IR_CODE_AST           0xFF42BD         /*  Not used */
-
 
 /******************************************/
 

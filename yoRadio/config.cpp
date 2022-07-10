@@ -7,6 +7,9 @@ Config config;
 
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
+#if IR_PIN!=255
+    irindex=-1;
+#endif
   eepromRead(EEPROM_START, store);
   if (store.tz_set != 57) { // update to v0.4.200
     store.tz_set = 57;
@@ -26,6 +29,13 @@ void Config::init() {
     save();
   }
   loadStation(store.lastStation);
+#if IR_PIN!=255
+  eepromRead(EEPROM_START_IR, ircodes);
+  if(ircodes.ir_set!=4224){
+    ircodes.ir_set=4224;
+    memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
+  }
+#endif
 }
 
 template <class T> int Config::eepromWrite(int ee, const T& value) {
@@ -81,6 +91,12 @@ uint16_t Config::getTimezoneOffset() {
 void Config::save() {
   eepromWrite(EEPROM_START, store);
 }
+
+#if IR_PIN!=255
+void Config::saveIR(){
+  eepromWrite(EEPROM_START_IR, ircodes);
+}
+#endif
 
 byte Config::setVolume(byte val, bool dosave) {
   store.volume = val;

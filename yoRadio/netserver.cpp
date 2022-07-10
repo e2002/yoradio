@@ -36,7 +36,7 @@ char* updateError(){
 
 bool NetServer::begin() {
   importRequest = false;
-
+  irRecordEnable = false;
   webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     ssidCount = 0;
     int mcb = heap_caps_get_free_size(MALLOC_CAP_8BIT);
@@ -73,6 +73,11 @@ bool NetServer::begin() {
   webserver.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/www/update.html", String(), false, processor);
   });
+#if IR_PIN!=255
+  webserver.on("/ir", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/www/ir.html", String(), false, processor);
+  });
+#endif
   webserver.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
     shouldReboot = !Update.hasError();
     AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot?"OK": updateError());
@@ -139,7 +144,19 @@ void NetServer::loop() {
     requestOnChange(NRSSI, 0);
   }
 }
-
+#if IR_PIN!=255
+void NetServer::irToWs(const char* protocol, uint64_t irvalue) {
+  char buf[BUFLEN] = { 0 };
+  sprintf (buf, "{\"ircode\": %llu, \"protocol\": \"%s\"}", irvalue, protocol);
+  websocket.textAll(buf);
+}
+void NetServer::irValsToWs(){
+  if(!irRecordEnable) return;
+  char buf[BUFLEN] = { 0 };
+  sprintf (buf, "{\"irvals\": [%llu, %llu, %llu]}", config.ircodes.irVals[config.irindex][0], config.ircodes.irVals[config.irindex][1], config.ircodes.irVals[config.irindex][2]);
+  websocket.textAll(buf);
+}
+#endif
 void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
@@ -150,6 +167,22 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len) {
         byte v = atoi(val);
         player.setVol(v, false);
       }
+#if IR_PIN!=255
+      if (strcmp(cmd, "irbtn") == 0) {
+        config.irindex=atoi(val);
+        irRecordEnable=(config.irindex>=0);
+        config.irchck=0;
+        irValsToWs();
+        if(config.irindex<0) config.saveIR();
+      }
+      if (strcmp(cmd, "chkid") == 0) {
+        config.irchck=atoi(val);
+      }
+      if (strcmp(cmd, "irclr") == 0) {
+        byte cl = atoi(val);
+        config.ircodes.irVals[config.irindex][cl]=0;
+      }
+#endif
     }
   }
 }
@@ -322,6 +355,9 @@ String processor(const String& var) { // %Templates%
   }
   if (var == "NOTAPMODE") {
     return network.status == CONNECTED ? " hidden" : "";
+  }
+  if (var == "IRMODE") {
+    return IR_PIN == 255 ? "" : " ir";
   }
   return String();
 }
