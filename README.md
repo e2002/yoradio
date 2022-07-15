@@ -295,6 +295,16 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.494
+- adding VU meter for displays ST7735 160x128, ST7735 128x128, ILI9341 320x240, ST7789 320x240 \
+  option ENABLE_VU_METER (see [myoptions.h](exsamples/myoptions.h#L113) for exsample) \
+  **!!! Important !!!** \
+  if you enable this feathure on the esp32 wroom, due to lack of memory, you must modify the file Arduino/libraries/AsyncTCP/src/AsyncTCP.cpp \
+  replace the line 221 \
+  xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 * 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE); \
+  with \
+  xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 / 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
+
 #### v0.6.450
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - adding an IR remote control has been moved to the web-interface (more info in [Controls.md](Controls.md#ir-receiver))

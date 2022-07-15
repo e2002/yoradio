@@ -331,6 +331,8 @@ void Audio::begin(){
     write_register(SCI_AUDATA, 44100 + 1);                  // 44.1kHz + stereo
     // The next clocksetting allows SPI clocking at 5 MHz, 4 MHz is safe then.
     write_register(SCI_CLOCKF, 6 << 12);                    // Normal clock settings multiplyer 3.0=12.2 MHz
+    //set vu meter
+    setVUmeter();
     //SPI Clock to 4 MHz. Now you can set high speed SPI clock.
     VS1053_SPI=SPISettings(6700000, MSBFIRST, SPI_MODE0); // SPIDIV 12 -> 80/12=6.66 MHz
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_LINE1));
@@ -350,6 +352,16 @@ size_t Audio::bufferFilled(){
 }
 //---------------------------------------------------------------------------------------------------------------------
 size_t Audio::bufferFree(){
+    return InBuff.freeSpace();
+}
+//---------------------------------------------------------------------------------------------------------------------
+uint32_t Audio::inBufferFilled() {
+    // current audio input buffer fillsize in bytes
+    return InBuff.bufferFilled();
+}
+//---------------------------------------------------------------------------------------------------------------------
+uint32_t Audio::inBufferFree() {
+    // current audio input buffer free space in bytes
     return InBuff.freeSpace();
 }
 //---------------------------------------------------------------------------------------------------------------------
@@ -1541,6 +1553,45 @@ void Audio::setDefaults(){
     m_f_webstream = false;
     m_f_tts = false;                                        // text to speech
     m_f_localfile = false;
+}
+//------------------------------------------------------------------------------
+/**
+ * \brief enable VSdsp VU Meter
+ *
+ * \param[in] enable when set will enable the VU meter
+ *
+ * Writes the SS_VU_ENABLE bit of the SCI_STATUS register to enable VU meter on
+ * board to the VSdsp.
+ *
+ * See data patches data sheet VU meter for details.
+ * \warning This feature is only available with patches that support VU meter.
+ * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
+ */
+void Audio::setVUmeter() {
+  if(!ENABLE_VU_METER) return;
+  uint16_t MP3Status = read_register(SCI_STATUS);
+  write_register(SCI_STATUS, MP3Status | _BV(9));
+}
+
+//------------------------------------------------------------------------------
+/**
+ * \brief get current measured VU Meter
+ *
+ * Returns the calculated peak sample values from both channels in 3 dB
+ * increaments through. Where the high byte represent the left channel,
+ * and the low bytes the right channel.
+ *
+ * Values from 0 to 31 are valid for both channels.
+ *
+ * \warning This feature is only available with patches that support VU meter.
+ */
+void Audio::getVUlevel() {
+  if(!ENABLE_VU_METER) return;
+  int16_t reg = read_register(SCI_AICTRL3);
+  uint8_t rl = map((uint8_t)reg, 81, 92, 0, 255);
+  uint8_t rr = map((uint8_t)(reg >> 8), 81, 92, 0, 255);
+  if(rl>30 || !isRunning()) vuLeft = rl;
+  if(rr>30 || !isRunning()) vuRight = rr;
 }
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::connecttohost(String host){

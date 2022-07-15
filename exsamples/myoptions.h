@@ -110,7 +110,20 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define SNTP_SERVER       "pool.ntp.org", "0.ru.pool.ntp.org"  /*  custom ntp servers min 1 max 3 comma separated values  */
 //#define I2S_INTERNAL      false             /*  If true - use esp32 internal DAC  */
 //#define SOFT_AP_REBOOT_DELAY      0         /*  Delay in milliseconds after which ESP is rebooting if it is in softAP mode (0 - disabled)  */
-
+//#define ENABLE_VU_METER   false             /*  enable? vu meter for some displays  */
+/*
+ * !!! Important !!!
+ * if you enable this feathure on the esp32 wroom, due to lack of memory, you must modify the file Arduino/libraries/AsyncTCP/src/AsyncTCP.cpp
+ * replace the line 221
+ * xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 * 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
+ * with
+ * xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 / 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
+*/
+/* VU settings. See the default settings for your display in file yoRadio/display_vu.h */
+/*****************************************************************************************************************************************************************************/
+/*                  vu left  |  vu top    | band width  | band height | band space | num of bands | max samples | horisontal  | Max Bands Color         |  Min Bands Color   */
+/*****************************************************************************************************************************************************************************/
+//#define VU_PARAMS { VU_X = 4,  VU_Y = 60,   VU_BW = 10,    VU_BH = 34,   VU_BS = 2,   VU_NB = 8,    VU_BMS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = SILVER }
 /******************************************/
 
 /*  IR control  */

@@ -3,7 +3,9 @@
 #include "WiFi.h"
 #include "time.h"
 #include "display.h"
-
+#if ENABLE_VU_METER
+#include "display_vu.h"
+#endif
 #include "player.h"
 #include "netserver.h"
 #include "network.h"
@@ -453,6 +455,9 @@ void Display::loop() {
   }
   dsp.loop();
   if (dsp_on_loop) dsp_on_loop(&dsp);
+#if ENABLE_VU_METER
+  drawVU(&dsp);
+#endif
 }
 
 void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {

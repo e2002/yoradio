@@ -4269,7 +4269,8 @@ int32_t Audio::Gain(int16_t s[2]) {
         step = step * m_balance * 16;
         r = (uint8_t)(step);
     }
-
+    vuLeft = s[LEFTCHANNEL] >> 7;
+    vuRight = s[RIGHTCHANNEL] >> 7;
     v[LEFTCHANNEL] = (s[LEFTCHANNEL]  * (m_vol - l)) >> 8;
     v[RIGHTCHANNEL]= (s[RIGHTCHANNEL] * (m_vol - r)) >> 8;
 

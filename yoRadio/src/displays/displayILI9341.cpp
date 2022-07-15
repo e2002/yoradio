@@ -121,6 +121,7 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   setTextSize(1);
   screenwidth = width();
   screenheight = height();
+  Serial.printf("ILI9341 %dx%d\n", screenwidth, screenheight);
   swidth = screenwidth;
   sheight = screenheight;
 }
@@ -208,7 +209,6 @@ void DspCore::displayHeapForDebug() {
   print(ESP.getFreeHeap());
   print(" / ");
   print(ESP.getMaxAllocHeap());
-#if VS1053_CS==255
   // audio buffer;
   fillRect(0, sheight - 2, swidth, 2, TFT_BG);
   int astored = player.inBufferFilled();
@@ -216,7 +216,6 @@ void DspCore::displayHeapForDebug() {
   int aprcnt = 100 * astored / (astored + afree);
   byte sbw = map(aprcnt, 0, 100 , 0, swidth);
   fillRect(0, sheight - 2, sbw, 2, SILVER);
-#endif
 }
 
 void DspCore::printClock(const char* timestr) {

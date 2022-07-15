@@ -186,7 +186,10 @@ public:
     uint32_t getAudioCurrentTime();
     uint32_t getTotalPlayingTime();
     void setDefaults();
-    
+    /* VU METER */
+    void     setVUmeter() {};
+    void     getVUlevel() {};
+    uint8_t  vuLeft, vuRight;
     SemaphoreHandle_t mutex_pl=NULL;
     
     esp_err_t i2s_mclk_pin_select(const uint8_t pin);

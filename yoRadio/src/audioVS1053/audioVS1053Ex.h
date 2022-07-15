@@ -241,7 +241,6 @@ protected:
     void     loadUserCode();
 
 
-
 public:
     // Constructor.  Only sets pin values.  Doesn't touch the chip.  Be sure to call begin()!
     Audio ( uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi = VSPI, uint8_t mosi = 23, uint8_t miso = 19, uint8_t sclk = 18);
@@ -269,11 +268,17 @@ public:
     SemaphoreHandle_t mutex_pl=NULL;
     size_t   bufferFilled();
     size_t   bufferFree();
+    uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
+    uint32_t inBufferFree();   // returns the number of free bytes in the inputbuffer
 		bool isRunning() {/*Serial.printf("m_f_running=%d\n", m_f_running); */return m_f_running;}
 		void setBalance(int8_t bal = 0);
 		void setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass);
     void     setDefaults();
     void     forceMono(bool m) {}                        // TODO
+    /* VU METER */
+    void     setVUmeter();
+    void     getVUlevel();
+    uint8_t  vuLeft, vuRight;
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}
     bool endsWith (const char* base, const char* str) {

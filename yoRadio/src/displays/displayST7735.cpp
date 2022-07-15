@@ -16,6 +16,12 @@
 #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
 #endif
 
+#if ENABLE_VU_METER && DTYPE==INITR_BLACKTAB
+#define CLOCK_DELTA 12
+#else
+#define CLOCK_DELTA 0
+#endif
+
 #define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
 #define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
 
@@ -220,7 +226,6 @@ void DspCore::displayHeapForDebug() {
   print(ESP.getFreeHeap());
   print(" / ");
   print(ESP.getMaxAllocHeap());
-#if VS1053_CS==255
   // audio buffer;
   fillRect(0, sheight - 2, swidth, 2, TFT_BG);
   int astored = player.inBufferFilled();
@@ -228,7 +233,6 @@ void DspCore::displayHeapForDebug() {
   int aprcnt = 100 * astored / (astored + afree);
   byte sbw = map(aprcnt, 0, 100 , 0, swidth);
   fillRect(0, sheight - 2, sbw, 2, SILVER);
-#endif
 #endif
 }
 
@@ -263,10 +267,10 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
     setFont(&DS_DIGI28pt7b);
   if(strstr(oldTimeBuf, timeBuf)==NULL || redraw){
     getTextBounds(oldTimeBuf, 0, 0, &x, &y, &wot, &hot);
-    setCursor((swidth - wot) / 2 - 4, clockY+28+6);
+    setCursor((swidth - wot) / 2 - 4 + CLOCK_DELTA, clockY+28+6);
     setTextColor(TFT_BG);
     print(oldTimeBuf);
-    dot = (swidth - wot) / 2 - 4;
+    dot = (swidth - wot) / 2 - 4 + CLOCK_DELTA;
     /*  dots  */
     strlcpy(tmpBuf, oldTimeBuf, 3);
     getTextBounds(tmpBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
@@ -279,8 +283,8 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
     setTextSize(1);
     getTextBounds(timeBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
     setTextColor(TFT_LOGO);
-    setCursor((swidth - ncwidth) / 2 - 4, clockY+28+6);
-    dot = (swidth - ncwidth) / 2 - 4;
+    setCursor((swidth - ncwidth) / 2 - 4 + CLOCK_DELTA, clockY+28+6);
+    dot = (swidth - ncwidth) / 2 - 4 + CLOCK_DELTA;
     setTextSize(1);
     print(timeBuf);
     /*  dots  */

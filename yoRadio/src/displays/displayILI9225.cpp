@@ -284,7 +284,6 @@ void DspCore::displayHeapForDebug() {
   fillRect(TFT_FRAMEWDT, vTop, swidth - TFT_FRAMEWDT / 2, 7, TFT_BG);
   sprintf(buf, "%d / %d", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
   print(buf);
-#if VS1053_CS==255
   // audio buffer;
   fillRect(0, sheight - 2, swidth, 2, TFT_BG);
   int astored = player.inBufferFilled();
@@ -292,7 +291,6 @@ void DspCore::displayHeapForDebug() {
   int aprcnt = 100 * astored / (astored + afree);
   byte sbw = map(aprcnt, 0, 100 , 0, swidth);
   fillRect(0, sheight - 2, sbw, 2, SILVER);
-#endif
 }
 
 void DspCore::printClock(const char* timestr) {
