@@ -295,6 +295,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.6.530
+- adding VU meter for displays ST7735 160x80, GC9106 160x80, ILI9225 220x176, ST7789 240x240
+- TFT_22_ILI9225 library is integrated into the project
+
 #### v0.6.494
 - adding VU meter for displays ST7735 160x128, ST7735 128x128, ILI9341 320x240, ST7789 320x240 \
   option ENABLE_VU_METER (see [myoptions.h](exsamples/myoptions.h#L113) for exsample) \

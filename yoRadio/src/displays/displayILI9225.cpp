@@ -444,4 +444,10 @@ void DspCore::loop(bool force) {
 
 }
 
+void DspCore::drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h) {
+  TAKE_MUTEX();
+  drawBitmap(x, y, bitmap, w, h);
+  GIVE_MUTEX();
+}
+
 #endif

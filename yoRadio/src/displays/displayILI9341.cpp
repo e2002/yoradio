@@ -121,7 +121,6 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   setTextSize(1);
   screenwidth = width();
   screenheight = height();
-  Serial.printf("ILI9341 %dx%d\n", screenwidth, screenheight);
   swidth = screenwidth;
   sheight = screenheight;
 }

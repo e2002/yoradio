@@ -16,9 +16,17 @@
 #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
 #endif
 
-#if ENABLE_VU_METER && DTYPE==INITR_BLACKTAB
+#if ENABLE_VU_METER
+
+#if DTYPE==INITR_BLACKTAB
 #define CLOCK_DELTA 12
+#elif DTYPE==INITR_MINI160x80
+#define CLOCK_DELTA 16
 #else
+#define CLOCK_DELTA 0
+#endif
+
+#else // !ENABLE_VU_METER
 #define CLOCK_DELTA 0
 #endif
 
