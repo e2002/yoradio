@@ -50,6 +50,7 @@ https://aliexpress.com/item/32965676064.html
 - or **LCD2004** 20x4 I2C https://aliexpress.com/item/32783128355.html
 - or **LCD2004** 20x4 without I2C https://aliexpress.com/item/32783128355.html
 - or **ILI9225** 2.0' 220x176 SPI https://aliexpress.com/item/32952021835.html
+- or **Nextion displays** - [more info](https://github.com/e2002/yoradio/tree/main/nextion)
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
