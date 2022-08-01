@@ -295,6 +295,13 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.000
+- added support for Nextion displays ([more info](nextion/README.md))
+- fixed work of VU Meter
+- fixed time lag when adjusting the volume / selecting a station
+- optimization of work with the DSP_DUMMY option
+- some bug fixes
+
 #### v0.6.530
 - adding VU meter for displays ST7735 160x80, GC9106 160x80, ILI9225 220x176, ST7789 240x240
 - TFT_22_ILI9225 library is integrated into the project

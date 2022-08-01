@@ -2157,6 +2157,11 @@ bool Audio::pauseResume() {
 bool Audio::playChunk() {
     // If we've got data, try and pump it out..
     int16_t sample[2];
+    /* VU Meter ************************************************************************************************************/
+    /* По мотивам https://github.com/schreibfaul1/ESP32-audioI2S/pull/170/commits/6cce84217e5bc8f2f8925936affc84576932a29b */
+    uint8_t maxl = 0, maxr = 0; 
+    uint8_t minl = 0xFF, minr = 0xFF;
+    /************************************************************************************************************ VU Meter */
     if(getBitsPerSample() == 8) {
         if(getChannels() == 1) {
             while(m_validSamples) {
@@ -2164,11 +2169,19 @@ bool Audio::playChunk() {
                 uint8_t y = (m_outBuff[m_curSample] & 0xFF00) >> 8;
                 sample[LEFTCHANNEL]  = x;
                 sample[RIGHTCHANNEL] = x;
+                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
+                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 while(1) {
                     if(playSample(sample)) break;
                 } // Can't send?
                 sample[LEFTCHANNEL]  = y;
                 sample[RIGHTCHANNEL] = y;
+                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
+                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 while(1) {
                     if(playSample(sample)) break;
                 } // Can't send?
@@ -2189,7 +2202,10 @@ bool Audio::playChunk() {
                     sample[LEFTCHANNEL]  = xy;
                     sample[RIGHTCHANNEL] = xy;
                 }
-
+                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
+                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 while(1) {
                     if(playSample(sample)) break;
                 } // Can't send?
@@ -2197,6 +2213,8 @@ bool Audio::playChunk() {
                 m_curSample++;
             }
         }
+        vuLeft = maxl - minl;
+        vuRight = maxr - minr;
         m_curSample = 0;
         return true;
     }
@@ -2205,6 +2223,10 @@ bool Audio::playChunk() {
             while(m_validSamples) {
                 sample[LEFTCHANNEL]  = m_outBuff[m_curSample];
                 sample[RIGHTCHANNEL] = m_outBuff[m_curSample];
+                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
+                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 if(!playSample(sample)) {
                     return false;
                 } // Can't send
@@ -2223,6 +2245,10 @@ bool Audio::playChunk() {
                     sample[LEFTCHANNEL] = xy;
                     sample[RIGHTCHANNEL] = xy;
                 }
+                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
+                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
+                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 if(!playSample(sample)) {
                     return false;
                 } // Can't send
@@ -2230,6 +2256,8 @@ bool Audio::playChunk() {
                 m_curSample++;
             }
         }
+        vuLeft = maxl - minl;
+        vuRight = maxr - minr;
         m_curSample = 0;
         return true;
     }
@@ -4269,8 +4297,6 @@ int32_t Audio::Gain(int16_t s[2]) {
         step = step * m_balance * 16;
         r = (uint8_t)(step);
     }
-    vuLeft = s[LEFTCHANNEL] >> 7;
-    vuRight = s[RIGHTCHANNEL] >> 7;
     v[LEFTCHANNEL] = (s[LEFTCHANNEL]  * (m_vol - l)) >> 8;
     v[RIGHTCHANNEL]= (s[RIGHTCHANNEL] * (m_vol - r)) >> 8;
 

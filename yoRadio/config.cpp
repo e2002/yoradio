@@ -220,7 +220,7 @@ void Config::loadStation(uint16_t ls) {
   playlist.close();
 }
 
-void Config::fillPlMenu(char plmenu[][40], int from, byte count) {
+void Config::fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum) {
   int ls = from;
   byte c = 0;
   bool finded = false;
@@ -248,9 +248,13 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count) {
     while (playlist.available()) {
       if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
 #ifdef PL_WITH_NUMBERS
-        char buf[BUFLEN+10];
-        sprintf(buf, "%d %s", (int)(from+c), sName);
-        strlcpy(plmenu[c], buf, 39);
+        if(removeNum){
+          strlcpy(plmenu[c], sName, 39);
+        }else{
+          char buf[BUFLEN+10];
+          sprintf(buf, "%d %s", (int)(from+c), sName);
+          strlcpy(plmenu[c], buf, 39);
+        }
 #else
         strlcpy(plmenu[c], sName, 39);
 #endif

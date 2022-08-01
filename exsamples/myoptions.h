@@ -22,6 +22,13 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define TFT_DC            4                 /*  SPI DC/RS pin  */
 /******************************************/
 
+/*  NEXTION  */
+//#define NEXTION_RX    255                   /*  Nextion RX pin  */
+//#define NEXTION_TX    255                   /*  Nextion TX pin  */
+//#define NEXTION_WEATHER_LAT    "55.7512"    /*  Nextion latitude for display Weather  */
+//#define NEXTION_WEATHER_LON    "37.6184"    /*  Nextion longitude for display Weather  */
+//#define NEXTION_WEATHER_KEY    ""           /*  Openweathermap API key https://openweathermap.org/appid  */ 
+  
 /*  I2C PINS  */
 //#define I2C_SDA           21                /*  I2C SDA pin. It is best to connect to pin 21.  */
 //#define I2C_SCL           22                /*  I2C SCL pin. It is best to connect to pin 22.  */
@@ -120,11 +127,11 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
  * xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 / 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
 */
 /* VU settings. See the default settings for your display in file yoRadio/display_vu.h */
-/*****************************************************************************************************************************************************************************/
-/*                  vu left  |  vu top    | band width  | band height | band space | num of bands | max samples | horisontal  | Max Bands Color         |  Min Bands Color   */
-/*****************************************************************************************************************************************************************************/
-//#define VU_PARAMS { VU_X = 4,  VU_Y = 60,   VU_BW = 10,    VU_BH = 34,   VU_BS = 2,   VU_NB = 8,    VU_BMS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = SILVER }
-/******************************************/
+/************************************************************************************************************************************************************************************/
+/*                     vu left  |  vu top    | band width  | band height | band space | num of bands | fade speed | horisontal | Max Bands Color          |  Min Bands Color        */
+/************************************************************************************************************************************************************************************/
+//#define VU_PARAMS2 { VU_X = 4,  VU_Y = 60,   VU_BW = 10,    VU_BH = 34,   VU_BS = 2,   VU_NB = 8,    VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = SILVER }
+/************************************************************************************************************************************************************************************/
 
 /*  IR control  */
 //#define IR_PIN                255

@@ -214,7 +214,7 @@ void Telnet::on_input(const char* str, byte clientId) {
   int sstart;
   if (sscanf(str, "smartstart(%d)", &sstart) == 1 || sscanf(str, "cli.smartstart(\"%d\")", &sstart) == 1 || sscanf(str, "smartstart %d", &sstart) == 1) {
     config.store.smartstart = (byte)sstart;
-    printf(clientId, "new smartstart value is: %d\n> ", config.store.audioinfo);
+    printf(clientId, "new smartstart value is: %d\n> ", config.store.smartstart);
     config.save();
     return;
   }

@@ -90,7 +90,7 @@ class Config {
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();
-    void fillPlMenu(char plmenu[][40], int from, byte count);
+    void fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum=false);
     void setTimezone(int8_t tzh, int8_t tzm);
     void setTimezoneOffset(uint16_t tzo);
     uint16_t getTimezoneOffset();

@@ -12,9 +12,15 @@
 
 DspCore dsp;
 Display display;
+#ifdef USE_NEXTION
+Nextion nextion;
+#endif
 
 #ifndef DUMMYDISPLAY
+/******************************************************************************************************************/
 void ticks() {
+  network.timeinfo.tm_sec ++;
+  mktime(&network.timeinfo);
   display.putRequest({CLOCK,0});
 }
 
@@ -219,6 +225,9 @@ void loopCore0( void * pvParameters ){
 }
 
 void Display::init() {
+#ifdef USE_NEXTION
+  nextion.begin();
+#endif
   dsp.initD(screenwidth, screenheight);
   dsp.drawLogo();
   meta.init(1, " * ", META_SIZE, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
@@ -261,9 +270,15 @@ void Display::start(bool reboot) {
   clear();
   if (network.status != CONNECTED) {
     apScreen();
+#ifdef USE_NEXTION
+    nextion.apScreen();
+#endif
     return;
   }
   mode = PLAYER;
+#ifdef USE_NEXTION
+  nextion.putcmd("page player");
+#endif
   if(!reboot){
     config.setTitle("[READY]");
     //loop();
@@ -284,10 +299,13 @@ void Display::clear() {
 }
 
 void Display::swichMode(displayMode_e newmode) {
+#ifdef USE_NEXTION
+  nextion.swichMode(newmode);
+#endif
   if (newmode == VOL) {
     volDelay = millis();
   }
-  if (newmode == mode) return;
+  if (newmode == mode || network.status != CONNECTED) return;
   clear();
   mode = newmode;
   if (newmode != STATIONS) {
@@ -332,6 +350,9 @@ void Display::swichMode(displayMode_e newmode) {
   if (newmode == UPDATING) {
     dsp.frameTitle("* UPDATING *");
   }
+  if (newmode == INFO || newmode == SETTINGS || newmode == TIMEZONE || newmode == WIFI) {
+    dsp.frameTitle("* NEXTION *");
+  }
   if (newmode == NUMBERS) {
     //dsp.frameTitle("STATION");
     meta.reset();
@@ -348,14 +369,24 @@ void Display::swichMode(displayMode_e newmode) {
 void Display::drawPlayer() {
   if (clockRequest) {
     //getLocalTime(&network.timeinfo);
-    network.timeinfo.tm_sec ++;
-    mktime(&network.timeinfo);
+    //network.timeinfo.tm_sec ++;
+    //mktime(&network.timeinfo);
     time();
     clockRequest = false;
   }
   meta.loop();
   title1.loop();
   if (TITLE_SIZE2 != 0) title2.loop();
+}
+
+void Display::sendInfo(){
+  if (clockRequest) {
+#ifdef USE_NEXTION
+  if(mode==TIMEZONE) nextion.localTime(network.timeinfo);
+  if(mode==INFO)     nextion.rssi();
+#endif
+    clockRequest = false;
+  }
 }
 
 void Display::drawVolume() {
@@ -373,15 +404,21 @@ void Display::drawPlaylist() {
   char buf[PLMITEMLENGHT];
   dsp.drawPlaylist(currentPlItem, buf);
   plCurrent.setText(dsp.utf8Rus(buf, true));
+#ifdef USE_NEXTION
+  nextion.drawPlaylist(currentPlItem);
+#endif
 }
 
 void Display::drawNextStationNum(uint16_t num) {
   char plMenu[1][40];
   char currentItemText[40] = {0};
-  config.fillPlMenu(plMenu, num, 1);
+  config.fillPlMenu(plMenu, num, 1, true);
   strlcpy(currentItemText, plMenu[0], 39);
   meta.setText(dsp.utf8Rus(currentItemText, true));
   dsp.drawNextStationNum(num);
+#ifdef USE_NEXTION
+  nextion.drawNextStationNum(num);
+#endif
 }
 
 void Display::putRequest(requestParams_t request){
@@ -391,6 +428,9 @@ void Display::putRequest(requestParams_t request){
 
 void Display::loop() {
   if(displayQueue==NULL) return;
+#ifdef USE_NEXTION
+  nextion.loop();
+#endif
   requestParams_t request;
   if(xQueueReceive(displayQueue, &request, 20)){
     switch (request.type){
@@ -438,6 +478,11 @@ void Display::loop() {
         drawPlayer();
         break;
       }
+    case INFO:
+    case TIMEZONE: {
+        sendInfo();
+        break;
+      }
     case VOL: {
         drawVolume();
         break;
@@ -468,6 +513,9 @@ void Display::bootString(const char* text, byte y) {
   dsp.set_TextSize(1);
   dsp.centerText(text, y == 1 ? BOOTSTR_TOP1 : BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
   dsp.loop(true);
+#ifdef USE_NEXTION
+  if(y==2) nextion.bootString(text);
+#endif
 }
 
 void Display::bootLogo() {
@@ -481,6 +529,11 @@ void Display::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 
 void Display::station() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
+#ifdef USE_NEXTION
+  nextion.newNameset(config.station.name);
+  nextion.bitrate(config.station.bitrate);
+  nextion.bitratePic(ICON_NA);
+#endif
 #ifdef DEBUG_TITLES
   meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
 #endif
@@ -490,6 +543,9 @@ void Display::station() {
 
 void Display::returnTile() {
   meta.setText(dsp.utf8Rus(config.station.name, true));
+#ifdef USE_NEXTION
+  nextion.newNameset(config.station.name);
+#endif
 #ifdef DEBUG_TITLES
   meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
 #endif
@@ -520,7 +576,9 @@ void Display::title() {
 #endif
     title1.setText(dsp.utf8Rus(ttl, true));
     if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
-
+#ifdef USE_NEXTION
+    nextion.newTitle(config.station.title);
+#endif
     //dsp.loop(true);
     if (player_on_track_change) player_on_track_change();
   }
@@ -542,12 +600,12 @@ void Display::rssi() {
 
 void Display::ip() {
   if (dsp_before_ip) if (!dsp_before_ip(&dsp)) return;
-  dsp.ip(WiFi.localIP().toString().c_str());
+  dsp.ip(network.status == CONNECTED?WiFi.localIP().toString().c_str():WiFi.softAPIP().toString().c_str());
 }
 
 void Display::time(bool redraw) {
   if (dsp_before_clock) if (!dsp_before_clock(&dsp, dt)) return;
-  char timeStringBuff[20] = { 0 };
+  char timeStringBuff[40] = { 0 };
   (void)timeStringBuff;
   if (!dt) {
     heap();
@@ -563,13 +621,44 @@ void Display::time(bool redraw) {
 #else
   dsp.printClock(network.timeinfo, dt, redraw);
 #endif
+#ifdef USE_NEXTION
+  nextion.printClock(network.timeinfo);
+#endif
   dt = !dt;
   if (dsp_after_clock) dsp_after_clock(&dsp, dt);
 }
 
 void Display::volume() {
   dsp.drawVolumeBar(mode == VOL);
+#ifdef USE_NEXTION
+  nextion.setVol(config.store.volume, mode == VOL);
+#endif
   //netserver.requestOnChange(VOLUME, 0);
 }
+/******************************************************************************************************************/
+#endif // !DUMMYDISPLAY
 
+#ifdef DUMMYDISPLAY
+/******************************************************************************************************************/
+void Display::bootString(const char* text, byte y) {
+  #ifdef USE_NEXTION
+  if(y==2) nextion.bootString(text);
+  #endif
+}
+void Display::init(){
+  #ifdef USE_NEXTION
+  nextion.begin(true);
+  #endif
+}
+void Display::start(bool reboot){
+  #ifdef USE_NEXTION
+  nextion.start();
+  #endif
+}
+void Display::putRequest(requestParams_t request){
+  #ifdef USE_NEXTION
+  nextion.putRequest(request);
+  #endif
+}
+/******************************************************************************************************************/
 #endif // DUMMYDISPLAY

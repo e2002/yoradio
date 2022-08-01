@@ -66,6 +66,9 @@ void Network::begin() {
   //getLocalTime(&timeinfo);
   stimer.once_ms(200,getFirstTime); 
   ntimer.attach_ms(TSYNC_DELAY, syncTime);
+#ifdef USE_NEXTION
+  nextion.startWeather();
+#endif
   if (network_on_connect) network_on_connect();
 }
 

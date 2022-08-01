@@ -7,6 +7,7 @@
 #include "config.h"
 
 #if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
 #include "src/displays/displayDummy.h"
 #elif DSP_MODEL==DSP_ST7735
 #include "src/displays/displayST7735.h"
@@ -38,7 +39,7 @@
 #include "src/displays/displayILI9225.h"
 #endif
 
-enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING };
+enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING, INFO, SETTINGS, TIMEZONE, WIFI };
 
 enum displayRequestType_e { NEWMODE, CLOCK, NEWTITLE, RETURNTITLE, NEWSTATION, NEXTSTATION, DRAWPLAYLIST, DRAWVOL };
 struct requestParams_t
@@ -46,6 +47,11 @@ struct requestParams_t
   displayRequestType_e type;
   int payload;
 };
+
+#if NEXTION_RX!=255 && NEXTION_TX!=255
+#define USE_NEXTION
+#include "src/displays/nextion.h"
+#endif
 
 #ifndef DUMMYDISPLAY
 void loopCore0( void * pvParameters );
@@ -91,6 +97,7 @@ class Display {
     Scroll plCurrent;
 #endif
     bool busy;
+    bool dt;              // dots
   public:
     Display() {};
 #ifndef DUMMYDISPLAY
@@ -105,23 +112,22 @@ class Display {
     void bootLogo();
     void putRequest(requestParams_t request);
 #else
-    void init(){};
+    void init();
     void loop(){};
-    void start(bool reboot=false){};
+    void start(bool reboot=false);
     void stop(){};
     void resetQueue(){};
     void centerText(const char* text, byte y, uint16_t fg, uint16_t bg){};
     void rightText(const char* text, byte y, uint16_t fg, uint16_t bg){};
-    void bootString(const char* text, byte y){};
+    void bootString(const char* text, byte y);
     void bootLogo(){};
-    void putRequest(requestParams_t request){};
+    void putRequest(requestParams_t request);
 #endif
 #ifndef DUMMYDISPLAY
   private:
     Ticker timer;
     Scroll meta, title1, title2;
     bool clockRequest;
-    bool dt;              // dots
     unsigned long volDelay;
     void clear();
     void heap();
@@ -130,6 +136,7 @@ class Display {
     void time(bool redraw = false);
     void apScreen();
     void drawPlayer();
+    void sendInfo();
     void drawVolume();
     void swichMode(displayMode_e newmode);
     void drawPlaylist();

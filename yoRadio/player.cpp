@@ -164,7 +164,7 @@ void Player::stepVol(bool up) {
 }
 
 byte Player::volToI2S(byte volume) {
-  int vol = map(volume, 0, 254 - config.station.ovol * 2 , 0, 254);
+  int vol = map(volume, 0, 254 - config.station.ovol * 3 , 0, 254);
   if (vol > 254) vol = 254;
   if (vol < 0) vol = 0;
   return vol;
