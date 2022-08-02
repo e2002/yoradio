@@ -98,13 +98,13 @@ void Config::saveIR(){
 }
 #endif
 
-byte Config::setVolume(byte val, bool dosave) {
+void Config::saveVolume(){
+  EEPROM.write(EEPROM_START + sizeof(store.config_set), store.volume);
+  EEPROM.commit();
+}
+
+byte Config::setVolume(byte val) {
   store.volume = val;
-  if (dosave) {
-    //save();
-    EEPROM.write(EEPROM_START + sizeof(store.config_set), store.volume);
-    EEPROM.commit();
-  }
   return store.volume;
 }
 

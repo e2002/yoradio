@@ -72,7 +72,8 @@ class Config {
     void saveIR();
 #endif
     void init();
-    byte setVolume(byte val, bool dosave);
+    byte setVolume(byte val);
+    void saveVolume();
     void setTone(int8_t bass, int8_t middle, int8_t trebble); 
     void setBalance(int8_t balance);
     byte setLastStation(byte val);

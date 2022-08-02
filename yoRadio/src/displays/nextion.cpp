@@ -74,8 +74,10 @@ void Nextion::begin(bool dummy) {
   rx_pos = 0;
   _volInside=false;
   snprintf(_espcoreversion, sizeof(_espcoreversion) - 1, "%d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
+  putcmd("");
   putcmd("rest");
   delay(200);
+  putcmd("");
   putcmd("bkcmd=0");
 //  putcmd("page boot");
   if(dummy) {

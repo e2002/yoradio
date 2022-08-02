@@ -16,6 +16,9 @@ struct audiorequest_t
   bool doSave;
 };
 class Player: public Audio {
+  private:
+    uint32_t  volTicks;   /* delayed volume save  */
+    bool      volTimer;   /* delayed volume save  */
   public:
     audioMode_e mode; 
     audiorequest_t request;

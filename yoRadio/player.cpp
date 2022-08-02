@@ -47,6 +47,7 @@ void Player::init() {
   mode = STOPPED;
   setOutputPins(false);
   requestToStart = true;
+  volTimer=false;
   zeroRequest();
 }
 
@@ -81,12 +82,18 @@ void Player::loop() {
     zeroRequest();
   }
   if (request.volume >= 0) {
-    config.setVolume(request.volume, request.doSave);
+    config.setVolume(request.volume);
     telnet.printf("##CLI.VOL#: %d\n", config.store.volume);
     Audio::setVolume(volToI2S(request.volume));
     zeroRequest();
     display.putRequest({DRAWVOL, 0});
     netserver.requestOnChange(VOLUME, 0);
+  }
+  if(volTimer){
+    if((millis()-volTicks)>3000){
+      config.saveVolume();
+      volTimer=false;
+    }
   }
 }
 
@@ -174,6 +181,8 @@ void Player::setVol(byte volume, bool inside) {
   if (inside) {
     setVolume(volToI2S(volume));
   } else {
+    volTicks = millis();
+    volTimer = true;
     request.volume = volume;
     request.doSave = true;
   }

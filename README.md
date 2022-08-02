@@ -296,6 +296,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.010
+- fixed choppy of sound when volume adjustment
+- fixed initialisation of Nextion displays
+
 #### v0.7.000
 - added support for Nextion displays ([more info](nextion/README.md))
 - fixed work of VU Meter
@@ -312,10 +316,10 @@ Work is in progress...
   option ENABLE_VU_METER (see [myoptions.h](exsamples/myoptions.h#L113) for exsample) \
   **!!! Important !!!** \
   if you enable this feathure on the esp32 wroom, due to lack of memory, you must modify the file Arduino/libraries/AsyncTCP/src/AsyncTCP.cpp \
-  replace the line 221 \
-  xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 * 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE); \
-  with \
-  xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 / 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
+  **replace the line 221** \
+  _xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 * 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);_ \
+  **with** \
+  _xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 / 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);_
 
 #### v0.6.450
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
