@@ -197,7 +197,8 @@ private:
     bool            m_f_stream_ready=false;         // Set after connecttohost and first streamdata are available
     bool            m_f_unsync = false;
     bool            m_f_exthdr = false;             // ID3 extended header
-
+    bool            _vuInitalized;
+    
     const char volumetable[22]={   0,50,60,65,70,75,80,82,84,86,
                                   88,90,91,92,93,94,95,96,97,98,99,100}; //22 elements
 protected:

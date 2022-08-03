@@ -296,6 +296,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.017
+- fix initialization of some vs1053b green boards
+- fix VU initialization on vs1053b boards
+
 #### v0.7.010
 - fixed choppy of sound when volume adjustment
 - fixed initialisation of Nextion displays

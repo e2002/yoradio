@@ -314,7 +314,7 @@ void Audio::begin(){
     mutex_pl = xSemaphoreCreateMutex();
     DCS_HIGH();
     CS_HIGH();
-    delay(100);
+    delay(200);
 
     // Init SPI in slow mode (0.2 MHz)
     VS1053_SPI = SPISettings(200000, MSBFIRST, SPI_MODE0);
@@ -331,14 +331,14 @@ void Audio::begin(){
     write_register(SCI_AUDATA, 44100 + 1);                  // 44.1kHz + stereo
     // The next clocksetting allows SPI clocking at 5 MHz, 4 MHz is safe then.
     write_register(SCI_CLOCKF, 6 << 12);                    // Normal clock settings multiplyer 3.0=12.2 MHz
-    //set vu meter
-    setVUmeter();
     //SPI Clock to 4 MHz. Now you can set high speed SPI clock.
     VS1053_SPI=SPISettings(6700000, MSBFIRST, SPI_MODE0); // SPIDIV 12 -> 80/12=6.66 MHz
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_LINE1));
     //testComm("Fast SPI, Testing VS1053 read/write registers again... \n");
     delay(10);
     await_data_request();
+    //set vu meter
+    setVUmeter();
     m_endFillByte=wram_read(0x1E06) & 0xFF;
 //    sprintf(chbuf, "endFillByte is %X", endFillByte);
 //    if(audio_info) audio_info(chbuf);
@@ -467,7 +467,7 @@ void Audio::stopSong()
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::softReset()
 {
-    if(VS1053_RST>0) return; // Hard resrt present
+//    if(VS1053_RST>0) return; // Hard resrt present
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_RESET));
     delay(10);
     await_data_request();
@@ -1571,6 +1571,12 @@ void Audio::setDefaults(){
 void Audio::setVUmeter() {
 //  if(!ENABLE_VU_METER) return;
   uint16_t MP3Status = read_register(SCI_STATUS);
+  if(MP3Status==0) {
+    Serial.println("VS1053 Error: Unable to write SCI_STATUS");
+    _vuInitalized = false;
+    return;
+  }
+  _vuInitalized = true;
   write_register(SCI_STATUS, MP3Status | _BV(9));
 }
 
@@ -1588,6 +1594,7 @@ void Audio::setVUmeter() {
  */
 void Audio::getVUlevel() {
 //  if(!ENABLE_VU_METER) return;
+  if(!_vuInitalized) return;
   int16_t reg = read_register(SCI_AICTRL3);
   uint8_t rl = map((uint8_t)reg, 85, 92, 0, 255);
   uint8_t rr = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
