@@ -1,4 +1,3 @@
-#if ENABLE_VU_METER
 #ifndef display_vu_h
 #define display_vu_h
 #include "player.h"
@@ -21,23 +20,29 @@ enum : uint16_t VU_PARAMS2;
 /**********************************************************************************************************************************************************************************/
 /*                vu left  |  vu top    | band width  | band height | band space |  num of bands | fade speed  | horisontal   | Max Bands Color          |  Min Bands Color       */
 /**********************************************************************************************************************************************************************************/
+
 #if DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB        /* ST7735 160x128 */
-enum : uint16_t { VU_X = 4,   VU_Y = 50,  VU_BW = 10,   VU_BH = 44,   VU_BS = 2,    VU_NB = 8,     VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY };
+enum : uint16_t { VU_X = 4,   VU_Y = 50,  VU_BW = 10,   VU_BH = 44,   VU_BS = 2,    VU_NB = 8,     VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+
 #elif DSP_MODEL==DSP_ST7735 && DTYPE==INITR_144GREENTAB   /* ST7735 128x128 */
-enum : uint16_t { VU_X = 4,   VU_Y = 45,  VU_BW = 60,   VU_BH = 8,    VU_BS = 0,    VU_NB = 10,    VU_FS = 2,   VU_HOR = 1,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = DARK_GRAY };
+enum : uint16_t { VU_X = 4,   VU_Y = 97,  VU_BW = 60,   VU_BH = 8,    VU_BS = 0,    VU_NB = 10,    VU_FS = 2,   VU_HOR = 1,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = DARK_GRAY };
 #define GREENTAB128
+
 #elif DSP_MODEL==DSP_ILI9341                              /* ILI9341 320x240  */
-enum : uint16_t { VU_X = 4,   VU_Y = 100, VU_BW = 20,   VU_BH = 86,   VU_BS = 4,    VU_NB = 10,    VU_FS = 5,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY   };
+enum : uint16_t { VU_X = 4,   VU_Y = 116, VU_BW = 24,   VU_BH = 80,   VU_BS = 4,    VU_NB = 8,     VU_FS = 5,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+
 #elif DSP_MODEL==DSP_ST7789                               /* ST7789 320x240 */
-enum : uint16_t { VU_X = 4,   VU_Y = 100, VU_BW = 20,   VU_BH = 86,   VU_BS = 4,    VU_NB = 10,    VU_FS = 3,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY   };
+enum : uint16_t { VU_X = 4,   VU_Y = 116, VU_BW = 24,   VU_BH = 80,   VU_BS = 4,    VU_NB = 8,     VU_FS = 5,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+
 #elif DSP_MODEL==DSP_ST7789_240                           /* ST7789 240x240 */
-enum : uint16_t { VU_X = 4,   VU_Y = 90,  VU_BW = 120,  VU_BH = 20,   VU_BS = 0,    VU_NB = 12,    VU_FS = 3,   VU_HOR = 1,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY   };
+enum : uint16_t { VU_X = 4,   VU_Y = 90,  VU_BW = 120,  VU_BH = 20,   VU_BS = 0,    VU_NB = 12,    VU_FS = 3,   VU_HOR = 1,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+
 #elif DSP_MODEL==DSP_ILI9225                              /* ILI9225 220x176 */
-enum : uint16_t { VU_X = 4,   VU_Y = 74,  VU_BW = 13,   VU_BH = 60,   VU_BS = 2,    VU_NB = 10,    VU_FS = 3,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY   };
+enum : uint16_t { VU_X = 4,   VU_Y = 80,  VU_BW = 13,   VU_BH = 56,   VU_BS = 2,    VU_NB = 8,     VU_FS = 3,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+
 #elif (DSP_MODEL==DSP_ST7735 && DTYPE==INITR_MINI160x80) || (DSP_MODEL==DSP_GC9106)  /* ST7735 160x80, GC9106 160x80 */
-enum : uint16_t { VU_X = 1,   VU_Y = 30,  VU_BW = 12,   VU_BH = 36,   VU_BS = 4,    VU_NB = 8,     VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY   };
-#else
-#error YOUR DISPLAY DOES NOT SUPPORT ENABLE_VU_METER FEATURE YET
+enum : uint16_t { VU_X = 1,   VU_Y = 30,  VU_BW = 12,   VU_BH = 36,   VU_BS = 4,    VU_NB = 8,     VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+
 #endif
 #endif //VU_PARAMS
 /**********************************************************************************************************************************************************************************/
@@ -47,6 +52,7 @@ void drawVU(DspCore *dsp);
 GFXcanvas16 gfxc(VU_BW*2+VU_BS,VU_BH);
 
 void drawVU(DspCore *dsp){
+  if(!config.store.vumeter) return;
   if(display.mode!=PLAYER && display.mode!=VOL) return;
 #ifdef GREENTAB128
   if(display.mode==VOL) return;
@@ -105,5 +111,4 @@ void drawVU(DspCore *dsp){
     dsp->drawRGBBitmap(VU_X, VU_Y, gfxc.getBuffer(), VU_BW*2+VU_BS, VU_BH);
   }
 }
-#endif
 #endif

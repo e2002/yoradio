@@ -29,6 +29,10 @@ void onBtnLongPressStart(int id);
 void onBtnLongPressStop(int id);
 tsDirection_e tsDirection(uint16_t x, uint16_t y);
 
+void setIRTolerance(uint8_t tl);
+void setEncAcceleration(uint16_t acc);
+void flipTS();
+
 extern __attribute__((weak)) void ctrls_on_loop();
 
 #endif

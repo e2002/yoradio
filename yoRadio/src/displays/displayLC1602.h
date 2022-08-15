@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#define DSP_FLIPPED 0
+
 #if DSP_MODEL==DSP_2004 || DSP_MODEL==DSP_2004I2C
 #define LCD_2004
 #endif
@@ -89,6 +91,8 @@ class DspCore: public LiquidCrystal {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    void flip(){};
+    void invert(){};
   private:
     uint16_t swidth, sheight, xOffset, yOffset;
     int16_t nextX;

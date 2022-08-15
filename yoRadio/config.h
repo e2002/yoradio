@@ -4,8 +4,9 @@
 #include "options.h"
 
 #define EEPROM_SIZE       768
-#define EEPROM_START      0
-#define EEPROM_START_IR   100
+#define EEPROM_START      500
+#define EEPROM_START_IR   0
+#define EEPROM_START_2    10
 #define BUFLEN            140
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
@@ -14,7 +15,7 @@
 
 struct config_t
 {
-  unsigned int config_set; //must be 4256
+  unsigned int config_set; //must be 4262
   byte volume;
   int8_t balance;
   int8_t trebble;
@@ -25,10 +26,41 @@ struct config_t
   byte lastSSID;
   bool audioinfo;
   byte smartstart;
-  byte tz_set; // must be 57
   int8_t tzHour;
   int8_t tzMin;
   uint16_t timezoneOffset;
+
+  bool      vumeter;
+  uint8_t   softapdelay;
+  bool      flipscreen;
+  bool      invertdisplay;
+  bool      numplaylist;
+  bool      fliptouch;
+  bool      dbgtouch;
+  bool      dspon;
+  uint8_t   brightness;
+  uint8_t   contrast;
+  char      sntp1[35];
+  char      sntp2[35];
+  bool      showweather;
+  char      weatherlat[10];
+  char      weatherlon[10];
+  char      weatherkey[64];
+  uint8_t   volsteps;
+  uint16_t  encacc;
+  uint8_t   irto;
+  uint8_t   irtlp;
+  bool      btnpullup;
+  uint16_t  btnlongpress;
+  uint16_t  btnclickticks;
+  uint16_t  btnpressticks;
+  bool      encpullup;
+  bool      enchalf;
+  bool      enc2pullup;
+  bool      enc2half;
+  bool      forcemono;
+  bool      i2sinternal;
+  bool      rotate90;
 };
 
 #if IR_PIN!=255
@@ -74,7 +106,7 @@ class Config {
     void init();
     byte setVolume(byte val);
     void saveVolume();
-    void setTone(int8_t bass, int8_t middle, int8_t trebble); 
+    void setTone(int8_t bass, int8_t middle, int8_t trebble);
     void setBalance(int8_t balance);
     byte setLastStation(byte val);
     byte setCountStation(byte val);
@@ -91,10 +123,12 @@ class Config {
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();
-    void fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum=false);
+    void fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum = false);
     void setTimezone(int8_t tzh, int8_t tzm);
     void setTimezoneOffset(uint16_t tzo);
     uint16_t getTimezoneOffset();
+    void setBrightness(bool dosave=false);
+    
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);

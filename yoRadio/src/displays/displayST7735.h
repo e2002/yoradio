@@ -6,6 +6,9 @@
 #include <Adafruit_ST7735.h>
 #include "fonts/DS_DIGI28pt7b.h"
 
+#define VU_READY        1
+#define WEATHER_READY   1
+
 #define TFT_LINEHGHT    10
 #if DTYPE==INITR_MINI160x80
 #define TFT_FRAMEWDT    0
@@ -69,6 +72,8 @@ class DspCore: public Adafruit_ST7735 {
     void loop(bool force=false);
     virtual void startWrite(void);
     virtual void endWrite(void);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     char oldTimeBuf[20];

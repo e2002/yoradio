@@ -58,6 +58,8 @@ class DspCore: public Adafruit_PCD8544 {
     void loop(bool force=false);
     virtual void command(uint8_t c);
     virtual void data(uint8_t c);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

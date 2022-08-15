@@ -8,6 +8,7 @@
 - [Software dependencies](#dependencies)
 - [Hardware setup](#hardware-setup)
 - [Quick start](#quick-start)
+- [Detailed start](https://github.com/e2002/yoradio/wiki/How-to-flash)
 - [Update](#update)
 - [Update over web-interface](#update-over-web-interface)
 - [Controls](Controls.md)
@@ -63,17 +64,19 @@ https://www.aliexpress.com/item/33009687492.html
 
 ---
 ## Connection tables
-| SPI Display | ESP-32 | options.h |
+##### SPI Displays
+| Display | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
 | VCC | +5v | - |
 | SCL | 18 | - |
 | SDA | 23 | - |
 | CSL | 5* | TFT_CS |
-| RSTL | 15* | TFT_RST |
+| RST | 15* | TFT_RST |
 | DCL | 4* | TFT_DC |
 
-| NOKIA5110 | ESP-32 | options.h |
+##### Nokia 5110
+| NOKIA5110 | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | RST | 15* | TFT_RST |
 | CE | 5* | TFT_CS |
@@ -83,14 +86,16 @@ https://www.aliexpress.com/item/33009687492.html
 | VCC | +3v3 | - |
 | GND | GND | - |
 
-| I2C Display | ESP-32 | options.h |
+##### I2C Displays
+| Display | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
 | VCC | +5v | - |
-| SDA | 13* | I2C_SDA |
-| SCL | 14* | I2C_SCL |
+| SDA | 21* | I2C_SDA |
+| SCL | 22* | I2C_SCL |
 
-| LCD 1602 | ESP-32 | options.h |
+##### LCD Displays (1602, 2004)
+| Display | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
 | VCC | +5v | - |
@@ -101,7 +106,8 @@ https://www.aliexpress.com/item/33009687492.html
 | D6 | any* | LCD_D6 |
 | D7 | any* | LCD_D7 |
 
-| Touchscreen | ESP-32 | options.h |
+##### Touchscreen
+| Touchscreen | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
 | VCC | +3.3v | - |
@@ -111,7 +117,8 @@ https://www.aliexpress.com/item/33009687492.html
 | IRQ | N/C | - |
 | CS | any* | TS_CS |
 
-| I2S DAC | ESP-32 | options.h |
+##### I2S DAC
+| I2S DAC | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND       | GND | - |
 | VIN       | +5v | - |
@@ -119,7 +126,8 @@ https://www.aliexpress.com/item/33009687492.html
 | BCLK      | 26* | I2S_BCLK |
 | LRC(WSEL) | 25* | I2S_LRC |
 
-| VS1053 | ESP-32 | options.h |
+##### VS1053
+| VS1053 | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | XDCS | 25* | VS1053_DCS |
 | XCS | 27* | VS1053_CS |
@@ -132,10 +140,19 @@ https://www.aliexpress.com/item/33009687492.html
 | DGND | GND | - |
 
 _\#\# Important! You must choose between I2S DAC and VS1053 by disabling the second module in the settings (see below)_
+##### Nextion Displays
+| Display | ESP-32 | myoptions.h |
+| ------ | ------ | ------ |
+| GND | GND | - |
+| VCC | +5v | - |
+| TX | 14* | NEXTION_RX |
+| RX | 15* | NEXTION_TX |
 
-| Buttons, Encoder, LED, IR, Joystick | ESP-32 | options.h |
+##### Controls
+| Buttons, Encoder, LED, IR, Joystick | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND       | GND | - |
+| 5v       | 3v3 | - |
 | PIN       | any* | ENC_BTNx, BTN_xxx, LED_BUILTIN, IR_PIN  |
 
 _\* Any free pin, configured in myoptions.h_ \
@@ -150,7 +167,9 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 \* _if you need MQTT support_
 
 #### Tool:
-[ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/)
+[ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/) \
+
+**See [wiki](https://github.com/e2002/yoradio/wiki/How-to-flash#preparing) for details**
 
 ---
 ## Hardware setup
@@ -205,6 +224,8 @@ _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRad
 
 **Localization:**
 Если Adafruit_GFX ещё не русифицирована, русифицировать её, заменив файл Arduino/libraries/Adafruit_GFX_Library/glcdfont.c файлом [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
+
+**See [wiki](https://github.com/e2002/yoradio/wiki/How-to-flash#build--flash) for details**
 
 ---
 ## Update
@@ -291,11 +312,22 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Plugins
-At the moment, you can display additional information on the display by writing a few additional functions. There is no documentation yet, you will have to deal with the example, which is in file [exsamples/plugins/displayhandlers.ino](exsamples/plugins/displayhandlers.ino).\
+At the moment, you can display additional information on the display by writing a few additional functions. There is no documentation yet, you will have to deal with the examples, which is in directory [exsamples/plugins/](https://github.com/e2002/yoradio/tree/main/exsamples/plugins).\
 Work is in progress...
 
 ---
 ## Version history
+#### v0.7.330
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+**Please backup playlist.csv and wifi.csv before updating.**
+- added the ability to configure parameters through the [web interface](images/settings.png)
+- new parameter BRIGHTNESS_PIN - pin for adjusting the brightness of the display. Details in [exsamples/myoptions.h](exsamples/myoptions.h#L105)
+- the weather plugin is integrated into the code, the settings are made through the web interface
+
+_**PS:** Due to the change in the storage location of settings in the ESP memory, settings such as:_ \
+**smartstart, audioinfo, time zone, IR remote, last volume level, last played station, equalizer** \
+_will have to be configured again through the web interface. Please understand and forgive._
+
 #### v0.7.017
 - fix initialization of some vs1053b green boards
 - fix VU initialization on vs1053b boards
@@ -317,7 +349,7 @@ Work is in progress...
 
 #### v0.6.494
 - adding VU meter for displays ST7735 160x128, ST7735 128x128, ILI9341 320x240, ST7789 320x240 \
-  option ENABLE_VU_METER (see [myoptions.h](exsamples/myoptions.h#L113) for exsample) \
+  option ENABLE_VU_METER (see [myoptions.h](exsamples/myoptions.h) for exsample) \
   **!!! Important !!!** \
   if you enable this feathure on the esp32 wroom, due to lack of memory, you must modify the file Arduino/libraries/AsyncTCP/src/AsyncTCP.cpp \
   **replace the line 221** \
@@ -344,8 +376,8 @@ Work is in progress...
 
 #### v0.6.355
 - added support for ST7789 1.3' 240x240 SPI displays \
-  _!!! Important !!! This display requires further development when used in conjunction with the VS1053 module. \
-  See this link for details https://www.instructables.com/Adding-CS-Pin-to-13-LCD/_
+  _!!! Important !!! This display requires further development when used in conjunction with the VS1053 module._ \
+  See this link for details https://www.instructables.com/Adding-CS-Pin-to-13-LCD/
 
 #### v0.6.348
 - fixed display bugs in the rssibitrate plugin
@@ -368,7 +400,7 @@ Work is in progress...
 - added support for ILI9225 220x176 SPI displays
 - added support for I2S internal DAC, option I2S_INTERNAL (see [myoptions.h](exsamples/myoptions.h#L111) for exsample) \
  _(this option worked only with esp32 core version==2.0.0)_
-- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](exsamples/myoptions.h#L112) for exsample)
+- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](exsamples/myoptions.h) for exsample)
 - fixed MQTT connection when WiFi reconnected
 - fixed date display for ILI9341 displays
 - fixed garbage on volume control with displays ILI9341

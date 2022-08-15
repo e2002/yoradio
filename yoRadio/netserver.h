@@ -5,7 +5,7 @@
 #include "ESPAsyncWebServer.h"
 #include "AsyncUDP.h"
 
-enum requestType_e { PLAYLIST, STATION, ITEM, TITLE, VOLUME, NRSSI, BITRATE, MODE, EQUALIZER, BALANCE, PLAYLISTSAVED };
+enum requestType_e { PLAYLIST, STATION, ITEM, TITLE, VOLUME, NRSSI, BITRATE, MODE, EQUALIZER, BALANCE, PLAYLISTSAVED, GETMODE, GETINDEX, GETACTIVE, GETSYSTEM, GETSCREEN, GETTIMEZONE, GETWEATHER, GETCONTROLS };
 
 class NetServer {
   public:
@@ -18,8 +18,10 @@ class NetServer {
     void loop();
     void requestOnChange(requestType_e request, uint8_t clientId);
     void setRSSI(int val);
-    void onWsMessage(void *arg, uint8_t *data, size_t len);
+    void onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId);
     bool savePlaylist(const char* post);
+    void takeMallocDog();
+    void giveMallocDog();
 #if IR_PIN!=255
     bool irRecordEnable;
     void irToWs(const char* protocol, uint64_t irvalue);

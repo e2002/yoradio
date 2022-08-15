@@ -320,12 +320,22 @@ void Nextion::loop() {
         }
         if (sscanf(rxbuf, "tzhour=%d", &scanDigit) == 1){
           config.setTimezone((int8_t)scanDigit, config.store.tzMin);
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
+          //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
+          if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
+            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+          }else if(strlen(config.store.sntp1)>0){
+            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
+          }
           network.requestTimeSync(true);
         }
         if (sscanf(rxbuf, "tzmin=%d", &scanDigit) == 1){
           config.setTimezone(config.store.tzHour, (int8_t)scanDigit);
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
+          //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
+          if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
+            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+          }else if(strlen(config.store.sntp1)>0){
+            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
+          }
           network.requestTimeSync(true);
         }
         if (sscanf(rxbuf, "audioinfo=%d", &scanDigit) == 1){
@@ -558,7 +568,7 @@ bool Nextion::getForecast(){
     return false;
   }
   char httpget[250] = {0};
-  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=metric&lang=ru&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", NEXTION_WEATHER_LAT, NEXTION_WEATHER_LON, NEXTION_WEATHER_KEY, host);
+  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=metric&lang=ru&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, config.store.weatherkey, host);
   client.print(httpget);
   unsigned long timeout = millis();
   while (client.available() == 0) {
@@ -684,6 +694,10 @@ void Nextion::getWeather(void * pvParameters){
 }
 
 void Nextion::updateWeather() {
+  if(strlen(config.store.weatherkey)==0 || !config.store.showweather) {
+    nextion.weatherVisible(0);
+    return;
+  }
   xTaskCreatePinnedToCore(
     nextion.getWeather,               /* Task function. */
     "nextiongetWeather",              /* name of task. */
@@ -691,15 +705,11 @@ void Nextion::updateWeather() {
     NULL,                             /* parameter of the task */
     0,                                /* priority of the task */
     &nextion.weatherUpdateTaskHandle, /* Task handle to keep track of created task */
-    0);                               /* pin task to core CORE_FOR_LOOP_CONTROLS */
+    0);                               /* pin task to core 0 */
 }
 
 void Nextion::startWeather(){
-  if(strlen(NEXTION_WEATHER_KEY)==0) {
-    Serial.println("## OPENWEATHERMAP ###: ERROR: NEXTION_WEATHER_KEY not configured");
-    return;
-  }
-  updateWeather();                            /* pin task to core CORE_FOR_LOOP_CONTROLS */
+  updateWeather();
 }
 
 /*

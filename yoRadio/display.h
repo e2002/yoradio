@@ -38,8 +38,20 @@
 #elif DSP_MODEL==DSP_ILI9225
 #include "src/displays/displayILI9225.h"
 #endif
+#ifndef VU_READY
+#define VU_READY        0
+#endif
+#ifndef DSP_FLIPPED
+#define DSP_FLIPPED     1
+#endif
+#ifndef WEATHER_READY
+#define WEATHER_READY   0
+#else
+#define WEATHER_REQUEST_INTERVAL          1800 //30min
+#define WEATHER_REQUEST_INTERVAL_FAULTY   30
+#endif
 
-enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING, INFO, SETTINGS, TIMEZONE, WIFI };
+enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING, INFO, SETTINGS, TIMEZONE, WIFI, CLEAR };
 
 enum displayRequestType_e { NEWMODE, CLOCK, NEWTITLE, RETURNTITLE, NEWSTATION, NEXTSTATION, DRAWPLAYLIST, DRAWVOL };
 struct requestParams_t
@@ -111,6 +123,15 @@ class Display {
     void bootString(const char* text, byte y);
     void bootLogo();
     void putRequest(requestParams_t request);
+    void flip();
+    void invert();
+    static void updateWeather();
+    void showWeather();
+#if DSP_MODEL==DSP_NOKIA5110
+    void setContrast();
+#else
+    void setContrast(){};
+#endif // DSP_MODEL==DSP_NOKIA5110
 #else
     void init();
     void loop(){};
@@ -122,9 +143,18 @@ class Display {
     void bootString(const char* text, byte y);
     void bootLogo(){};
     void putRequest(requestParams_t request);
+    void flip(){};
+    void invert(){};
+    void setContrast(){};
+    static void updateWeather(){};
+    void showWeather(){};
 #endif
 #ifndef DUMMYDISPLAY
   private:
+#if WEATHER_READY==1
+    Scroll weatherScroll;
+    static void getWeather( void * pvParameters );
+#endif
     Ticker timer;
     Scroll meta, title1, title2;
     bool clockRequest;

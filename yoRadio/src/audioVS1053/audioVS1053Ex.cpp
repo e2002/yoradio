@@ -1569,7 +1569,6 @@ void Audio::setDefaults(){
  * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
  */
 void Audio::setVUmeter() {
-//  if(!ENABLE_VU_METER) return;
   uint16_t MP3Status = read_register(SCI_STATUS);
   if(MP3Status==0) {
     Serial.println("VS1053 Error: Unable to write SCI_STATUS");
@@ -1593,7 +1592,6 @@ void Audio::setVUmeter() {
  * \warning This feature is only available with patches that support VU meter.
  */
 void Audio::getVUlevel() {
-//  if(!ENABLE_VU_METER) return;
   if(!_vuInitalized) return;
   int16_t reg = read_register(SCI_AICTRL3);
   uint8_t rl = map((uint8_t)reg, 85, 92, 0, 255);

@@ -11,13 +11,7 @@ void Config::init() {
     irindex=-1;
 #endif
   eepromRead(EEPROM_START, store);
-  if (store.tz_set != 57) { // update to v0.4.200
-    store.tz_set = 57;
-    store.tzHour = 3;
-    store.tzMin = 0;
-    store.timezoneOffset = 0;
-  }
-  if (store.config_set != 4256) setDefaults();
+  if (store.config_set != 4262) setDefaults();
   //if (!SPIFFS.begin(false, "/spiffs", 30)) {
   if (!SPIFFS.begin(false)) {
     return;
@@ -35,6 +29,10 @@ void Config::init() {
     ircodes.ir_set=4224;
     memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
   }
+#endif
+#if BRIGHTNESS_PIN!=255
+  pinMode(BRIGHTNESS_PIN, OUTPUT);
+  setBrightness(false);
 #endif
 }
 
@@ -56,7 +54,7 @@ template <class T> int Config::eepromRead(int ee, T& value) {
 }
 
 void Config::setDefaults() {
-  store.config_set = 4256;
+  store.config_set = 4262;
   store.volume = 12;
   store.balance = 0;
   store.trebble = 0;
@@ -67,10 +65,41 @@ void Config::setDefaults() {
   store.lastSSID = 0;
   store.audioinfo = false;
   store.smartstart = 2;
-  store.tz_set = 57;
   store.tzHour = 3;
   store.tzMin = 0;
   store.timezoneOffset = 0;
+
+  store.vumeter=false;
+  store.softapdelay=0;
+  store.flipscreen=false;
+  store.invertdisplay=false;
+  store.numplaylist=false;
+  store.fliptouch=false;
+  store.dbgtouch=false;
+  store.dspon=true;
+  store.brightness=100;
+  store.contrast=55;
+  strlcpy(store.sntp1,"0.ru.pool.ntp.org", 35);
+  strlcpy(store.sntp2,"1.ru.pool.ntp.org", 35);
+  store.showweather=false;
+  strlcpy(store.weatherlat,"55.7512", 10);
+  strlcpy(store.weatherlon,"37.6184", 10);
+  strlcpy(store.weatherkey,"", 64);
+  store.volsteps = 1;
+  store.encacc = 200;
+  store.irto = 80;
+  store.irtlp = 35;
+  store.btnpullup = true;
+  store.btnlongpress = 200;
+  store.btnclickticks = 300;
+  store.btnpressticks = 500;
+  store.encpullup = false;
+  store.enchalf = false;
+  store.enc2pullup = false;
+  store.enc2half = false;
+  store.forcemono = false;
+  store.i2sinternal = false;
+  store.rotate90 = false;
 }
 
 void Config::setTimezone(int8_t tzh, int8_t tzm) {
@@ -247,17 +276,17 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum)
     }
     while (playlist.available()) {
       if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
-#ifdef PL_WITH_NUMBERS
-        if(removeNum){
-          strlcpy(plmenu[c], sName, 39);
+        if(config.store.numplaylist){
+          if(removeNum){
+            strlcpy(plmenu[c], sName, 39);
+          }else{
+            char buf[BUFLEN+10];
+            sprintf(buf, "%d %s", (int)(from+c), sName);
+            strlcpy(plmenu[c], buf, 39);
+          }
         }else{
-          char buf[BUFLEN+10];
-          sprintf(buf, "%d %s", (int)(from+c), sName);
-          strlcpy(plmenu[c], buf, 39);
+          strlcpy(plmenu[c], sName, 39);
         }
-#else
-        strlcpy(plmenu[c], sName, 39);
-#endif
         c++;
       }
       if (c >= count) break;
@@ -344,7 +373,7 @@ bool Config::parseWsCommand(const char* line, char* cmd, char* val, byte cSize) 
   strlcpy(cmd, line, tmpe - line + 1);
   if (strlen(tmpe + 1) == 0) return false;
   memset(val, 0, cSize);
-  strlcpy(val, tmpe + 1, tmpe + 1 - line + 1);
+  strlcpy(val, tmpe + 1, strlen(line) - strlen(cmd) + 1);
   return true;
 }
 
@@ -390,4 +419,11 @@ bool Config::initNetwork() {
   }
   file.close();
   return true;
+}
+
+void Config::setBrightness(bool dosave){
+#if BRIGHTNESS_PIN!=255
+  analogWrite(BRIGHTNESS_PIN, config.store.dspon?map(store.brightness, 0, 100, 0, 255):0);
+  if(dosave) save();
+#endif
 }

@@ -3,7 +3,7 @@
 #include "WiFi.h"
 #include "time.h"
 #include "display.h"
-#if ENABLE_VU_METER
+#if VU_READY==1
 #include "display_vu.h"
 #endif
 #include "player.h"
@@ -72,6 +72,13 @@ void ticks() {
 #endif
 
 byte currentScrollId = 0;   /* one scroll on one time */
+
+#if WEATHER_READY==1
+bool weatherRequest = false;
+TaskHandle_t weatherUpdateTaskHandle;
+Ticker weatherTicker;
+char weatherText[254] = { 0 };
+#endif
 
 void  Scroll::init(byte ScrollId, const char *sep, byte tsize, byte top, uint16_t dlay, uint16_t fgcolor, uint16_t bgcolor) {
   textsize = tsize;
@@ -239,6 +246,15 @@ void Display::init() {
 #endif
   plCurrent.init(4, " * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
   plCurrent.lock();
+#if WEATHER_READY==1
+  if (DSP_MODEL == DSP_ST7735 || (DSP_MODEL == DSP_SSD1327)) {
+    weatherScroll.init(5, " * ", 1, TFT_LINEHGHT * 4 + 6, 0, ORANGE, TFT_BG);
+  }else if(DSP_MODEL == DSP_ILI9225){
+    weatherScroll.init(5, " * ", 1, TFT_LINEHGHT * 6 + 5, 0, ORANGE, TFT_BG);
+  } else {
+    weatherScroll.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, ORANGE, TFT_BG);
+  }
+#endif
   if (dsp_on_init) dsp_on_init();
 }
 
@@ -476,6 +492,9 @@ void Display::loop() {
   switch (mode) {
     case PLAYER: {
         drawPlayer();
+#if WEATHER_READY==1
+        weatherScroll.loop();
+#endif
         break;
       }
     case INFO:
@@ -500,8 +519,14 @@ void Display::loop() {
   }
   dsp.loop();
   if (dsp_on_loop) dsp_on_loop(&dsp);
-#if ENABLE_VU_METER
+#if VU_READY==1
   drawVU(&dsp);
+#endif
+#if WEATHER_READY==1
+  if (weatherRequest) {
+    weatherRequest = false;
+    weatherScroll.setText(dsp.utf8Rus(weatherText, true));
+  }
 #endif
 }
 
@@ -635,6 +660,19 @@ void Display::volume() {
 #endif
   //netserver.requestOnChange(VOLUME, 0);
 }
+
+void Display::flip(){
+  dsp.flip();
+}
+
+void Display::invert(){
+  dsp.invert();
+}
+#if DSP_MODEL==DSP_NOKIA5110
+void  Display::setContrast(){
+  dsp.setContrast(config.store.contrast);
+}
+#endif // DSP_MODEL==DSP_NOKIA5110
 /******************************************************************************************************************/
 #endif // !DUMMYDISPLAY
 
@@ -662,3 +700,140 @@ void Display::putRequest(requestParams_t request){
 }
 /******************************************************************************************************************/
 #endif // DUMMYDISPLAY
+
+#ifndef DUMMYDISPLAY
+#if WEATHER_READY==1
+
+bool getForecast() {
+  WiFiClient client;
+  const char* host  = "api.openweathermap.org";
+  
+  if (!client.connect(host, 80)) {
+    Serial.println("## OPENWEATHERMAP ###: connection  failed");
+    return false;
+  }
+  char httpget[250] = {0};
+  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=metric&lang=ru&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, config.store.weatherkey, host);
+  client.print(httpget);
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 2000UL) {
+      Serial.println("## OPENWEATHERMAP ###: client available timeout !");
+      client.stop();
+      return false;
+    }
+  }
+  timeout = millis();
+  String line = "";
+  if (client.connected()) {
+    while (client.available())
+    {
+      line = client.readStringUntil('\n');
+      if (strstr(line.c_str(), "\"temp\"") != NULL) {
+        client.stop();
+        break;
+      }
+      if ((millis() - timeout) > 500)
+      {
+        client.stop();
+        Serial.println("## OPENWEATHERMAP ###: client read timeout !");
+        return false;
+      }
+    }
+  }
+  if (strstr(line.c_str(), "\"temp\"") == NULL) {
+    Serial.println("## OPENWEATHERMAP ###: weather not found !");
+    return false;
+  }
+  char *tmpe;
+  char *tmps;
+  const char* cursor = line.c_str();
+  char desc[120], temp[20], hum[20], press[20], icon[5];
+
+  tmps = strstr(cursor, "\"description\":\"");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: description not found !"); return false;}
+  tmps += 15;
+  tmpe = strstr(tmps, "\",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: description not found !"); return false;}
+  strlcpy(desc, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 2;
+  
+  // "ясно","icon":"01d"}],
+  tmps = strstr(cursor, "\"icon\":\"");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: icon not found !"); return false;}
+  tmps += 8;
+  tmpe = strstr(tmps, "\"}");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: icon not found !"); return false;}
+  strlcpy(icon, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 2;
+  
+  tmps = strstr(cursor, "\"temp\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: temp not found !"); return false;}
+  tmps += 7;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: temp not found !"); return false;}
+  strlcpy(temp, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 2;
+  float tempf = atof(temp);
+
+  tmps = strstr(cursor, "\"pressure\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
+  tmps += 11;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
+  strlcpy(press, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 2;
+  int pressi = (float)atoi(press) / 1.333;
+
+  tmps = strstr(cursor, "humidity\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
+  tmps += 10;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
+  strlcpy(hum, tmps, tmpe - tmps + 1);
+
+  Serial.printf("## OPENWEATHERMAP ###: description: %s, temp:%.1f C, pressure:%dmmHg, humidity:%s%%\n", desc, tempf, pressi, hum);
+  sprintf(weatherText, "%s, %.1f C * давление: %d мм * влажность: %s%%", desc, tempf, pressi, hum);
+  return true;
+
+}
+
+void Display::getWeather( void * pvParameters ) {
+  delay(200);
+  if (getForecast()) {
+    weatherRequest = true;
+    weatherTicker.detach();
+    weatherTicker.attach(WEATHER_REQUEST_INTERVAL, display.updateWeather);
+  } else {
+    weatherTicker.detach();
+    weatherTicker.attach(WEATHER_REQUEST_INTERVAL_FAULTY, display.updateWeather);
+  }
+  vTaskDelete( NULL );
+}
+#endif // WEATHER_READY==1
+
+void Display::updateWeather(){
+#if WEATHER_READY==1
+  if(!config.store.showweather || strlen(config.store.weatherkey)==0) return;
+  xTaskCreatePinnedToCore(
+    getWeather,                   /* Task function. */
+    "dspGetWeather1",             /* name of task. */
+    1024 * 4,                     /* Stack size of task */
+    NULL,                         /* parameter of the task */
+    0,                            /* priority of the task */
+    &weatherUpdateTaskHandle,     /* Task handle to keep track of created task */
+    0);                           /* pin task to core CORE_FOR_LOOP_CONTROLS */
+#endif // WEATHER_READY==1
+}
+
+void Display::showWeather(){
+#if WEATHER_READY==1
+  if(strlen(config.store.weatherkey)!=0 && config.store.showweather) display.updateWeather();
+  if(!config.store.showweather){
+    memset(weatherText, 0, sizeof(weatherText));
+    weatherScroll.setText(weatherText);
+  }
+#endif // WEATHER_READY==1
+}
+/******************************************************************************************************************/
+#endif // !DUMMYDISPLAY

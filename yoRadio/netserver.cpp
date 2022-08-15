@@ -8,11 +8,14 @@
 #include "options.h"
 #include "network.h"
 #include "mqtt.h"
+#include "controls.h"
 #include <Update.h>
 
 #ifndef MIN_MALLOC
 #define MIN_MALLOC 24112
 #endif
+
+#define CORS_DEBUG
 
 NetServer netserver;
 
@@ -25,7 +28,6 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 void handleHTTPPost(AsyncWebServerRequest * request);
 
-byte  ssidCount;
 bool  shouldReboot  = false;
 
 char* updateError(){
@@ -34,23 +36,40 @@ char* updateError(){
   return ret;
 }
 
+void NetServer::takeMallocDog(){
+  int mcb = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  int mci = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+  (void)mci;
+  log_i("[yoradio] webserver.on / - MALLOC_CAP_INTERNAL=%d, MALLOC_CAP_8BIT=%d", mci, mcb);
+  resumePlay = mcb < MIN_MALLOC;
+  if (resumePlay) {
+    player.toggle();
+    while (player.isRunning()) {
+     vTaskDelay(10);
+    }
+    vTaskDelay(50);
+  }
+}
+
+void NetServer::giveMallocDog(){
+  if (resumePlay) {
+    resumePlay = false;
+    vTaskDelay(100);
+    player.toggle();
+  }
+}
+
 bool NetServer::begin() {
   importRequest = false;
   irRecordEnable = false;
   webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
-    ssidCount = 0;
-    int mcb = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    int mci = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-    (void)mci;
-    log_i("[yoradio] webserver.on / - MALLOC_CAP_INTERNAL=%d, MALLOC_CAP_8BIT=%d", mci, mcb);
-    netserver.resumePlay = mcb < MIN_MALLOC;
-    if (netserver.resumePlay) {
-      player.toggle();
-      while (player.isRunning()) {
-        delay(10);
-      }
+    netserver.takeMallocDog();
+    if (network.status == CONNECTED) {
+      request->send(SPIFFS, "/www/index.html", String(), false, processor);
+    }else{
+      request->send(SPIFFS, "/www/settings.html", String(), false, processor);
     }
-    request->send(SPIFFS, "/www/index.html", String(), false, processor);
+    netserver.giveMallocDog();
   });
 
   webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=31536000");
@@ -59,23 +78,37 @@ bool NetServer::begin() {
     handleHTTPPost(request);
   });
   webserver.on(PLAYLIST_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
+    netserver.takeMallocDog();
     request->send(SPIFFS, PLAYLIST_PATH, "application/octet-stream");
+    netserver.giveMallocDog();
   });
   webserver.on(INDEX_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(SPIFFS, INDEX_PATH, "application/octet-stream");
   });
   webserver.on(SSIDS_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
+    netserver.takeMallocDog();
     request->send(SPIFFS, SSIDS_PATH, "application/octet-stream");
+    netserver.giveMallocDog();
   });
   webserver.on("/upload", HTTP_POST, [](AsyncWebServerRequest * request) {
     //request->send(200);
+    
   }, handleUpload);
   webserver.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
+    netserver.takeMallocDog();
     request->send(SPIFFS, "/www/update.html", String(), false, processor);
+    netserver.giveMallocDog();
+  });
+  webserver.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
+    netserver.takeMallocDog();
+    request->send(SPIFFS, "/www/settings.html", String(), false, processor);
+    netserver.giveMallocDog();
   });
 #if IR_PIN!=255
   webserver.on("/ir", HTTP_GET, [](AsyncWebServerRequest *request){
+    netserver.takeMallocDog();
     request->send(SPIFFS, "/www/ir.html", String(), false, processor);
+    netserver.giveMallocDog();
   });
 #endif
   webserver.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -109,6 +142,10 @@ bool NetServer::begin() {
       }
     }
   });
+#ifdef CORS_DEBUG
+  DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
+  DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
+#endif
   webserver.begin();
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
@@ -136,7 +173,7 @@ void NetServer::loop() {
   }
   if (importRequest) {
     if (importPlaylist()) {
-      requestOnChange(PLAYLIST, 0);
+      //requestOnChange(PLAYLIST, 0);
     }
     importRequest = false;
   }
@@ -157,15 +194,354 @@ void NetServer::irValsToWs(){
   websocket.textAll(buf);
 }
 #endif
-void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len) {
+void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    char cmd[15], val[15];
-    if (config.parseWsCommand((const char*)data, cmd, val, 15)) {
+    char cmd[65], val[65];
+    if (config.parseWsCommand((const char*)data, cmd, val, 65)) {
+      if (strcmp(cmd, "getmode") == 0) {
+        requestOnChange(GETMODE,clientId);
+        return;
+      }
+      if (strcmp(cmd, "getindex") == 0) {
+        requestOnChange(GETINDEX,clientId);
+        return;
+      }
+      if (strcmp(cmd, "getsystem") == 0) {
+        requestOnChange(GETSYSTEM,clientId);
+        return;
+      }
+      if (strcmp(cmd, "getscreen") == 0) {
+        requestOnChange(GETSCREEN,clientId);
+        return;
+      }
+      if (strcmp(cmd, "gettimezone") == 0) {
+        requestOnChange(GETTIMEZONE,clientId);
+        return;
+      }
+      if (strcmp(cmd, "getcontrols") == 0) {
+        requestOnChange(GETCONTROLS,clientId);
+        return;
+      }
+      if (strcmp(cmd, "getweather") == 0) {
+        requestOnChange(GETWEATHER,clientId);
+        return;
+      }
+      if (strcmp(cmd, "getactive") == 0) {
+        requestOnChange(GETACTIVE,clientId);
+        return;
+      }
+
+      if (strcmp(cmd, "smartstart") == 0) {
+        byte valb=atoi(val);
+        config.store.smartstart=valb==1?1:2;
+        if(!player.isRunning() && config.store.smartstart==1) config.store.smartstart=0;
+        config.save();
+        return;
+      }
+      if (strcmp(cmd, "audioinfo") == 0) {
+        byte valb=atoi(val);
+        config.store.audioinfo=valb;
+        config.save();
+        display.putRequest({NEWMODE, CLEAR});
+        display.putRequest({NEWMODE, PLAYER});
+        return;
+      }
+      if (strcmp(cmd, "vumeter") == 0) {
+        byte valb=atoi(val);
+        config.store.vumeter=valb;
+        config.save();
+        display.putRequest({NEWMODE, CLEAR});
+        display.putRequest({NEWMODE, PLAYER});
+        return;
+      }
+      if (strcmp(cmd, "softap") == 0) {
+        byte valb=atoi(val);
+        config.store.softapdelay=valb;
+        config.save();
+        return;
+      }
+      if (strcmp(cmd, "invertdisplay") == 0) {
+        byte valb=atoi(val);
+        config.store.invertdisplay=valb;
+        config.save();
+        display.invert();
+        return;
+      }
+      if (strcmp(cmd, "numplaylist") == 0) {
+        byte valb=atoi(val);
+        config.store.numplaylist=valb;
+        config.save();
+        display.putRequest({NEWMODE, CLEAR});
+        display.putRequest({NEWMODE, PLAYER});
+        return;
+      }
+      
+      if (strcmp(cmd, "fliptouch") == 0) {
+        byte valb=atoi(val);
+        config.store.fliptouch=valb==1;
+        config.save();
+        flipTS();
+        return;
+      }
+      if (strcmp(cmd, "dbgtouch") == 0) {
+        byte valb=atoi(val);
+        config.store.dbgtouch=valb==1;
+        config.save();
+        return;
+      }
+      if (strcmp(cmd, "flipscreen") == 0) {
+        byte valb=atoi(val);
+        config.store.flipscreen=valb;
+        config.save();
+        display.flip();
+        display.putRequest({NEWMODE, CLEAR});
+        display.putRequest({NEWMODE, PLAYER});
+        return;
+      }
+      if (strcmp(cmd, "brightness") == 0) {
+        byte valb=atoi(val);
+        config.store.brightness=valb;
+        //display.setContrast();
+        config.setBrightness(true);
+        return;
+      }
+      if (strcmp(cmd, "screenon") == 0) {
+        byte valb=atoi(val);
+        config.store.dspon=valb==1;
+        config.setBrightness(true);
+        return;
+      }
+      if (strcmp(cmd, "contrast") == 0) {
+        byte valb=atoi(val);
+        config.store.contrast=valb;
+        config.save();
+        display.setContrast();
+        return;
+      }
+      if (strcmp(cmd, "tzh") == 0) {
+        int vali=atoi(val);
+        config.store.tzHour=vali;
+        return;
+      }
+      if (strcmp(cmd, "tzm") == 0) {
+        int vali=atoi(val);
+        config.store.tzMin=vali;
+        return;
+      }
+      if (strcmp(cmd, "sntp2") == 0) {
+        strlcpy(config.store.sntp2,val, 35);
+        return;
+      }
+      if (strcmp(cmd, "sntp1") == 0) {
+        strlcpy(config.store.sntp1,val, 35);
+        bool tzdone=false;
+        if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
+          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+          tzdone=true;
+        }else if(strlen(config.store.sntp1)>0){
+          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
+          tzdone=true;
+        }
+        if(tzdone){
+          network.requestTimeSync(true);
+          config.save();
+        }
+        return;
+      }
+
+      if (strcmp(cmd, "volsteps") == 0) {
+        uint8_t valb=atoi(val);
+        config.store.volsteps=valb;
+        config.save();
+        return;
+      }
+      if (strcmp(cmd, "encacceleration") == 0) {
+        uint16_t valb=atoi(val);
+        setEncAcceleration(valb);
+        config.store.encacc=valb;
+        config.save();
+        return;
+      }
+      if (strcmp(cmd, "irtlp") == 0) {
+        uint8_t valb=atoi(val);
+        setIRTolerance(valb);
+        return;
+      }
+      if (strcmp(cmd, "showweather") == 0) {
+        uint8_t valb=atoi(val);
+        config.store.showweather=valb==1;
+        config.save();
+        display.showWeather();
+#ifdef USE_NEXTION
+        nextion.startWeather();
+#endif
+        display.putRequest({NEWMODE, CLEAR});
+        display.putRequest({NEWMODE, PLAYER});
+        return;
+      }
+      if (strcmp(cmd, "lat") == 0) {
+        strlcpy(config.store.weatherlat,val, 10);
+        return;
+      }
+      if (strcmp(cmd, "lon") == 0) {
+        strlcpy(config.store.weatherlon,val, 10);
+        return;
+      }
+      if (strcmp(cmd, "key") == 0) {
+        strlcpy(config.store.weatherkey,val, 64);
+        config.save();
+        display.showWeather();
+#ifdef USE_NEXTION
+        nextion.startWeather();
+#endif
+        display.putRequest({NEWMODE, CLEAR});
+        display.putRequest({NEWMODE, PLAYER});
+        return;
+      }
+
+      if (strcmp(cmd, "reset") == 0) {
+        if (strcmp(val, "system") == 0) {
+          config.store.smartstart=2;
+          config.store.audioinfo=false;
+          config.store.vumeter=false;
+          config.store.softapdelay=0;
+          config.save();
+          display.putRequest({NEWMODE, CLEAR});
+          display.putRequest({NEWMODE, PLAYER});
+          requestOnChange(GETSYSTEM,clientId);
+          return;
+        }
+        if (strcmp(val, "screen") == 0) {
+          config.store.flipscreen=false;
+          display.flip();
+          config.store.invertdisplay=false;
+          display.invert();
+          config.store.dspon=true;
+          config.store.brightness=100;
+          config.setBrightness(false);
+          config.store.contrast=55;
+          display.setContrast();
+          config.store.numplaylist=false;
+          config.save();
+          display.putRequest({NEWMODE, CLEAR});
+          display.putRequest({NEWMODE, PLAYER});
+          requestOnChange(GETSCREEN,clientId);
+          return;
+        }
+        if (strcmp(val, "timezone") == 0) {
+          config.store.tzHour=3;
+          config.store.tzMin=0;
+          strlcpy(config.store.sntp1,"pool.ntp.org", 35);
+          strlcpy(config.store.sntp2,"0.ru.pool.ntp.org", 35);
+          config.save();
+          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+          network.requestTimeSync(true);
+          requestOnChange(GETTIMEZONE,clientId);
+          return;
+        }
+        if (strcmp(val, "weather") == 0) {
+          config.store.showweather=0;
+          strlcpy(config.store.weatherlat,"55.7512", 10);
+          strlcpy(config.store.weatherlon,"37.6184", 10);
+          strlcpy(config.store.weatherkey,"", 64);
+          config.save();
+          display.showWeather();
+#ifdef USE_NEXTION
+          nextion.startWeather();
+#endif
+          display.putRequest({NEWMODE, CLEAR});
+          display.putRequest({NEWMODE, PLAYER});
+          requestOnChange(GETWEATHER,clientId);
+          return;
+        }
+        if (strcmp(val, "controls") == 0) {
+          config.store.volsteps=1;
+          config.store.fliptouch=false;
+          config.store.dbgtouch=false;
+          setEncAcceleration(200);
+          setIRTolerance(40);
+          requestOnChange(GETCONTROLS,clientId);
+          return;
+        }
+      }
       if (strcmp(cmd, "volume") == 0) {
         byte v = atoi(val);
         player.setVol(v, false);
+      }
+
+      /* REMOVE FROM POST
+       *   if (request->hasParam("trebble", true)) {
+    AsyncWebParameter* pt = request->getParam("trebble", true);
+    AsyncWebParameter* pm = request->getParam("middle", true);
+    AsyncWebParameter* pb = request->getParam("bass", true);
+    int t = atoi(pt->value().c_str());
+    int m = atoi(pm->value().c_str());
+    int b = atoi(pb->value().c_str());
+    //setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass)
+    player.setTone(b, m, t);
+    config.setTone(b, m, t);
+    netserver.requestOnChange(EQUALIZER, 0);
+    request->send(200);
+    return;
+  }
+  if (request->hasParam("ballance", true)) {
+    AsyncWebParameter* p = request->getParam("ballance", true);
+    int b = atoi(p->value().c_str());
+    player.setBalance(b);
+    config.setBalance(b);
+    netserver.requestOnChange(BALANCE, 0);
+    request->send(200);
+    return;
+  }
+       */
+      if (strcmp(cmd, "balance") == 0) {
+        int8_t valb=atoi(val);
+        player.setBalance(valb);
+        config.setBalance(valb);
+        netserver.requestOnChange(BALANCE, 0);
+        return;
+      }
+      if (strcmp(cmd, "treble") == 0) {
+        int8_t valb=atoi(val);
+        player.setTone(config.store.bass, config.store.middle, valb);
+        config.setTone(config.store.bass, config.store.middle, valb);
+        netserver.requestOnChange(EQUALIZER, 0);
+        return;
+      }
+      if (strcmp(cmd, "middle") == 0) {
+        int8_t valb=atoi(val);
+        player.setTone(config.store.bass, valb, config.store.trebble);
+        config.setTone(config.store.bass, valb, config.store.trebble);
+        netserver.requestOnChange(EQUALIZER, 0);
+        return;
+      }
+      if (strcmp(cmd, "bass") == 0) {
+        int8_t valb=atoi(val);
+        player.setTone(valb, config.store.middle, config.store.trebble);
+        config.setTone(valb, config.store.middle, config.store.trebble);
+        netserver.requestOnChange(EQUALIZER, 0);
+        return;
+      }
+      if (strcmp(cmd, "submitplaylist") == 0) {
+        if(player.isRunning()){
+          player.toggle();
+          while (player.isRunning()) {
+            vTaskDelay(10);
+          }
+          vTaskDelay(50);
+          resumePlay=true;
+        }
+        return;
+      }
+      if (strcmp(cmd, "submitplaylistdone") == 0) {
+        if(resumePlay){
+          vTaskDelay(100);
+          player.toggle();
+          resumePlay=false;
+        }
+        return;
       }
 #if IR_PIN!=255
       if (strcmp(cmd, "irbtn") == 0) {
@@ -264,7 +640,7 @@ bool NetServer::importPlaylist() {
 }
 
 void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
-  char buf[BUFLEN + 50] = { 0 };
+  char buf[BUFLEN * 2] = { 0 };
   switch (request) {
     case PLAYLIST: {
         getPlaylist(clientId);
@@ -279,6 +655,90 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
 #endif
         break;
       }
+    case GETACTIVE: {
+        bool dbgact = false;
+        String act="\"group_wifi\",";
+        if (network.status == CONNECTED) {
+          act+="\"group_system\",";
+          if(BRIGHTNESS_PIN!=255 || DSP_FLIPPED==1 || DSP_MODEL==DSP_NOKIA5110 || dbgact){
+            act+="\"group_display\",";
+          }
+#ifdef USE_NEXTION
+          act+="\"group_nextion\",";
+          if (WEATHER_READY==0 || dbgact){
+            act+="\"group_weather\",";
+          }
+#endif
+          if(VU_READY==1 || dbgact){
+            act+="\"group_vu\",";
+          }
+          if(BRIGHTNESS_PIN!=255 || dbgact){
+            act+="\"group_brightness\",";
+          }
+          if(DSP_FLIPPED==1 || dbgact){
+            act+="\"group_tft\",";
+          }
+          if(TS_CS!=255 || dbgact){
+            act+="\"group_touch\",";
+          }
+          if(DSP_MODEL==DSP_NOKIA5110){
+            act+="\"group_nokia\",";
+          }
+          if(DSP_MODEL!=DSP_DUMMY || dbgact){
+            act+="\"group_timezone\",";
+            
+          }
+          if (WEATHER_READY==1 || dbgact){
+            act+="\"group_weather\",";
+          }
+          act+="\"group_controls\",";
+          if(ENC_BTNL!=255 || ENC2_BTNL!=255 || dbgact){
+            act+="\"group_encoder\",";
+          }
+          if(IR_PIN!=255 || dbgact){
+            act+="\"group_ir\",";
+          }
+        }
+        act = act.substring(0, act.length()-1);
+        sprintf (buf, "{\"act\":[%s]}", act.c_str());
+        break;
+    }
+    case GETMODE: {
+        sprintf (buf, "{\"pmode\":\"%s\"}", network.status == CONNECTED?"player":"ap");
+        break;
+    }
+    case GETINDEX: {
+        requestOnChange(STATION, clientId);
+        requestOnChange(TITLE, clientId);
+        requestOnChange(VOLUME, clientId);
+        requestOnChange(EQUALIZER, clientId);
+        requestOnChange(BALANCE, clientId);
+        requestOnChange(BITRATE, clientId);
+        requestOnChange(MODE, clientId);
+        //playlistrequest = clientId; /* Cleanup this */
+        return;
+        break;
+    }
+    case GETSYSTEM: {
+        sprintf (buf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d}", config.store.smartstart!=2, config.store.audioinfo, config.store.vumeter, config.store.softapdelay);
+        break;
+    }
+    case GETSCREEN: {
+        sprintf (buf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d}", config.store.flipscreen, config.store.invertdisplay, config.store.numplaylist, config.store.fliptouch, config.store.dbgtouch, config.store.dspon, config.store.brightness, config.store.contrast);
+        break;
+    }
+    case GETTIMEZONE: {
+        sprintf (buf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", config.store.tzHour, config.store.tzMin, config.store.sntp1, config.store.sntp2);
+        break;
+    }
+    case GETWEATHER: {
+        sprintf (buf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}", config.store.showweather, config.store.weatherlat, config.store.weatherlon, config.store.weatherkey);
+        break;
+    }
+    case GETCONTROLS: {
+        sprintf (buf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d}", config.store.volsteps, config.store.encacc, config.store.irtlp);
+        break;
+    }
     case STATION: {
         sprintf (buf, "{\"nameset\": \"%s\"}", config.station.name);
         requestOnChange(ITEM, clientId);
@@ -343,22 +803,6 @@ String processor(const String& var) { // %Templates%
   if (var == "VERSION") {
     return VERSION;
   }
-  if (var == "SSID") {
-    ssidCount++;
-    return String(config.ssids[ssidCount - 1].ssid);
-  }
-  if (var == "PASS") {
-    return String(config.ssids[ssidCount - 1].password);
-  }
-  if (var == "APMODE") {
-    return network.status == CONNECTED ? "" : " style=\"display: none!important\"";
-  }
-  if (var == "NOTAPMODE") {
-    return network.status == CONNECTED ? " hidden" : "";
-  }
-  if (var == "IRMODE") {
-    return IR_PIN == 255 ? "" : " ir";
-  }
   return String();
 }
 
@@ -381,22 +825,21 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   switch (type) {
     case WS_EVT_CONNECT:
       if(config.store.audioinfo) Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-
-      netserver.requestOnChange(STATION, client->id());
+      /*netserver.requestOnChange(STATION, client->id());
       netserver.requestOnChange(TITLE, client->id());
       netserver.requestOnChange(VOLUME, client->id());
       netserver.requestOnChange(EQUALIZER, client->id());
       netserver.requestOnChange(BALANCE, client->id());
       netserver.requestOnChange(BITRATE, client->id());
       netserver.requestOnChange(MODE, client->id());
-      netserver.playlistrequest = client->id();
+      netserver.playlistrequest = client->id();*/
 
       break;
     case WS_EVT_DISCONNECT:
       if(config.store.audioinfo) Serial.printf("WebSocket client #%u disconnected\n", client->id());
       break;
     case WS_EVT_DATA:
-      netserver.onWsMessage(arg, data, len);
+      netserver.onWsMessage(arg, data, len, client->id());
       break;
     case WS_EVT_PONG:
     case WS_EVT_ERROR:

@@ -13,20 +13,14 @@
 #include "../../network.h"
 
 #ifndef DEF_SPI_FREQ
-#define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
+#define DEF_SPI_FREQ        26000000UL      /*  set it to 0 for system default */
 #endif
-
-#if ENABLE_VU_METER
 
 #if DTYPE==INITR_BLACKTAB
 #define CLOCK_DELTA 12
 #elif DTYPE==INITR_MINI160x80
 #define CLOCK_DELTA 16
 #else
-#define CLOCK_DELTA 0
-#endif
-
-#else // !ENABLE_VU_METER
 #define CLOCK_DELTA 0
 #endif
 
@@ -133,9 +127,9 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   initR(DTYPE);
   if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   cp437(true);
-  invertDisplay((DTYPE==INITR_MINI160x80)?TFT_INVERT:!TFT_INVERT);
+  invert();
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  flip();
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();
@@ -270,15 +264,16 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
   char timeBuf[50] = { 0 };
   char tmpBuf[4] = { 0 };
   uint16_t ncwidth, ncheight;
+  uint16_t clockdelta=config.store.vumeter?CLOCK_DELTA:0;
   strftime(timeBuf, sizeof(timeBuf), "%H %M", &timeinfo);
   setTextSize(1);
     setFont(&DS_DIGI28pt7b);
   if(strstr(oldTimeBuf, timeBuf)==NULL || redraw){
     getTextBounds(oldTimeBuf, 0, 0, &x, &y, &wot, &hot);
-    setCursor((swidth - wot) / 2 - 4 + CLOCK_DELTA, clockY+28+6);
+    setCursor((swidth - wot) / 2 - 4 + clockdelta, clockY+28+6);
     setTextColor(TFT_BG);
     print(oldTimeBuf);
-    dot = (swidth - wot) / 2 - 4 + CLOCK_DELTA;
+    dot = (swidth - wot) / 2 - 4 + clockdelta;
     /*  dots  */
     strlcpy(tmpBuf, oldTimeBuf, 3);
     getTextBounds(tmpBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
@@ -291,8 +286,8 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
     setTextSize(1);
     getTextBounds(timeBuf, 0, 0, &x, &y, &ncwidth, &ncheight);
     setTextColor(TFT_LOGO);
-    setCursor((swidth - ncwidth) / 2 - 4 + CLOCK_DELTA, clockY+28+6);
-    dot = (swidth - ncwidth) / 2 - 4 + CLOCK_DELTA;
+    setCursor((swidth - ncwidth) / 2 - 4 + clockdelta, clockY+28+6);
+    dot = (swidth - ncwidth) / 2 - 4 + clockdelta;
     setTextSize(1);
     print(timeBuf);
     /*  dots  */
@@ -406,5 +401,15 @@ void DspCore::printText(const char* txt) {
 void DspCore::loop(bool force) {
 
 }
+void DspCore::flip(){
+  if(ROTATE_90){
+    setRotation(config.store.flipscreen?2:0);
+  }else{
+    setRotation(config.store.flipscreen?3:1);
+  }
+}
 
+void DspCore::invert(){
+  invertDisplay((DTYPE==INITR_MINI160x80)?!config.store.invertdisplay:config.store.invertdisplay);
+}
 #endif

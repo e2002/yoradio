@@ -5,6 +5,9 @@
 #include "../ILI9225Fix/TFT_22_ILI9225Fix.h"
 #include "fonts/DS_DIGI28pt7b.h"
 
+#define VU_READY        1
+#define WEATHER_READY   1
+
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    4
 #define META_SIZE       2
@@ -73,6 +76,8 @@ class DspCore: public TFT_22_ILI9225 {
     int16_t width(void) { return (int16_t)maxX(); }
     int16_t height(void) { return (int16_t)maxY(); }
     void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     uint16_t bgcolor, fgcolor;

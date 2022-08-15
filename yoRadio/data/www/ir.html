@@ -6,9 +6,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" type="image/png" href="elogo.png">
   <link rel="icon" type="image/png" href="elogo.png">
-  <link rel="stylesheet" title="base" href="style.css" type="text/css">
-  <link rel="stylesheet" title="base" href="ir.css" type="text/css">
-  <title>ёRadio IR recorder</title>
+  <link rel="stylesheet" title="base" href="style.css?%VERSION%" type="text/css">
+  <link rel="stylesheet" title="base" href="ir.css?%VERSION%" type="text/css">
+  <title>ёRadio - IR Recorder</title>
   <style> </style>
   </head>
 <body>
@@ -28,7 +28,7 @@
         <div id="irform">
           <div id="irstartrecord"><h3>Welcome to IR Recorder!</h3>
           Press the button on the left<br />to record the code.
-          <a href="/" class="button" id="done_ir" onclick="doneRecord()">DONE</a>
+          <a href="/" class="button" id="done_ir">DONE</a>
           </div>
           <div id="irrecord" class="hidden">
             <h3 id="irrecordtitle"></h3>
@@ -45,5 +45,5 @@
     </div><!--playerwrap-->
     <div id="copy">powered by <a target="_blank" href="https://github.com/e2002/yoradio/">ёRadio</a> | v%VERSION%</div>
   </div>
-  <script src="ir.js"></script>
+  <script src="ir.js?%VERSION%"></script>
 </body>

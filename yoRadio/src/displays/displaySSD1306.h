@@ -71,6 +71,8 @@ class DspCore: public Adafruit_SSD1306 {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

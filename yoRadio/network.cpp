@@ -62,13 +62,19 @@ void Network::begin() {
   digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
   WiFi.setSleep(false);
-  configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
-  //getLocalTime(&timeinfo);
+  //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
+  if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
+    configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+  }else if(strlen(config.store.sntp1)>0){
+    configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
+  }
+  ////getLocalTime(&timeinfo);
   stimer.once_ms(200,getFirstTime); 
   ntimer.attach_ms(TSYNC_DELAY, syncTime);
 #ifdef USE_NEXTION
   nextion.startWeather();
 #endif
+  display.updateWeather();
   if (network_on_connect) network_on_connect();
 }
 
@@ -91,7 +97,6 @@ void Network::raiseSoftAP() {
   WiFi.softAP(apSsid, apPassword);
   Serial.printf("\n\nRunning in AP mode.\nConnect to AP %s with password %s for settings.\n\n", apSsid, apPassword);
   status = SOFT_AP;
-#if SOFT_AP_REBOOT_DELAY>0
-  rtimer.attach_ms(SOFT_AP_REBOOT_DELAY, rebootTime);
-#endif
+  if(config.store.softapdelay>0)
+    rtimer.attach_ms(config.store.softapdelay*1000*60, rebootTime);
 }

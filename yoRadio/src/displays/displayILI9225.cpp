@@ -190,10 +190,10 @@ void DspCore::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   //hspi.begin();
   begin();
-  invert(TFT_INVERT);
+  invert();
   setBackgroundColor(TFT_BG);
   clear();
-  setOrientation(TFT_ROTATE);
+  flip();
   setTextSize(1);
   screenwidth = maxX();
   screenheight = maxY();
@@ -449,5 +449,10 @@ void DspCore::drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_
   drawBitmap(x, y, bitmap, w, h);
   GIVE_MUTEX();
 }
-
+void DspCore::flip(){
+  setOrientation(config.store.flipscreen?3:1);
+}
+void DspCore::invert(){
+  invertDisplay(config.store.invertdisplay);
+}
 #endif

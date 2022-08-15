@@ -123,7 +123,8 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   }
   cp437(true);
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  flip();
+  invert();
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();
@@ -401,5 +402,15 @@ boolean DspCore::checkdelay(int m, unsigned long &tstamp) {
     return false;
   }
 }
+void DspCore::flip(){
+  if(ROTATE_90){
+    setRotation(config.store.flipscreen?3:1);
+  }else{
+    setRotation(config.store.flipscreen?2:0);
+  }
+}
 
+void DspCore::invert(){
+  invertDisplay(config.store.invertdisplay);
+}
 #endif

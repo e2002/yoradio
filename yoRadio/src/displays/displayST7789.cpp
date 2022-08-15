@@ -117,10 +117,10 @@ void DspCore::apScreen() {
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   init(240,(DSP_MODEL==DSP_ST7789)?320:240);
   if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
-  invertDisplay(TFT_INVERT);
+  invert();
   cp437(true);
   fillScreen(TFT_BG);
-  setRotation(TFT_ROTATE);
+  flip();
   setTextWrap(false);
   setTextSize(1);
   screenwidth = width();
@@ -382,5 +382,20 @@ void DspCore::printText(const char* txt) {
 void DspCore::loop(bool force) {
 
 }
+void DspCore::flip(){
+#if DSP_MODEL==DSP_ST7789
+  setRotation(config.store.flipscreen?3:1);
+#endif
+#if DSP_MODEL==DSP_ST7789_240
+  if(ROTATE_90){
+    setRotation(config.store.flipscreen?3:1);
+  }else{
+    setRotation(config.store.flipscreen?2:0);
+  }
+#endif
+}
 
+void DspCore::invert(){
+  invertDisplay(config.store.invertdisplay);
+}
 #endif

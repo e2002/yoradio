@@ -156,14 +156,14 @@ void Player::toggle() {
 
 void Player::stepVol(bool up) {
   if (up) {
-    if (config.store.volume <= 254 - VOL_STEP) {
-      setVol(config.store.volume + VOL_STEP, false);
+    if (config.store.volume <= 254 - config.store.volsteps) {
+      setVol(config.store.volume + config.store.volsteps, false);
     }else{
       setVol(254, false);
     }
   } else {
-    if (config.store.volume >= VOL_STEP) {
-      setVol(config.store.volume - VOL_STEP, false);
+    if (config.store.volume >= config.store.volsteps) {
+      setVol(config.store.volume - config.store.volsteps, false);
     }else{
       setVol(0, false);
     }

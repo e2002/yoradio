@@ -5,6 +5,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1305.h>
 
+#define WEATHER_READY   0
+
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
 
@@ -51,6 +53,8 @@ class DspCore: public Adafruit_SSD1305 {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

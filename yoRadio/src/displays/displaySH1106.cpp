@@ -142,12 +142,8 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   }
   cp437(true);
   fillScreen(TFT_BG);
-  byte tftRotate = TFT_ROTATE;
-#if DSP_MODEL==DSP_SH1107
-  if(tftRotate>=2) tftRotate=3;
-  if(tftRotate==0) tftRotate=1;
-#endif
-  setRotation(tftRotate);
+  flip();
+  invert();
   setTextWrap(false);
   screenwidth = width();
   screenheight = height();
@@ -348,5 +344,16 @@ boolean DspCore::checkdelay(int m, unsigned long &tstamp) {
     return false;
   }
 }
+void DspCore::flip(){
+#if DSP_MODEL==DSP_SH1107
+  setRotation(config.store.flipscreen?3:1);
+#endif
+#if DSP_MODEL==DSP_SH1106
+  setRotation(config.store.flipscreen?2:0);
+#endif
+}
 
+void DspCore::invert(){
+  invertDisplay(config.store.invertdisplay);
+}
 #endif

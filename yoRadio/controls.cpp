@@ -59,7 +59,6 @@ byte irVolRepeat = 0;
 const uint16_t kCaptureBufferSize = 1024;
 const uint8_t kTimeout = IR_TIMEOUT;
 const uint16_t kMinUnknownSize = 12;
-const uint8_t kTolerancePercentage = IR_TLP;  //kTolerance;  // kTolerance is normally 25%
 #define LEGACY_TIMING_INFO false
 
 IRrecv irrecv(IR_PIN, kCaptureBufferSize, kTimeout, true);
@@ -85,13 +84,13 @@ void initControls() {
   encoder.begin();
   encoder.setup(readEncoderISR);
   encoder.setBoundaries(0, 254, true);
-  encoder.setAcceleration(VOL_ACCELERATION);
+  encoder.setAcceleration(config.store.encacc);
 #endif
 #if ENC2_BTNL!=255
   encoder2.begin();
   encoder2.setup(readEncoder2ISR);
   encoder2.setBoundaries(0, 254, true);
-  encoder2.setAcceleration(VOL_ACCELERATION);
+  encoder2.setAcceleration(config.store.encacc);
 #endif
 
 #if ISPUSHBUTTONS
@@ -116,7 +115,7 @@ void initControls() {
 #endif
 #if TS_CS!=255
   ts.begin();
-  ts.setRotation(TS_ROTATE);
+  ts.setRotation(config.store.fliptouch?3:1);
 #endif
 #if IR_PIN!=255
   pinMode(IR_PIN, INPUT);
@@ -124,7 +123,7 @@ void initControls() {
 #if DECODE_HASH
   irrecv.setUnknownThreshold(kMinUnknownSize);
 #endif  // DECODE_HASH
-  irrecv.setTolerance(kTolerancePercentage);
+  irrecv.setTolerance(config.store.irtlp);
   irrecv.enableIRIn();
 #endif // IR_PIN!=255
 }
@@ -411,7 +410,7 @@ void touchLoop() {
               int16_t yDelta = map(abs(touchStation - touchY), 0, display.screenheight, 0, TS_STEPS);
               display.putRequest({NEWMODE, STATIONS});
               if (yDelta>1) {
-                controlsEvent((touchStation - touchY)>0);
+                controlsEvent((touchStation - touchY)<0);
                 touchStation = touchY;
               }
             }
@@ -421,7 +420,7 @@ void touchLoop() {
             break;
       }
     }
-    if (TS_DBG) {
+    if (config.store.dbgtouch) {
       Serial.print(", x = ");
       Serial.print(p.x);
       Serial.print(", y = ");
@@ -608,4 +607,26 @@ void onBtnDoubleClick(int id) {
     default:
         break;
   }
+}
+void setIRTolerance(uint8_t tl){
+  config.store.irtlp=tl;
+  config.save();
+#if IR_PIN!=255
+  irrecv.setTolerance(config.store.irtlp);
+#endif
+}
+void setEncAcceleration(uint16_t acc){
+  config.store.encacc=acc;
+  config.save();
+#if ENC_BTNL!=255
+  encoder.setAcceleration(config.store.encacc);
+#endif
+#if ENC2_BTNL!=255
+  encoder2.setAcceleration(config.store.encacc);
+#endif
+}
+void flipTS(){
+#if TS_CS!=255
+  ts.setRotation(config.store.fliptouch?3:1);
+#endif
 }

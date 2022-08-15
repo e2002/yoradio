@@ -7,6 +7,9 @@
 // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
 #include "fonts/DS_DIGI42pt7b.h"
 
+#define VU_READY        1
+#define WEATHER_READY   1
+
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    8
 #define META_SIZE       3
@@ -58,6 +61,8 @@ class DspCore: public Adafruit_ST7789 {
     void loop(bool force=false);
     virtual void startWrite(void);
     virtual void endWrite(void);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     char oldTimeBuf[20];

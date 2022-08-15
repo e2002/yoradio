@@ -6,6 +6,8 @@
 #include <Adafruit_SSD1327.h>
 #include "fonts/DS_DIGI28pt7b.h"
 
+#define WEATHER_READY   1
+
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    4
 
@@ -13,26 +15,9 @@
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   22
 #define TITLE_TOP2 TFT_FRAMEWDT + 3 * TFT_LINEHGHT
-/*
-#ifdef DSP_FPS
-#if DSP_FPS!=0
-#define SCROLLDELTA (DSP_FPS>30)?3:(80/DSP_FPS)
-#define SCROLLTIME  (DSP_FPS>30)?34:(1000/DSP_FPS)
-#else
-#define SCROLLDELTA     4
-#define SCROLLTIME      83
-#define LOOP_DELAY      83
-#endif
-#else
-#define SCROLLDELTA     4
-#define SCROLLTIME      83
-#define LOOP_DELAY      40
-#endif
-*/
+
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-/*#define SCROLLDELTA     5
-#define SCROLLTIME      83
-#define LOOP_DELAY      100*/
+
 #define SCROLLDELTA     2
 #define SCROLLTIME      30
 #define LOOP_DELAY      33
@@ -70,6 +55,8 @@ class DspCore: public Adafruit_SSD1327 {
     void ip(const char* str);
     void drawPlaylist(uint16_t currentItem, char* currentItemText);
     void loop(bool force=false);
+    void flip();
+    void invert();
   private:
     uint16_t swidth, sheight;
     int16_t x, y;

@@ -7,6 +7,8 @@
 #include "../Adafruit_GC9106Ex/Adafruit_GC9106Ex.h"
 #include "fonts/DS_DIGI28pt7b.h"
 
+#define VU_READY  1
+
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    0
 
@@ -58,6 +60,8 @@ class DspCore: public Adafruit_GC9106Ex {
     void loop(bool force=false);
     virtual void startWrite(void);
     virtual void endWrite(void);
+    void flip();
+    void invert();
     /*virtual void sendCommand(uint8_t commandByte, uint8_t *dataBytes,
                  uint8_t numDataBytes);
     virtual void sendCommand(uint8_t commandByte, const uint8_t *dataBytes = NULL,

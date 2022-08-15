@@ -186,7 +186,7 @@ class TFT_22_ILI9225 {
 
         /// Invert screen
         /// @param     flag true to invert, false for normal screen
-        void invert(boolean flag);
+        void invertDisplay(boolean flag);
 
         /// Switch backlight on or off
         /// @param     flag true=on, false=off

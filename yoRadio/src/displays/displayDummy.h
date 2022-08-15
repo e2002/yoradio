@@ -15,6 +15,8 @@
 #define SCROLLTIME 60
 #endif
 
+#define DSP_FLIPPED     0
+
 class DspCore {
   public:
     DspCore();
