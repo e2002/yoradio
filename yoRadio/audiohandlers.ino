@@ -15,6 +15,15 @@ void audio_info(const char *info) {
     player.mode = STOPPED;
     player.stopInfo();
   }
+  if (strstr(info, "not supported") != NULL){
+    config.setTitle(info);
+    netserver.requestOnChange(TITLE, 0);
+    player.setOutputPins(false);
+    player.setDefaults();
+    if (player_on_stop_play) player_on_stop_play();
+    player.mode = STOPPED;
+    player.stopInfo();
+  }
 }
 
 void audio_bitrate(const char *info)

@@ -13,6 +13,8 @@
 #define TMP_PATH          "/data/tmpfile.txt"
 #define INDEX_PATH        "/data/index.dat"
 
+void DBGVB(const char *format, ...);
+
 struct config_t
 {
   unsigned int config_set; //must be 4262

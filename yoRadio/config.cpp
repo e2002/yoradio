@@ -5,6 +5,18 @@
 #include "player.h"
 Config config;
 
+void DBGVB(const char *format, ...) {
+#ifdef DEBUG_V
+  char buf[200];
+  va_list args;
+  va_start (args, format );
+  vsnprintf(buf, 200, format, args);
+  Serial.print("[DEBUG]                           ");
+  Serial.print(buf);
+  Serial.println();
+#endif
+}
+
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
 #if IR_PIN!=255

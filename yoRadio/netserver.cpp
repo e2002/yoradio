@@ -15,7 +15,7 @@
 #define MIN_MALLOC 24112
 #endif
 
-#define CORS_DEBUG
+//#define CORS_DEBUG
 
 NetServer netserver;
 
@@ -40,21 +40,20 @@ void NetServer::takeMallocDog(){
   int mcb = heap_caps_get_free_size(MALLOC_CAP_8BIT);
   int mci = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
   (void)mci;
-  log_i("[yoradio] webserver.on / - MALLOC_CAP_INTERNAL=%d, MALLOC_CAP_8BIT=%d", mci, mcb);
+  DBGVB("MALLOC_CAP_8BIT=%d, MALLOC_CAP_INTERNAL=%d", mcb, mci);
   resumePlay = mcb < MIN_MALLOC;
   if (resumePlay) {
     player.toggle();
-    while (player.isRunning()) {
-     vTaskDelay(10);
-    }
-    vTaskDelay(50);
+    vTaskDelay(150);
+    xSemaphoreTake(player.playmutex, portMAX_DELAY);
   }
 }
 
 void NetServer::giveMallocDog(){
   if (resumePlay) {
     resumePlay = false;
-    vTaskDelay(100);
+    vTaskDelay(150);
+    xSemaphoreGive(player.playmutex);
     player.toggle();
   }
 }
@@ -63,13 +62,13 @@ bool NetServer::begin() {
   importRequest = false;
   irRecordEnable = false;
   webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
-    netserver.takeMallocDog();
     if (network.status == CONNECTED) {
-      request->send(SPIFFS, "/www/index.html", String(), false, processor);
+      netserver.htmlPath = PINDEX;
+      netserver.chunkedHtmlPage(String(), request);
     }else{
-      request->send(SPIFFS, "/www/settings.html", String(), false, processor);
+      netserver.htmlPath = PSETTINGS;
+      netserver.chunkedHtmlPage(String(), request);
     }
-    netserver.giveMallocDog();
   });
 
   webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=31536000");
@@ -81,34 +80,35 @@ bool NetServer::begin() {
     netserver.takeMallocDog();
     request->send(SPIFFS, PLAYLIST_PATH, "application/octet-stream");
     netserver.giveMallocDog();
+    DBGVB("PLAYLIST_PATH client ip=%s", request->client()->remoteIP().toString().c_str());
+    /*netserver.htmlPath = PPLAYLIST; // TODO
+    netserver.chunkedHtmlPage("application/octet-stream", request);
+    netserver.giveMallocDog();*/
   });
   webserver.on(INDEX_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(SPIFFS, INDEX_PATH, "application/octet-stream");
   });
   webserver.on(SSIDS_PATH, HTTP_GET, [](AsyncWebServerRequest * request) {
-    netserver.takeMallocDog();
-    request->send(SPIFFS, SSIDS_PATH, "application/octet-stream");
-    netserver.giveMallocDog();
+    netserver.htmlPath = PSSIDS;
+    netserver.chunkedHtmlPage("application/octet-stream", request);
   });
   webserver.on("/upload", HTTP_POST, [](AsyncWebServerRequest * request) {
     //request->send(200);
     
   }, handleUpload);
   webserver.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
-    netserver.takeMallocDog();
-    request->send(SPIFFS, "/www/update.html", String(), false, processor);
-    netserver.giveMallocDog();
+      netserver.htmlPath = PUPDATE;
+      netserver.chunkedHtmlPage(String(), request);
   });
   webserver.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
-    netserver.takeMallocDog();
-    request->send(SPIFFS, "/www/settings.html", String(), false, processor);
-    netserver.giveMallocDog();
+    netserver.htmlPath = PSETTINGS;
+    netserver.chunkedHtmlPage(String(), request);
   });
+  
 #if IR_PIN!=255
   webserver.on("/ir", HTTP_GET, [](AsyncWebServerRequest *request){
-    netserver.takeMallocDog();
-    request->send(SPIFFS, "/www/ir.html", String(), false, processor);
-    netserver.giveMallocDog();
+      netserver.htmlPath = PIR;
+      netserver.chunkedHtmlPage(String(), request);
   });
 #endif
   webserver.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -160,6 +160,66 @@ bool NetServer::begin() {
   return true;
 }
 
+void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request){
+  max = heap_caps_get_free_size(MALLOC_CAP_8BIT) / 32;   
+  htmlpos = 0;
+  theend  = false;
+  DBGVB("chunkedHtmlPage client ip=%s", request->client()->remoteIP().toString().c_str());
+  AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+    if(netserver.theend) return 0;
+    File htmlpage;
+    switch(netserver.htmlPath){
+      case PINDEX: {
+        htmlpage = SPIFFS.open("/www/index.html", "r");
+        break;
+      }
+      case PSETTINGS: {
+        htmlpage = SPIFFS.open("/www/settings.html", "r");
+        break;
+      }
+      case PUPDATE: {
+        htmlpage = SPIFFS.open("/www/update.html", "r");
+        break;
+      }
+      case PIR: {
+        htmlpage = SPIFFS.open("/www/ir.html", "r");
+        break;
+      }
+      case PPLAYLIST: {
+        htmlpage = SPIFFS.open(PLAYLIST_PATH, "r");
+        DBGVB("SPIFFS.open(PLAYLIST_PATH)");
+        break;
+      }
+      case PSSIDS: {
+        htmlpage = SPIFFS.open(SSIDS_PATH, "r");
+        break;
+      }
+      default: {
+        return 0;
+        break;
+      }
+    }
+    if(!htmlpage) return 0;
+    uint32_t htmlpagesize = htmlpage.size();
+    uint32_t len =  htmlpagesize - netserver.htmlpos;
+    if (len > maxLen) len = maxLen;
+    if (len > netserver.max) len = netserver.max;
+    if (len + netserver.htmlpos > htmlpagesize) {
+      netserver.theend = true;
+      len = htmlpagesize - netserver.htmlpos;
+    }
+    if (len > 0) {
+      DBGVB("seek to %d in %s and read %d bytes", netserver.htmlpos, htmlpage.name(), len);
+      htmlpage.seek(netserver.htmlpos, SeekSet);
+      htmlpage.read(buffer, len);
+      netserver.htmlpos = netserver.htmlpos + len;
+    }
+    if(htmlpage) htmlpage.close();
+    return len;
+  }, processor); // AsyncWebServerResponse
+  request->send(response);
+}
+
 void NetServer::loop() {
   if(shouldReboot){
     Serial.println("Rebooting...");
@@ -173,7 +233,7 @@ void NetServer::loop() {
   }
   if (importRequest) {
     if (importPlaylist()) {
-      //requestOnChange(PLAYLIST, 0);
+      requestOnChange(PLAYLIST, 0);
     }
     importRequest = false;
   }
@@ -400,7 +460,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         display.putRequest({NEWMODE, PLAYER});
         return;
       }
-
+      /*  RESETS  */
       if (strcmp(cmd, "reset") == 0) {
         if (strcmp(val, "system") == 0) {
           config.store.smartstart=2;
@@ -465,7 +525,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           requestOnChange(GETCONTROLS,clientId);
           return;
         }
-      }
+      } /*  RESETS  */
       if (strcmp(cmd, "volume") == 0) {
         byte v = atoi(val);
         player.setVol(v, false);
@@ -541,6 +601,9 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           player.toggle();
           resumePlay=false;
         }
+#ifdef MQTT_HOST
+        mqttPublishPlaylist();
+#endif
         return;
       }
 #if IR_PIN!=255
@@ -589,6 +652,7 @@ bool NetServer::savePlaylist(const char* post) {
   } else {
     file.print(post);
     file.close();
+    vTaskDelay(150);
     netserver.requestOnChange(PLAYLISTSAVED, 0);
     return true;
   }
@@ -650,9 +714,9 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
         config.indexPlaylist();
         config.initPlaylist();
         getPlaylist(clientId);
-#ifdef MQTT_HOST
+/*#ifdef MQTT_HOST
         mqttPublishPlaylist();
-#endif
+#endif*/
         break;
       }
     case GETACTIVE: {
@@ -808,6 +872,7 @@ String processor(const String& var) { // %Templates%
 
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
+    netserver.takeMallocDog();
     request->_tempFile = SPIFFS.open(TMP_PATH , "w");
   }
   if (len) {
@@ -824,7 +889,7 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
-      if(config.store.audioinfo) Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      if(config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
       /*netserver.requestOnChange(STATION, client->id());
       netserver.requestOnChange(TITLE, client->id());
       netserver.requestOnChange(VOLUME, client->id());
@@ -836,7 +901,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
       break;
     case WS_EVT_DISCONNECT:
-      if(config.store.audioinfo) Serial.printf("WebSocket client #%u disconnected\n", client->id());
+      if(config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u disconnected\n", client->id());
       break;
     case WS_EVT_DATA:
       netserver.onWsMessage(arg, data, len, client->id());

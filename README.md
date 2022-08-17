@@ -317,6 +317,12 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.355
+- updating libraries ESP32-audioI2S and ESP32-vs1053_ext to the latest version
+- optimization of the web interface during playback
+- fixed one js bug. a [full update](#update-over-web-interface) with Sketch data upload is desirable
+- plugin example for esp deep sleep when playback is stopped (exsamples/plugins/deepsleep.ino)
+
 #### v0.7.330
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**

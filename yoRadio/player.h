@@ -24,6 +24,7 @@ class Player: public Audio {
     audiorequest_t request;
     bool requestToStart;
     void zeroRequest();
+    SemaphoreHandle_t playmutex=NULL;
   public:
     Player();
     void init();

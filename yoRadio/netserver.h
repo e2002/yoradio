@@ -5,13 +5,15 @@
 #include "ESPAsyncWebServer.h"
 #include "AsyncUDP.h"
 
-enum requestType_e { PLAYLIST, STATION, ITEM, TITLE, VOLUME, NRSSI, BITRATE, MODE, EQUALIZER, BALANCE, PLAYLISTSAVED, GETMODE, GETINDEX, GETACTIVE, GETSYSTEM, GETSCREEN, GETTIMEZONE, GETWEATHER, GETCONTROLS };
+enum requestType_e : uint8_t  { PLAYLIST=1, STATION=2, ITEM=3, TITLE=4, VOLUME=5, NRSSI=6, BITRATE=7, MODE=8, EQUALIZER=9, BALANCE=10, PLAYLISTSAVED=11, GETMODE=12, GETINDEX=13, GETACTIVE=14, GETSYSTEM=15, GETSCREEN=16, GETTIMEZONE=17, GETWEATHER=18, GETCONTROLS=19 };
+enum htmlPath_e    : uint8_t  { PINDEX=1, PSETTINGS=2, PUPDATE=3, PIR=4, PPLAYLIST=5, PSSIDS=6 };
 
 class NetServer {
   public:
     uint8_t playlistrequest; // ClientId want the playlist
     bool importRequest;
     bool resumePlay;
+    htmlPath_e htmlPath;
   public:
     NetServer() {};
     bool begin();
@@ -22,10 +24,13 @@ class NetServer {
     bool savePlaylist(const char* post);
     void takeMallocDog();
     void giveMallocDog();
+    uint32_t max, htmlpos;
+    bool theend;
 #if IR_PIN!=255
     bool irRecordEnable;
     void irToWs(const char* protocol, uint64_t irvalue);
     void irValsToWs();
+    void chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request);
 #endif
   private:
     requestType_e request;

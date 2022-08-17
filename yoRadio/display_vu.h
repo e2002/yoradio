@@ -38,7 +38,7 @@ enum : uint16_t { VU_X = 4,   VU_Y = 116, VU_BW = 24,   VU_BH = 80,   VU_BS = 4,
 enum : uint16_t { VU_X = 4,   VU_Y = 90,  VU_BW = 120,  VU_BH = 20,   VU_BS = 0,    VU_NB = 12,    VU_FS = 3,   VU_HOR = 1,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
 
 #elif DSP_MODEL==DSP_ILI9225                              /* ILI9225 220x176 */
-enum : uint16_t { VU_X = 4,   VU_Y = 80,  VU_BW = 13,   VU_BH = 56,   VU_BS = 2,    VU_NB = 8,     VU_FS = 3,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
+enum : uint16_t { VU_X = 4,   VU_Y = 80,  VU_BW = 13,   VU_BH = 56,   VU_BS = 2,    VU_NB = 8,     VU_FS = 4,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
 
 #elif (DSP_MODEL==DSP_ST7735 && DTYPE==INITR_MINI160x80) || (DSP_MODEL==DSP_GC9106)  /* ST7735 160x80, GC9106 160x80 */
 enum : uint16_t { VU_X = 1,   VU_Y = 30,  VU_BW = 12,   VU_BH = 36,   VU_BS = 4,    VU_NB = 8,     VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = GRAY      };
