@@ -6,6 +6,8 @@
 #include <Adafruit_SSD1305.h>
 
 #define WEATHER_READY   0
+#define DSP_CAN_SLEEP  true
+#define DSP_OLED       true
 
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0

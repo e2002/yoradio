@@ -317,6 +317,17 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.402
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+**Please backup playlist.csv and wifi.csv before updating.**
+- added the ability to themize color displays. Details in [exsamples/mytheme.h](exsamples/mytheme.h)
+- in this connection, examples of plugins displayhandlers.ino and rssibitrate.ino have been updated
+- parameter VU_PARAMS2 is deprecated. New parameter - VU_PARAMS3. Details in [yoRadio/display_vu.h](yoRadio/display_vu.h)
+- added deepsleep capability for LCD_I2C and OLED displays
+- in this connection, a full update with Sketch data upload is required
+- in this connection, example of plugi deepsleep.ino (exsamples/plugins/deepsleep.ino) have been updated
+- some bug fixes
+
 #### v0.7.355
 - updating libraries ESP32-audioI2S and ESP32-vs1053_ext to the latest version
 - optimization of the web interface during playback

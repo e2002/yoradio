@@ -536,10 +536,10 @@ void TFT_22_ILI9225::_resetWindow() {
 }
 
 
-void TFT_22_ILI9225::clear() {
+void TFT_22_ILI9225::clear(uint16_t withColor) {
     uint8_t old = _orientation;
     setOrientation(0);
-    fillRectangle(0, 0, _maxX - 1, _maxY - 1, COLOR_BLACK);
+    fillRectangle(0, 0, _maxX - 1, _maxY - 1, withColor);
     setOrientation(old);
     delay(10);
 }

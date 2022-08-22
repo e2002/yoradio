@@ -7,6 +7,8 @@
 
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
+#define DSP_CAN_SLEEP  true
+#define DSP_OLED       true
 
 #define PLMITEMS        7
 #define PLMITEMLENGHT   40
@@ -59,6 +61,8 @@ class DspCore: public Adafruit_SH1107 {
     void loop(bool force=false);
     void flip();
     void invert();
+    void sleep();
+    void wake();
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

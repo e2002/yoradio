@@ -8,6 +8,7 @@
 #include "fonts/DS_DIGI28pt7b.h"
 
 #define VU_READY  1
+#define DSP_CAN_SLEEP   true
 
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    0
@@ -62,6 +63,8 @@ class DspCore: public Adafruit_GC9106Ex {
     virtual void endWrite(void);
     void flip();
     void invert();
+    void sleep();
+    void wake();
     /*virtual void sendCommand(uint8_t commandByte, uint8_t *dataBytes,
                  uint8_t numDataBytes);
     virtual void sendCommand(uint8_t commandByte, const uint8_t *dataBytes = NULL,
@@ -83,7 +86,7 @@ extern DspCore dsp;
 /*
  * TFT COLORS
  */
-#define BLACK       0x0000
+/*#define BLACK       0x0000
 #define BLUE        0x001F
 #define RED         0xF800
 #define GREEN       0x07E0
@@ -110,6 +113,6 @@ extern DspCore dsp;
 
 #define TFT_BG      BLACK
 #define TFT_FG      WHITE
-#define TFT_LOGO    0xE68B // 224, 209, 92
+#define TFT_LOGO    0xE68B // 224, 209, 92*/
 
 #endif

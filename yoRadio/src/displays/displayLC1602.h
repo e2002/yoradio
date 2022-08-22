@@ -29,7 +29,7 @@
 
 #define TFT_LINEHGHT    1
 #define TFT_FRAMEWDT    0
-
+#define DSP_CAN_SLEEP   true
 
 #define PLMITEMLENGHT   40
 #define PLMITEMHEIGHT   9
@@ -93,6 +93,8 @@ class DspCore: public LiquidCrystal {
     void loop(bool force=false);
     void flip(){};
     void invert(){};
+    void sleep();
+    void wake();
   private:
     uint16_t swidth, sheight, xOffset, yOffset;
     int16_t nextX;

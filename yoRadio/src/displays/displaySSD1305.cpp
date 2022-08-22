@@ -142,6 +142,12 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
     Serial.println(F("SSD1305 allocation failed"));
     for (;;); // Don't proceed, loop forever
   }
+  config.theme.background = TFT_BG;
+  config.theme.meta       = TFT_FG;
+  config.theme.title1     = TFT_FG;
+  config.theme.title2     = TFT_FG;
+  config.theme.rssi       = TFT_FG;
+  for(byte i=0;i<5;i++) config.theme.playlist[i] = TFT_FG;
   cp437(true);
   fillScreen(TFT_BG);
   flip();

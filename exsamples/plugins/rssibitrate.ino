@@ -16,7 +16,7 @@ bool dsp_before_rssi(DspCore *dsp){
   sprintf(buf, "RSSI:000dBm");
   dsp->setTextSize(1);
   dsp->getTextBounds(buf, 0, 0, &x1, &y1, &w, &h);
-  dsp->fillRect(dsp->width() - w - TFT_FRAMEWDT /* left */, vTop /* top */, w /* width */, TFT_LINEHGHT-2 /* height */, TFT_BG /* background color */);
+  dsp->fillRect(dsp->width() - w - TFT_FRAMEWDT /* left */, vTop /* top */, w /* width */, TFT_LINEHGHT-2 /* height */, config.theme.background /* background color */);
   sprintf(buf, "%dkBits", config.station.bitrate);
   dsp->getTextBounds(buf, 0, 0, &x1, &y1, &w, &h);
   if(cnt<2){
@@ -25,7 +25,7 @@ bool dsp_before_rssi(DspCore *dsp){
   }
   cnt++;
   if(cnt>3) cnt=0;
-  dsp->setTextColor(SILVER,TFT_BG);
+  dsp->setTextColor(config.theme.rssi,config.theme.background);
   dsp->setCursor(dsp->width() - w - TFT_FRAMEWDT, vTop);
   dsp->print(buf);                                                        /* print bitrate */
   return false;                                                           /* disable to print RSSI */

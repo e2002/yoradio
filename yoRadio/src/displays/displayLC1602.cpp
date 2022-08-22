@@ -11,7 +11,11 @@
 #define SCREEN_ADDRESS 0x27 ///< See datasheet for Address or scan it https://create.arduino.cc/projecthub/abdularbi17/how-to-scan-i2c-address-in-arduino-eaadda
 #endif
 
+#ifdef LCD_2004
+const byte controlspaces[] = { CLOCK_SPACE, 0, 0, VOL_SPACE };
+#else
 const byte controlspaces[] = { CLOCK_SPACE, VOL_SPACE };
+#endif
 
 DspCore::DspCore(): DSP_INIT {}
 
@@ -217,6 +221,19 @@ boolean DspCore::checkdelay(int m, unsigned long & tstamp) {
   } else {
     return false;
   }
+}
+
+void DspCore::sleep(void) { 
+  noDisplay();
+#ifdef LCD_I2C
+  noBacklight();
+#endif
+}
+void DspCore::wake(void) { 
+  display();
+#ifdef LCD_I2C
+  backlight();
+#endif
 }
 
 char* DspCore::utf8Rus(const char* str, bool uppercase) {

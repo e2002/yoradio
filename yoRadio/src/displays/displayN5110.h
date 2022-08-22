@@ -11,6 +11,9 @@
 #define TFT_LINEHGHT    8
 #define TFT_FRAMEWDT    0
 
+#define DSP_CAN_SLEEP  true
+#define DSP_OLED       true
+
 #if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
 //#define SCROLLDELTA 8
 //#define SCROLLTIME 332
@@ -60,6 +63,8 @@ class DspCore: public Adafruit_PCD8544 {
     virtual void data(uint8_t c);
     void flip();
     void invert();
+    void sleep();
+    void wake();
   private:
     uint16_t swidth, sheight;
     unsigned long loopdelay;

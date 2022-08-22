@@ -362,6 +362,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       }
       if (strcmp(cmd, "brightness") == 0) {
         byte valb=atoi(val);
+        if(!config.store.dspon) requestOnChange(DSPON, 0);
         config.store.brightness=valb;
         //display.setContrast();
         config.setBrightness(true);
@@ -369,8 +370,9 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       }
       if (strcmp(cmd, "screenon") == 0) {
         byte valb=atoi(val);
-        config.store.dspon=valb==1;
-        config.setBrightness(true);
+        //config.store.dspon=valb==1;
+        //config.setBrightness(true);
+        config.setDspOn(valb==1);
         return;
       }
       if (strcmp(cmd, "contrast") == 0) {
@@ -733,6 +735,9 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
             act+="\"group_weather\",";
           }
 #endif
+#if defined(LCD_I2C) || DSP_OLED
+          act+="\"group_oled\",";
+#endif
           if(VU_READY==1 || dbgact){
             act+="\"group_vu\",";
           }
@@ -801,6 +806,10 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
     }
     case GETCONTROLS: {
         sprintf (buf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d}", config.store.volsteps, config.store.encacc, config.store.irtlp);
+        break;
+    }
+    case DSPON: {
+        sprintf (buf, "{\"dspontrue\":%d}", 1);
         break;
     }
     case STATION: {

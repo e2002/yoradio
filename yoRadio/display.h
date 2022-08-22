@@ -44,6 +44,9 @@
 #ifndef DSP_FLIPPED
 #define DSP_FLIPPED     1
 #endif
+#ifndef DSP_OLED
+#define DSP_OLED        false
+#endif
 #ifndef WEATHER_READY
 #define WEATHER_READY   0
 #else
@@ -127,6 +130,8 @@ class Display {
     void invert();
     static void updateWeather();
     void showWeather();
+    bool deepsleep();
+    void wakeup();
 #if DSP_MODEL==DSP_NOKIA5110
     void setContrast();
 #else
@@ -148,6 +153,8 @@ class Display {
     void setContrast(){};
     static void updateWeather(){};
     void showWeather(){};
+    bool deepsleep(){return true;};
+    void wakeup(){};
 #endif
 #ifndef DUMMYDISPLAY
   private:

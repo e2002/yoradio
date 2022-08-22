@@ -114,13 +114,28 @@ void DspCore::apScreen() {
   print(WiFi.softAPIP().toString().c_str());
   print("/");
 }
-
+#define CLR_ITEM1    0xA
+#define CLR_ITEM2    0x8
+#define CLR_ITEM3    0x5
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   tw.begin(I2C_SDA, I2C_SCL);
   if (!begin(SCREEN_ADDRESS)) {
     Serial.println(F("SSD1327 allocation failed"));
     for (;;);
   }
+  config.theme.background = TFT_BG;
+  config.theme.meta       = TFT_FG;
+  config.theme.title1     = TFT_FG;
+  config.theme.title2     = SILVER;
+  config.theme.rssi       = TFT_FG;
+  config.theme.weather    = ORANGE;
+  config.theme.heap       = SILVER;
+  config.theme.ip         = SILVER;
+  config.theme.playlist[0] = CLR_ITEM1;
+  config.theme.playlist[1] = CLR_ITEM2;
+  config.theme.playlist[2] = CLR_ITEM3;
+  config.theme.playlist[3] = CLR_ITEM3;
+  config.theme.playlist[4] = CLR_ITEM3;
   cp437(true);
   fillScreen(TFT_BG);
   flip();
@@ -137,9 +152,6 @@ void DspCore::drawLogo() {
   drawGrayscaleBitmap((swidth - 99) / 2, 18, bootlogobw, 99, 64);
 }
 
-#define CLR_ITEM1    0xA
-#define CLR_ITEM2    0x8
-#define CLR_ITEM3    0x5
 void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
@@ -413,4 +425,8 @@ void DspCore::flip(){
 void DspCore::invert(){
   invertDisplay(config.store.invertdisplay);
 }
+
+void DspCore::sleep(void) { oled_command(SSD1327_DISPLAYOFF); }
+void DspCore::wake(void) { oled_command(SSD1327_DISPLAYON); }
+
 #endif

@@ -94,28 +94,28 @@ char* DspCore::utf8Rus(const char* str, bool uppercase) {
 
 void DspCore::apScreen() {
   setTextSize(TITLE_SIZE1);
-  setTextColor(TFT_FG, TFT_BG);
+  setTextColor(config.theme.title1, config.theme.background);
   setCursor(TFT_FRAMEWDT, TITLE_TOP1);
   print("AP NAME: ");
   print(apSsid);
   setCursor(TFT_FRAMEWDT, TITLE_TOP2);
   print("PASSWORD: ");
   print(apPassword);
-  setTextColor(SILVER, TFT_BG);
+  setTextColor(config.theme.title2, config.theme.background);
   setCursor(TFT_FRAMEWDT, sheight-TFT_FRAMEWDT-TFT_LINEHGHT*4);
   print("SETTINGS PAGE ON: ");
   setCursor(TFT_FRAMEWDT, sheight-TFT_FRAMEWDT-TFT_LINEHGHT*2);
   print("http://");
   print(WiFi.softAPIP().toString().c_str());
   print("/");
-  drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, SILVER);
+  drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, config.theme.div);
 }
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   begin();             /* SPI_DEFAULT_FREQ 40000000 */
   invert();
   cp437(true);
-  fillScreen(TFT_BG);
+//  fillScreen(config.theme.background);
   flip();
   setTextWrap(false);
   setTextSize(1);
@@ -126,33 +126,32 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
 }
 
 void DspCore::drawLogo() {
+  fillScreen(0x0000);
   drawRGBBitmap((swidth - 99) / 2, (sheight-64)/2 - TFT_LINEHGHT*2, bootlogo2, 99, 64);
 }
 
-// http://greekgeeks.net/#maker-tools_convertColor
-uint16_t iclrs[] = { 0x738E /*707070*/, 0x52AA /*575757*/, 0x39C7, 0x18E3 };
 void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
-  config.fillPlMenu(plMenu, currentItem - 4, PLMITEMS);
+  config.fillPlMenu(plMenu, currentItem - 5, PLMITEMS);
   setTextSize(2);
   int yStart = (sheight / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
-  fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) - 1, swidth, PLMITEMHEIGHT + 2, TFT_LOGO);
+  fillRect(0, (sheight / 2 - PLMITEMHEIGHT / 2) - 1, swidth, PLMITEMHEIGHT + 2, config.theme.meta);
   for (byte i = 0; i < PLMITEMS; i++) {
-    if (i == 4) {
+    if (i == 5) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
-      setTextColor(iclrs[abs(i - 4)-1], TFT_BG);
+      setTextColor(config.theme.playlist[abs(i - 5)-1], config.theme.background);
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
-      fillRect(0, yStart + i * PLMITEMHEIGHT-1, swidth, PLMITEMHEIGHT-4, TFT_BG);
+      fillRect(0, yStart + i * PLMITEMHEIGHT-1, swidth, PLMITEMHEIGHT-4, config.theme.background);
       print(utf8Rus(plMenu[i], true));
     }
   }
 }
 
 void DspCore::clearDsp() {
-  fillScreen(TFT_BG);
+  fillScreen(config.theme.background);
 }
 
 void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
@@ -202,19 +201,19 @@ void DspCore::rightText(const char* text, uint16_t y, uint16_t fg, uint16_t bg, 
 void DspCore::displayHeapForDebug() {
   int16_t vTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT * 2 - 2;
   setTextSize(1);
-  setTextColor(DARK_GRAY, TFT_BG);
+  setTextColor(config.theme.heap, config.theme.background);
   setCursor(TFT_FRAMEWDT, vTop);
-  fillRect(TFT_FRAMEWDT, vTop, swidth - TFT_FRAMEWDT / 2, 7, TFT_BG);
+  fillRect(TFT_FRAMEWDT, vTop, swidth - TFT_FRAMEWDT / 2, 7, config.theme.background);
   print(ESP.getFreeHeap());
   print(" / ");
   print(ESP.getMaxAllocHeap());
   // audio buffer;
-  fillRect(0, sheight - 2, swidth, 2, TFT_BG);
+  fillRect(0, sheight - 2, swidth, 2, config.theme.background);
   int astored = player.inBufferFilled();
   int afree = player.inBufferFree();
   int aprcnt = 100 * astored / (astored + afree);
-  byte sbw = map(aprcnt, 0, 100 , 0, swidth);
-  fillRect(0, sheight - 2, sbw, 2, SILVER);
+  uint16_t sbw = map(aprcnt, 0, 100 , 0, swidth);
+  fillRect(0, sheight - 2, sbw, 2, config.theme.buffer);
 }
 
 void DspCore::printClock(const char* timestr) {
@@ -239,21 +238,21 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
     }
     clwidth = wot+clsp+(swidth>240?46:34);
     clleft=swidth-TFT_FRAMEWDT-clwidth;
-    //fillRect(swidth-TFT_FRAMEWDT-clwidth, cltop-hot, clwidth, hot+3, TFT_BG);
+    //fillRect(swidth-TFT_FRAMEWDT-clwidth, cltop-hot, clwidth, hot+3, config.theme.background);
     setCursor(clleft, cltop);
-    setTextColor(TFT_BG);
+    setTextColor(config.theme.background);
     print(oldTimeBuf);
     strlcpy(oldTimeBuf, timeBuf, 20);
     getTextBounds(timeBuf, 0, 0, &x1, &y1, &wot, &hot);
     clwidth = wot+clsp+(swidth>240?46:34);
     clleft=swidth-TFT_FRAMEWDT-clwidth;
-    setTextColor(TFT_LOGO, TFT_BG);
+    setTextColor(config.theme.clock, config.theme.background);
     setCursor(clleft, cltop);
     print(timeBuf);
 
     setFont();
     setTextSize(3);
-    setTextColor(TFT_FG, TFT_BG);
+    setTextColor(config.theme.dow, config.theme.background);
     setCursor(clleft+wot+clsp, cltop-hot+32);
     print(utf8Rus(dow[timeinfo.tm_wday], false));
 
@@ -261,15 +260,15 @@ void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw){
     setTextSize(1);
     uint16_t wdate, hdate;
     getTextBounds(timeBuf, 0, 0, &x1, &y1, &wdate, &hdate);
-    fillRect(swidth - wdate - TFT_FRAMEWDT-20, cltop+10, wdate+20, hdate, TFT_BG);
-    rightText(utf8Rus(timeBuf,true), cltop+10, TFT_FG, TFT_BG, false, swidth>240?12:0);
-    drawFastVLine(clleft+wot+clsp/2+3, cltop-hot, hot+3, SILVER);
-    drawFastHLine(clleft+wot+clsp/2+3, cltop-hot+29, 42, SILVER);
+    fillRect(swidth - wdate - TFT_FRAMEWDT-20, cltop+10, wdate+20, hdate, config.theme.background);
+    rightText(utf8Rus(timeBuf,true), cltop+10, config.theme.date, config.theme.background, false, swidth>240?12:0);
+    drawFastVLine(clleft+wot+clsp/2+3, cltop-hot, hot+3, config.theme.div);
+    drawFastHLine(clleft+wot+clsp/2+3, cltop-hot+29, 42, config.theme.div);
 
-    drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, SILVER);
+    drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, config.theme.div);
   }
   setTextSize(3);
-  setTextColor(TFT_LOGO, TFT_BG);
+  setTextColor(config.theme.seconds, config.theme.background);
   setCursor(clleft+wot+clsp, cltop-hot+1);
   sprintf(timeBuf, "%02d", timeinfo.tm_sec);
   print(timeBuf);
@@ -280,36 +279,36 @@ void DspCore::drawVolumeBar(bool withNumber) {
   int16_t volTop = sheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT - 2;
   int16_t vWidth = swidth - TFT_FRAMEWDT *2;
   uint16_t ww = map(config.store.volume, 0, 254, 0, vWidth - 2);
-  fillRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, TFT_BG);
-  drawRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, TFT_LOGO);
-  fillRect(TFT_FRAMEWDT + 1, vTop - 1, ww, 5, TFT_LOGO);
+  fillRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, config.theme.background);
+  fillRect(TFT_FRAMEWDT + 1, vTop - 1, ww, 5, config.theme.volbarin);
+  drawRect(TFT_FRAMEWDT, vTop - 2, vWidth, 6, config.theme.volbarout);
   if(swidth>240){
     char buf[20];
     sprintf(buf, "VOL %d", config.store.volume);
     setTextSize(1);
-    centerText(buf, volTop, SILVER, TFT_BG);
+    centerText(buf, volTop, config.theme.vol, config.theme.background);
   }
   if (withNumber) {
     setTextSize(1);
-    setTextColor(TFT_FG);
+    setTextColor(config.theme.digit);
     setFont(&DS_DIGI42pt7b);
     char volstr[4];
     uint16_t wv, hv;
     int16_t  x1, y1;
 
-    /*setTextColor(TFT_BG);
+    /*setTextColor(config.theme.background);
     sprintf(volstr, "%d", oldVolume);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
     setCursor((swidth - wv) / 2, (sheight-hv)/2 + hv);
     print(volstr);*/
     sprintf(volstr, "%d", oldVolume);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
-    fillRect((swidth - wv) / 2 - 12, (sheight-hv)/2, wv+24, hv+4, TFT_BG);
+    fillRect((swidth - wv) / 2 - 12, (sheight-hv)/2, wv+24, hv+4, config.theme.background);
 
-    setTextColor(TFT_FG);
+    setTextColor(config.theme.vol);
     sprintf(volstr, "%d", config.store.volume);
     getTextBounds(volstr, 0, 0, &x1, &y1, &wv, &hv);
-    //fillRect(TFT_FRAMEWDT, (sheight-hv)/2, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+    //fillRect(TFT_FRAMEWDT, (sheight-hv)/2, swidth - TFT_FRAMEWDT / 2, hv + 3, config.theme.background);
     setCursor((swidth - wv) / 2, (sheight-hv)/2 + hv);
     print(volstr);
     oldVolume=config.store.volume;
@@ -319,14 +318,14 @@ void DspCore::drawVolumeBar(bool withNumber) {
 
 void DspCore::drawNextStationNum(uint16_t num) {
   setTextSize(1);
-  setTextColor(TFT_FG);
+  setTextColor(config.theme.digit);
   setFont(&DS_DIGI42pt7b);
   char numstr[7];
   uint16_t wv, hv;
   int16_t  x1, y1;
   sprintf(numstr, "%d", num);
   getTextBounds(numstr, 0, 0, &x1, &y1, &wv, &hv);
-  fillRect(TFT_FRAMEWDT, (sheight-hv)/2, swidth - TFT_FRAMEWDT / 2, hv + 3, TFT_BG);
+  fillRect(TFT_FRAMEWDT, (sheight-hv)/2, swidth - TFT_FRAMEWDT / 2, hv + 3, config.theme.background);
   setCursor((swidth - wv) / 2, (sheight-hv)/2 + hv);
   print(numstr);
   setFont();
@@ -334,8 +333,8 @@ void DspCore::drawNextStationNum(uint16_t num) {
 
 void DspCore::frameTitle(const char* str) {
   setTextSize(META_SIZE);
-  centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
-  drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, SILVER);
+  centerText(str, TFT_FRAMEWDT, config.theme.meta, config.theme.background);
+  drawFastHLine(TFT_FRAMEWDT, TITLE_TOP1-8, swidth-TFT_FRAMEWDT*2, config.theme.div);
 }
 
 void DspCore::rssi(const char* str) {
@@ -343,7 +342,7 @@ void DspCore::rssi(const char* str) {
   char buf[20];
   sprintf(buf, "RSSI:%s", str);
   setTextSize(1);
-  rightText(buf, vTop, SILVER, TFT_BG);
+  rightText(buf, vTop, config.theme.rssi, config.theme.background);
 }
 
 void DspCore::ip(const char* str) {
@@ -351,7 +350,7 @@ void DspCore::ip(const char* str) {
   char buf[30];
   sprintf(buf, "IP: %s", str);
   setTextSize(1);
-  setTextColor(SILVER, TFT_BG);
+  setTextColor(config.theme.ip, config.theme.background);
   setCursor(TFT_FRAMEWDT, vTop);
   print(buf);
 }
@@ -392,4 +391,8 @@ void DspCore::flip(){
 void DspCore::invert(){
   invertDisplay(config.store.invertdisplay);
 }
+
+void DspCore::sleep(void) { sendCommand(ILI9341_SLPIN); delay(150); sendCommand(ILI9341_DISPOFF); delay(150);}
+void DspCore::wake(void) { sendCommand(ILI9341_DISPON); delay(150); sendCommand(ILI9341_SLPOUT); delay(150);}
+
 #endif

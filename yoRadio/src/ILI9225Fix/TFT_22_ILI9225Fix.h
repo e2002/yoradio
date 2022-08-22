@@ -182,7 +182,7 @@ class TFT_22_ILI9225 {
 #endif
 
         /// Clear the screen
-        void clear(void); 
+        void clear(uint16_t withColor = COLOR_BLACK); 
 
         /// Invert screen
         /// @param     flag true to invert, false for normal screen

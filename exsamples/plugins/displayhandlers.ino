@@ -157,11 +157,11 @@ void dsp_on_start(DspCore *dsp) {
  ***********************************************/
 void dsp_on_init() {
   if (DSP_MODEL == DSP_ST7735 || (DSP_MODEL == DSP_SSD1327)) {
-    hello.init(5, " * ", 1, TFT_LINEHGHT * 4 + 6, 0, ORANGE, TFT_BG);
+    hello.init(5, " * ", 1, TFT_LINEHGHT * 4 + 6, 0, config.theme.weather, config.theme.background);
   }else if(DSP_MODEL == DSP_ILI9225){
-    hello.init(5, " * ", 1, TFT_LINEHGHT * 6 + 5, 0, ORANGE, TFT_BG);
+    hello.init(5, " * ", 1, TFT_LINEHGHT * 6 + 5, 0, config.theme.weather, config.theme.background);
   } else {
-    hello.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, ORANGE, TFT_BG);
+    hello.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, config.theme.weather, config.theme.background);
   }
 }
 
@@ -194,7 +194,7 @@ bool dsp_before_clock(DspCore *dsp, bool dots) {
   if (display.mode == PLAYER) {
     dsp->setFont();
     dsp->setTextSize(1);
-    display.centerText(dsp->utf8Rus("Hello from plugin!", true), display.screenheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT * 2 - 2, PINK, TFT_BG);
+    display.centerText(dsp->utf8Rus("Hello from plugin!", true), display.screenheight - TFT_FRAMEWDT * 2 - TFT_LINEHGHT * 2 - 2, 0xF97F, config.theme.background);
   }
   return true; // false, if you need to disable the drawing of the clock
 }

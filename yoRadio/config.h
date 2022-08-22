@@ -15,6 +15,29 @@
 
 void DBGVB(const char *format, ...);
 
+struct theme_t {
+  uint16_t background;
+  uint16_t meta;
+  uint16_t title1;
+  uint16_t title2;
+  uint16_t digit;
+  uint16_t div;
+  uint16_t weather;
+  uint16_t vumax;
+  uint16_t vumin;
+  uint16_t clock;
+  uint16_t seconds;
+  uint16_t dow;
+  uint16_t date;
+  uint16_t heap;
+  uint16_t buffer;
+  uint16_t ip;
+  uint16_t vol;
+  uint16_t rssi;
+  uint16_t volbarout;
+  uint16_t volbarin;
+  uint16_t playlist[5];
+};
 struct config_t
 {
   unsigned int config_set; //must be 4262
@@ -92,6 +115,7 @@ class Config {
   public:
     config_t store;
     station_t station;
+    theme_t   theme;
 #if IR_PIN!=255
     int irindex;
     uint8_t irchck;
@@ -106,6 +130,7 @@ class Config {
     void saveIR();
 #endif
     void init();
+    void loadTheme();
     byte setVolume(byte val);
     void saveVolume();
     void setTone(int8_t bass, int8_t middle, int8_t trebble);
@@ -130,11 +155,12 @@ class Config {
     void setTimezoneOffset(uint16_t tzo);
     uint16_t getTimezoneOffset();
     void setBrightness(bool dosave=false);
-    
+    void setDspOn(bool dspon);
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);
     void setDefaults();
+    uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
 };
 
 extern Config config;

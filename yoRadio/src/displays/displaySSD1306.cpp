@@ -139,6 +139,13 @@ void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;); // Don't proceed, loop forever
   }
+  maxcontrast = DSP_MODEL==DSP_SSD1306?0xCF:0x8F;
+  config.theme.background = TFT_BG;
+  config.theme.meta       = TFT_FG;
+  config.theme.title1     = TFT_FG;
+  config.theme.title2     = TFT_FG;
+  config.theme.rssi       = TFT_FG;
+  for(byte i=0;i<5;i++) config.theme.playlist[i] = TFT_FG;
   cp437(true);
   fillScreen(TFT_BG);
   flip();
@@ -360,4 +367,8 @@ void DspCore::flip(){
 void DspCore::invert(){
   invertDisplay(config.store.invertdisplay);
 }
+
+void DspCore::sleep(void) { ssd1306_command(SSD1306_DISPLAYOFF); }
+void DspCore::wake(void) { ssd1306_command(SSD1306_DISPLAYON); }
+
 #endif

@@ -28,6 +28,7 @@ void Config::init() {
   if (!SPIFFS.begin(false)) {
     return;
   }
+  loadTheme();
   ssidsCount = 0;
   initPlaylist();
   if (store.lastStation == 0 && store.countStation > 0) {
@@ -46,6 +47,39 @@ void Config::init() {
   pinMode(BRIGHTNESS_PIN, OUTPUT);
   setBrightness(false);
 #endif
+}
+
+uint16_t Config::color565(uint8_t r, uint8_t g, uint8_t b)
+{
+  return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+
+void Config::loadTheme(){
+  theme.background  = color565(COLOR_BACKGROUND);
+  theme.meta        = color565(COLOR_STATION_NAME);
+  theme.title1      = color565(COLOR_SNG_TITLE_1);
+  theme.title2      = color565(COLOR_SNG_TITLE_2);
+  theme.digit       = color565(COLOR_DIGITS);
+  theme.div         = color565(COLOR_DIVIDER);
+  theme.weather     = color565(COLOR_WEATHER);
+  theme.vumax       = color565(COLOR_VU_MAX);
+  theme.vumin       = color565(COLOR_VU_MIN);
+  theme.clock       = color565(COLOR_CLOCK);
+  theme.seconds     = color565(COLOR_SECONDS);
+  theme.dow         = color565(COLOR_DAY_OF_W);
+  theme.date        = color565(COLOR_DATE);
+  theme.heap        = color565(COLOR_HEAP);
+  theme.buffer      = color565(COLOR_BUFFER);
+  theme.ip          = color565(COLOR_IP);
+  theme.vol         = color565(COLOR_VOLUME_VALUE);
+  theme.rssi        = color565(COLOR_RSSI);
+  theme.volbarout   = color565(COLOR_VOLBAR_OUT);
+  theme.volbarin    = color565(COLOR_VOLBAR_IN);
+  theme.playlist[0] = color565(COLOR_PLAYLIST_0);
+  theme.playlist[1] = color565(COLOR_PLAYLIST_1);
+  theme.playlist[2] = color565(COLOR_PLAYLIST_2);
+  theme.playlist[3] = color565(COLOR_PLAYLIST_3);
+  theme.playlist[4] = color565(COLOR_PLAYLIST_4);
 }
 
 template <class T> int Config::eepromWrite(int ee, const T& value) {
@@ -435,7 +469,28 @@ bool Config::initNetwork() {
 
 void Config::setBrightness(bool dosave){
 #if BRIGHTNESS_PIN!=255
-  analogWrite(BRIGHTNESS_PIN, config.store.dspon?map(store.brightness, 0, 100, 0, 255):0);
+  if(!store.dspon && dosave) {
+    display.wakeup();
+  }
+  //analogWrite(BRIGHTNESS_PIN, config.store.dspon?map(store.brightness, 0, 100, 0, 255):0);
+  analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
+  if(!store.dspon) store.dspon = true;
   if(dosave) save();
 #endif
+}
+
+void Config::setDspOn(bool dspon){
+  store.dspon = dspon;
+  save();
+  if(!dspon){
+#if BRIGHTNESS_PIN!=255
+  analogWrite(BRIGHTNESS_PIN, 0);
+#endif
+    display.deepsleep();
+  }else{
+    display.wakeup();
+#if BRIGHTNESS_PIN!=255
+  analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
+#endif
+  }
 }

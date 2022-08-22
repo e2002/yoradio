@@ -134,6 +134,13 @@ void DspCore::data(uint8_t c) {
 
 void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
   begin();
+  setReinitInterval(255);
+  config.theme.background = TFT_BG;
+  config.theme.meta       = TFT_FG;
+  config.theme.title1     = TFT_FG;
+  config.theme.title2     = TFT_FG;
+  config.theme.rssi       = TFT_FG;
+  for(byte i=0;i<5;i++) config.theme.playlist[i] = TFT_FG;
   setContrast(config.store.contrast);
   cp437(true);
   invert();
@@ -344,4 +351,8 @@ void DspCore::flip(){
 void DspCore::invert(){
   invertDisplay(config.store.invertdisplay);
 }
+
+void DspCore::sleep(void) { command( PCD8544_FUNCTIONSET | PCD8544_POWERDOWN); }
+void DspCore::wake(void) { initDisplay(); }
+
 #endif

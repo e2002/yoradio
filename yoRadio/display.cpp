@@ -237,22 +237,22 @@ void Display::init() {
 #endif
   dsp.initD(screenwidth, screenheight);
   dsp.drawLogo();
-  meta.init(1, " * ", META_SIZE, TFT_FRAMEWDT, STARTTIME, TFT_LOGO, TFT_BG);
-  title1.init(2, " * ", TITLE_SIZE1, TITLE_TOP1, STARTTIME, TITLE_FG1, TFT_BG);
-  title2.init(3, " * ", TITLE_SIZE2, TITLE_TOP2, STARTTIME, TITLE_FG2, TFT_BG);
+  meta.init(1, " * ", META_SIZE, TFT_FRAMEWDT, STARTTIME, config.theme.meta, config.theme.background);
+  title1.init(2, " * ", TITLE_SIZE1, TITLE_TOP1, STARTTIME, config.theme.title1, config.theme.background);
+  title2.init(3, " * ", TITLE_SIZE2, TITLE_TOP2, STARTTIME, config.theme.title2, config.theme.background);
   int yStart = (screenheight / 2 - PLMITEMHEIGHT / 2) + 3;
 #ifdef PL_TOP
   yStart = PL_TOP;
 #endif
-  plCurrent.init(4, " * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, TFT_BG, TFT_LOGO);
+  plCurrent.init(4, " * ", PLCURRENT_SIZE, yStart, STARTTIME_PL, config.theme.background, config.theme.meta);
   plCurrent.lock();
 #if WEATHER_READY==1
   if (DSP_MODEL == DSP_ST7735 || (DSP_MODEL == DSP_SSD1327)) {
-    weatherScroll.init(5, " * ", 1, TFT_LINEHGHT * 4 + 6, 0, ORANGE, TFT_BG);
+    weatherScroll.init(5, " * ", 1, TFT_LINEHGHT * 4 + 6, 0, config.theme.weather, config.theme.background);
   }else if(DSP_MODEL == DSP_ILI9225){
-    weatherScroll.init(5, " * ", 1, TFT_LINEHGHT * 6 + 5, 0, ORANGE, TFT_BG);
+    weatherScroll.init(5, " * ", 1, TFT_LINEHGHT * 6 + 5, 0, config.theme.weather, config.theme.background);
   } else {
-    weatherScroll.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, ORANGE, TFT_BG);
+    weatherScroll.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, config.theme.weather, config.theme.background);
   }
 #endif
   if (dsp_on_init) dsp_on_init();
@@ -536,7 +536,7 @@ void Display::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
 
 void Display::bootString(const char* text, byte y) {
   dsp.set_TextSize(1);
-  dsp.centerText(text, y == 1 ? BOOTSTR_TOP1 : BOOTSTR_TOP2, TFT_LOGO, TFT_BG);
+  dsp.centerText(text, y == 1 ? BOOTSTR_TOP1 : BOOTSTR_TOP2, DSP_OLED?1:0xE68B, 0x0000);
   dsp.loop(true);
 #ifdef USE_NEXTION
   if(y==2) nextion.bootString(text);
@@ -673,6 +673,22 @@ void  Display::setContrast(){
   dsp.setContrast(config.store.contrast);
 }
 #endif // DSP_MODEL==DSP_NOKIA5110
+
+bool Display::deepsleep(){
+//#ifdef DSP_CAN_SLEEP
+#if defined(LCD_I2C) || DSP_OLED || BRIGHTNESS_PIN!=255
+  dsp.sleep();
+  return true;
+#endif
+  return false;
+}
+
+void Display::wakeup(){
+//#ifdef DSP_CAN_SLEEP
+#if defined(LCD_I2C) || DSP_OLED || BRIGHTNESS_PIN!=255
+  dsp.wake();
+#endif
+}
 /******************************************************************************************************************/
 #endif // !DUMMYDISPLAY
 

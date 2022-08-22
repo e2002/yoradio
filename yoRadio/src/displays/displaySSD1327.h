@@ -7,6 +7,7 @@
 #include "fonts/DS_DIGI28pt7b.h"
 
 #define WEATHER_READY   1
+#define DSP_CAN_SLEEP   true
 
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    4
@@ -57,6 +58,8 @@ class DspCore: public Adafruit_SSD1327 {
     void loop(bool force=false);
     void flip();
     void invert();
+    void sleep();
+    void wake();
   private:
     uint16_t swidth, sheight;
     int16_t x, y;

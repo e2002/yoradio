@@ -7,6 +7,7 @@
 
 #define VU_READY        1
 #define WEATHER_READY   1
+#define DSP_CAN_SLEEP   true
 
 #define TFT_LINEHGHT    10
 #define TFT_FRAMEWDT    4
@@ -32,7 +33,6 @@
 #ifndef TITLE_TOP2
 #define TITLE_TOP2 TFT_FRAMEWDT + (META_SIZE+2) * TFT_LINEHGHT
 #endif
-#define TITLE_FG2 SILVER
 
 class DspCore: public TFT_22_ILI9225 {
   public:
@@ -66,7 +66,7 @@ class DspCore: public TFT_22_ILI9225 {
     void setFont(uint8_t* font, bool monoSp=false );
     void setFont(const GFXfont *f = NULL);
     void setTextSize(uint8_t s);
-    void setTextColor(uint16_t fg, uint16_t bg=0x0000);
+    void setTextColor(uint16_t fg, uint16_t bg);
     void setCursor(int16_t x, int16_t y);
     uint16_t print(const char* s);
     void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1,
@@ -78,11 +78,13 @@ class DspCore: public TFT_22_ILI9225 {
     void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h);
     void flip();
     void invert();
+    void sleep();
+    void wake();
   private:
     uint16_t swidth, sheight;
     uint16_t bgcolor, fgcolor;
     int16_t  cursorx, cursory;
-    bool gFont;
+    bool gFont, started;
     char oldTimeBuf[20];
     uint8_t oldVolume;
     uint16_t wot, hot;
@@ -90,37 +92,5 @@ class DspCore: public TFT_22_ILI9225 {
 };
 
 extern DspCore dsp;
-
-/*
- * TFT COLORS
- */
-#define BLACK       0x0000
-#define BLUE        0x001F
-#define RED         0xF800
-#define GREEN       0x07E0
-#define MAGENTA     0xF81F
-#define YELLOW      0xFFE0
-#define WHITE       0xFFFF
-#define GRAY        0x7BEF
-#define DARK_GRAY   0x2945
-#define LIGHT_GRAY  0xC618
-#define LIME        0x87E0
-#define AQUA        0x5D1C
-#define CYAN        0x07FF
-#define DARK_CYAN   0x03EF
-#define ORANGE      0xFCA0
-#define PINK        0xF97F
-#define BROWN       0x8200
-#define VIOLET      0x9199
-#define SILVER      0xA510
-#define GOLD        0xA508
-#define NAVY        0x000F
-#define MAROON      0x7800
-#define PURPLE      0x780F
-#define OLIVE       0x7BE0
-
-#define TFT_BG      BLACK
-#define TFT_FG      WHITE
-#define TFT_LOGO    0xE68B // 224, 209, 92
 
 #endif
