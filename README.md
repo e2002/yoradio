@@ -317,6 +317,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.414
+- fixed non latin long titles of songs error
+
 #### v0.7.402
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**

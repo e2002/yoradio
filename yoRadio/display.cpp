@@ -559,9 +559,6 @@ void Display::station() {
   nextion.bitrate(config.station.bitrate);
   nextion.bitratePic(ICON_NA);
 #endif
-#ifdef DEBUG_TITLES
-  meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
-#endif
   //dsp.loop(true);
   //netserver.requestOnChange(STATION, 0);
 }
@@ -571,43 +568,35 @@ void Display::returnTile() {
 #ifdef USE_NEXTION
   nextion.newNameset(config.station.name);
 #endif
-#ifdef DEBUG_TITLES
-  meta.setText(dsp.utf8Rus("Utenim adminim veniam FM", true));
-#endif
   meta.reset();
   //dsp.loop(true);
 }
 
-void Display::title() {
-  /*
-    memset(config.station.title, 0, BUFLEN);
-    strlcpy(config.station.title, str, BUFLEN);
-  */
-  char ttl[BUFLEN / 2] = { 0 };
-  char sng[BUFLEN / 2] = { 0 };
-  if (strlen(config.station.title) > 0) {
-    char* ici;
-    if ((ici = strstr(config.station.title, " - ")) != NULL && TITLE_SIZE2 != 0) {
-      strlcpy(sng, ici + 3, BUFLEN / 2);
-      strlcpy(ttl, config.station.title, strlen(config.station.title) - strlen(ici) + 1);
+char *split(char *str, const char *delim) {
+  char *dmp = strstr(str, delim);
+  if (dmp == NULL) return NULL;
+  *dmp = '\0'; 
+  return dmp + strlen(delim);
+}
 
-    } else {
-      strlcpy(ttl, config.station.title, BUFLEN / 2);
-      sng[0] = '\0';
+void Display::title() {
+  DBGVB("call of %s(), config.station.title=%s", __func__, config.station.title);
+  if (strlen(config.station.title) > 0) {
+    char tmpbuf[strlen(config.station.title)+1];
+    strlcpy(tmpbuf, config.station.title, strlen(config.station.title)+1);
+    char *stitle = split(tmpbuf, " - ");
+    if(stitle && TITLE_SIZE2 != 0){
+      title1.setText(dsp.utf8Rus(tmpbuf, true));
+      title2.setText(dsp.utf8Rus(stitle, true));
+    }else{
+      title1.setText(dsp.utf8Rus(tmpbuf, true));
+      title2.setText(dsp.utf8Rus("", true));
     }
-#ifdef DEBUG_TITLES
-    strlcpy(ttl, "Duis aute irure dolor in reprehenderit in voluptate velit", BUFLEN / 2);
-    strlcpy(sng, "Excepteur sint occaecat cupidatat non proident", BUFLEN / 2);
-#endif
-    title1.setText(dsp.utf8Rus(ttl, true));
-    if (TITLE_SIZE2 != 0) title2.setText(dsp.utf8Rus(sng, true));
 #ifdef USE_NEXTION
     nextion.newTitle(config.station.title);
 #endif
-    //dsp.loop(true);
     if (player_on_track_change) player_on_track_change();
   }
-  //netserver.requestOnChange(TITLE, 0);
 }
 
 void Display::heap() {

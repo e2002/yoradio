@@ -57,7 +57,11 @@ void audio_showstation(const char *info) {
 void audio_showstreamtitle(const char *info) {
   if (strlen(info) > 0) {
     bool p = printable(info);
+#ifdef DEBUG_TITLES
+    config.setTitle(DEBUG_TITLES);
+#else
     config.setTitle(p?info:"*****");
+#endif
     netserver.requestOnChange(TITLE, 0);
   }
 }

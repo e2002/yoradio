@@ -14,6 +14,7 @@
 #define INDEX_PATH        "/data/index.dat"
 
 void DBGVB(const char *format, ...);
+void u8fix(char *src);
 
 struct theme_t {
   uint16_t background;

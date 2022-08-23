@@ -17,6 +17,11 @@ void DBGVB(const char *format, ...) {
 #endif
 }
 
+void u8fix(char *src){
+  char last = src[strlen(src)-1]; 
+  if ((uint8_t)last >= 0xC2) src[strlen(src)-1]='\0';
+}
+
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
 #if IR_PIN!=255
@@ -223,12 +228,14 @@ byte Config::setLastSSID(byte val) {
 void Config::setTitle(const char* title) {
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
+  u8fix(config.station.title);
   display.putRequest({NEWTITLE, 0});
 }
 
 void Config::setStation(const char* station) {
   memset(config.station.name, 0, BUFLEN);
   strlcpy(config.station.name, station, BUFLEN);
+  u8fix(config.station.title);
 }
 
 void Config::indexPlaylist() {
