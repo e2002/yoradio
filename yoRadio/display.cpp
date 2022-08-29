@@ -580,7 +580,7 @@ char *split(char *str, const char *delim) {
 }
 
 void Display::title() {
-  DBGVB("call of %s(), config.station.title=%s", __func__, config.station.title);
+  DBGVB("[%s] config.station.title = %s", __func__, config.station.title);
   if (strlen(config.station.title) > 0) {
     char tmpbuf[strlen(config.station.title)+1];
     strlcpy(tmpbuf, config.station.title, strlen(config.station.title)+1);
@@ -589,7 +589,7 @@ void Display::title() {
       title1.setText(dsp.utf8Rus(tmpbuf, true));
       title2.setText(dsp.utf8Rus(stitle, true));
     }else{
-      title1.setText(dsp.utf8Rus(tmpbuf, true));
+      title1.setText(dsp.utf8Rus(config.station.title, true));
       title2.setText(dsp.utf8Rus("", true));
     }
 #ifdef USE_NEXTION

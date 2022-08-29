@@ -147,7 +147,8 @@ class Config {
     bool parseSsid(const char* line, char* ssid, char* pass);
     void loadStation(uint16_t station);
     bool initNetwork();
-    bool saveWifi(const char* post);
+    bool saveWifi();
+    bool saveWifiFromNextion(const char* post);
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();

@@ -15,7 +15,7 @@ void audio_info(const char *info) {
     player.mode = STOPPED;
     player.stopInfo();
   }
-  if (strstr(info, "not supported") != NULL){
+  if (strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL){
     config.setTitle(info);
     netserver.requestOnChange(TITLE, 0);
     player.setOutputPins(false);
@@ -47,20 +47,32 @@ bool printable(const char *info) {
 }
 
 void audio_showstation(const char *info) {
+  DBGVB("[%s] info = %s", __func__, info);
   if (strlen(info) > 0) {
     bool p = printable(info);
-    config.setTitle(p?info:"*****");
+    config.setTitle(p?info:config.station.name);
     netserver.requestOnChange(TITLE, 0);
   }
 }
 
 void audio_showstreamtitle(const char *info) {
+  DBGVB("[%s] info = %s", __func__, info);
+  if (strstr(info, "Account already in use") != NULL){
+    config.setTitle(info);
+    netserver.requestOnChange(TITLE, 0);
+    player.setOutputPins(false);
+    player.setDefaults();
+    if (player_on_stop_play) player_on_stop_play();
+    player.mode = STOPPED;
+    player.stopInfo();
+    return;
+  }
   if (strlen(info) > 0) {
     bool p = printable(info);
 #ifdef DEBUG_TITLES
     config.setTitle(DEBUG_TITLES);
 #else
-    config.setTitle(p?info:"*****");
+    config.setTitle(p?info:config.station.name);
 #endif
     netserver.requestOnChange(TITLE, 0);
   }

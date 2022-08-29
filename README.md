@@ -317,6 +317,24 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.490
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+**Please backup playlist.csv and wifi.csv before updating.**
+- fixed playlist break down when saving it
+- fixed bug with cropped song titles on single line displays (GC9106, ST7735mini, N5110 etc.)
+- netserver - optimization and refactoring
+- web interface optimization
+- the AUDIOBUFFER_MULTIPLIER parameter is deprecated. New parameter AUDIOBUFFER_MULTIPLIER2. If everything works fine, then it is better not to touch it.
+- new setting VS_PATCH_ENABLE (see PS)
+- fixing other bugs
+
+_**PS:** A bug was found with the lack of sound on some (not all) green VS1053 boards.
+If there is no sound, you need to assign in myoptions_
+```
+#define VS_PATCH_ENABLE false
+```
+_On red boards and normally working green boards, nothing else needs to be done._
+
 #### v0.7.414
 - fixed non latin long titles of songs error
 

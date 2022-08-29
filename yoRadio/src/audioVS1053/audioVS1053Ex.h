@@ -9,8 +9,8 @@
 #ifndef _vs1053_ext
 #define _vs1053_ext
 
-#ifndef AUDIOBUFFER_MULTIPLIER
-#define AUDIOBUFFER_MULTIPLIER 12
+#ifndef AUDIOBUFFER_MULTIPLIER2
+#define AUDIOBUFFER_MULTIPLIER2  10
 #endif
 
 #define VS1053VOLM 128				// 128 or 96 only
@@ -97,7 +97,7 @@ public:
 protected:
     const size_t m_buffSizePSRAM    = 300000;   // most webstreams limit the advance to 100...300Kbytes
     //const size_t m_buffSizeRAM      = 1600 * 10;
-    const size_t m_buffSizeRAM      = 1600 * AUDIOBUFFER_MULTIPLIER;
+    const size_t m_buffSizeRAM      = 1600 * AUDIOBUFFER_MULTIPLIER2;
     size_t       m_buffSize         = 0;
     size_t       m_freeSpace        = 0;
     size_t       m_writeSpace       = 0;

@@ -61,7 +61,10 @@ void Player::stopInfo() {
 
 void Player::loop() {
   if (mode == PLAYING) {
+    xSemaphoreTake(playmutex, portMAX_DELAY);
     Audio::loop();
+    xSemaphoreGive(playmutex);
+    vTaskDelay(2);
   } else {
     if (isRunning()) {
       //digitalWrite(LED_BUILTIN, LOW);
@@ -71,7 +74,6 @@ void Player::loop() {
       //stopSong();
       setDefaults();
       stopInfo();
-      xSemaphoreGive(playmutex);
       if (player_on_stop_play) player_on_stop_play();
     }
   }
@@ -112,8 +114,6 @@ void Player::setOutputPins(bool isPlaying) {
 
 void Player::play(uint16_t stationId) {
   //stopSong();
-  xSemaphoreGive(playmutex);
-  xSemaphoreTake(playmutex, portMAX_DELAY);
   setDefaults();
   setOutputPins(false);
   config.setTitle("[connecting]");

@@ -32,8 +32,8 @@
 #include <FFat.h>
 #endif // SDFATFS_USED
 
-#ifndef AUDIOBUFFER_MULTIPLIER
-#define AUDIOBUFFER_MULTIPLIER 12
+#ifndef AUDIOBUFFER_MULTIPLIER2
+#define AUDIOBUFFER_MULTIPLIER2    8
 #endif
 
 #ifdef SDFATFS_USED
@@ -140,7 +140,7 @@ public:
 protected:
     size_t   m_buffSizePSRAM    = 300000;   // most webstreams limit the advance to 100...300Kbytes
     //size_t   m_buffSizeRAM      = 1600 * 5;
-    size_t   m_buffSizeRAM      = 1600 * AUDIOBUFFER_MULTIPLIER;
+    size_t   m_buffSizeRAM      = 1600 * AUDIOBUFFER_MULTIPLIER2;
     size_t   m_buffSize         = 0;
     size_t   m_freeSpace        = 0;
     size_t   m_writeSpace       = 0;

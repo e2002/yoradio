@@ -7,7 +7,9 @@
  *  Updated on: Aug 15.2022
  *      Author: Wolle
  */
-
+#ifndef VS_PATCH_ENABLE
+#define VS_PATCH_ENABLE  true
+#endif
 #include "audioVS1053Ex.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -325,7 +327,7 @@ void Audio::begin(){
     setVUmeter();
     m_endFillByte = wram_read(0x1E06) & 0xFF;
     //  printDetails("After last clocksetting \n");
-    loadUserCode(); // load in VS1053B if you want to play flac
+    if(VS_PATCH_ENABLE) loadUserCode(); // load in VS1053B if you want to play flac
     startSong();
 }
 //---------------------------------------------------------------------------------------------------------------------
@@ -1613,6 +1615,7 @@ void Audio::setDefaults(){
  * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
  */
 void Audio::setVUmeter() {
+  if(!VS_PATCH_ENABLE) return;
   uint16_t MP3Status = read_register(SCI_STATUS);
   if(MP3Status==0) {
     Serial.println("VS1053 Error: Unable to write SCI_STATUS");
@@ -1636,6 +1639,7 @@ void Audio::setVUmeter() {
  * \warning This feature is only available with patches that support VU meter.
  */
 void Audio::getVUlevel() {
+  if(!VS_PATCH_ENABLE) return;
   if(!_vuInitalized) return;
   int16_t reg = read_register(SCI_AICTRL3);
   uint8_t rl = map((uint8_t)reg, 85, 92, 0, 255);

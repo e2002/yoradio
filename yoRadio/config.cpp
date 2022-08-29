@@ -443,7 +443,7 @@ bool Config::parseSsid(const char* line, char* ssid, char* pass) {
   return true;
 }
 
-bool Config::saveWifi(const char* post) {
+bool Config::saveWifiFromNextion(const char* post){
   File file = SPIFFS.open(SSIDS_PATH, "w");
   if (!file) {
     return false;
@@ -453,6 +453,14 @@ bool Config::saveWifi(const char* post) {
     ESP.restart();
     return true;
   }
+}
+
+bool Config::saveWifi() {
+  if (!SPIFFS.exists(TMP_PATH)) return false;
+  SPIFFS.remove(SSIDS_PATH);
+  SPIFFS.rename(TMP_PATH, SSIDS_PATH);
+  ESP.restart();
+  return true;
 }
 
 bool Config::initNetwork() {
