@@ -17,7 +17,7 @@ class Network {
   public:
     Network() {};
     void begin();
-    void requestTimeSync(bool withTelnetOutput=false);
+    void requestTimeSync(bool withTelnetOutput=false, uint8_t clientId=0);
   private:
     Ticker ntimer, stimer, rtimer;
     void raiseSoftAP();

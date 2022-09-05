@@ -269,26 +269,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 ## More features
 - Сan add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
 - Telnet with KaRadio format output \
- **Commands**: \
- **cli.prev** (_or simply_ **prev**) - previous station \
- **cli.next** _or_ **next** - next station \
- **cli.toggle** _or_ **toggle** - start/stop \
- **cli.stop** _or_ **stop** - stop \
- **cli.start** _or_ **start** _or_ **cli.play** _or_ **play** - start playing \
- **cli.play("x")** _or_ **play(x)** _or_ **play x** - play station x \
- **cli.vol** _or_ **vol** - display the current value of volume (0-254) \
- **cli.vol("x")** _or_ **vol(x)** _or_ **vol x** - set volume (0-254) \
- **cli.audioinfo** _or_ **audioinfo** - display the current value of debug (0-1) \
- **cli.audioinfo("x")** _or_ **audioinfo(x)** _or_ **audioinfo x** - debug on/off (0-1) \
- **cli.smartstart** _or_ **smartstart** - display the current value of smart start \
- **cli.smartstart("x")** _or_ **smartstart(x)** _or_ **smartstart x** - smart start: 2-off, 0-1 - start playing on boot, if the radio was playing before the reboot \
- **cli.list** _or_ **list** - display playlist \
- **cli.info** _or_ **info** - display current state \
- **sys.boot** _or_ **boot** _or_ **reboot** - reboot \
- **sys.date** - sync date/time and display it \
- **sys.tzo** _or_ **tzo** - display the timezone offset \
- **sys.tzo("h:m")** _or_ **tzo(h:m)** _or_ **tzo h:m** - set timezone offset \
- **sys.tzo("h")** _or_ **tzo(h)** _or_ **tzo h** - set timezone offset in hours only
+  **see [list of available commands](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST))**
 
 - MQTT support \
  **Topics**: \
@@ -317,6 +298,16 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.534
+- added control via uart (see [list of commands](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST))). The uart and telnet commands are the same.
+- added additional commands
+- added control via GET/POST (see [list of commands](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST)))
+- fixed clock operation when configured with DSP_DUMMY
+- fixed RSSI display in web interface when configured with DSP_DUMMY
+- added brightness control/on/off nextion displays from the web interface
+- new parameter WAKE_PIN (to wake up esp after sleep command earlier than given time (see exsamples/myoptions.h and list of commands)
+- minor memory optimization
+
 #### v0.7.490
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**

@@ -48,8 +48,8 @@ void setup() {
 }
 
 void loop() {
+  telnet.loop();
   if (network.status == CONNECTED) {
-    telnet.loop();
     player.loop();
     loopControls();
     checkConnection();

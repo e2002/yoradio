@@ -47,7 +47,6 @@ bool printable(const char *info) {
 }
 
 void audio_showstation(const char *info) {
-  DBGVB("[%s] info = %s", __func__, info);
   if (strlen(info) > 0) {
     bool p = printable(info);
     config.setTitle(p?info:config.station.name);
@@ -56,7 +55,7 @@ void audio_showstation(const char *info) {
 }
 
 void audio_showstreamtitle(const char *info) {
-  DBGVB("[%s] info = %s", __func__, info);
+  DBGH();
   if (strstr(info, "Account already in use") != NULL){
     config.setTitle(info);
     netserver.requestOnChange(TITLE, 0);

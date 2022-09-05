@@ -18,7 +18,9 @@
 #ifdef SDFATFS_USED
 fs::SDFATFS SD_SDFAT;
 #endif
-
+#ifndef DMA_BUFCOUNT
+#define DMA_BUFCOUNT  4
+#endif
 //---------------------------------------------------------------------------------------------------------------------
 AudioBuffer::AudioBuffer(size_t maxBlockSize) {
     // if maxBlockSize isn't set use defaultspace (1600 bytes) is enough for aac and mp3 player
@@ -174,7 +176,11 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_DAC
     m_i2s_config.bits_per_sample      = I2S_BITS_PER_SAMPLE_16BIT;
     m_i2s_config.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
     m_i2s_config.intr_alloc_flags     = ESP_INTR_FLAG_LEVEL1; // interrupt priority
-    m_i2s_config.dma_buf_count        = 16;
+#ifdef OLD_DMABUF_PARAMS
+    m_i2s_config.dma_buf_count        = 16;		// 4×512×16=32768
+#else
+    m_i2s_config.dma_buf_count        = psramInit()?16:DMA_BUFCOUNT;
+#endif
     m_i2s_config.dma_buf_len          = 512;
     m_i2s_config.use_apll             = APLL_DISABLE; // must be disabled in V2.0.1-RC1
     m_i2s_config.tx_desc_auto_clear   = true;   // new in V1.0.1

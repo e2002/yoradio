@@ -712,6 +712,12 @@ void Nextion::startWeather(){
   updateWeather();
 }
 
+void Nextion::sleep(void) { 
+  putcmd("sleep=1");
+}
+void Nextion::wake(void) { 
+  putcmd("sleep=0");
+}
 /*
   По мотивам https://forum.amperka.ru/threads/%D0%94%D0%B8%D1%81%D0%BF%D0%BB%D0%B5%D0%B9-nextion-%D0%B0%D0%B7%D1%8B-arduino-esp8266.9204/page-18#post-173442
 */

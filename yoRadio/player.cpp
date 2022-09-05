@@ -64,7 +64,7 @@ void Player::loop() {
     xSemaphoreTake(playmutex, portMAX_DELAY);
     Audio::loop();
     xSemaphoreGive(playmutex);
-    vTaskDelay(2);
+    //vTaskDelay(2);
   } else {
     if (isRunning()) {
       //digitalWrite(LED_BUILTIN, LOW);

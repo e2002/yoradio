@@ -70,7 +70,9 @@ void ticks() {
 #ifndef CORE_STACK_SIZE
 #define CORE_STACK_SIZE  1024*3
 #endif
-
+#ifndef DSP_TASK_DELAY
+#define DSP_TASK_DELAY  5
+#endif
 byte currentScrollId = 0;   /* one scroll on one time */
 
 #if WEATHER_READY==1
@@ -225,7 +227,7 @@ void loopCore0( void * pvParameters ){
   while(!display.busy){
     if(displayQueue==NULL) break;
     display.loop();
-    vTaskDelay(10);
+    vTaskDelay(DSP_TASK_DELAY);
   }
   vTaskDelete( NULL );
   TaskCore0=NULL;
@@ -254,6 +256,9 @@ void Display::init() {
   } else {
     weatherScroll.init(5, " * ", 2, TFT_LINEHGHT * 9 + 5, 0, config.theme.weather, config.theme.background);
   }
+#endif
+#ifdef USE_NEXTION
+  nextion.wake();
 #endif
   if (dsp_on_init) dsp_on_init();
 }
@@ -580,7 +585,6 @@ char *split(char *str, const char *delim) {
 }
 
 void Display::title() {
-  DBGVB("[%s] config.station.title = %s", __func__, config.station.title);
   if (strlen(config.station.title) > 0) {
     char tmpbuf[strlen(config.station.title)+1];
     strlcpy(tmpbuf, config.station.title, strlen(config.station.title)+1);
@@ -683,6 +687,18 @@ void Display::wakeup(){
 
 #ifdef DUMMYDISPLAY
 /******************************************************************************************************************/
+void ticks() {
+  static bool divrssi;
+  network.timeinfo.tm_sec ++;
+  mktime(&network.timeinfo);
+  if(divrssi) {
+    netserver.setRSSI(WiFi.RSSI());
+    divrssi=false;
+  }else{
+    divrssi=true;
+  }
+}
+
 void Display::bootString(const char* text, byte y) {
   #ifdef USE_NEXTION
   if(y==2) nextion.bootString(text);
@@ -697,6 +713,7 @@ void Display::start(bool reboot){
   #ifdef USE_NEXTION
   nextion.start();
   #endif
+  timer.attach_ms(1000, ticks);
 }
 void Display::putRequest(requestParams_t request){
   #ifdef USE_NEXTION

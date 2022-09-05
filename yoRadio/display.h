@@ -183,6 +183,8 @@ class Display {
     void drawNextStationNum(uint16_t num);
     void returnTile();
     void createCore0Task();
+#else
+    Ticker timer;
 #endif
 };
 

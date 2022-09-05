@@ -3,19 +3,8 @@
 #include <SPIFFS.h>
 #include "display.h"
 #include "player.h"
-Config config;
 
-void DBGVB(const char *format, ...) {
-#ifdef DEBUG_V
-  char buf[200];
-  va_list args;
-  va_start (args, format );
-  vsnprintf(buf, 200, format, args);
-  Serial.print("[DEBUG]                           ");
-  Serial.print(buf);
-  Serial.println();
-#endif
-}
+Config config;
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -492,11 +481,25 @@ void Config::setBrightness(bool dosave){
   if(!store.dspon) store.dspon = true;
   if(dosave) save();
 #endif
+#ifdef USE_NEXTION
+//  if(!store.dspon && dosave) {
+    nextion.wake();
+//  }
+  char cmd[15];
+  snprintf(cmd, 15, "dims=%d", store.brightness);
+  nextion.putcmd(cmd);
+  if(!store.dspon) store.dspon = true;
+  if(dosave) save();
+#endif
 }
 
 void Config::setDspOn(bool dspon){
   store.dspon = dspon;
   save();
+#ifdef USE_NEXTION
+  if(!dspon) nextion.sleep();
+  else nextion.wake();
+#endif
   if(!dspon){
 #if BRIGHTNESS_PIN!=255
   analogWrite(BRIGHTNESS_PIN, 0);
@@ -508,4 +511,21 @@ void Config::setDspOn(bool dspon){
   analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
 #endif
   }
+}
+
+void Config::doSleep(){
+  if(BRIGHTNESS_PIN!=255) analogWrite(BRIGHTNESS_PIN, 0);
+  display.deepsleep();
+#ifdef USE_NEXTION
+  nextion.sleep();
+#endif
+  if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
+  esp_sleep_enable_timer_wakeup(config.sleepfor * 60 * 1000000ULL);
+  esp_deep_sleep_start();
+}
+
+void Config::sleepForAfter(uint16_t sf, uint16_t sa){
+  sleepfor = sf;
+  if(sa > 0) _sleepTimer.attach(sa * 60, doSleep);
+  else doSleep();
 }

@@ -26,6 +26,7 @@ class Telnet {
     void on_input(const char* str, byte clientId);
   private:
     bool _isIPSet(IPAddress ip);
+    void handleSerial();
 };
 
 extern Telnet telnet;

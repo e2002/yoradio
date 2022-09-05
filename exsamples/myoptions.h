@@ -115,7 +115,8 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define PLAYER_FORCE_MONO false             /*  mono option on boot - false stereo, true mono  */
 //#define I2S_INTERNAL      false             /*  If true - use esp32 internal DAC  */
 //#define ROTATE_90         false             /*  Optional 90 degree rotation for square displays */
-
+//#define WAKE_PIN          255               /*  Wake Pin (for manual wakeup from sleep mode. can match with BTN_XXXX, ENC_BTNB, ENC2_BTNB.  must be one of: 0,2,4,12,13,14,15,25,26,27,32,33,34,35,36,39) */
+                                              /*  For sample #define ENC_BTNB 36 - next line - #define WAKE_PIN ENC_BTNB  */
 /* VU settings. See the default settings for your display in file yoRadio/display_vu.h */
 /************************************************************************************************************************************************************************************/
 /*                     vu left  |  vu top    | band width  | band height | band space | num of bands | fade speed | horisontal | Max Bands Color          |  Min Bands Color        */

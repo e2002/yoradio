@@ -62,13 +62,11 @@ void Network::begin() {
   digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
   WiFi.setSleep(false);
-  //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
   if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
     configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
   }else if(strlen(config.store.sntp1)>0){
     configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
   }
-  ////getLocalTime(&timeinfo);
   stimer.once_ms(200,getFirstTime); 
   ntimer.attach_ms(TSYNC_DELAY, syncTime);
 #ifdef USE_NEXTION
@@ -78,16 +76,15 @@ void Network::begin() {
   if (network_on_connect) network_on_connect();
 }
 
-void Network::requestTimeSync(bool withTelnetOutput) {
-  //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), "pool.ntp.org", "ru.pool.ntp.org");
+void Network::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
   if (withTelnetOutput) {
     getLocalTime(&timeinfo);
     char timeStringBuff[50];
     strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
     if (config.store.tzHour < 0) {
-      telnet.printf(0, "##SYS.DATE#: %s%03d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
+      telnet.printf(clientId, "##SYS.DATE#: %s%03d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
     } else {
-      telnet.printf(0, "##SYS.DATE#: %s+%02d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
+      telnet.printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
     }
   }
 }

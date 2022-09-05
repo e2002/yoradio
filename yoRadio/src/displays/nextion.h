@@ -71,6 +71,8 @@ class Nextion {
     bool  getForecast();
     static void  updateWeather();
     static void  getWeather(void * pvParameters);
+    void sleep();
+    void wake();
 };
 
 extern Nextion nextion;

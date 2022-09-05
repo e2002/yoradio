@@ -1,6 +1,7 @@
 #ifndef config_h
 #define config_h
 #include "Arduino.h"
+#include <Ticker.h>
 #include "options.h"
 
 #define EEPROM_SIZE       768
@@ -13,7 +14,14 @@
 #define TMP_PATH          "/data/tmpfile.txt"
 #define INDEX_PATH        "/data/index.dat"
 
-void DBGVB(const char *format, ...);
+#ifdef DEBUG_V
+#define DBGH()       { Serial.printf("[%s:%s:%d] Heap: %d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, xPortGetFreeHeapSize()); }
+#define DBGVB( ... ) { char buf[200]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("[DEBUG]\t"); Serial.println(buf); }
+#else
+#define DBGVB( ... )
+#define DBGH()
+#endif
+#define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
 void u8fix(char *src);
 
 struct theme_t {
@@ -124,6 +132,7 @@ class Config {
 #endif
     neworkItem ssids[5];
     byte ssidsCount;
+    uint16_t sleepfor;
   public:
     Config() {};
     void save();
@@ -158,10 +167,13 @@ class Config {
     uint16_t getTimezoneOffset();
     void setBrightness(bool dosave=false);
     void setDspOn(bool dspon);
+    void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);
     void setDefaults();
+    Ticker   _sleepTimer;
+    static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
 };
 

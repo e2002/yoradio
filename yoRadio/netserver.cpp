@@ -564,28 +564,29 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
     case PLAYLIST:        getPlaylist(clientId); break;
     case PLAYLISTSAVED:   config.indexPlaylist(); config.initPlaylist(); getPlaylist(clientId); break;
     case GETACTIVE: {
-        bool dbgact = false;
-        String act = "\"group_wifi\",";
+        bool dbgact = false, nxtn=false;
+        String act = F("\"group_wifi\",");
         if (network.status == CONNECTED) {
-          act += "\"group_system\",";
-          if (BRIGHTNESS_PIN != 255 || DSP_FLIPPED == 1 || DSP_MODEL == DSP_NOKIA5110 || dbgact)    act += "\"group_display\",";
+                                                              act += F("\"group_system\",");
+          if (BRIGHTNESS_PIN != 255 || DSP_FLIPPED == 1 || DSP_MODEL == DSP_NOKIA5110 || dbgact)    act += F("\"group_display\",");
 #ifdef USE_NEXTION
-                                                              act += "\"group_nextion\",";
-          if (WEATHER_READY == 0 || dbgact)                   act += "\"group_weather\",";
+                                                              act += F("\"group_nextion\",");
+          if (WEATHER_READY == 0 || dbgact)                   act += F("\"group_weather\",");
+          nxtn=true;
 #endif
 #if defined(LCD_I2C) || DSP_OLED
-                                                              act += "\"group_oled\",";
+                                                              act += F("\"group_oled\",");
 #endif
-          if (VU_READY == 1 || dbgact)                        act += "\"group_vu\",";
-          if (BRIGHTNESS_PIN != 255 || dbgact)                act += "\"group_brightness\",";
-          if (DSP_FLIPPED == 1 || dbgact)                     act += "\"group_tft\",";
-          if (TS_CS != 255 || dbgact)                         act += "\"group_touch\",";
-          if (DSP_MODEL == DSP_NOKIA5110)                     act += "\"group_nokia\",";
-          if (DSP_MODEL != DSP_DUMMY || dbgact)               act += "\"group_timezone\",";
-          if (WEATHER_READY == 1 || dbgact)                   act += "\"group_weather\",";
-                                                              act += "\"group_controls\",";
-          if (ENC_BTNL != 255 || ENC2_BTNL != 255 || dbgact)  act += "\"group_encoder\",";
-          if (IR_PIN != 255 || dbgact)                        act += "\"group_ir\",";
+          if (VU_READY == 1 || dbgact)                        act += F("\"group_vu\",");
+          if (BRIGHTNESS_PIN != 255 || nxtn || dbgact)                act += F("\"group_brightness\",");
+          if (DSP_FLIPPED == 1 || dbgact)                     act += F("\"group_tft\",");
+          if (TS_CS != 255 || dbgact)                         act += F("\"group_touch\",");
+          if (DSP_MODEL == DSP_NOKIA5110)                     act += F("\"group_nokia\",");
+                                                              act += F("\"group_timezone\",");
+          if (WEATHER_READY == 1 || dbgact)                   act += F("\"group_weather\",");
+                                                              act += F("\"group_controls\",");
+          if (ENC_BTNL != 255 || ENC2_BTNL != 255 || dbgact)  act += F("\"group_encoder\",");
+          if (IR_PIN != 255 || dbgact)                        act += F("\"group_ir\",");
         }
                                                               act = act.substring(0, act.length() - 1);
         sprintf (buf, "{\"act\":[%s]}", act.c_str());
@@ -606,7 +607,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
     case NRSSI:       sprintf (buf, "{\"rssi\": %d}", rssi); rssi = 255; break;
     case BITRATE:     sprintf (buf, "{\"bitrate\": %d}", config.station.bitrate); break;
     case MODE:        sprintf (buf, "{\"mode\": \"%s\"}", player.mode == PLAYING ? "playing" : "stopped"); break;
-    case EQUALIZER:   sprintf (buf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); DBGVB("[%s] %s", __func__, buf); break;
+    case EQUALIZER:   sprintf (buf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
     case BALANCE:     sprintf (buf, "{\"balance\": %d}", config.store.balance); break;
   }
   if (strlen(buf) > 0) {
@@ -671,15 +672,14 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
     }
   }
   if (network.status == CONNECTED) {
-    if (request->hasArg("start")) player.request.station = config.store.lastStation;
-    if (request->hasArg("stop")) {
-      player.mode = STOPPED;
-      config.setTitle("[stopped]");
-    }
-    if (request->hasArg("prev")) player.prev();
-    if (request->hasArg("next")) player.next();
-    if (request->hasArg("volm")) player.stepVol(false);
-    if (request->hasArg("volp")) player.stepVol(true);
+    bool commandFound=false;
+    if (request->hasArg("start")) { player.request.station = config.store.lastStation; commandFound=true; }
+    if (request->hasArg("stop")) { player.mode = STOPPED; config.setTitle("[stopped]"); commandFound=true; }
+    if (request->hasArg("toggle")) { player.toggle(); commandFound=true; }
+    if (request->hasArg("prev")) { player.prev(); commandFound=true; }
+    if (request->hasArg("next")) { player.next(); commandFound=true; }
+    if (request->hasArg("volm")) { player.stepVol(false); commandFound=true; }
+    if (request->hasArg("volp")) { player.stepVol(true); commandFound=true; }
 
     if (request->hasArg("trebble") && request->hasArg("middle") && request->hasArg("bass")) {
       AsyncWebParameter* pt = request->getParam("trebble", request->method() == HTTP_POST);
@@ -691,6 +691,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       player.setTone(b, m, t);
       config.setTone(b, m, t);
       netserver.requestOnChange(EQUALIZER, 0);
+      commandFound=true;
     }
     if (request->hasArg("ballance")) {
       AsyncWebParameter* p = request->getParam("ballance", request->method() == HTTP_POST);
@@ -698,6 +699,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       player.setBalance(b);
       config.setBalance(b);
       netserver.requestOnChange(BALANCE, 0);
+      commandFound=true;
     }
     if (request->hasArg("playstation") || request->hasArg("play")) {
       AsyncWebParameter* p = request->getParam(request->hasArg("playstation") ? "playstation" : "play", request->method() == HTTP_POST);
@@ -706,6 +708,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       if (id > config.store.countStation) id = config.store.countStation;
       player.request.station = id;
       player.request.doSave = true;
+      commandFound=true;
       DBGVB("[%s] play=%d", __func__, id);
     }
     if (request->hasArg("vol")) {
@@ -715,10 +718,40 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       if (v > 254) v = 254;
       config.store.volume = v;
       player.setVol(v, false);
+      commandFound=true;
       DBGVB("[%s] vol=%d", __func__, v);
     }
+    if (request->hasArg("dspon")) {
+      AsyncWebParameter* p = request->getParam("dspon", request->method() == HTTP_POST);
+      int d = atoi(p->value().c_str());
+      config.setDspOn(d!=0);
+      commandFound=true;
+    }
+    if (request->hasArg("dim")) {
+      AsyncWebParameter* p = request->getParam("dim", request->method() == HTTP_POST);
+      int d = atoi(p->value().c_str());
+      if (d < 0) d = 0;
+      if (d > 100) d = 100;
+      config.store.brightness = (uint8_t)d;
+      config.setBrightness(true);
+      commandFound=true;
+    }
+    if (request->hasArg("sleep")) {
+      AsyncWebParameter* sfor = request->getParam("sleep", request->method() == HTTP_POST);
+      int sford = atoi(sfor->value().c_str());
+      int safterd = 0;
+      if(request->hasArg("after")){
+        AsyncWebParameter* safter = request->getParam("after", request->method() == HTTP_POST);
+        safterd = atoi(safter->value().c_str());
+      }
+      if(sford > 0 && safterd >= 0){
+        request->send(200);
+        config.sleepForAfter(sford, safterd);
+        commandFound=true;
+      }
+    }
     if (request->params() > 0) {
-      request->send(200);
+      request->send(commandFound?200:404);
       return;
     }
   } else {
