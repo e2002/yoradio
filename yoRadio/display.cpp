@@ -687,6 +687,7 @@ void Display::wakeup(){
 
 #ifdef DUMMYDISPLAY
 /******************************************************************************************************************/
+#ifndef USE_NEXTION
 void ticks() {
   static bool divrssi;
   network.timeinfo.tm_sec ++;
@@ -698,7 +699,7 @@ void ticks() {
     divrssi=true;
   }
 }
-
+#endif
 void Display::bootString(const char* text, byte y) {
   #ifdef USE_NEXTION
   if(y==2) nextion.bootString(text);
@@ -712,8 +713,9 @@ void Display::init(){
 void Display::start(bool reboot){
   #ifdef USE_NEXTION
   nextion.start();
-  #endif
+  #else
   timer.attach_ms(1000, ticks);
+  #endif
 }
 void Display::putRequest(requestParams_t request){
   #ifdef USE_NEXTION

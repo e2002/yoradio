@@ -298,6 +298,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.7.540
+- fixed compilation error when using NEXTION display with DUMMY display
+
 #### v0.7.534
 - added control via uart (see [list of commands](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST))). The uart and telnet commands are the same.
 - added additional commands
