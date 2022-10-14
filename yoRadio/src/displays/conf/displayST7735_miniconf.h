@@ -62,7 +62,7 @@ const char           rssiFmt[]    PROGMEM = "%d";
 //const char          iptxtFmt[]    PROGMEM = "%s";
 //const char         voltxtFmt[]    PROGMEM = "%d";
 const char        bitrateFmt[]    PROGMEM = "%d";
- */
+
 /* MOVES  */                             /* { left, top, width } */
 const MoveConfig    clockMove     PROGMEM = { 14, 29+34, 0};
 const MoveConfig   weatherMove    PROGMEM = { TFT_FRAMEWDT, 80-13, MAX_WIDTH-6*3-4-30 };

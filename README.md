@@ -299,6 +299,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.01b
+- fix INITR_MINI160x80 compiling error
+- fix ENC_INTERNALPULLUP descriotion in exsamples/myoptions.h
+
 #### v0.8.00b
 - rewritten the display engine
 - added the ability to position widgets on the display using configuration files. More info in yoRadio/src/displays/conf/ and here https://github.com/e2002/yoradio/wiki/Widgets

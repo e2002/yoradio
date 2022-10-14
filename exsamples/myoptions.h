@@ -60,7 +60,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define ENC_BTNL              255           /*  Left rotation */
 //#define ENC_BTNB              255           /*  Encoder button */
 //#define ENC_BTNR              255           /*  Right rotation */
-//#define ENC_INTERNALPULLUP    true          /*  Enabl//#define LED_BUILTIN       2                 /*  LED Pin */e the weak pull up resistors */
+//#define ENC_INTERNALPULLUP    true          /*  Enable the weak pull up resistors */
 //#define ENC_HALFQUARD         true          /*  Experiment  with it */
 /******************************************/
 
