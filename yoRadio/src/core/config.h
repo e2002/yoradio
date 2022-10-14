@@ -27,6 +27,8 @@ void u8fix(char *src);
 struct theme_t {
   uint16_t background;
   uint16_t meta;
+  uint16_t metabg;
+  uint16_t metafill;
   uint16_t title1;
   uint16_t title2;
   uint16_t digit;
@@ -43,6 +45,7 @@ struct theme_t {
   uint16_t ip;
   uint16_t vol;
   uint16_t rssi;
+  uint16_t bitrate;
   uint16_t volbarout;
   uint16_t volbarin;
   uint16_t playlist[5];

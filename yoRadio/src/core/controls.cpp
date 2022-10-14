@@ -33,7 +33,7 @@ constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
 #if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-#include "src/yoEncoder/yoEncoder.h"
+#include "../yoEncoder/yoEncoder.h"
 #if (ENC_BTNL!=255 && ENC_BTNR!=255)
 yoEncoder encoder = yoEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
 #endif
@@ -129,7 +129,7 @@ void initControls() {
 }
 
 void loopControls() {
-  if(display.mode==LOST || display.mode==UPDATING) return;
+  if(display.mode()==LOST || display.mode()==UPDATING) return;
   if (ctrls_on_loop) ctrls_on_loop();
 #if ENC_BTNL!=255
   encoderLoop();
@@ -178,9 +178,9 @@ void encoder2Loop() {
     if (ENC2_BTNB != 255) {
       bp = digitalRead(ENC2_BTNB);
     }
-    if (bp == HIGH && display.mode == PLAYER) {
-      display.putRequest({NEWMODE, STATIONS});
-      while(display.mode != STATIONS) {delay(10);}
+    if (bp == HIGH && display.mode() == PLAYER) {
+      display.putRequest(NEWMODE, STATIONS);
+      while(display.mode() != STATIONS) {delay(10);}
     }
     controlsEvent(encoderDelta > 0, encoderDelta);
   }
@@ -200,12 +200,12 @@ void irBlink() {
 void irNum(byte num) {
   uint16_t s;
   if (display.numOfNextStation == 0 && num == 0) return;
-  display.putRequest({NEWMODE, NUMBERS});
+  display.putRequest(NEWMODE, NUMBERS);
   if (display.numOfNextStation > UINT16_MAX / 10) return;
   s = display.numOfNextStation * 10 + num;
   if (s > config.store.countStation) return;
   display.numOfNextStation = s;
-  display.putRequest({NEXTSTATION, s});
+  display.putRequest(NEXTSTATION, s);
 }
 
 void irLoop() {
@@ -223,11 +223,11 @@ void irLoop() {
     }
     switch (irVolRepeat) {
       case 1: {
-          controlsEvent(display.mode == STATIONS ? false : true);
+          controlsEvent(display.mode() == STATIONS ? false : true);
           break;
         }
       case 2: {
-          controlsEvent(display.mode == STATIONS ? true : false);
+          controlsEvent(display.mode() == STATIONS ? true : false);
           break;
         }
     }
@@ -237,8 +237,8 @@ void irLoop() {
           switch (target){
             case IR_PLAY: {
                 irBlink();
-                if (display.mode == NUMBERS) {
-                  display.putRequest({NEWMODE, PLAYER});
+                if (display.mode() == NUMBERS) {
+                  display.putRequest(NEWMODE, PLAYER);
                   player.play(display.numOfNextStation);
                   display.numOfNextStation = 0;
                   break;
@@ -255,23 +255,22 @@ void irLoop() {
                 break;
               }
             case IR_UP: {
-                controlsEvent(display.mode == STATIONS ? false : true);
+                controlsEvent(display.mode() == STATIONS ? false : true);
                 irVolRepeat = 1;
                 break;
               }
             case IR_DOWN: {
-                controlsEvent(display.mode == STATIONS ? true : false);
+                controlsEvent(display.mode() == STATIONS ? true : false);
                 irVolRepeat = 2;
                 break;
               }
             case IR_HASH: {
-                if (display.mode == NUMBERS) {
-                  display.putRequest({RETURNTITLE, 0});
-                  display.putRequest({NEWMODE, PLAYER});
+                if (display.mode() == NUMBERS) {
+                  display.putRequest(NEWMODE, PLAYER);
                   display.numOfNextStation = 0;
                   break;
                 }
-                display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
+                display.putRequest(NEWMODE, display.mode() == PLAYER ? STATIONS : PLAYER);
                 break;
               }
             case IR_0: {
@@ -378,8 +377,8 @@ void touchLoop() {
   boolean istouched = ts.touched();
   if (istouched) {
     TS_Point p = ts.getPoint();
-    uint16_t touchX = map(p.x, TS_X_MIN, TS_X_MAX, 0, display.screenwidth);
-    uint16_t touchY = map(p.y, TS_Y_MIN, TS_Y_MAX, 0, display.screenheight);
+    uint16_t touchX = map(p.x, TS_X_MIN, TS_X_MAX, 0, dsp.width());
+    uint16_t touchY = map(p.y, TS_Y_MIN, TS_Y_MAX, 0, dsp.height());
     if (!wastouched) { /*     START TOUCH     */
       oldTouchP[0] = touchX;
       oldTouchP[1] = touchY;
@@ -393,9 +392,9 @@ void touchLoop() {
         case TSD_LEFT:
         case TSD_RIGHT: {
             touchLongPress=millis();
-            if(display.mode==PLAYER || display.mode==VOL){
-              int16_t xDelta = map(abs(touchVol - touchX), 0, display.screenwidth, 0, TS_STEPS);
-              display.putRequest({NEWMODE, VOL});
+            if(display.mode()==PLAYER || display.mode()==VOL){
+              int16_t xDelta = map(abs(touchVol - touchX), 0, dsp.width(), 0, TS_STEPS);
+              display.putRequest(NEWMODE, VOL);
               if (xDelta>1) {
                 controlsEvent((touchVol - touchX)<0);
                 touchVol = touchX;
@@ -406,9 +405,9 @@ void touchLoop() {
         case TSD_UP:
         case TSD_DOWN: {
             touchLongPress=millis();
-            if(display.mode==PLAYER || display.mode==STATIONS){
-              int16_t yDelta = map(abs(touchStation - touchY), 0, display.screenheight, 0, TS_STEPS);
-              display.putRequest({NEWMODE, STATIONS});
+            if(display.mode()==PLAYER || display.mode()==STATIONS){
+              int16_t yDelta = map(abs(touchStation - touchY), 0, dsp.height(), 0, TS_STEPS);
+              display.putRequest(NEWMODE, STATIONS);
               if (yDelta>1) {
                 controlsEvent((touchStation - touchY)<0);
                 touchStation = touchY;
@@ -429,10 +428,11 @@ void touchLoop() {
   } else {
     if (wastouched) {/*     END TOUCH     */
       if (direct == TDS_REQUEST) {
-        if(millis()-touchLongPress < BTN_PRESS_TICKS*2){
-          onBtnClick(EVT_BTNCENTER);
+        uint32_t pressTicks = millis()-touchLongPress;
+        if( pressTicks < BTN_PRESS_TICKS*2){
+          if(pressTicks > 50) onBtnClick(EVT_BTNCENTER);
         }else{
-          display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
+          display.putRequest(NEWMODE, display.mode() == PLAYER ? STATIONS : PLAYER);
         }
       }
       direct = TSD_STAY;
@@ -453,11 +453,11 @@ void onBtnLongPressStart(int id) {
       }
     case EVT_BTNCENTER:
     case EVT_ENCBTNB: {
-        display.putRequest({NEWMODE, display.mode == PLAYER ? STATIONS : PLAYER});
+        display.putRequest(NEWMODE, display.mode() == PLAYER ? STATIONS : PLAYER);
         break;
       }
     case EVT_ENC2BTNB: {
-        display.putRequest({NEWMODE, display.mode == PLAYER ? VOL : PLAYER});
+        display.putRequest(NEWMODE, display.mode() == PLAYER ? VOL : PLAYER);
         break;
       }
     default:
@@ -502,10 +502,10 @@ void onBtnDuringLongPress(int id) {
         }
       case EVT_BTNUP:
       case EVT_BTNDOWN: {
-          if (display.mode == PLAYER) {
-            display.putRequest({NEWMODE, STATIONS});
+          if (display.mode() == PLAYER) {
+            display.putRequest(NEWMODE, STATIONS);
           }
-          if (display.mode == STATIONS) {
+          if (display.mode() == STATIONS) {
             controlsEvent(id == EVT_BTNDOWN);
           }
           break;
@@ -517,12 +517,12 @@ void onBtnDuringLongPress(int id) {
 }
 
 void controlsEvent(bool toRight, int8_t volDelta) {
-  if (display.mode == NUMBERS) {
+  if (display.mode() == NUMBERS) {
     display.numOfNextStation = 0;
-    display.putRequest({NEWMODE, PLAYER});
+    display.putRequest(NEWMODE, PLAYER);
   }
-  if (display.mode != STATIONS) {
-    display.putRequest({NEWMODE, VOL});
+  if (display.mode() != STATIONS) {
+    display.putRequest(NEWMODE, VOL);
     if(volDelta!=0){
       int nv = config.store.volume+volDelta;
       if(nv<0) nv=0;
@@ -532,10 +532,13 @@ void controlsEvent(bool toRight, int8_t volDelta) {
       player.stepVol(toRight);
     }
   }
-  if (display.mode == STATIONS) {
+  if (display.mode() == STATIONS) {
     display.resetQueue();
-    display.putRequest({DRAWPLAYLIST, toRight});
-    
+    int p = toRight ? display.currentPlItem + 1 : display.currentPlItem - 1;
+    if (p < 1) p = config.store.countStation;
+    if (p > config.store.countStation) p = 1;
+    display.currentPlItem = p;
+    display.putRequest(DRAWPLAYLIST, p);
   }
 }
 
@@ -548,15 +551,15 @@ void onBtnClick(int id) {
     case EVT_BTNCENTER:
     case EVT_ENCBTNB:
     case EVT_ENC2BTNB: {
-        if (display.mode == NUMBERS) {
+        if (display.mode() == NUMBERS) {
           display.numOfNextStation = 0;
-          display.putRequest({NEWMODE, PLAYER});
+          display.putRequest(NEWMODE, PLAYER);
         }
-        if (display.mode == PLAYER) {
+        if (display.mode() == PLAYER) {
           player.toggle();
         }
-        if (display.mode == STATIONS) {
-          display.putRequest({NEWMODE, PLAYER});
+        if (display.mode() == STATIONS) {
+          display.putRequest(NEWMODE, PLAYER);
           player.play(display.currentPlItem);
         }
         break;
@@ -574,10 +577,10 @@ void onBtnClick(int id) {
             player.prev();
           }
         } else {
-          if (display.mode == PLAYER) {
-            display.putRequest({NEWMODE, STATIONS});
+          if (display.mode() == PLAYER) {
+            display.putRequest(NEWMODE, STATIONS);
           }
-          if (display.mode == STATIONS) {
+          if (display.mode() == STATIONS) {
             controlsEvent(id == EVT_BTNDOWN);
           }
         }
@@ -589,18 +592,18 @@ void onBtnClick(int id) {
 void onBtnDoubleClick(int id) {
   switch ((controlEvt_e)id) {
     case EVT_BTNLEFT: {
-        if (display.mode != PLAYER) return;
+        if (display.mode() != PLAYER) return;
         player.prev();
         break;
       }
     case EVT_BTNCENTER:
     case EVT_ENCBTNB:
     case EVT_ENC2BTNB: {
-        display.putRequest({NEWMODE, display.mode == PLAYER ? VOL : PLAYER});
+        display.putRequest(NEWMODE, display.mode() == PLAYER ? VOL : PLAYER);
         break;
       }
     case EVT_BTNRIGHT: {
-        if (display.mode != PLAYER) return;
+        if (display.mode() != PLAYER) return;
         player.next();
         break;
       }

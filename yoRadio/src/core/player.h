@@ -3,9 +3,9 @@
 #include "options.h"
 
 #if I2S_DOUT!=255 || I2S_INTERNAL
-#include "src/audioI2S/AudioEx.h"
+  #include "../audioI2S/AudioEx.h"
 #else
-#include "src/audioVS1053/audioVS1053Ex.h"
+  #include "../audioVS1053/audioVS1053Ex.h"
 #endif
 
 enum audioMode_e { PLAYING, STOPPED };
@@ -30,6 +30,7 @@ class Player: public Audio {
     void init();
     void loop();
     void play(uint16_t stationId);
+    void stop(const char *nttl = NULL);
     void prev();
     void next();
     void toggle();
@@ -45,5 +46,6 @@ extern Player player;
 extern __attribute__((weak)) void player_on_start_play();
 extern __attribute__((weak)) void player_on_stop_play();
 extern __attribute__((weak)) void player_on_track_change();
+extern __attribute__((weak)) void player_on_station_change();
 
 #endif

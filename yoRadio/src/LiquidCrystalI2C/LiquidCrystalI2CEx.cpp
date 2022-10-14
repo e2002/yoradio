@@ -1,6 +1,6 @@
 // Based on the work by DFRobot
 // Based on the LiquidCrystal_I2C library https://github.com/johnrickman/LiquidCrystal_I2C
-#include "../../options.h"
+#include "../core/options.h"
 #if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_2004I2C
 
 #include "LiquidCrystalI2CEx.h"

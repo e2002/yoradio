@@ -1,5 +1,3 @@
-#include "../../../options.h"
-#if DSP_MODEL==DSP_ILI9225
 #ifndef YOFONTFONT5X7_H
 #define YOFONTFONT5X7_H
 
@@ -272,4 +270,3 @@ const unsigned char yofont5x7[] PROGMEM = {
 0x05, 0x48, 0x34, 0x14, 0x14, 0x7C
 };
 #endif // YOFONTFONT5X7_H
-#endif //DSP_ILI9225

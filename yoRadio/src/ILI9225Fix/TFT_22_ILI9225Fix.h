@@ -220,12 +220,10 @@ class TFT_22_ILI9225 {
         /// @return   horizontal size of the screen, in pixels
         /// @note     240 means 240 pixels and thus 0..239 coordinates (decimal)
         uint16_t maxX(void);
-
         /// Screen size, y-axis
         /// @return   vertical size of the screen, in pixels
         /// @note     220 means 220 pixels and thus 0..219 coordinates (decimal)
         uint16_t maxY(void);
-
         /// Draw circle
         /// @param    x0 center, point coordinate, x-axis
         /// @param    y0 center, point coordinate, y-axis
@@ -333,7 +331,7 @@ class TFT_22_ILI9225 {
         /// @param    ch ASCII character
         /// @param    color 16-bit color, default=white
         /// @return   width of character in display pixels
-        uint16_t drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color = COLOR_WHITE);
+        virtual uint16_t drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color = COLOR_WHITE);
 
         /// width of an ASCII character (pixel )
         /// @param    ch ASCII character
@@ -400,8 +398,8 @@ class TFT_22_ILI9225 {
         /// @return   width of character in display pixels
         uint16_t drawGFXChar(int16_t x, int16_t y, unsigned char c, uint16_t color);
         
-        void startWrite(void);
-        void endWrite(void);
+        virtual void startWrite(void);
+        virtual void endWrite(void);
 
     private:
 
@@ -458,7 +456,7 @@ class TFT_22_ILI9225 {
 
         bool  hwSPI, blState;
 
-        _currentFont cfont;
+        //_currentFont cfont;
 
 #ifdef ESP32
         SPIClass _spi;
@@ -471,6 +469,8 @@ class TFT_22_ILI9225 {
         void getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16_t *xa);
         
         GFXfont *gfxFont;
+        
+        _currentFont cfont;
 };
 
 class GFXcanvas16 {

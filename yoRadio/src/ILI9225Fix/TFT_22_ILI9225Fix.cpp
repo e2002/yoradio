@@ -1,4 +1,4 @@
-#include "../../options.h"
+#include "../core/options.h"
 #if DSP_MODEL==DSP_ILI9225
 #include "TFT_22_ILI9225Fix.h"
 

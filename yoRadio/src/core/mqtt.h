@@ -1,8 +1,8 @@
 #ifndef mqtt_h
 #define mqtt_h
 
-#if __has_include("mqttoptions.h")
-#include "mqttoptions.h"
+#if __has_include("../../mqttoptions.h")
+#include "../../mqttoptions.h"
 #include <AsyncMqttClient.h>
 
 

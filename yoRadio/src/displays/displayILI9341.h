@@ -1,76 +1,32 @@
 #ifndef displayILI9341_h
 #define displayILI9341_h
+#include "../core/options.h"
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
-// https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
-#include "fonts/DS_DIGI42pt7b.h"
+#include "fonts/DS_DIGI42pt7b.h"          // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+#include "tools/l10n.h"
 
-#define VU_READY        1
-#define WEATHER_READY   1
-#define DSP_CAN_SLEEP  true
+#define CHARWIDTH   6
+#define CHARHEIGHT  8
 
-#define TFT_LINEHGHT    10
-#define TFT_FRAMEWDT    8
-#define META_SIZE       3
-#define TITLE_SIZE1     2
-#define TITLE_SIZE2     2
+typedef GFXcanvas16 Canvas;
+#include "widgets/widgets.h"
+#include "widgets/pages.h"
 
-#if !defined(SCROLLDELTA) || !defined(SCROLLTIME)
-#define SCROLLDELTA 4
-#define SCROLLTIME 30
+#if __has_include("conf/displayILI9341conf_custom.h")
+  #include "conf/displayILI9341conf_custom.h"
+#else
+  #include "conf/displayILI9341conf.h"
 #endif
 
-#define PLMITEMS        11
-#define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   22
-#define TFT_FULLTIME    1
-
-#define TITLE_TOP1 TFT_FRAMEWDT + META_SIZE * TFT_LINEHGHT + 8
-#define TITLE_TOP2 TFT_FRAMEWDT + (META_SIZE+2) * TFT_LINEHGHT + 8
+#define BOOT_PRG_COLOR    0xE68B
+#define BOOT_TXT_COLOR    0xFFFF
+#define PINK              0xF97F
 
 class DspCore: public Adafruit_ILI9341 {
-  public:
-    DspCore();
-    char plMenu[PLMITEMS][PLMITEMLENGHT];
-    uint16_t clockY;
-    void initD(uint16_t &screenwidth, uint16_t &screenheight);
-    void apScreen();
-    void drawLogo();
-    void clearDsp();
-    void centerText(const char* text, uint16_t y, uint16_t fg, uint16_t bg);
-    void rightText(const char* text, uint16_t y, uint16_t fg, uint16_t bg, bool fliprect=false, uint16_t delta = 0);
-    void set_TextSize(uint8_t s);
-    void set_TextColor(uint16_t fg, uint16_t bg);
-    void set_Cursor(int16_t x, int16_t y);
-    void printText(const char* txt);
-    void printClock(const char* timestr);
-    void printClock(struct tm timeinfo, bool dots, bool redraw = false);
-    void displayHeapForDebug();
-    void drawVolumeBar(bool withNumber);
-    void drawNextStationNum(uint16_t num);
-    char* utf8Rus(const char* str, bool uppercase);
-    void drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg);
-    void getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth);
-    void clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg);
-    void frameTitle(const char* str);
-    void rssi(const char* str);
-    void ip(const char* str);
-    void drawPlaylist(uint16_t currentItem, char* currentItemText);
-    void loop(bool force=false);
-    virtual void startWrite(void);
-    virtual void endWrite(void);
-    void flip();
-    void invert();
-    void sleep();
-    void wake();
-  private:
-    uint16_t swidth, sheight;
-    char oldTimeBuf[20];
-    uint8_t oldVolume;
-    uint16_t wot, hot;
-
+#include "tools/commongfx.h"
 };
 
 extern DspCore dsp;

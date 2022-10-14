@@ -1,227 +1,153 @@
-#include "../../options.h"
+#include "../core/options.h"
 
 #if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_1602 || DSP_MODEL==DSP_2004 || DSP_MODEL==DSP_2004I2C
 
 #include "displayLC1602.h"
-#include "../../player.h"
-#include "../../config.h"
-#include "../../network.h"
+#include "../core/player.h"
+#include "../core/config.h"
+#include "../core/network.h"
 
 #ifndef SCREEN_ADDRESS
-#define SCREEN_ADDRESS 0x27 ///< See datasheet for Address or scan it https://create.arduino.cc/projecthub/abdularbi17/how-to-scan-i2c-address-in-arduino-eaadda
-#endif
-
-#ifdef LCD_2004
-const byte controlspaces[] = { CLOCK_SPACE, 0, 0, VOL_SPACE };
-#else
-const byte controlspaces[] = { CLOCK_SPACE, VOL_SPACE };
+  #define SCREEN_ADDRESS 0x27 ///< See datasheet for Address or scan it https://create.arduino.cc/projecthub/abdularbi17/how-to-scan-i2c-address-in-arduino-eaadda
 #endif
 
 DspCore::DspCore(): DSP_INIT {}
 
+#include "tools/utf8RusLCD.h"
+
 void DspCore::apScreen() {
+  clear();
   setCursor(0,0);
-  print("YORADIO AP MODE");
+  print(utf8Rus(const_lcdApMode, false));
   setCursor(0,1);
   print(WiFi.softAPIP().toString().c_str());
 #ifdef LCD_2004
   setCursor(0, 2);
-  print("AP NAME: ");
+  print(utf8Rus(const_lcdApName, false));
   print(apSsid);
   setCursor(0, 3);
-  print("PASSWORD: ");
+  print(utf8Rus(const_lcdApPass, false));
   print(apPassword);
 #endif
 }
 
-void DspCore::initD(uint16_t &screenwidth, uint16_t &screenheight) {
+byte Arrow[] PROGMEM = { B00000, B00100, B00010, B01001, B00010, B00100, B00000, B00000 };
+
+void DspCore::initDisplay() {
 #ifdef LCD_I2C
   init();
   backlight();
 #else
-#ifdef LCD_2004
-  begin(20, 4);
-#else
-  begin(16, 2);
+  #ifdef LCD_2004
+    begin(20, 4);
+  #else
+    begin(16, 2);
+  #endif
 #endif
-#endif
-
-#ifdef LCD_2004
-  screenwidth = 20;
-  screenheight = 4;
-#else
-  screenwidth = 16;
-  screenheight = 2;
-#endif
-
-  swidth = screenwidth;
-  sheight = screenheight;
-  fillSpaces = true;
+  clearClipping();
+  createChar(0, Arrow);
 }
 
-void DspCore::drawLogo() {
+void DspCore::drawLogo(uint16_t top) { }
 
-}
 
 void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
-  centerText("NEXT STATION", 0, 0, 0);
+  clear();
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
-#ifdef LCD_2004
   config.fillPlMenu(plMenu, currentItem-1, PLMITEMS);
   for (byte i = 0; i < PLMITEMS; i++) {
     if (i == 1) {
-      strlcpy(currentItemText, ">", 2);
-      //strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
-      strlcat(currentItemText, plMenu[i], PLMITEMLENGHT - 2);
+      strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
-      char tmp[swidth+1] = {0};
-      strlcpy(tmp, utf8Rus(plMenu[i], true), swidth);
-      clearScroll(1 + i, 0, 0);
-      setCursor(1, 1 + i);
+      char tmp[width()] = {0};
+      strlcpy(tmp, utf8Rus(plMenu[i], true), width());
+      setCursor(1, i);
       print(tmp);
     }
   }
-#else
-  config.fillPlMenu(plMenu, currentItem, PLMITEMS);
-  for (byte i = 0; i < PLMITEMS; i++) {
-    strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
-  }
-#endif
+  setCursor(0,1);
+  write(byte(0));
 }
 
-void DspCore::clearDsp() {
+void DspCore::clearDsp(bool black) {
   clear();
 }
 
-void DspCore::drawScrollFrame(uint16_t texttop, uint16_t textheight, uint16_t bg) {
-
-}
-
-void DspCore::getScrolBbounds(const char* text, const char* separator, byte textsize, uint16_t &tWidth, uint16_t &tHeight, uint16_t &sWidth) {
-  tWidth = strlen(text);
-  tHeight = 1;
-  sWidth = strlen(separator);
-}
-
-void DspCore::clearScroll(uint16_t texttop, uint16_t textheight, uint16_t bg) {
-  for(uint16_t x=0; x<swidth-(fillSpaces?controlspaces[texttop]:0); x++){
-    setCursor(x, texttop);
-    print(" ");
-  }
-}
-
-void DspCore::centerText(const char* text, byte y, uint16_t fg, uint16_t bg) {
-  byte x=(strlen(text)>swidth)?0:(swidth-strlen(text))/2;
+void DspCore::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color){
+  if(w<2) return;
+  char buf[width()+1] = { 0 };
+  snprintf(buf, sizeof(buf), "%*s%s", w-1, "", " ");
   setCursor(x, y);
-  print(text);
-}
-
-void DspCore::rightText(const char* text, byte y, uint16_t fg, uint16_t bg) {
-  byte x=swidth-strlen(text);
-  setCursor(x-1, y);
-  print(" ");
+  print(buf);
   setCursor(x, y);
-  print(text);
 }
 
-void DspCore::displayHeapForDebug() {
-
-}
-
-void DspCore::printClock(const char* timestr) {
-  rightText(timestr, 0, 0, 0);
-}
-
-void DspCore::printClock(struct tm timeinfo, bool dots, bool redraw) {
-
-}
-
-void DspCore::drawVolumeBar(bool withNumber) {
-  char volstr[4];
-  sprintf(volstr, "%02d", config.store.volume);
-  if (withNumber) {;
-    centerText("   ", 1, 0, 0);
-    centerText(volstr, 1, TFT_LOGO, TFT_BG);
-  }else{
+uint16_t DspCore::width(){
 #ifdef LCD_2004
-    rightText("   ", 3, 0, 0);
-    rightText(volstr, 3, TFT_LOGO, TFT_BG);
+  return 20;
 #else
-    rightText("   ", 1, 0, 0);
-    rightText(volstr, 1, TFT_LOGO, TFT_BG);
+  return 16;
 #endif
-  }
 }
 
-void DspCore::drawNextStationNum(uint16_t num) {
-  char numstr[7];
-  sprintf(numstr, "%d", num);
-  clearScroll(1, 0, 0);
-  centerText(numstr, 1, TFT_LOGO, TFT_BG);
-}
-
-void DspCore::frameTitle(const char* str) {
-  centerText(str, TFT_FRAMEWDT, TFT_LOGO, TFT_BG);
-}
-
-void DspCore::rssi(const char* str) {
-
-}
-
-void DspCore::ip(const char* str) {
+uint16_t DspCore::height(){
 #ifdef LCD_2004
-  setCursor(0, 3);
-  print(str);
+  return 4;
+#else
+  return 2;
 #endif
 }
 
-void DspCore::set_TextSize(uint8_t s) {
-
+uint8_t DspCore::_charWidth(unsigned char c){
+  return 1;
 }
 
-void DspCore::set_TextColor(uint16_t fg, uint16_t bg) {
-
+uint16_t DspCore::textWidth(const char *txt){
+  uint16_t w = 0, l=strlen(txt);
+  for(uint16_t c=0;c<l;c++) w+=_charWidth(txt[c]);
+  return w;
 }
 
-void DspCore::set_Cursor(int16_t x, int16_t y) {
-  if(x<0) {
-    xOffset=-x;
-    x=0;
-  }else{
-    xOffset=0;
+void DspCore::_getTimeBounds() { }
+
+void DspCore::_clockSeconds(){
+  setCursor(_timeleft+_dotsLeft, clockTop);
+  print((network.timeinfo.tm_sec % 2 == 0)?":":" ");
+}
+
+void DspCore::_clockDate(){ }
+
+void DspCore::_clockTime(){ }
+
+void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight, bool redraw) {
+  clockTop = 0;
+  _timeleft = width()-5;
+  _dotsLeft = 2;
+  strftime(_timeBuf, sizeof(_timeBuf), "%H:%M", &network.timeinfo);
+  if(strcmp(_oldTimeBuf, _timeBuf)!=0 || redraw){
+    setCursor(_timeleft, clockTop);
+    print(_timeBuf);
+    strlcpy(_oldTimeBuf, _timeBuf, sizeof(_timeBuf));
   }
-  nextX=0;
-  yOffset = y;
-  setCursor(x, y);
+  _clockSeconds();
 }
 
-void DspCore::printText(const char* txt) {
-  char tmp[swidth+1] = {0};
-  int16_t numchars = fillSpaces?swidth-controlspaces[yOffset]:swidth;
-  strlcpy(tmp, txt+xOffset, numchars+1-nextX);
-  print(tmp);
-  xOffset=(int16_t)(strlen(txt)-xOffset)<=0?xOffset-strlen(txt):0;
-  nextX=nextX+strlen(tmp);
-  if(nextX>numchars) nextX=numchars;
-  setCursor(nextX, yOffset);
+void DspCore::clearClock() {  }
+
+void DspCore::loop(bool force) { 
+//  delay(100);
 }
 
-void DspCore::loop(bool force) {
-  if (checkdelay(SCROLLTIME, loopdelay)) {
-    //display();
-  }
+void DspCore::charSize(uint8_t textsize, uint8_t& width, uint16_t& height){
+  width = 1;
+  height = 1;
 }
 
-boolean DspCore::checkdelay(int m, unsigned long & tstamp) {
-  if (millis() - tstamp > m) {
-    tstamp = millis();
-    return true;
-  } else {
-    return false;
-  }
-}
+void DspCore::flip(){ }
+
+void DspCore::invert(){ }
 
 void DspCore::sleep(void) { 
   noDisplay();
@@ -236,111 +162,20 @@ void DspCore::wake(void) {
 #endif
 }
 
-char* DspCore::utf8Rus(const char* str, bool uppercase) {
-  int index = 0;
-  static char strn[BUFLEN];
-  static char newStr[BUFLEN];
-  bool E = false;
-  strlcpy(strn, str, BUFLEN);
-  newStr[0] = '\0';
-  bool next = false;
-  for (char *iter = strn; *iter != '\0'; ++iter)
-  {
-    if (E) {
-      E = false;
-      continue;
-    }
-    byte rus = (byte) * iter;
-    if (rus == 208 && (byte) * (iter + 1) == 129) { // ёКостыли
-      *iter = (char)209;
-      *(iter + 1) = (char)145;
-      E = true;
-      continue;
-    }
-    if (rus == 209 && (byte) * (iter + 1) == 145) {
-      *iter = (char)209;
-      *(iter + 1) = (char)145;
-      E = true;
-      continue;
-    }
-    if (next) {
-      if (rus >= 128 && rus <= 143) *iter = (char)(rus + 32);
-      if (rus >= 176 && rus <= 191) *iter = (char)(rus - 32);
-      next = false;
-    }
-    if (rus == 208) next = true;
-    if (rus == 209) {
-      *iter = (char)208;
-      next = true;
-    }
-    *iter = toupper(*iter);
-  }
+void DspCore::writePixel(int16_t x, int16_t y, uint16_t color) { }
 
-  while (strn[index])
-  {
-    if (strlen(newStr) > BUFLEN - 2) break;
-    if (strn[index] >= 0xBF)
-    {
-      switch (strn[index]) {
-        case 0xD0: {
-            switch (strn[index + 1])
-            {
-              case 0x90: strcat(newStr, "A"); break;
-              case 0x91: strcat(newStr, "B"); break;
-              case 0x92: strcat(newStr, "V"); break;
-              case 0x93: strcat(newStr, "G"); break;
-              case 0x94: strcat(newStr, "D"); break;
-              case 0x95: strcat(newStr, "E"); break;
-              case 0x96: strcat(newStr, "ZH"); break;
-              case 0x97: strcat(newStr, "Z"); break;
-              case 0x98: strcat(newStr, "I"); break;
-              case 0x99: strcat(newStr, "Y"); break;
-              case 0x9A: strcat(newStr, "K"); break;
-              case 0x9B: strcat(newStr, "L"); break;
-              case 0x9C: strcat(newStr, "M"); break;
-              case 0x9D: strcat(newStr, "N"); break;
-              case 0x9E: strcat(newStr, "O"); break;
-              case 0x9F: strcat(newStr, "P"); break;
-              case 0xA0: strcat(newStr, "R"); break;
-              case 0xA1: strcat(newStr, "S"); break;
-              case 0xA2: strcat(newStr, "T"); break;
-              case 0xA3: strcat(newStr, "U"); break;
-              case 0xA4: strcat(newStr, "F"); break;
-              case 0xA5: strcat(newStr, "H"); break;
-              case 0xA6: strcat(newStr, "TS"); break;
-              case 0xA7: strcat(newStr, "CH"); break;
-              case 0xA8: strcat(newStr, "SH"); break;
-              case 0xA9: strcat(newStr, "SHCH"); break;
-              case 0xAA: strcat(newStr, "'"); break;
-              case 0xAB: strcat(newStr, "YU"); break;
-              case 0xAC: strcat(newStr, "'"); break;
-              case 0xAD: strcat(newStr, "E"); break;
-              case 0xAE: strcat(newStr, "YU"); break;
-              case 0xAF: strcat(newStr, "YA"); break;
-            }
-            break;
-          }
-        case 0xD1: {
-            if (strn[index + 1] == 0x91) {
-              strcat(newStr, "YO"); break;
-              break;
-            }
-            break;
-          }
-      }
-      int sind = index + 2;
-      while (strn[sind]) {
-        strn[sind - 1] = strn[sind];
-        sind++;
-      }
-      strn[sind - 1] = 0;
-    } else {
-      char Temp[2] = {(char) strn[index] , 0 } ;
-      strcat(newStr, Temp);
-    }
-    index++;
-  }
-  return newStr;
+void DspCore::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) { }
+
+void DspCore::setClipping(clipArea ca){
+  _cliparea = ca;
+  _clipping = true;
 }
+
+void DspCore::clearClipping(){
+  _clipping = false;
+  setClipping({0, 0, width(), height()});
+}
+
+void DspCore::setNumFont(){ }
 
 #endif

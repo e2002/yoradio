@@ -90,7 +90,7 @@ void handleUpdate(AsyncWebServerRequest *request, String filename, size_t index,
     int target = (request->getParam("updatetarget", true)->value() == "spiffs") ? U_SPIFFS : U_FLASH;
     Serial.printf("Update Start: %s\n", filename.c_str());
     player.mode = STOPPED;
-    display.putRequest({NEWMODE, UPDATING});
+    display.putRequest(NEWMODE, UPDATING);
     if (!Update.begin(UPDATE_SIZE_UNKNOWN, target)) {
       Update.printError(Serial);
       request->send(200, "text/html", updateError());
@@ -142,38 +142,12 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
 void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool gzip) {
   memset(chunkedPathBuffer, 0, sizeof(chunkedPathBuffer));
   strlcpy(chunkedPathBuffer, path, sizeof(chunkedPathBuffer)-1);
-  PLOW(); 
   AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback, processor);
   xSemaphoreTake(player.playmutex, portMAX_DELAY);
   request->send(response);
-  xSemaphoreGive(player.playmutex); PHIG();
-}
-/*
-void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool gzip) {
-  static char pathbuffer[40] = { 0 };
-  strlcpy(pathbuffer, path, 39);
-  PLOW();
-  AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-    File requiredfile = SPIFFS.open(pathbuffer, "r");
-    if (!requiredfile) return 0;
-    size_t filesize = requiredfile.size();
-    size_t needread = filesize - index;
-    if (!needread) return 0;
-    size_t canread = (needread > maxLen) ? maxLen : needread;
-    DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, pathbuffer, canread, maxLen);
-    requiredfile.seek(index, SeekSet);
-    requiredfile.read(buffer, canread);
-    index += canread;
-    if (requiredfile) requiredfile.close();
-    return canread;
-  }, processor); // AsyncWebServerResponse
-
-  xSemaphoreTake(player.playmutex, portMAX_DELAY);
-  request->send(response);
   xSemaphoreGive(player.playmutex);
-  PHIG();
 }
- */
+
 void NetServer::loop() {
   if (shouldReboot) {
     Serial.println("Rebooting...");
@@ -181,7 +155,6 @@ void NetServer::loop() {
     ESP.restart();
   }
   websocket.cleanupClients();
-  //if (playlistrequest > 0) { requestOnChange(PLAYLIST, playlistrequest); playlistrequest = 0; } /* Cleanup this */
   switch (importRequest) {
     case IMPL:    importPlaylist();  importRequest = IMDONE; break;
     case IMWIFI:  config.saveWifi(); importRequest = IMDONE; break;
@@ -229,14 +202,14 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         byte valb = atoi(val);
         config.store.audioinfo = valb;
         config.save();
-        display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+        display.putRequest(AUDIOINFO);
         return;
       }
       if (strcmp(cmd, "vumeter") == 0) {
         byte valb = atoi(val);
         config.store.vumeter = valb;
         config.save();
-        display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+        display.putRequest(SHOWVUMETER);
         return;
       }
       if (strcmp(cmd, "softap") == 0) {
@@ -256,7 +229,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         byte valb = atoi(val);
         config.store.numplaylist = valb;
         config.save();
-        display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+        display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
         return;
       }
       if (strcmp(cmd, "fliptouch") == 0) {
@@ -277,7 +250,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         config.store.flipscreen = valb;
         config.save();
         display.flip();
-        display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+        display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
         return;
       }
       if (strcmp(cmd, "brightness") == 0) {
@@ -324,7 +297,8 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           tzdone = true;
         }
         if (tzdone) {
-          network.requestTimeSync(true);
+          //network.requestTimeSync(true);
+          network.forceTimeSync = true;
           config.save();
         }
         return;
@@ -351,11 +325,9 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         uint8_t valb = atoi(val);
         config.store.showweather = valb == 1;
         config.save();
-        display.showWeather();
-#ifdef USE_NEXTION
-        nextion.startWeather();
-#endif
-        display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+        network.trueWeather=false;
+        network.forceWeather = true;
+        display.putRequest(SHOWWEATHER);
         return;
       }
       if (strcmp(cmd, "lat") == 0) {
@@ -369,11 +341,8 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       if (strcmp(cmd, "key") == 0) {
         strlcpy(config.store.weatherkey, val, 64);
         config.save();
-        display.showWeather();
-#ifdef USE_NEXTION
-        nextion.startWeather();
-#endif
-        display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+        network.trueWeather=false;
+        display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
         return;
       }
       /*  RESETS  */
@@ -384,7 +353,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           config.store.vumeter = false;
           config.store.softapdelay = 0;
           config.save();
-          display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+          display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETSYSTEM, clientId);
           return;
         }
@@ -400,7 +369,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           display.setContrast();
           config.store.numplaylist = false;
           config.save();
-          display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+          display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETSCREEN, clientId);
           return;
         }
@@ -411,7 +380,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           strlcpy(config.store.sntp2, "0.ru.pool.ntp.org", 35);
           config.save();
           configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
-          network.requestTimeSync(true);
+          network.forceTimeSync = true;
           requestOnChange(GETTIMEZONE, clientId);
           return;
         }
@@ -421,11 +390,8 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           strlcpy(config.store.weatherlon, "37.6184", 10);
           strlcpy(config.store.weatherkey, "", 64);
           config.save();
-          display.showWeather();
-#ifdef USE_NEXTION
-          nextion.startWeather();
-#endif
-          display.putRequest({NEWMODE, CLEAR}); display.putRequest({NEWMODE, PLAYER});
+          network.trueWeather=false;
+          display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETWEATHER, clientId);
           return;
         }
@@ -557,7 +523,16 @@ bool NetServer::importPlaylist() {
   SPIFFS.remove(TMP_PATH);
   return false;
 }
-
+#ifndef DSP_NOT_FLIPPED
+  #define DSP_CAN_FLIPPED true
+#else
+  #define DSP_CAN_FLIPPED false
+#endif
+#if !defined(HIDE_WEATHER) && (!defined(DUMMYDISPLAY) && !defined(USE_NEXTION))
+  #define SHOW_WEATHER  true
+#else
+  #define SHOW_WEATHER  false
+#endif
 void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
   char buf[BUFLEN * 2] = { 0 };
   switch (request) {
@@ -568,22 +543,24 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
         String act = F("\"group_wifi\",");
         if (network.status == CONNECTED) {
                                                               act += F("\"group_system\",");
-          if (BRIGHTNESS_PIN != 255 || DSP_FLIPPED == 1 || DSP_MODEL == DSP_NOKIA5110 || dbgact)    act += F("\"group_display\",");
-#ifdef USE_NEXTION
+          if (BRIGHTNESS_PIN != 255 || DSP_CAN_FLIPPED || DSP_MODEL == DSP_NOKIA5110 || dbgact)    act += F("\"group_display\",");
+        #ifdef USE_NEXTION
                                                               act += F("\"group_nextion\",");
-          if (WEATHER_READY == 0 || dbgact)                   act += F("\"group_weather\",");
+          if (!SHOW_WEATHER || dbgact)                        act += F("\"group_weather\",");
           nxtn=true;
-#endif
-#if defined(LCD_I2C) || DSP_OLED
+        #endif
+                                                            #if defined(LCD_I2C) || defined(DSP_OLED)
                                                               act += F("\"group_oled\",");
-#endif
-          if (VU_READY == 1 || dbgact)                        act += F("\"group_vu\",");
+                                                            #endif
+                                                            #ifndef HIDE_VU
+                                                              act += F("\"group_vu\",");
+                                                            #endif
           if (BRIGHTNESS_PIN != 255 || nxtn || dbgact)                act += F("\"group_brightness\",");
-          if (DSP_FLIPPED == 1 || dbgact)                     act += F("\"group_tft\",");
+          if (DSP_CAN_FLIPPED || dbgact)                      act += F("\"group_tft\",");
           if (TS_CS != 255 || dbgact)                         act += F("\"group_touch\",");
           if (DSP_MODEL == DSP_NOKIA5110)                     act += F("\"group_nokia\",");
                                                               act += F("\"group_timezone\",");
-          if (WEATHER_READY == 1 || dbgact)                   act += F("\"group_weather\",");
+          if (SHOW_WEATHER || dbgact)                         act += F("\"group_weather\",");
                                                               act += F("\"group_controls\",");
           if (ENC_BTNL != 255 || ENC2_BTNL != 255 || dbgact)  act += F("\"group_encoder\",");
           if (IR_PIN != 255 || dbgact)                        act += F("\"group_ir\",");
@@ -626,7 +603,6 @@ String processor(const String& var) { // %Templates%
 
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
-    PLOW();
     request->_tempFile = SPIFFS.open(TMP_PATH , "w");
   }
   if (len) {
@@ -635,7 +611,6 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
   }
   if (final) {
     request->_tempFile.close();
-    PHIG();
   }
 }
 
@@ -674,7 +649,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
   if (network.status == CONNECTED) {
     bool commandFound=false;
     if (request->hasArg("start")) { player.request.station = config.store.lastStation; commandFound=true; }
-    if (request->hasArg("stop")) { player.mode = STOPPED; config.setTitle("[stopped]"); commandFound=true; }
+    if (request->hasArg("stop")) { player.mode = STOPPED; config.setTitle(const_PlStopped); commandFound=true; }
     if (request->hasArg("toggle")) { player.toggle(); commandFound=true; }
     if (request->hasArg("prev")) { player.prev(); commandFound=true; }
     if (request->hasArg("next")) { player.next(); commandFound=true; }

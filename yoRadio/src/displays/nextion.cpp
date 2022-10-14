@@ -1,41 +1,19 @@
-#include "../../options.h"
+#include "../core/options.h"
 
 #if NEXTION_RX!=255 && NEXTION_TX!=255
 #include "nextion.h"
-#include "../../config.h"
+#include "../core/config.h"
 
-#include "../../player.h"
-#include "../../controls.h"
-#include "../../netserver.h"
-#include "../../network.h"
+#include "../core/player.h"
+#include "../core/controls.h"
+#include "../core/netserver.h"
+#include "../core/network.h"
 
 #ifndef CORE_STACK_SIZE
-#define CORE_STACK_SIZE  1024*3
+  #define CORE_STACK_SIZE  1024*3
 #endif
 
 HardwareSerial hSerial(1); // use UART1
-Ticker weatherticker;
-//char weather[254] = { 0 };
-//bool weatherRequest = false;
-
-
-const char *ndow[7] = {"воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"};
-const char *nmnths[12] = {"января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"};
-
-#ifdef DUMMYDISPLAY
-void ticks() {
-  network.timeinfo.tm_sec ++;
-  mktime(&network.timeinfo);
-  nextion.putRequest({CLOCK,0});
-  if(nextion.mode==TIMEZONE) nextion.localTime(network.timeinfo);
-  if(nextion.mode==INFO)     nextion.rssi();
-  if(nextion.dt){
-    int rssi = WiFi.RSSI();
-    netserver.setRSSI(rssi);
-  }
-  nextion.dt=!nextion.dt;
-}
-#endif
 
 Nextion::Nextion() {
 
@@ -44,22 +22,10 @@ Nextion::Nextion() {
 void nextionCore0( void * pvParameters ){
   delay(500);
   while(true){
-//    if(displayQueue==NULL) break;
     nextion.loop();
     vTaskDelay(5);
   }
   vTaskDelete( NULL );
-}
-
-void Nextion::createCore0Task(){
-  xTaskCreatePinnedToCore(
-      nextionCore0,               /* Task function. */
-      "TaskCore0",                /* name of task. */
-      CORE_STACK_SIZE,            /* Stack size of task */
-      NULL,                       /* parameter of the task */
-      4,                          /* no one flies higher than the Toruk */
-      &_TaskCore0,                /* Task handle to keep track of created task */
-      !xPortGetCoreID());         /* pin task to core 0 */
 }
 
 void Nextion::begin(bool dummy) {
@@ -80,9 +46,10 @@ void Nextion::begin(bool dummy) {
   putcmd("");
   putcmd("bkcmd=0");
 //  putcmd("page boot");
-  if(dummy) {
+  
     _displayQueue = xQueueCreate( 5, sizeof( requestParams_t ) );
-    createCore0Task();
+  if(dummy) {
+    xTaskCreatePinnedToCore(nextionCore0, "TaskCore0", CORE_STACK_SIZE, NULL, 4, &_TaskCore0, !xPortGetCoreID());
   }
 }
 
@@ -92,30 +59,20 @@ void Nextion::start(){
     return;
   }
 #ifdef DUMMYDISPLAY
-  if(_dummyDisplay) _timer.attach_ms(1000, ticks);
-  display.mode = PLAYER;
-  config.setTitle("[READY]");
+  display.mode(PLAYER);
+  config.setTitle(const_PlReady);
 #endif
   mode = PLAYER;
   putcmd("page player");
   delay(100);
-#ifdef DUMMYDISPLAY
   newNameset(config.station.name);
   newTitle(config.station.title);
-#endif
   setVol(config.store.volume, mode == VOL);
 }
 
 void Nextion::apScreen() {
   putcmd("apscreenlock=1");
   putcmd("page settings_wifi");
-  //char cmd[20];
-  /*for(int i=0;i<5;i++){
-    snprintf(cmd, sizeof(cmd)-1, "vis b%d,%d", i, 0);
-    putcmd(cmd);
-  }*/
-  //putcmd("vis btnBack,0");
-  
 }
 
 void Nextion::putRequest(requestParams_t request){
@@ -128,20 +85,14 @@ void Nextion::processQueue(){
   requestParams_t request;
   if(xQueueReceive(_displayQueue, &request, 20)){
     switch (request.type){
-      case NEWMODE: {
-        swichMode((displayMode_e)request.payload);
-        break;
-      }
-      case CLOCK: {
-        printClock(network.timeinfo);
-        break;
-      }
-      case NEWTITLE: {
-        newTitle(config.station.title);
-        break;
-      }
-      case RETURNTITLE: {
-        //returnTile();
+      case NEWMODE: swichMode((displayMode_e)request.payload); break;
+      case CLOCK: printClock(network.timeinfo); break;
+      case DSPRSSI: rssi(); break;
+      case NEWTITLE: newTitle(config.station.title); break;
+      case BOOTSTRING: {
+        char buf[50];
+        snprintf(buf, 50, bootstrFmt, config.ssids[request.payload].ssid);
+        bootString(buf);
         break;
       }
       case NEWSTATION: {
@@ -150,18 +101,9 @@ void Nextion::processQueue(){
         bitratePic(ICON_NA);
         break;
       }
-      case NEXTSTATION: {
-        drawNextStationNum((displayMode_e)request.payload);
-        break;
-      }
-      case DRAWPLAYLIST: {
-        int p = request.payload ? display.currentPlItem + 1 : display.currentPlItem - 1;
-        if (p < 1) p = config.store.countStation;
-        if (p > config.store.countStation) p = 1;
-        display.currentPlItem = p;
-        drawPlaylist(display.currentPlItem);
-        break;
-      }
+      case SHOWWEATHER:   weatherVisible(strlen(config.store.weatherkey)>0 && config.store.showweather); break;
+      case NEXTSTATION:   drawNextStationNum(request.payload); break;
+      case DRAWPLAYLIST:  drawPlaylist(request.payload); break;
       case DRAWVOL: {
         if(!_volInside){
           setVol(config.store.volume, mode == VOL);
@@ -169,36 +111,17 @@ void Nextion::processQueue(){
         _volInside=false;
         break;
       }
+      default: break;
     }
   }
-  switch (mode) {
-    case PLAYER: {
-        //drawPlayer();
-        break;
-      }
-    case INFO:
-    case TIMEZONE: {
-        //sendInfo();
-        break;
-      }
-    case VOL: {
-        if (millis() - _volDelay > 3000) {
-          _volDelay = millis();
-          swichMode(PLAYER);
-        }
-        break;
-      }
-    case NUMBERS: {
-        //meta.loop();
-        break;
-      }
-    case STATIONS: {
-        //plCurrent.loop();
-        break;
-      }
-    default:
-        break;
+#ifdef DUMMYDISPLAY
+  if(mode==VOL || mode==STATIONS || mode==NUMBERS ){
+    if (millis() - _volDelay > (mode==VOL?3000:30000)) {
+      _volDelay = millis();
+      swichMode(PLAYER);
+    }
   }
+#endif
 }
 
 void Nextion::loop() {
@@ -230,14 +153,14 @@ void Nextion::loop() {
         rxbuf[rx_pos] = '\0';
         rx_pos = 0;
         if (sscanf(rxbuf, "page=%s", scanBuf) == 1){
-          if(strcmp(scanBuf, "player") == 0) display.putRequest({NEWMODE, PLAYER});
-          if(strcmp(scanBuf, "playlist") == 0) display.putRequest({NEWMODE, STATIONS});
+          if(strcmp(scanBuf, "player") == 0) display.putRequest(NEWMODE, PLAYER);
+          if(strcmp(scanBuf, "playlist") == 0) display.putRequest(NEWMODE, STATIONS);
           if(strcmp(scanBuf, "info") == 0) {
             putcmd("yoversion.txt", VERSION);
             putcmd("espcore.txt", _espcoreversion);
             putcmd("ipaddr.txt", WiFi.localIP().toString().c_str());
             putcmd("ssid.txt", WiFi.SSID().c_str());
-            display.putRequest({NEWMODE, INFO});
+            display.putRequest(NEWMODE, INFO);
           }
           if(strcmp(scanBuf, "eq") == 0) {
             putcmd("t4.txt", config.store.balance, true);
@@ -248,7 +171,7 @@ void Nextion::loop() {
             putcmd("h2.val", config.store.middle+16);
             putcmd("t7.txt", config.store.bass, true);
             putcmd("h3.val", config.store.bass+16);
-            display.putRequest({NEWMODE, SETTINGS});
+            display.putRequest(NEWMODE, SETTINGS);
           }
           if(strcmp(scanBuf, "wifi") == 0) {
             if(mode != WIFI){
@@ -260,7 +183,7 @@ void Nextion::loop() {
                 snprintf(cell, sizeof(cell) - 1, "t%d.txt", i*2+1);
                 putcmd(cell, config.ssids[i].password);
               }
-              display.putRequest({NEWMODE, WIFI});
+              display.putRequest(NEWMODE, WIFI);
             }
           }
           if(strcmp(scanBuf, "time") == 0) {
@@ -268,25 +191,31 @@ void Nextion::loop() {
             putcmd("tzHour.val", config.store.tzHour);
             putcmdf("tzMinText.txt=\"%02d\"", config.store.tzMin);
             putcmd("tzMin.val", config.store.tzMin);
-            display.putRequest({NEWMODE, TIMEZONE});
+            display.putRequest(NEWMODE, TIMEZONE);
           }
           if(strcmp(scanBuf, "sys") == 0) {
             putcmd("smartstart.val", config.store.smartstart==2?0:1);
             putcmd("audioinfo.val", config.store.audioinfo);
-            display.putRequest({NEWMODE, SETTINGS});
+            display.putRequest(NEWMODE, SETTINGS);
           }
         }
         if (sscanf(rxbuf, "ctrls=%s", scanBuf) == 1){
           if(strcmp(scanBuf, "up") == 0) {
             display.resetQueue();
-            display.putRequest({DRAWPLAYLIST, false});
+            int p = display.currentPlItem - 1;
+            if (p < 1) p = config.store.countStation;
+            display.currentPlItem = p;
+            display.putRequest(DRAWPLAYLIST, p);
           }
           if(strcmp(scanBuf, "dn") == 0) {
             display.resetQueue();
-            display.putRequest({DRAWPLAYLIST, true});
+            int p = display.currentPlItem + 1;
+            if (p > config.store.countStation) p = 1;
+            display.currentPlItem = p;
+            display.putRequest(DRAWPLAYLIST, p);
           }
           if(strcmp(scanBuf, "go") == 0) {
-            display.putRequest({NEWMODE, PLAYER});
+            display.putRequest(NEWMODE, PLAYER);
             player.request.station=display.currentPlItem;
           }
           if(strcmp(scanBuf, "toggle") == 0) {
@@ -320,23 +249,21 @@ void Nextion::loop() {
         }
         if (sscanf(rxbuf, "tzhour=%d", &scanDigit) == 1){
           config.setTimezone((int8_t)scanDigit, config.store.tzMin);
-          //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
           if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
             configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
           }else if(strlen(config.store.sntp1)>0){
             configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
           }
-          network.requestTimeSync(true);
+          network.forceTimeSync = true;
         }
         if (sscanf(rxbuf, "tzmin=%d", &scanDigit) == 1){
           config.setTimezone(config.store.tzHour, (int8_t)scanDigit);
-          //configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), SNTP_SERVER);
           if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
             configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
           }else if(strlen(config.store.sntp1)>0){
             configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
           }
-          network.requestTimeSync(true);
+          network.forceTimeSync = true;
         }
         if (sscanf(rxbuf, "audioinfo=%d", &scanDigit) == 1){
           config.store.audioinfo = scanDigit;
@@ -411,7 +338,7 @@ void Nextion::bitrate(int bpm){
   if(bpm>0){
     putcmd("player.bitrate.txt", bpm, true);
   }else{
-    putcmd("player.bitrate.txt=\"und\"");
+    putcmd("player.bitrate.txt=\" \"");
   }
 }
 
@@ -434,6 +361,13 @@ void Nextion::bitratePic(uint8_t pic){
   putcmd("player.bitrate.pic", pic);
 }
 
+void Nextion::audioinfo(const char* info){
+  if (strstr(info, "format is aac")  != NULL) bitratePic(ICON_AAC);
+  if (strstr(info, "format is flac") != NULL) bitratePic(ICON_FLAC);
+  if (strstr(info, "format is mp3")  != NULL) bitratePic(ICON_MP3);
+  if (strstr(info, "format is wav")  != NULL) bitratePic(ICON_WAV);
+}
+
 void Nextion::bootString(const char* bs) {
   char buf[50] = { 0 };
   strlcpy(buf, bs, 50);
@@ -449,10 +383,7 @@ void Nextion::newNameset(const char* meta){
 void Nextion::setVol(uint8_t vol, bool dialog){
   if(dialog){
     putcmd("dialog.text.txt", vol, true);
-  }/*else{
-    putcmd("player.volText.txt", vol, true);
-    putcmd("player.volumeSlider.val", vol);
-  }*/
+  }
   putcmd("player.volText.txt", vol, true);
   putcmd("player.volumeSlider.val", vol);
 }
@@ -480,12 +411,14 @@ void Nextion::newTitle(const char* title){
 }
 
 void Nextion::printClock(struct tm timeinfo){
-  char timeStringBuff[70] = { 0 };
+  char timeStringBuff[100] = { 0 };
   strftime(timeStringBuff, sizeof(timeStringBuff), "player.clock.txt=\"%H:%M\"", &timeinfo);
   putcmd(timeStringBuff);
   putcmdf("player.secText.txt=\"%02d\"", timeinfo.tm_sec);
-  snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", ndow[timeinfo.tm_wday], timeinfo.tm_mday, nmnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
+  snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", dowf[timeinfo.tm_wday], timeinfo.tm_mday, mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
   putcmd(utf8Rus(timeStringBuff, false));
+  if(mode==TIMEZONE) localTime(network.timeinfo);
+  if(mode==INFO)     rssi();
 }
 
 void Nextion::localTime(struct tm timeinfo){
@@ -505,6 +438,7 @@ void Nextion::drawPlaylist(uint16_t currentPlItem){
     snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", i, nextion.utf8Rus(plMenu[i], true));
     putcmd(cmd);
   }
+  _volDelay = millis();
 }
 
 void Nextion::drawNextStationNum(uint16_t num) {//dialog
@@ -512,10 +446,9 @@ void Nextion::drawNextStationNum(uint16_t num) {//dialog
   char currentItemText[40] = {0};
   config.fillPlMenu(plMenu, num, 1, true);
   strlcpy(currentItemText, plMenu[0], 39);
-  //meta.setText(dsp.utf8Rus(currentItemText, true));
   putcmd("dialog.title.txt", utf8Rus(currentItemText, true));
   putcmd("dialog.text.txt", num, true);
-  //dsp.drawNextStationNum(num);
+  _volDelay = millis();
 }
 
 void Nextion::swichMode(displayMode_e newmode){
@@ -525,12 +458,8 @@ void Nextion::swichMode(displayMode_e newmode){
   if (newmode == mode) return;
   mode = newmode;
 #ifdef DUMMYDISPLAY
-  display.mode = newmode;
+  display.mode(newmode);
 #endif
-/*  if (newmode != STATIONS) {
-    ip();
-    volume();
-  }*/
   if (newmode == PLAYER) {
     putcmd("page player");
     putcmd("dialog.title.txt", "");
@@ -558,158 +487,6 @@ void Nextion::swichMode(displayMode_e newmode){
 #endif
     drawPlaylist(config.store.lastStation);
   }
-}
-
-bool Nextion::getForecast(){
-  WiFiClient client;
-  const char* host  = "api.openweathermap.org";
-  if (!client.connect(host, 80)) {
-    Serial.println("## OPENWEATHERMAP ###: connection  failed");
-    return false;
-  }
-  char httpget[250] = {0};
-  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=metric&lang=ru&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, config.store.weatherkey, host);
-  client.print(httpget);
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 2000UL) {
-      Serial.println("## OPENWEATHERMAP ###: client available timeout !");
-      client.stop();
-      return false;
-    }
-  }
-  timeout = millis();
-  String line = "";
-  if (client.connected()) {
-    while (client.available())
-    {
-      line = client.readStringUntil('\n');
-      if (strstr(line.c_str(), "\"temp\"") != NULL) {
-        client.stop();
-        break;
-      }
-      if ((millis() - timeout) > 500)
-      {
-        client.stop();
-        Serial.println("## OPENWEATHERMAP ###: client read timeout !");
-        return false;
-      }
-    }
-  }
-  if (strstr(line.c_str(), "\"temp\"") == NULL) {
-    Serial.println("## OPENWEATHERMAP ###: weather not found !");
-    return false;
-  }
-  char *tmpe;
-  char *tmps;
-  const char* cursor = line.c_str();
-  char desc[120], temp[20], hum[20], press[20], icon[5];
-
-  tmps = strstr(cursor, "\"description\":\"");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: description not found !"); return false;}
-  tmps += 15;
-  tmpe = strstr(tmps, "\",\"");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: description not found !"); return false;}
-  strlcpy(desc, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  
-  // "ясно","icon":"01d"}],
-  tmps = strstr(cursor, "\"icon\":\"");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: icon not found !"); return false;}
-  tmps += 8;
-  tmpe = strstr(tmps, "\"}");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: icon not found !"); return false;}
-  strlcpy(icon, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  
-  tmps = strstr(cursor, "\"temp\":");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: temp not found !"); return false;}
-  tmps += 7;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: temp not found !"); return false;}
-  strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  float tempf = atof(temp);
-  tmps = strstr(cursor, "\"pressure\":");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
-  tmps += 11;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
-  strlcpy(press, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  int pressi = (float)atoi(press) / 1.333;
-
-  tmps = strstr(cursor, "humidity\":");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
-  tmps += 10;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
-  strlcpy(hum, tmps, tmpe - tmps + 1);
-
-  if(config.store.audioinfo) Serial.printf("## OPENWEATHERMAP ###: description: %s, temp:%.1f C, pressure:%dmmHg, humidity:%s%%\n", desc, tempf, pressi, hum);
-
-  putcmdf("press_txt.txt=\"%dmm\"", pressi);
-  putcmdf("hum_txt.txt=\"%d%%\"", atoi(hum));
-  char cmd[30];
-  snprintf(cmd, sizeof(cmd)-1,"temp_txt.txt=\"%.1f\"", tempf);
-  putcmd(cmd);
-  int iconofset;
-  if(strstr(icon,"01")!=NULL){
-    iconofset = 0;
-  }else if(strstr(icon,"02")!=NULL){
-    iconofset = 1;
-  }else if(strstr(icon,"03")!=NULL){
-    iconofset = 2;
-  }else if(strstr(icon,"04")!=NULL){
-    iconofset = 3;
-  }else if(strstr(icon,"09")!=NULL){
-    iconofset = 4;
-  }else if(strstr(icon,"10")!=NULL){
-    iconofset = 5;
-  }else if(strstr(icon,"11")!=NULL){
-    iconofset = 6;
-  }else if(strstr(icon,"13")!=NULL){
-    iconofset = 7;
-  }else if(strstr(icon,"50")!=NULL){
-    iconofset = 8;
-  }else{
-    iconofset = 9;
-  }
-  putcmd("cond_img.pic", 50+iconofset);
-  weatherVisible(1);
-  return true;
-}
-
-void Nextion::getWeather(void * pvParameters){
-  delay(200);
-  if (nextion.getForecast()) {
-//    nextion.weatherRequest = true;
-    weatherticker.detach();
-    weatherticker.attach(WEATHER_REQUEST_INTERVAL, nextion.updateWeather);
-  } else {
-    weatherticker.detach();
-    weatherticker.attach(WEATHER_REQUEST_INTERVAL_FAULTY, nextion.updateWeather);
-  }
-  vTaskDelete( NULL );
-}
-
-void Nextion::updateWeather() {
-  if(strlen(config.store.weatherkey)==0 || !config.store.showweather) {
-    nextion.weatherVisible(0);
-    return;
-  }
-  xTaskCreatePinnedToCore(
-    nextion.getWeather,               /* Task function. */
-    "nextiongetWeather",              /* name of task. */
-    1024 * 4,                         /* Stack size of task */
-    NULL,                             /* parameter of the task */
-    0,                                /* priority of the task */
-    &nextion.weatherUpdateTaskHandle, /* Task handle to keep track of created task */
-    0);                               /* pin task to core 0 */
-}
-
-void Nextion::startWeather(){
-  updateWeather();
 }
 
 void Nextion::sleep(void) { 

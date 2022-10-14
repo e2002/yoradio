@@ -51,6 +51,8 @@ uint16_t Config::color565(uint8_t r, uint8_t g, uint8_t b)
 void Config::loadTheme(){
   theme.background  = color565(COLOR_BACKGROUND);
   theme.meta        = color565(COLOR_STATION_NAME);
+  theme.metabg      = color565(COLOR_STATION_BG);
+  theme.metafill    = color565(COLOR_STATION_FILL);
   theme.title1      = color565(COLOR_SNG_TITLE_1);
   theme.title2      = color565(COLOR_SNG_TITLE_2);
   theme.digit       = color565(COLOR_DIGITS);
@@ -67,6 +69,7 @@ void Config::loadTheme(){
   theme.ip          = color565(COLOR_IP);
   theme.vol         = color565(COLOR_VOLUME_VALUE);
   theme.rssi        = color565(COLOR_RSSI);
+  theme.bitrate     = color565(COLOR_BITRATE);
   theme.volbarout   = color565(COLOR_VOLBAR_OUT);
   theme.volbarin    = color565(COLOR_VOLBAR_IN);
   theme.playlist[0] = color565(COLOR_PLAYLIST_0);
@@ -119,7 +122,7 @@ void Config::setDefaults() {
   store.dspon=true;
   store.brightness=100;
   store.contrast=55;
-  strlcpy(store.sntp1,"0.ru.pool.ntp.org", 35);
+  strlcpy(store.sntp1,"pool.ntp.org", 35);
   strlcpy(store.sntp2,"1.ru.pool.ntp.org", 35);
   store.showweather=false;
   strlcpy(store.weatherlat,"55.7512", 10);
@@ -218,7 +221,7 @@ void Config::setTitle(const char* title) {
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
   u8fix(config.station.title);
-  display.putRequest({NEWTITLE, 0});
+  display.putRequest(NEWTITLE);
 }
 
 void Config::setStation(const char* station) {

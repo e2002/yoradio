@@ -1,9 +1,8 @@
 #ifndef NEXTION_H
 #define NEXTION_H
 
-//#include <SoftwareSerial.h>
 #include <HardwareSerial.h>
-#include "../../display.h"
+#include "../core/display.h"
 
 #define TXBUFLEN  255
 #define RXBUFLEN  50
@@ -17,9 +16,6 @@
 #define ICON_MP3      ICON_NA+3
 #define ICON_WAV      ICON_NA+4
 
-#define WEATHER_REQUEST_INTERVAL          1800 //30min
-#define WEATHER_REQUEST_INTERVAL_FAULTY   30
-
 class Nextion {
   private:
     char          txbuf[TXBUFLEN];
@@ -31,16 +27,12 @@ class Nextion {
     QueueHandle_t _displayQueue=NULL;
     bool          _dummyDisplay;
     bool          _volInside;
-    Ticker        _timer;
     unsigned long _volDelay;
-    void createCore0Task();
     void processQueue();
     void drawVU();
   public:
     displayMode_e mode;
     bool dt;
-    TaskHandle_t weatherUpdateTaskHandle;
-//    bool weatherRequest;
   public:
     Nextion();
     void  begin(bool dummy=false);
@@ -60,6 +52,7 @@ class Nextion {
     void  printClock(struct tm timeinfo);
     void  bitrate(int bpm);
     void  bitratePic(uint8_t pic);
+    void  audioinfo(const char* info);
     void  rssi();
     void  weatherVisible(uint8_t vis);
     void  localTime(struct tm timeinfo);
@@ -67,12 +60,8 @@ class Nextion {
     void  swichMode(displayMode_e newmode);
     void  drawNextStationNum(uint16_t num);
     void  putRequest(requestParams_t request);
-    void  startWeather();
-    bool  getForecast();
-    static void  updateWeather();
-    static void  getWeather(void * pvParameters);
-    void sleep();
-    void wake();
+    void  sleep();
+    void  wake();
 };
 
 extern Nextion nextion;

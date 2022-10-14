@@ -17,6 +17,7 @@
 - [More features](#more-features)
 - [Plugins](#plugins)
 - [Version history](#version-history)
+- [Описание на 4PDA](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=112992611)
 ---
 <img src="images/img0.jpg" width="830" height="443">
 
@@ -293,11 +294,26 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Plugins
-At the moment, you can display additional information on the display by writing a few additional functions. There is no documentation yet, you will have to deal with the examples, which is in directory [exsamples/plugins/](https://github.com/e2002/yoradio/tree/main/exsamples/plugins).\
+There is no documentation yet, you will have to deal with the examples, which is in directory [exsamples/plugins/](https://github.com/e2002/yoradio/tree/main/exsamples/plugins).\
 Work is in progress...
 
 ---
 ## Version history
+#### v0.8.00b
+- rewritten the display engine
+- added the ability to position widgets on the display using configuration files. More info in yoRadio/src/displays/conf/ and here https://github.com/e2002/yoradio/wiki/Widgets
+- the VU_PARAMS3 parameter is deprecated. VUmeter configuration is done through yoRadio/src/displays/conf/ configs
+- added bitrate display on displays
+- added the ability to display the weather on all displays except LCD1602
+- examples of plug-ins related to displaying information on the display are outdated and no longer work. The examples have been removed from the exsamples/plugins folder.
+- the structure of the project files has been changed so that I don’t know what.
+- localization of information displayed on the display (rus, en). Option L10N_LANGUAGE (EN by default. see exsamples/myoptions.h for details)
+- changes in mytheme.h . Added colors COLOR_STATION_BG, COLOR_STATION_FILL, COLOR_BITRATE
+- optimization, refactoring
+- bugs fixes
+- bugs adding
+- probably something else that I forgot .__.
+
 #### v0.7.540
 - fixed compilation error when using NEXTION display with DUMMY display
 

@@ -1,4 +1,4 @@
-#include "../../options.h"
+#include "../core/options.h"
 #if VS1053_CS==255
 /*
  * Audio.cpp
@@ -3892,26 +3892,32 @@ bool Audio::parseContentType(char* ct) {
         case CT_MP3:
             m_codec = CODEC_MP3;
             if(m_f_Log) { log_i("ContentType %s, format is mp3", ct); } //ok is likely mp3
+            if(audio_info) audio_info("format is mp3");
             break;
         case CT_AAC:
             m_codec = CODEC_AAC;
             if(m_f_Log) { log_i("ContentType %s, format is aac", ct); }
+            if(audio_info) audio_info("format is aac");
             break;
         case CT_M4A:
             m_codec = CODEC_M4A;
             if(m_f_Log) { log_i("ContentType %s, format is aac", ct); }
+            if(audio_info) audio_info("format is aac");
             break;
         case CT_FLAC:
             m_codec = CODEC_FLAC;
             if(m_f_Log) { log_i("ContentType %s, format is flac", ct); }
+            if(audio_info) audio_info("format is flac");
             break;
         case CT_WAV:
             m_codec = CODEC_WAV;
             if(m_f_Log) { log_i("ContentType %s, format is wav", ct); }
+            if(audio_info) audio_info("format is wav");
             break;
         case CT_OGG:
             m_codec = CODEC_OGG;
             if(m_f_Log) { log_i("ContentType %s found", ct); }
+            if(audio_info) audio_info("format is ogg");
             break;
 
         case CT_PLS:

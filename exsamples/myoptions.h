@@ -9,8 +9,10 @@ Uncomment the lines you need, to override the default value and set the values a
 The connection tables are located here https://github.com/e2002/yoradio#connection-tables
 
 ********************************************************/
+#define LED_BUILTIN       2                 /*  Onboard LED Pin */
+#define L10N_LANGUAGE     EN                /*  Language (EN, RU). More info in yoRadio/locale/displayL10n_(en|ru).h
 
-/*  DSP_MODEL. See description/available values in the options.h file  */
+/*  DSP_MODEL. See description/available values in https://github.com/e2002/yoradio/wiki/Available-display-models  */
 /*  This option is required. Use DSP_DUMMY if no display is connected */
 #define DSP_MODEL         DSP_DUMMY
 /*
@@ -58,7 +60,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define ENC_BTNL              255           /*  Left rotation */
 //#define ENC_BTNB              255           /*  Encoder button */
 //#define ENC_BTNR              255           /*  Right rotation */
-//#define ENC_INTERNALPULLUP    true          /*  Enable the weak pull up resistors */
+//#define ENC_INTERNALPULLUP    true          /*  Enabl//#define LED_BUILTIN       2                 /*  LED Pin */e the weak pull up resistors */
 //#define ENC_HALFQUARD         true          /*  Experiment  with it */
 /******************************************/
 
@@ -108,7 +110,6 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
                                               /*  INITR_MINI160x80      // 0.96' 160x80 ST7735S   https://????  */
                                               /*  INITR_GREENTAB  */
                                               /*  INITR_REDTAB  */
-//#define LED_BUILTIN       2                 /*  LED Pin */
 //#define MUTE_PIN          255               /*  MUTE Pin */
 //#define MUTE_VAL          HIGH              /*  Write this to MUTE_PIN when player is stopped */
 //#define BRIGHTNESS_PIN    255               /*  Pin for adjusting the brightness of the display (output 0 - 3v3) */

@@ -11,36 +11,36 @@
 Player player;
 
 #if VS1053_CS!=255 && !I2S_INTERNAL
-Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {
+  Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {
 
-}
-void ResetChip(){
-  pinMode(VS1053_RST, OUTPUT);
-  digitalWrite(VS1053_RST, LOW);
-  delay(30);
-  digitalWrite(VS1053_RST, HIGH);
-  delay(100);
-}
+  }
+  void ResetChip(){
+    pinMode(VS1053_RST, OUTPUT);
+    digitalWrite(VS1053_RST, LOW);
+    delay(30);
+    digitalWrite(VS1053_RST, HIGH);
+    delay(100);
+  }
 #else
-#if !I2S_INTERNAL
-Player::Player() {}
-#else
-Player::Player(): Audio(true, I2S_DAC_CHANNEL_BOTH_EN)  {}
-#endif
+  #if !I2S_INTERNAL
+    Player::Player() {}
+  #else
+    Player::Player(): Audio(true, I2S_DAC_CHANNEL_BOTH_EN)  {}
+  #endif
 #endif
 
 
 void Player::init() {
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
-#if I2S_DOUT!=255
-#if !I2S_INTERNAL
-  setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-#endif
-#else
-  SPI.begin();
-  if(VS1053_RST>0) ResetChip();
-  begin();
-#endif
+  #if I2S_DOUT!=255
+    #if !I2S_INTERNAL
+      setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+    #endif
+  #else
+    SPI.begin();
+    if(VS1053_RST>0) ResetChip();
+    begin();
+  #endif
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
@@ -59,23 +59,31 @@ void Player::stopInfo() {
   requestToStart = true;
 }
 
+void Player::stop(const char *nttl){
+  mode = STOPPED;
+  setOutputPins(false);
+  if(nttl) config.setTitle(nttl);
+  else config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
+  netserver.requestOnChange(TITLE, 0);
+  config.station.bitrate = 0;
+  #ifdef USE_NEXTION
+    nextion.bitrate(config.station.bitrate);
+  #endif
+  netserver.requestOnChange(BITRATE, 0);
+  display.putRequest(DBITRATE);
+  display.putRequest(PSTOP);
+  setDefaults();
+  stopInfo();
+  if (player_on_stop_play) player_on_stop_play();
+}
+
 void Player::loop() {
   if (mode == PLAYING) {
     xSemaphoreTake(playmutex, portMAX_DELAY);
     Audio::loop();
     xSemaphoreGive(playmutex);
-    //vTaskDelay(2);
   } else {
-    if (isRunning()) {
-      //digitalWrite(LED_BUILTIN, LOW);
-      setOutputPins(false);
-      config.setTitle((display.mode==LOST || display.mode==UPDATING)?"":"[stopped]");
-      netserver.requestOnChange(TITLE, 0);
-      //stopSong();
-      setDefaults();
-      stopInfo();
-      if (player_on_stop_play) player_on_stop_play();
-    }
+    if (isRunning())  stop();
   }
   if (request.station > 0) {
     if (request.doSave) {
@@ -90,7 +98,7 @@ void Player::loop() {
     telnet.printf("##CLI.VOL#: %d\n", config.store.volume);
     Audio::setVolume(volToI2S(request.volume));
     zeroRequest();
-    display.putRequest({DRAWVOL, 0});
+    display.putRequest(DRAWVOL);
     netserver.requestOnChange(VOLUME, 0);
   }
   if(volTimer){
@@ -113,16 +121,15 @@ void Player::setOutputPins(bool isPlaying) {
 }
 
 void Player::play(uint16_t stationId) {
-  //stopSong();
+  display.putRequest(PSTOP);
   setDefaults();
   setOutputPins(false);
-  config.setTitle("[connecting]");
+  config.setTitle(const_PlConnect);
   config.station.bitrate=0;
   netserver.requestOnChange(TITLE, 0);
-  //telnet.printf("##CLI.META#: %s\n", config.station.title);
   config.loadStation(stationId);
   setVol(config.store.volume, true);
-  display.putRequest({NEWSTATION, 0});
+  display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
   if (connecttohost(config.station.url)) {
@@ -131,6 +138,7 @@ void Player::play(uint16_t stationId) {
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
     requestToStart = true;
+    display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
   }else{
     Serial.println("some unknown bug...");
@@ -152,7 +160,6 @@ void Player::next() {
 void Player::toggle() {
   if (mode == PLAYING) {
     mode = STOPPED;
-    //display.title("[stopped]");
   } else {
     request.station = config.store.lastStation;
   }
