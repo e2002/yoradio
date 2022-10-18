@@ -19,7 +19,7 @@
 //#define COLOR_BACKGROUND        255, 255,   0     /*  background                                                */
 //#define COLOR_STATION_NAME        0,   0,   0     /*  station name                                              */
 //#define COLOR_STATION_BG         91, 118, 255     /*  station name background                                   */
-//#define COLOR_STATION_FILL      231, 211,  90     /*  station name fill background                              */
+//#define COLOR_STATION_FILL       91, 118, 255     /*  station name fill background                              */
 //#define COLOR_SNG_TITLE_1       255,   0,   0     /*  first title                                               */
 //#define COLOR_SNG_TITLE_2         0,   0,   0     /*  second title                                              */
 //#define COLOR_WEATHER           255,   0, 216     /*  weather string                                            */
@@ -39,6 +39,9 @@
 //#define COLOR_DIGITS            100, 100, 255     /*  volume / station number                                   */
 //#define COLOR_DIVIDER             0, 255,   0     /*  divider color (DSP_ST7789, DSP_ILI9341, DSP_ILI9225)      */
 //#define COLOR_BITRATE           231, 211,  90     /*  bitrate                                                   */
+//#define COLOR_PL_CURRENT          0,   0,   0     /*  playlist current item                                     */
+//#define COLOR_PL_CURRENT_BG      91, 118, 255     /*  playlist current item background                          */
+//#define COLOR_PL_CURRENT_FILL    91, 118, 255     /*  playlist current item fill background                     */
 //#define COLOR_PLAYLIST_0        255,   0,   0     /*  playlist string 0                                         */
 //#define COLOR_PLAYLIST_1          0, 255,   0     /*  playlist string 1                                         */
 //#define COLOR_PLAYLIST_2        255,   0, 255     /*  playlist string 2                                         */

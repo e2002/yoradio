@@ -48,6 +48,9 @@ struct theme_t {
   uint16_t bitrate;
   uint16_t volbarout;
   uint16_t volbarin;
+  uint16_t plcurrent;
+  uint16_t plcurrentbg;
+  uint16_t plcurrentfill;
   uint16_t playlist[5];
 };
 struct config_t

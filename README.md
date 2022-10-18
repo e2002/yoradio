@@ -299,6 +299,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.02b
+- fixed artifacts when displaying the volume level
+- changes in mytheme.h . Added colors COLOR_PL_CURRENT, COLOR_PL_CURRENT_BG, COLOR_PL_CURRENT_FILL. Details in [exsamples/mytheme.h](exsamples/mytheme.h)
+
 #### v0.8.01b
 - fix INITR_MINI160x80 compiling error
 - fix ENC_INTERNALPULLUP descriotion in exsamples/myoptions.h

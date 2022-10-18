@@ -78,13 +78,13 @@ void Display::_buildPager(){
   #if DSP_MODEL==DSP_NOKIA5110
     _plcurrent.init("*", playlistConf, 0, 1);
   #else
-    _plcurrent.init("*", playlistConf, config.theme.meta, config.theme.metabg);
+    _plcurrent.init("*", playlistConf, config.theme.plcurrent, config.theme.plcurrentbg);
   #endif
   #ifndef HIDE_TITLE2
     _title2 = new ScrollWidget("*", title2Conf, config.theme.title2, config.theme.background);
   #endif
   #if !defined(DSP_LCD) && DSP_MODEL!=DSP_NOKIA5110
-    _plbackground = new FillWidget(playlBGConf, config.theme.metafill);
+    _plbackground = new FillWidget(playlBGConf, config.theme.plcurrentfill);
     _metabackground = new FillWidget(metaBGConf, config.theme.metafill);
   #endif
   #if DSP_MODEL==DSP_NOKIA5110
