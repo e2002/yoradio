@@ -2,6 +2,7 @@
 #define config_h
 #include "Arduino.h"
 #include <Ticker.h>
+#include <SPI.h>
 #include "options.h"
 
 #define EEPROM_SIZE       768
@@ -184,5 +185,9 @@ class Config {
 };
 
 extern Config config;
+#if DSP_HSPI || TS_HSPI || VS_HSPI
+extern SPIClass  SPI2;
+#endif
+
 
 #endif

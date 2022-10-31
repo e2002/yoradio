@@ -30,9 +30,11 @@ const unsigned char logo [] PROGMEM=
 };
 
 #if DSP_MODEL==DSP_SSD1305
-DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {
-
-}
+  #if DSP_HSPI
+    DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI2, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {}
+  #else
+    DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {}
+  #endif
 #else
 #include <Wire.h>
 TwoWire I2CSSD1305 = TwoWire(0);

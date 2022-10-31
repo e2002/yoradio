@@ -11,9 +11,11 @@
 Player player;
 
 #if VS1053_CS!=255 && !I2S_INTERNAL
-  Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {
-
-  }
+  #if VS_HSPI
+    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, HSPI, 13, 12, 14) {}
+  #else
+    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ) {}
+  #endif
   void ResetChip(){
     pinMode(VS1053_RST, OUTPUT);
     digitalWrite(VS1053_RST, LOW);
@@ -116,7 +118,7 @@ void Player::zeroRequest() {
 }
 
 void Player::setOutputPins(bool isPlaying) {
-  digitalWrite(LED_BUILTIN, isPlaying);
+  digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
   if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, isPlaying?!MUTE_VAL:MUTE_VAL);
 }
 

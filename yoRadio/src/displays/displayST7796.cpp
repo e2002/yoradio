@@ -1,50 +1,56 @@
 #include "../core/options.h"
-#if DSP_MODEL==DSP_ILI9341
+#if DSP_MODEL==DSP_ST7796
 
-#include "displayILI9341.h"
+#include "displayST7796.h"
+//#include <SPI.h>
 #include "fonts/bootlogo.h"
 #include "../core/player.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
+#ifndef DEF_SPI_FREQ
+  #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
+#endif
+
 #define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
 #define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
 
 #if DSP_HSPI
-DspCore::DspCore(): Adafruit_ILI9341(&SPI2, TFT_DC, TFT_CS, TFT_RST) {}
+DspCore::DspCore(): Adafruit_ST7796S_kbv(&SPI2, TFT_DC, TFT_CS, TFT_RST) {}
 #else
-DspCore::DspCore(): Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST) {}
+DspCore::DspCore(): Adafruit_ST7796S_kbv(TFT_CS, TFT_DC, TFT_RST) {}
 #endif
 
 #include "tools/utf8RusGFX.h"
 
 void DspCore::initDisplay() {
-  begin();             /* SPI_DEFAULT_FREQ 40000000 */
+  begin();
+  if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   invert();
   cp437(true);
   flip();
   setTextWrap(false);
+  setTextSize(1);
+  fillScreen(0x0000);
 }
 
-void DspCore::drawLogo(uint16_t top) {
-  drawRGBBitmap((width() - 99) / 2, top, bootlogo2, 99, 64);
-}
+void DspCore::drawLogo(uint16_t top) { drawRGBBitmap((width() - 99) / 2, top, bootlogo2, 99, 64); }
 
 void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
   for (byte i = 0; i < PLMITEMS; i++) {
     plMenu[i][0] = '\0';
   }
   config.fillPlMenu(plMenu, currentItem - 5, PLMITEMS);
-  setTextSize(2);
+  setTextSize(3);
   int yStart = (height() / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
-  //fillRect(0, (height() / 2 - PLMITEMHEIGHT / 2) - 1, width(), PLMITEMHEIGHT + 2, config.theme.meta);
+
   for (byte i = 0; i < PLMITEMS; i++) {
     if (i == 5) {
       strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
     } else {
       setTextColor(config.theme.playlist[abs(i - 5)-1], config.theme.background);
       setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
-      fillRect(0, yStart + i * PLMITEMHEIGHT-1, width(), PLMITEMHEIGHT-4, config.theme.background);
+      fillRect(0, yStart + i * PLMITEMHEIGHT - 1, width(), PLMITEMHEIGHT - 6, config.theme.background);
       print(utf8Rus(plMenu[i], true));
     }
   }
@@ -57,7 +63,7 @@ GFXglyph *pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c) {
 }
 
 uint8_t DspCore::_charWidth(unsigned char c){
-  GFXglyph *glyph = pgm_read_glyph_ptr(&DS_DIGI42pt7b, c - 0x20);
+  GFXglyph *glyph = pgm_read_glyph_ptr(&DS_DIGI56pt7b, c - 0x20);
   return pgm_read_byte(&glyph->xAdvance);
 }
 
@@ -75,33 +81,40 @@ void DspCore::_getTimeBounds() {
 }
 
 void DspCore::_clockSeconds(){
-  setTextSize(3);
+  setTextSize(4);
   setTextColor(config.theme.seconds, config.theme.background);
-  setCursor(width() - 8 - clockRightSpace - CHARWIDTH*3*2, clockTop-clockTimeHeight+1);
+  setCursor(width() - 8 - clockRightSpace - CHARWIDTH*4*2, clockTop-clockTimeHeight+1);
   sprintf(_bufforseconds, "%02d", network.timeinfo.tm_sec);
   print(_bufforseconds);                                      /* print seconds */
+  setTextSize(1);
+  setFont(&DS_DIGI56pt7b);
+  setTextColor((network.timeinfo.tm_sec % 2 == 0) ? config.theme.clock : config.theme.background, config.theme.background);
+  setCursor(_timeleft+_dotsLeft, clockTop);
+  print(":");                                     /* print dots */
+  setFont();
 }
 
 void DspCore::_clockDate(){
   if(_olddateleft>0)
     dsp.fillRect(_olddateleft,  clockTop+10, _olddatewidth, CHARHEIGHT, config.theme.background);
   setTextColor(config.theme.date, config.theme.background);
-  setCursor(_dateleft, clockTop+10);
+  setCursor(_dateleft, clockTop+15);
+  setTextSize(2);
   print(_dateBuf);                                            /* print date */
   strlcpy(_oldDateBuf, _dateBuf, sizeof(_dateBuf));
   _olddatewidth = _datewidth;
   _olddateleft = _dateleft;
-  setTextSize(3);
+  setTextSize(4);
   setTextColor(config.theme.dow, config.theme.background);
-  setCursor(width() - 8 - clockRightSpace - CHARWIDTH*3*2, clockTop-CHARHEIGHT*3+4);
+  setCursor(width() - 8 - clockRightSpace - CHARWIDTH*4*2, clockTop-CHARHEIGHT*4+4);
   print(utf8Rus(dow[network.timeinfo.tm_wday], false));       /* print dow */
 }
 
 void DspCore::_clockTime(){
   if(_oldtimeleft>0) dsp.fillRect(_oldtimeleft, clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
-  _timeleft = width()-clockRightSpace-CHARWIDTH*3*2-24-_timewidth;
+  _timeleft = width()-clockRightSpace-CHARWIDTH*4*2-24-_timewidth;
   setTextSize(1);
-  setFont(&DS_DIGI42pt7b);
+  setFont(&DS_DIGI56pt7b);
   setTextColor(config.theme.clock, config.theme.background);
   setCursor(_timeleft, clockTop);
   print(_timeBuf);
@@ -109,12 +122,12 @@ void DspCore::_clockTime(){
   strlcpy(_oldTimeBuf, _timeBuf, sizeof(_timeBuf));
   _oldtimewidth = _timewidth;
   _oldtimeleft = _timeleft;
-  drawFastVLine(width()-clockRightSpace-CHARWIDTH*3*2-18, clockTop-clockTimeHeight, clockTimeHeight+3, config.theme.div);  /*divider vert*/
-  drawFastHLine(width()-clockRightSpace-CHARWIDTH*3*2-18, clockTop-clockTimeHeight+29, 44, config.theme.div);              /*divider hor*/
+  drawFastVLine(width()-clockRightSpace-CHARWIDTH*4*2-18, clockTop-clockTimeHeight, clockTimeHeight+4, config.theme.div);  /*divider vert*/
+  drawFastHLine(width()-clockRightSpace-CHARWIDTH*4*2-18, clockTop-clockTimeHeight+37, 59, config.theme.div);              /*divider hor*/
   sprintf(_buffordate, "%2d %s %d", network.timeinfo.tm_mday,mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
   strlcpy(_dateBuf, utf8Rus(_buffordate, true), sizeof(_dateBuf));
-  _datewidth = strlen(_dateBuf) * CHARWIDTH;
-  _dateleft = width() - 8 - clockRightSpace - _datewidth;
+  _datewidth = strlen(_dateBuf) * CHARWIDTH*2;
+  _dateleft = width() - 10 - clockRightSpace - _datewidth;
 }
 
 void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight, bool redraw){
@@ -131,20 +144,22 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
 }
 
 void DspCore::clearClock(){
-  dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+CHARWIDTH*3*2+24, clockTimeHeight+10+CHARHEIGHT, config.theme.background);
+  dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+CHARWIDTH*3*2+24, clockTimeHeight+12+CHARHEIGHT, config.theme.background);
 }
 
 void DspCore::startWrite(void) {
   TAKE_MUTEX();
-  Adafruit_ILI9341::startWrite();
+  Adafruit_ST7796S_kbv::startWrite();
 }
 
 void DspCore::endWrite(void) {
-  Adafruit_ILI9341::endWrite();
+  Adafruit_ST7796S_kbv::endWrite();
   GIVE_MUTEX();
 }
 
-void DspCore::loop(bool force) { }
+void DspCore::loop(bool force) {
+
+}
 
 void DspCore::charSize(uint8_t textsize, uint8_t& width, uint16_t& height){
   width = textsize * CHARWIDTH;
@@ -156,28 +171,33 @@ void DspCore::setTextSize(uint8_t s){
 }
 
 void DspCore::flip(){
-  setRotation(config.store.flipscreen?1:3);
+  setRotation(config.store.flipscreen?3:1);
 }
 
 void DspCore::invert(){
   invertDisplay(config.store.invertdisplay);
 }
 
-void DspCore::sleep(void) { sendCommand(ILI9341_SLPIN); delay(150); sendCommand(ILI9341_DISPOFF); delay(150);}
-void DspCore::wake(void) { sendCommand(ILI9341_DISPON); delay(150); sendCommand(ILI9341_SLPOUT); delay(150);}
+void DspCore::sleep(void) { 
+  sendCommand(ST7796S_SLPIN); delay(150); sendCommand(ST7796S_DISPOFF); delay(150);
+}
+
+void DspCore::wake(void) { 
+  sendCommand(ST7796S_DISPON); delay(150); sendCommand(ST7796S_SLPOUT); delay(150);
+}
 
 void DspCore::writePixel(int16_t x, int16_t y, uint16_t color) {
   if(_clipping){
     if ((x < _cliparea.left) || (x > _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height)) return;
   }
-  Adafruit_ILI9341::writePixel(x, y, color);
+  Adafruit_ST7796S_kbv::writePixel(x, y, color);
 }
 
 void DspCore::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
   if(_clipping){
     if ((x < _cliparea.left) || (x >= _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height))  return;
   }
-  Adafruit_ILI9341::writeFillRect(x, y, w, h, color);
+  Adafruit_ST7796S_kbv::writeFillRect(x, y, w, h, color);
 }
 
 void DspCore::setClipping(clipArea ca){
@@ -190,7 +210,7 @@ void DspCore::clearClipping(){
 }
 
 void DspCore::setNumFont(){
-  setFont(&DS_DIGI42pt7b);
+  setFont(&DS_DIGI56pt7b);
   setTextSize(1);
 }
 #endif

@@ -10,6 +10,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 
 ********************************************************/
 #define LED_BUILTIN       2                 /*  Onboard LED Pin */
+//#define LED_INVERT      false             /*  Invert Onboard LED? */
 #define L10N_LANGUAGE     EN                /*  Language (EN, RU). More info in yoRadio/locale/displayL10n_(en|ru).h
 
 /*  DSP_MODEL. See description/available values in https://github.com/e2002/yoradio/wiki/Available-display-models  */
@@ -25,11 +26,14 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 */
 /******************************************/
 
-/*  SPI PINS. SCL(SCK, CLK) must be connected to pin 18
-              SDA(MOSI, DIN, SDI) must be connected to pin 23  */
+/*  VSPI PINS. SCL(SCK, CLK) must be connected to pin 18
+               SDA(MOSI, DIN, SDI) must be connected to pin 23  */
 //#define TFT_CS            5                 /*  SPI CS pin  */
 //#define TFT_RST           15                /*  SPI RST pin.  set to -1 and connect to Esp EN pin */
 //#define TFT_DC            4                 /*  SPI DC/RS pin  */
+/*  HSPI PINS. SCL(SCK, CLK) must be connected to pin 14
+               SDA(MOSI, DIN, SDI) must be connected to pin 13  */
+//#define DSP_HSPI          false             /*  Use HSPI for display  */
 /******************************************/
 
 /*  NEXTION  */
@@ -47,13 +51,17 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define I2S_LRC           25                /*  WSEL Left Right Clock */
 /******************************************/
 
-/*  VS1053 PINS. VS1053 SCK must be connected to pin 18
-                 VS1053 MISO must be connected to pin 19
-                 VS1053 MOSI must be connected to pin 23  */
+/*  VS1053 VSPI PINS. VS1053 SCK must be connected to pin 18
+                      VS1053 MISO must be connected to pin 19
+                      VS1053 MOSI must be connected to pin 23  */
 //#define VS1053_CS         255               /*  XCS pin. Should be set to 255 if the board is not used */
 //#define VS1053_DCS        25                /*  XDCS pin.  */
 //#define VS1053_DREQ       26                /*  DREQ pin.  */
 //#define VS1053_RST        -1                /*  XRESET pin. Set to -1 if connected to Esp EN pin */
+/*  VS1053 HSPI PINS. VS1053 SCK must be connected to pin 14
+                      VS1053 MISO must be connected to pin 12
+                      VS1053 MOSI must be connected to pin 13  */
+//#define VS_HSPI           false             /*  Use HSPI for VS  */
 /******************************************/
 
 /*  ENCODER  */
@@ -94,11 +102,25 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 /******************************************/
 
 /*  TOUCHSCREEN  */
-/*  SPI PINS. CLK must be connected to pin 18
-              DIN must be connected to pin 23
-              DO  must be connected to pin 19
-              IRQ - not connected */
-//#define TS_CS                 255           /*  Touch screen CS pin
+//#define TS_MODEL              TS_MODEL_UNDEFINED  /*  See description/available values in yoRadio/src/core/options.h  */
+
+/*  Resistive SPI touch screen  */
+/*  TS VSPI PINS. CLK must be connected to pin 18
+                  DIN must be connected to pin 23
+                  DO  must be connected to pin 19
+                  IRQ - not connected */
+//#define TS_CS                 255           /*  Touch screen CS pin  */
+/*  TS HSPI PINS. CLK must be connected to pin 14
+                  DIN must be connected to pin 13
+                  DO  must be connected to pin 12
+                  IRQ - not connected */
+//#define TS_HSPI               false         /*  Use HSPI for Touch screen  */
+
+/*  Capacitive I2C touch screen  */
+//#define TS_SDA                33
+//#define TS_SCL                32
+//#define TS_INT                21
+//#define TS_RST                25
 /******************************************/
 
 /*  Other settings.  */
@@ -118,12 +140,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define ROTATE_90         false             /*  Optional 90 degree rotation for square displays */
 //#define WAKE_PIN          255               /*  Wake Pin (for manual wakeup from sleep mode. can match with BTN_XXXX, ENC_BTNB, ENC2_BTNB.  must be one of: 0,2,4,12,13,14,15,25,26,27,32,33,34,35,36,39) */
                                               /*  For sample #define ENC_BTNB 36 - next line - #define WAKE_PIN ENC_BTNB  */
-/* VU settings. See the default settings for your display in file yoRadio/display_vu.h */
-/************************************************************************************************************************************************************************************/
-/*                     vu left  |  vu top    | band width  | band height | band space | num of bands | fade speed | horisontal | Max Bands Color          |  Min Bands Color        */
-/************************************************************************************************************************************************************************************/
-//#define VU_PARAMS2 { VU_X = 4,  VU_Y = 60,   VU_BW = 10,    VU_BH = 34,   VU_BS = 2,   VU_NB = 8,    VU_FS = 2,   VU_HOR = 0,   VU_COLOR_MAX = TFT_LOGO,   VU_COLOR_MIN = SILVER }
-/************************************************************************************************************************************************************************************/
+//#define LIGHT_SENSOR      255               /*  Light sensor  */
+//#define AUTOBACKLIGHT(x)  *function*        /*  Autobacklight function. See options.h for exsample  */
+/******************************************/
 
 /*  IR control  */
 //#define IR_PIN                255

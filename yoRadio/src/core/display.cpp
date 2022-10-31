@@ -50,6 +50,9 @@ void Display::init() {
 #ifdef USE_NEXTION
   nextion.begin();
 #endif
+#if LIGHT_SENSOR!=255
+  analogSetAttenuation(ADC_0db);
+#endif
   _bootStep = 0;
   dsp.initDisplay();
   displayQueue=NULL;
@@ -442,6 +445,10 @@ void Display::_title() {
 }
 
 void Display::_time(bool redraw) {
+#if LIGHT_SENSOR!=255
+  config.store.brightness = AUTOBACKLIGHT(analogRead(LIGHT_SENSOR));
+  config.setBrightness();
+#endif
   _clock.draw();
   /*#ifdef USE_NEXTION
     nextion.printClock(network.timeinfo);

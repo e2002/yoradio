@@ -23,9 +23,11 @@ const unsigned char logo [] PROGMEM=
 	0xe0, 0x01, 0xff, 0xc0
 };
 
-DspCore::DspCore(): Adafruit_PCD8544(TFT_DC, TFT_CS, TFT_RST) {
-
-}
+#if DSP_HSPI
+DspCore::DspCore(): Adafruit_PCD8544(TFT_DC, TFT_CS, TFT_RST, &SPI2) {}
+#else
+DspCore::DspCore(): Adafruit_PCD8544(TFT_DC, TFT_CS, TFT_RST) {}
+#endif
 
 #include "tools/utf8RusGFX.h"
 

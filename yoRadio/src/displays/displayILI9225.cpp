@@ -13,11 +13,8 @@ extern unsigned char yofont10x14[];
 
 #define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
 #define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
-//SPIClass hspi(VSPI);
 
-DspCore::DspCore(): TFT_22_ILI9225(TFT_RST, TFT_DC, TFT_CS, 0) {
-
-}
+DspCore::DspCore(): TFT_22_ILI9225(TFT_RST, TFT_DC, TFT_CS, 0) {}
 
 #include "tools/utf8RusGFX.h"
 
@@ -97,7 +94,11 @@ void DspCore::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color){
       
 void DspCore::initDisplay() {
   TAKE_MUTEX();
+#if DSP_HSPI
+  begin(SPI2);
+#else
   begin();
+#endif
   invert();
   flip();
   setTextSize(1);

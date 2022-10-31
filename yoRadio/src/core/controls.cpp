@@ -42,9 +42,9 @@ yoEncoder encoder2 = yoEncoder(ENC2_BTNL, ENC2_BTNR, ENCODER2_STEPS, ENC2_INTERN
 #endif
 #endif
 
-#if TS_CS!=255
-#include <XPT2046_Touchscreen.h>
-XPT2046_Touchscreen ts(TS_CS);
+#if TS_MODEL!=TS_MODEL_UNDEFINED
+  #include "touchscreen.h"
+  TouchScreen touchscreen;
 #endif
 
 #if IR_PIN!=255
@@ -113,9 +113,8 @@ void initControls() {
     button[i].setPressTicks(BTN_PRESS_TICKS);
   }
 #endif
-#if TS_CS!=255
-  ts.begin();
-  ts.setRotation(config.store.fliptouch?3:1);
+#if TS_MODEL!=TS_MODEL_UNDEFINED
+  touchscreen.init();
 #endif
 #if IR_PIN!=255
   pinMode(IR_PIN, INPUT);
@@ -145,18 +144,15 @@ void loopControls() {
     if (lpId >= 0) {
       if (DSP_MODEL == DSP_DUMMY && (lpId == 4 || lpId == 5)) continue;
       onBtnDuringLongPress(lpId);
-      yield();
     }
-    yield();
   }
 #endif
 #if IR_PIN!=255
   irLoop();
 #endif
-#if TS_CS!=255
-  touchLoop();
+#if TS_MODEL!=TS_MODEL_UNDEFINED
+  touchscreen.loop();
 #endif
-  yield();
 }
 
 #if ENC_BTNL!=255
@@ -325,122 +321,6 @@ void irLoop() {
   }       /* if (irrecv.decode(&irResults)) */
 }
 #endif // if IR_PIN!=255
-
-#if TS_CS!=255
-#ifndef TS_X_MIN
-  #define TS_X_MIN              400
-#endif
-#ifndef TS_X_MAX
-  #define TS_X_MAX              3800
-#endif
-#ifndef TS_Y_MIN
-  #define TS_Y_MIN              260
-#endif
-#ifndef TS_Y_MAX
-  #define TS_Y_MAX              3800
-#endif
-#ifndef TS_STEPS
-  #define TS_STEPS              40
-#endif
-
-boolean wastouched = true;
-unsigned long touchdelay;
-uint16_t touchVol, touchStation;
-uint16_t oldTouchP[2];
-tsDirection_e direct;
-unsigned long touchLongPress;
-
-tsDirection_e tsDirection(uint16_t x, uint16_t y) {
-  int16_t dX = x - oldTouchP[0];
-  int16_t dY = y - oldTouchP[1];
-  if (abs(dX) > 20 || abs(dY) > 20) {
-    if (abs(dX) > abs(dY)) {
-      if (dX > 0) {
-        return TSD_RIGHT;
-      } else {
-        return TSD_LEFT;
-      }
-    } else {
-      if (dY > 0) {
-        return TSD_DOWN;
-      } else {
-        return TSD_UP;
-      }
-    }
-  } else {
-    return TDS_REQUEST;
-  }
-}
-
-void touchLoop() {
-  if (!checklpdelay(100, touchdelay)) return;
-  boolean istouched = ts.touched();
-  if (istouched) {
-    TS_Point p = ts.getPoint();
-    uint16_t touchX = map(p.x, TS_X_MIN, TS_X_MAX, 0, dsp.width());
-    uint16_t touchY = map(p.y, TS_Y_MIN, TS_Y_MAX, 0, dsp.height());
-    if (!wastouched) { /*     START TOUCH     */
-      oldTouchP[0] = touchX;
-      oldTouchP[1] = touchY;
-      touchVol = touchX;
-      touchStation = touchY;
-      direct = TDS_REQUEST;
-      touchLongPress=millis();
-    } else { /*     SWIPE TOUCH     */
-      direct = tsDirection(touchX, touchY);
-      switch (direct) {
-        case TSD_LEFT:
-        case TSD_RIGHT: {
-            touchLongPress=millis();
-            if(display.mode()==PLAYER || display.mode()==VOL){
-              int16_t xDelta = map(abs(touchVol - touchX), 0, dsp.width(), 0, TS_STEPS);
-              display.putRequest(NEWMODE, VOL);
-              if (xDelta>1) {
-                controlsEvent((touchVol - touchX)<0);
-                touchVol = touchX;
-              }
-            }
-            break;
-          }
-        case TSD_UP:
-        case TSD_DOWN: {
-            touchLongPress=millis();
-            if(display.mode()==PLAYER || display.mode()==STATIONS){
-              int16_t yDelta = map(abs(touchStation - touchY), 0, dsp.height(), 0, TS_STEPS);
-              display.putRequest(NEWMODE, STATIONS);
-              if (yDelta>1) {
-                controlsEvent((touchStation - touchY)<0);
-                touchStation = touchY;
-              }
-            }
-            break;
-          }
-        default:
-            break;
-      }
-    }
-    if (config.store.dbgtouch) {
-      Serial.print(", x = ");
-      Serial.print(p.x);
-      Serial.print(", y = ");
-      Serial.println(p.y);
-    }
-  } else {
-    if (wastouched) {/*     END TOUCH     */
-      if (direct == TDS_REQUEST) {
-        uint32_t pressTicks = millis()-touchLongPress;
-        if( pressTicks < BTN_PRESS_TICKS*2){
-          if(pressTicks > 50) onBtnClick(EVT_BTNCENTER);
-        }else{
-          display.putRequest(NEWMODE, display.mode() == PLAYER ? STATIONS : PLAYER);
-        }
-      }
-      direct = TSD_STAY;
-    }
-  }
-  wastouched = istouched;
-}
-#endif // if TS_CS!=255
 
 void onBtnLongPressStart(int id) {
   switch ((controlEvt_e)id) {
@@ -629,7 +509,7 @@ void setEncAcceleration(uint16_t acc){
 #endif
 }
 void flipTS(){
-#if TS_CS!=255
-  ts.setRotation(config.store.fliptouch?3:1);
+#if TS_MODEL!=TS_MODEL_UNDEFINED
+  touchscreen.flip();
 #endif
 }

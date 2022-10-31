@@ -6,6 +6,10 @@
 
 Config config;
 
+#if DSP_HSPI || TS_HSPI || VS_HSPI
+SPIClass  SPI2(HSPI);
+#endif
+
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
   if ((uint8_t)last >= 0xC2) src[strlen(src)-1]='\0';

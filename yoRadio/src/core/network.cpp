@@ -209,6 +209,7 @@ bool getWeather(char *wstr) {
   }
   char *tmpe;
   char *tmps;
+  char *tmpc;
   const char* cursor = line.c_str();
   char desc[120], temp[20], hum[20], press[20], icon[5];
 
@@ -251,8 +252,9 @@ bool getWeather(char *wstr) {
   if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
   tmps += 10;
   tmpe = strstr(tmps, ",\"");
+  tmpc = strstr(tmps, "}");
   if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
-  strlcpy(hum, tmps, tmpe - tmps + 1);
+  strlcpy(hum, tmps, tmpe - tmps + (tmpc>tmpe?1:0));
   
   #ifdef USE_NEXTION
     nextion.putcmdf("press_txt.txt=\"%dmm\"", pressi);

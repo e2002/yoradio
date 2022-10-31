@@ -45,7 +45,8 @@ https://aliexpress.com/item/32965676064.html
 - or **LCD1602** 16x2 I2C https://aliexpress.com/item/32305776560.html
 - or **LCD1602** 16x2 without I2C https://aliexpress.com/item/32305776560.html
 - or **SSD1327** 1.5' 128x128 I2C https://aliexpress.com/item/1005001414175498.html
-- or **ILI9341** 3.2'320x240 SPI https://aliexpress.com/item/33048191074.html
+- or **ILI9341** 3.2' 320x240 SPI https://aliexpress.com/item/33048191074.html
+- or **ILI9341** 2.8' 320x240 SPI https://aliexpress.com/item/1005004502250619.html
 - or **SSD1305 (SSD1309)** 2.4' 128x64 SPI/I2C https://aliexpress.com/item/32950307344.html
 - or **SH1107** 0.96' 128x64 I2C https://aliexpress.com/item/4000551696674.html
 - or **GC9106** 0.96' 160x80 SPI (looks like ST7735S, but it's not him) https://aliexpress.com/item/32947890530.html
@@ -53,6 +54,7 @@ https://aliexpress.com/item/32965676064.html
 - or **LCD2004** 20x4 without I2C https://aliexpress.com/item/32783128355.html
 - or **ILI9225** 2.0' 220x176 SPI https://aliexpress.com/item/32952021835.html
 - or **Nextion displays** - [more info](https://github.com/e2002/yoradio/tree/main/nextion)
+- or **ST7796** 3.5' 480x320 SPI https://aliexpress.com/item/1005004632953455.html?sku_id=12000029911293172
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
@@ -299,6 +301,16 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.03b
+- added support for ST7796 display
+- added support for capacitive touch GT911
+- HSPI bus support added - DSP_HSPI, VS_HSPI, TS_HSPI options More details in examples/myoptions.h
+- changed the method of connecting the touchscreen in myoptions.h Now instead of specifying TS_CS, you must specify TS_MODEL (by default TS_MODEL_UNDEFINED) More details in examples/myoptions.h
+- new parameters TS_SDA, TS_SCL, TS_INT, TS_RST for GT911 touchscreen
+- new parameters LIGHT_SENSOR and AUTOBACKLIGHT - to automatically adjust the brightness of the display. More details in examples/myoptions.h
+- new parameter LED_INVERT (true/false) - to invert the behavior of the built-in LED
+- fixed bug with extra sign } in humidity value
+
 #### v0.8.02b
 - fixed artifacts when displaying the volume level
 - changes in mytheme.h . Added colors COLOR_PL_CURRENT, COLOR_PL_CURRENT_BG, COLOR_PL_CURRENT_FILL. Details in [exsamples/mytheme.h](exsamples/mytheme.h)

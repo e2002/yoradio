@@ -557,7 +557,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
                                                             #endif
           if (BRIGHTNESS_PIN != 255 || nxtn || dbgact)                act += F("\"group_brightness\",");
           if (DSP_CAN_FLIPPED || dbgact)                      act += F("\"group_tft\",");
-          if (TS_CS != 255 || dbgact)                         act += F("\"group_touch\",");
+          if (TS_MODEL != TS_MODEL_UNDEFINED || dbgact)       act += F("\"group_touch\",");
           if (DSP_MODEL == DSP_NOKIA5110)                     act += F("\"group_nokia\",");
                                                               act += F("\"group_timezone\",");
           if (SHOW_WEATHER || dbgact)                         act += F("\"group_weather\",");
