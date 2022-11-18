@@ -301,6 +301,12 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.089
+- increased length of SSID string to 30 characters (requires full update + ESP32 Data Upload)
+- fixed artifacts when adjusting the volume on OLED displays
+- fixed bug with missing current station in playlist on OLED displays
+- new parameter DSP_INVERT_TITLE - invert colors in station name for OLED displays (more details in exsamples/myoptions.h)
+
 #### v0.8.03b
 - added support for ST7796 display
 - added support for capacitive touch GT911

@@ -123,7 +123,7 @@ struct station_t
 
 struct neworkItem
 {
-  char ssid[20];
+  char ssid[30];
   char password[40];
 };
 

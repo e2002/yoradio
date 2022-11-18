@@ -61,6 +61,9 @@ void DspCore::initDisplay() {
   config.theme.buffer     = TFT_FG;
   config.theme.volbarout  = TFT_FG;
   config.theme.volbarin   = TFT_FG;
+  config.theme.plcurrent     = TFT_BG;
+  config.theme.plcurrentbg   = TFT_FG;
+  config.theme.plcurrentfill = TFT_FG;
   for(byte i=0;i<5;i++) config.theme.playlist[i] = TFT_FG;
   
   setContrast(config.store.contrast);

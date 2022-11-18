@@ -422,7 +422,7 @@ void Telnet::on_input(const char* str, byte clientId) {
     printf(clientId, "##WIFI.STATION#\n> ");
     return;
   }
-  char newssid[20], newpass[40];
+  char newssid[30], newpass[40];
   if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", newssid, newpass) == 2 || sscanf(str, "wifi %[^ ] %s", newssid, newpass) == 2) {
     char buf[BUFLEN];
     snprintf(buf, BUFLEN, "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", newssid, newpass);

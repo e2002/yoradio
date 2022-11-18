@@ -142,6 +142,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
                                               /*  For sample #define ENC_BTNB 36 - next line - #define WAKE_PIN ENC_BTNB  */
 //#define LIGHT_SENSOR      255               /*  Light sensor  */
 //#define AUTOBACKLIGHT(x)  *function*        /*  Autobacklight function. See options.h for exsample  */
+//#define DSP_INVERT_TITLE  true              /* Invert title colors for OLED displays ?  */
 /******************************************/
 
 /*  IR control  */

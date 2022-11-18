@@ -376,7 +376,11 @@ void NumWidget::setText(const char* txt) {
   strlcpy(_text, txt, _buffsize);
   _getBounds();
   if (strcmp(_oldtext, _text) == 0) return;
-  if (_active) dsp.fillRect(_oldleft == 0 ? _realLeft() : min(_oldleft, _realLeft()),  _config.top-_textheight+1, max(_oldtextwidth, _textwidth), _textheight, _bgcolor);
+  uint16_t realth = _textheight;
+#ifdef DSP_OLED
+  realth = _textheight*CHARHEIGHT;
+#endif
+  if (_active) dsp.fillRect(_oldleft == 0 ? _realLeft() : min(_oldleft, _realLeft()),  _config.top-_textheight+1, max(_oldtextwidth, _textwidth), realth, _bgcolor);
   _oldtextwidth = _textwidth;
   _oldleft = _realLeft();
   if (_active) _draw();

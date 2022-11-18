@@ -434,8 +434,8 @@ bool Config::parseSsid(const char* line, char* ssid, char* pass) {
   tmpe = strstr(line, "\t");
   if (tmpe == NULL) return false;
   uint16_t pos = tmpe - line;
-  if (pos > 19 || strlen(line) > 61) return false;
-  memset(ssid, 0, 20);
+  if (pos > 29 || strlen(line) > 71) return false;
+  memset(ssid, 0, 30);
   strlcpy(ssid, line, pos + 1);
   memset(pass, 0, 40);
   strlcpy(pass, line + pos + 1, strlen(line) - pos);
@@ -467,11 +467,11 @@ bool Config::initNetwork() {
   if (!file || file.isDirectory()) {
     return false;
   }
-  char ssidval[20], passval[40];
+  char ssidval[30], passval[40];
   byte c = 0;
   while (file.available()) {
     if (parseSsid(file.readStringUntil('\n').c_str(), ssidval, passval)) {
-      strlcpy(ssids[c].ssid, ssidval, 20);
+      strlcpy(ssids[c].ssid, ssidval, 30);
       strlcpy(ssids[c].password, passval, 40);
       ssidsCount++;
       c++;

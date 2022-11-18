@@ -53,24 +53,7 @@ void DspCore::initDisplay() {
     Serial.println(F("SSD1305 allocation failed"));
     for (;;); // Don't proceed, loop forever
   }
-  config.theme.background = TFT_BG;
-  config.theme.meta       = TFT_BG;
-  config.theme.clock      = TFT_FG;
-  config.theme.weather    = TFT_FG;
-  config.theme.metabg     = TFT_FG;
-  config.theme.metafill   = TFT_FG;
-  config.theme.title1     = TFT_FG;
-  config.theme.title2     = TFT_FG;
-  config.theme.rssi       = TFT_FG;
-  config.theme.ip         = TFT_FG;
-  config.theme.vol        = TFT_FG;
-  config.theme.bitrate    = TFT_FG;
-  config.theme.digit      = TFT_FG;
-  config.theme.buffer     = TFT_FG;
-  config.theme.volbarout  = TFT_FG;
-  config.theme.volbarin   = TFT_FG;
-  
-  for(byte i=0;i<5;i++) config.theme.playlist[i] = TFT_FG;
+#include "tools/oledcolorfix.h"
   
   cp437(true);
   flip();
