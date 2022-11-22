@@ -100,7 +100,7 @@ void audio_info(const char *info) {
     nextion.audioinfo(info);
   #endif
   if (strstr(info, "failed!") != NULL || strstr(info, " 404") != NULL || strstr(info, " 403") != NULL || strstr(info, "address is empty") != NULL) player.stop(info);
-  if (strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL) player.stop(info);
+  if (strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) player.stop(info);
 }
 
 void audio_bitrate(const char *info)
@@ -134,7 +134,7 @@ void audio_showstation(const char *info) {
 
 void audio_showstreamtitle(const char *info) {
   DBGH();
-  if (strstr(info, "Account already in use") != NULL){
+  if (strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL){
     player.stop(info);
     return;
   }

@@ -301,6 +301,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.112
+- fixed compilation error with BOOMBOX_STYLE parameter
+- fixes in default configuration for GC9A01A display
+
 #### v0.8.100
 - added support for GC9A01A display https://aliexpress.com/item/1005004069703494.html?sku_id=12000029869654615
 
