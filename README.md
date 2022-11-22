@@ -301,6 +301,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.100
+- added support for GC9A01A display https://aliexpress.com/item/1005004069703494.html?sku_id=12000029869654615
+
 #### v0.8.089
 - increased length of SSID string to 30 characters (requires full update + ESP32 Data Upload)
 - fixed artifacts when adjusting the volume on OLED displays

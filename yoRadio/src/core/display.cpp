@@ -245,7 +245,7 @@ void Display::_swichMode(displayMode_e newmode) {
     #ifdef META_MOVE
       _meta.moveBack();
     #endif
-    _meta.setAlign(WA_LEFT);
+    _meta.setAlign(metaConf.widget.align);
     _meta.setText(config.station.name);
     _nums.setText("");
     _pager.setPage( pages[PG_PLAYER]);
@@ -409,7 +409,7 @@ void Display::loop() {
 }
 
 void Display::_station() {
-  _meta.setAlign(WA_LEFT);
+  _meta.setAlign(metaConf.widget.align);
   _meta.setText(config.station.name);
 /*#ifdef USE_NEXTION
   nextion.newNameset(config.station.name);

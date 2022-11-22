@@ -36,6 +36,8 @@
   #include "displayILI9225.h"
 #elif DSP_MODEL==DSP_ST7796
   #include "displayST7796.h"
+#elif DSP_MODEL==DSP_GC9A01A
+  #include "displayGC9A01A.h"
 #endif
 
 //extern DspCore dsp;
