@@ -25,6 +25,7 @@
 #include "src/core/netserver.h"
 #include "src/core/controls.h"
 #include "src/core/mqtt.h"
+#include "src/core/optionschecker.h"
 
 extern __attribute__((weak)) void yoradio_on_setup();
 
