@@ -310,6 +310,7 @@ void irLoop() {
                 break;
               }
             case IR_AST: {
+                ESP.restart();
                 break;
               }
           } /* switch (target) */

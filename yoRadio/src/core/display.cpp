@@ -508,10 +508,12 @@ void Display::_start(){
 void Display::putRequest(displayRequestType_e type, int payload){
   if(type==DSP_START) _start();
   #ifdef USE_NEXTION
-  requestParams_t request;
-  request.type = type;
-  request.payload = payload;
-  nextion.putRequest(request);
+    requestParams_t request;
+    request.type = type;
+    request.payload = payload;
+    nextion.putRequest(request);
+  #else
+    if(type==NEWMODE) mode((displayMode_e)payload);
   #endif
 }
 //============================================================================================================================
