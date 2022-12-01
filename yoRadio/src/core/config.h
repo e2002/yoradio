@@ -152,8 +152,8 @@ class Config {
     void saveVolume();
     void setTone(int8_t bass, int8_t middle, int8_t trebble);
     void setBalance(int8_t balance);
-    byte setLastStation(byte val);
-    byte setCountStation(byte val);
+    byte setLastStation(uint16_t val);
+    byte setCountStation(uint16_t val);
     byte setLastSSID(byte val);
     void setTitle(const char* title);
     void setStation(const char* station);

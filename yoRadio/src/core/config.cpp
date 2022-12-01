@@ -206,13 +206,13 @@ void Config::setBalance(int8_t balance) {
   save();
 }
 
-byte Config::setLastStation(byte val) {
+byte Config::setLastStation(uint16_t val) {
   store.lastStation = val;
   save();
   return store.lastStation;
 }
 
-byte Config::setCountStation(byte val) {
+byte Config::setCountStation(uint16_t val) {
   store.countStation = val;
   save();
   return store.countStation;
