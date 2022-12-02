@@ -2,6 +2,10 @@
 #define controls_h
 #include "options.h"
 
+#if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
+  #include "../yoEncoder/yoEncoder.h"
+#endif
+
 enum controlEvt_e { EVT_BTNLEFT, EVT_BTNCENTER, EVT_BTNRIGHT, EVT_ENCBTNB, EVT_BTNUP, EVT_BTNDOWN, EVT_ENC2BTNB };
 
 //enum tsDirection_e { TSD_STAY, TSD_LEFT, TSD_RIGHT, TSD_UP, TSD_DOWN, TDS_REQUEST };
@@ -14,7 +18,8 @@ boolean checklpdelay(int m, unsigned long &tstamp);
 
 void initControls();
 void loopControls();
-void encoderLoop();
+void encodersLoop(yoEncoder *enc, bool first=true);
+void encoder1Loop();
 void encoder2Loop();
 void irLoop();
 //void touchLoop();

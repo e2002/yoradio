@@ -33,13 +33,12 @@ constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
 #if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-#include "../yoEncoder/yoEncoder.h"
-#if (ENC_BTNL!=255 && ENC_BTNR!=255)
-yoEncoder encoder = yoEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
-#endif
-#if (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-yoEncoder encoder2 = yoEncoder(ENC2_BTNL, ENC2_BTNR, ENCODER2_STEPS, ENC2_INTERNALPULLUP);
-#endif
+  #if (ENC_BTNL!=255 && ENC_BTNR!=255)
+    yoEncoder encoder = yoEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
+  #endif
+  #if (ENC2_BTNL!=255 && ENC2_BTNR!=255)
+    yoEncoder encoder2 = yoEncoder(ENC2_BTNL, ENC2_BTNR, ENCODER2_STEPS, ENC2_INTERNALPULLUP);
+  #endif
 #endif
 
 #if TS_MODEL!=TS_MODEL_UNDEFINED
@@ -131,7 +130,7 @@ void loopControls() {
   if(display.mode()==LOST || display.mode()==UPDATING) return;
   if (ctrls_on_loop) ctrls_on_loop();
 #if ENC_BTNL!=255
-  encoderLoop();
+  encoder1Loop();
 #endif
 #if ENC2_BTNL!=255
   encoder2Loop();
@@ -154,32 +153,46 @@ void loopControls() {
   touchscreen.loop();
 #endif
 }
-
-#if ENC_BTNL!=255
-void encoderLoop() {
-  int8_t encoderDelta = encoder.encoderChanged();
+#if ENC_BTNL!=255 || ENC2_BTNL!=255
+void encodersLoop(yoEncoder *enc, bool first){
+  int8_t encoderDelta = enc->encoderChanged();
   if (encoderDelta!=0)
   {
-    controlsEvent(encoderDelta > 0, encoderDelta);
+    uint8_t encBtnState = digitalRead(first?ENC_BTNB:ENC2_BTNB);
+#   if defined(DUMMYDISPLAY) && !defined(USE_NEXTION)
+    first = first?(first && encBtnState):(!encBtnState);
+    if(first){
+      int nv = config.store.volume+encoderDelta;
+      if(nv<0) nv=0;
+      if(nv>254) nv=254;
+      player.setVol((byte)nv, false);  
+    }else{
+      if(encoderDelta > 0) player.next(); else player.prev();
+    }
+#   else
+    if(first){
+      controlsEvent(encoderDelta > 0, encoderDelta);
+    }else{
+      if (encBtnState == HIGH && display.mode() == PLAYER) {
+        display.putRequest(NEWMODE, STATIONS);
+        while(display.mode() != STATIONS) {delay(10);}
+      }
+      controlsEvent(encoderDelta > 0, encoderDelta);
+    }
+#   endif
   }
+}
+#endif
+
+#if ENC_BTNL!=255
+void encoder1Loop() {
+  encodersLoop(&encoder, true);
 }
 #endif
 
 #if ENC2_BTNL!=255
 void encoder2Loop() {
-  int8_t encoderDelta = encoder2.encoderChanged();
-  if (encoderDelta!=0)
-  {
-    uint8_t bp = 2;
-    if (ENC2_BTNB != 255) {
-      bp = digitalRead(ENC2_BTNB);
-    }
-    if (bp == HIGH && display.mode() == PLAYER) {
-      display.putRequest(NEWMODE, STATIONS);
-      while(display.mode() != STATIONS) {delay(10);}
-    }
-    controlsEvent(encoderDelta > 0, encoderDelta);
-  }
+  encodersLoop(&encoder2, false);
 }
 #endif
 
@@ -334,10 +347,16 @@ void onBtnLongPressStart(int id) {
       }
     case EVT_BTNCENTER:
     case EVT_ENCBTNB: {
+#       if defined(DUMMYDISPLAY) && !defined(USE_NEXTION)
+        break;
+#       endif
         display.putRequest(NEWMODE, display.mode() == PLAYER ? STATIONS : PLAYER);
         break;
       }
     case EVT_ENC2BTNB: {
+#       if defined(DUMMYDISPLAY) && !defined(USE_NEXTION)
+        break;
+#       endif
         display.putRequest(NEWMODE, display.mode() == PLAYER ? VOL : PLAYER);
         break;
       }
