@@ -118,7 +118,7 @@ void Player::zeroRequest() {
 }
 
 void Player::setOutputPins(bool isPlaying) {
-  digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
+  if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
   if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, isPlaying?!MUTE_VAL:MUTE_VAL);
 }
 

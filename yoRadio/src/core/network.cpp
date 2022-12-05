@@ -68,7 +68,7 @@ void Network::begin() {
     while (WiFi.status() != WL_CONNECTED) {
       Serial.print(".");
       delay(500);
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       errcnt++;
       if (errcnt > 16) {
         errcnt = 0;
@@ -87,7 +87,7 @@ void Network::begin() {
     }
   }
   Serial.println(".");
-  digitalWrite(LED_BUILTIN, LOW);
+  if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
   WiFi.setSleep(false);
   

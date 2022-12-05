@@ -198,6 +198,7 @@ void encoder2Loop() {
 
 #if IR_PIN!=255
 void irBlink() {
+  if(LED_BUILTIN==255) return;
   if (player.mode == STOPPED) {
     for (byte i = 0; i < 7; i++) {
       digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
