@@ -301,6 +301,13 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.135
+- added numeric IR remote buttons in configurations with DSP_DUMMY
+- fixed navigation bug in playlist with more than 255 stations
+- fixed work of encoders in configurations with DSP_DUMMY
+- fixed missing volume value bug when switching to volume control dialog
+- LED_BUILTIN is now 255 by default (off)
+
 #### v0.8.112
 - fixed compilation error with BOOMBOX_STYLE parameter
 - fixes in default configuration for GC9A01A display

@@ -9,7 +9,7 @@ Uncomment the lines you need, to override the default value and set the values a
 The connection tables are located here https://github.com/e2002/yoradio#connection-tables
 
 ********************************************************/
-#define LED_BUILTIN       2                 /*  Onboard LED Pin */
+//#define LED_BUILTIN     255               /*  Onboard LED Pin (turn OFF by default) */
 //#define LED_INVERT      false             /*  Invert Onboard LED? */
 #define L10N_LANGUAGE     EN                /*  Language (EN, RU). More info in yoRadio/locale/displayL10n_(en|ru).h
 
