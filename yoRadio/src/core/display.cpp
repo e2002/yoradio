@@ -256,6 +256,7 @@ void Display::_swichMode(displayMode_e newmode) {
     #else
       _showDialog(WiFi.localIP().toString().c_str());
     #endif
+    _nums.setText(config.store.volume, numtxtFmt);
   }
   if (newmode == LOST)      _showDialog(const_DlgLost);
   if (newmode == UPDATING)  _showDialog(const_DlgUpdate);
