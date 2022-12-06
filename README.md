@@ -301,6 +301,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.137
+- fixed compilation error without encoder
+
 #### v0.8.135
 - added numeric IR remote buttons in configurations with DSP_DUMMY
 - fixed navigation bug in playlist with more than 255 stations
