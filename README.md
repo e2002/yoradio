@@ -301,6 +301,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.138
+- fixed unclosed comment in exsamples/myoptions.h
+
 #### v0.8.137
 - fixed compilation error without encoder
 
