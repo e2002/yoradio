@@ -33,6 +33,7 @@ Player player;
 
 
 void Player::init() {
+  BOOTLOG("player.init");
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
   #if I2S_DOUT!=255
     #if !I2S_INTERNAL
@@ -52,6 +53,7 @@ void Player::init() {
   volTimer=false;
   zeroRequest();
   playmutex = xSemaphoreCreateMutex();
+  BOOTLOG("done");
 }
 
 void Player::stopInfo() {

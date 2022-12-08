@@ -22,6 +22,7 @@
 #define DBGVB( ... )
 #define DBGH()
 #endif
+#define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("##[BOOT]#\t"); Serial.println(buf); }
 #define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
 void u8fix(char *src);
 
@@ -175,6 +176,7 @@ class Config {
     void setBrightness(bool dosave=false);
     void setDspOn(bool dspon);
     void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
+    void bootInfo();
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);

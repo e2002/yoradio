@@ -45,6 +45,7 @@ void Config::init() {
   pinMode(BRIGHTNESS_PIN, OUTPUT);
   setBrightness(false);
 #endif
+  bootInfo();
 }
 
 uint16_t Config::color565(uint8_t r, uint8_t g, uint8_t b)
@@ -539,3 +540,25 @@ void Config::sleepForAfter(uint16_t sf, uint16_t sa){
   if(sa > 0) _sleepTimer.attach(sa * 60, doSleep);
   else doSleep();
 }
+
+void Config::bootInfo() {
+  BOOTLOG("******************************************");
+  BOOTLOG("*            ёPadio v%s             *", VERSION);
+  BOOTLOG("******************************************");
+  BOOTLOG("display:\t%d", DSP_MODEL);
+  if(VS1053_CS==255) {
+    BOOTLOG("audio:\t\t%s (%d, %d, %d)", "I2S", I2S_DOUT, I2S_BCLK, I2S_LRC);
+  }else{
+    BOOTLOG("audio:\t\t%s (%d, %d, %d, %d, %s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"true":"false");
+  }
+  BOOTLOG("audioinfo:\t%s", store.audioinfo?"true":"false");
+  BOOTLOG("smartstart:\t%d", store.smartstart);
+  BOOTLOG("vumeter:\t%s", store.vumeter?"true":"false");
+  BOOTLOG("softapdelay:\t%d", store.softapdelay);
+  BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
+  BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
+  BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
+  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, ", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN);
+  BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, l2=%d, b2=%d, r2=%d", ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC2_BTNL, ENC2_BTNB, ENC2_BTNR);
+}
+

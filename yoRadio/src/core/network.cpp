@@ -50,6 +50,7 @@ void ticks() {
 #define DBGAP false
 
 void Network::begin() {
+  BOOTLOG("network.begin");
   config.initNetwork();
   ctimer.detach();
   forceTimeSync = forceWeather = true;
@@ -62,7 +63,9 @@ void Network::begin() {
   byte errcnt = 0;
   WiFi.mode(WIFI_STA);
   while (true) {
-    Serial.printf("[BOOT]\tAttempt to connect to %s...\n", config.ssids[ls].ssid);
+    //BOOTLOG("Attempt to connect to %s...\n", config.ssids[ls].ssid);
+    Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
+    Serial.print("##[BOOT]#\t");
     display.putRequest(BOOTSTRING, ls);
     WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
     while (WiFi.status() != WL_CONNECTED) {

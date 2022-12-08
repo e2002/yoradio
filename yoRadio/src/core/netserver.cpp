@@ -48,6 +48,7 @@ char* updateError() {
 }
 
 bool NetServer::begin() {
+  BOOTLOG("netserver.begin");
   importRequest = IMDONE;
   irRecordEnable = false;
   webserver.on("/", HTTP_ANY, handleHTTPArgs);
@@ -75,6 +76,7 @@ bool NetServer::begin() {
         packet.println(WiFi.localIP());
     });
   }
+  BOOTLOG("done");
   return true;
 }
 

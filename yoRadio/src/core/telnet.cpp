@@ -13,10 +13,13 @@ bool Telnet::_isIPSet(IPAddress ip) {
 }
 
 bool Telnet::begin() {
+  BOOTLOG("telnet.begin");
   if (WiFi.status() == WL_CONNECTED || _isIPSet(WiFi.softAPIP())) {
     server.begin();
     server.setNoDelay(true);
-    Serial.printf("Ready! Use 'telnet %s 23' to connect\n", WiFi.localIP().toString().c_str());
+    BOOTLOG("Ready! Go to http:/%s/ to configure.", WiFi.localIP().toString().c_str());
+    BOOTLOG("******************************************\n");
+    Serial.println();
     return true;
   } else {
     return false;
