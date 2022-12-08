@@ -90,6 +90,7 @@ void Network::begin() {
     }
   }
   Serial.println(".");
+  Serial.println("##[BOOT]#\tdone");
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
   WiFi.setSleep(false);

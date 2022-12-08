@@ -47,7 +47,7 @@ void loopDspTask(void * pvParameters){
 }
 
 void Display::init() {
-  BOOTLOG("display.init");
+  Serial.print("##[BOOT]#\tdisplay.init\t");
 #ifdef USE_NEXTION
   nextion.begin();
 #endif
@@ -63,7 +63,7 @@ void Display::init() {
   while(!_bootStep==0) { delay(10); }
   //_pager.begin();
   //_bootScreen();
-  BOOTLOG("done");
+  Serial.println("done");
 }
 
 void Display::_bootScreen(){
