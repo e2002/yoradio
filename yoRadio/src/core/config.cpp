@@ -561,7 +561,8 @@ void Config::bootInfo() {
   BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
   BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
   BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
-  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, ", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN);
-  BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, l2=%d, b2=%d, r2=%d", ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC2_BTNL, ENC2_BTNB, ENC2_BTNR);
+  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, pullup=%s", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_INTERNALPULLUP?"true":"false");
+  BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"true":"false", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"true":"false");
+  BOOTLOG("ir:\t\t%d", IR_PIN);
 }
 
