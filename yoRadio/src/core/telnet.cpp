@@ -18,11 +18,9 @@ bool Telnet::begin() {
     server.begin();
     server.setNoDelay(true);
     Serial.println("done");
-    Serial.println();
-    BOOTLOG("************************************************");
-    BOOTLOG("Ready! Go to http:/%s/ to configure.", WiFi.localIP().toString().c_str());
-    BOOTLOG("************************************************");
-    Serial.println();
+    Serial.println("##[BOOT]#");
+    BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
+    Serial.println("##[BOOT]#");
     return true;
   } else {
     return false;

@@ -547,7 +547,8 @@ void Config::bootInfo() {
   BOOTLOG("************************************************");
   BOOTLOG("arduino:\t%d", ARDUINO);
   BOOTLOG("compiler:\t%s", __VERSION__);
-  BOOTLOG("esp:\t\t%d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
+  BOOTLOG("esp32core:\t%d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
+  BOOTLOG("esp chip:\tmodel: %s | rev: %d | cores: %d | psram: %d", ESP.getChipModel(), ESP.getChipRevision(), ESP.getChipCores(), ESP.getPsramSize());
   BOOTLOG("display:\t%d", DSP_MODEL);
   if(VS1053_CS==255) {
     BOOTLOG("audio:\t\t%s (%d, %d, %d)", "I2S", I2S_DOUT, I2S_BCLK, I2S_LRC);

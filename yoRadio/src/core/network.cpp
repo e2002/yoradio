@@ -82,6 +82,7 @@ void Network::begin() {
     }
     if (WiFi.status() != WL_CONNECTED && ls == startedls) {
       raiseSoftAP();
+      Serial.println("##[BOOT]#\tdone");
       return;
     }
     if (WiFi.status() == WL_CONNECTED) {
@@ -130,7 +131,12 @@ void rebootTime() {
 void Network::raiseSoftAP() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP(apSsid, apPassword);
-  Serial.printf("\n\nRunning in AP mode.\nConnect to AP %s with password %s for settings.\n\n", apSsid, apPassword);
+  Serial.println("##[BOOT]#");
+  BOOTLOG("************************************************");
+  BOOTLOG("Running in AP mode");
+  BOOTLOG("Connect to AP %s with password %s", apSsid, apPassword);
+  BOOTLOG("and go to http:/192.168.4.1/ to configure");
+  BOOTLOG("************************************************");
   status = SOFT_AP;
   if(config.store.softapdelay>0)
     rtimer.once(config.store.softapdelay*60, rebootTime);
