@@ -301,6 +301,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.173
+- bootlog added
+- fixed work of start/stop button in configurations with DSP_DUMMY
+
 #### v0.8.138
 - fixed unclosed comment in exsamples/myoptions.h
 
