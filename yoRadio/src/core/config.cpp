@@ -545,10 +545,15 @@ void Config::bootInfo() {
   BOOTLOG("************************************************");
   BOOTLOG("*               ёPadio v%s                *", VERSION);
   BOOTLOG("************************************************");
+  BOOTLOG("------------------------------------------------");
   BOOTLOG("arduino:\t%d", ARDUINO);
   BOOTLOG("compiler:\t%s", __VERSION__);
   BOOTLOG("esp32core:\t%d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
-  BOOTLOG("esp chip:\tmodel: %s | rev: %d | cores: %d | psram: %d", ESP.getChipModel(), ESP.getChipRevision(), ESP.getChipCores(), ESP.getPsramSize());
+  uint32_t chipId = 0;
+  for(int i=0; i<17; i=i+8) {
+	  chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+	}
+  BOOTLOG("chip:\t\tmodel: %s | rev: %d | id: %d | cores: %d | psram: %d", ESP.getChipModel(), ESP.getChipRevision(), chipId, ESP.getChipCores(), ESP.getPsramSize());
   BOOTLOG("display:\t%d", DSP_MODEL);
   if(VS1053_CS==255) {
     BOOTLOG("audio:\t\t%s (%d, %d, %d)", "I2S", I2S_DOUT, I2S_BCLK, I2S_LRC);
@@ -565,5 +570,6 @@ void Config::bootInfo() {
   BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, pullup=%s", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_INTERNALPULLUP?"true":"false");
   BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"true":"false", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"true":"false");
   BOOTLOG("ir:\t\t%d", IR_PIN);
+  BOOTLOG("------------------------------------------------");
 }
 

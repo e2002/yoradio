@@ -20,6 +20,7 @@ bool Telnet::begin() {
     Serial.println("done");
     Serial.println("##[BOOT]#");
     BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
+    BOOTLOG("------------------------------------------------");
     Serial.println("##[BOOT]#");
     return true;
   } else {
@@ -126,27 +127,6 @@ void Telnet::printf(const char *format, ...) {
   Serial.print(buf);
 }
 
-/*void Telnet::printf(byte id, const char *format, ...) {
-  va_list argptr;
-  va_start(argptr, format);
-  char *szBuffer = 0;
-  const size_t nBufferLength = vsnprintf(szBuffer, 0, format, argptr) + 1;
-  if (nBufferLength == 1) return;
-  szBuffer = (char *) malloc(nBufferLength);
-  if (! szBuffer) return;
-  vsnprintf(szBuffer, nBufferLength, format, argptr);
-  va_end(argptr);
-  if(id>MAX_TLN_CLIENTS){
-    Serial.print(szBuffer);
-    free(szBuffer);
-    return;
-  }
-  if (clients[id] && clients[id].connected()) {
-    clients[id].print(szBuffer);
-    free(szBuffer);
-  }
-}*/
-
 void Telnet::printf(byte id, const char *format, ...) {
   char buf[MAX_PRINTF_LEN];
   va_list argptr;
@@ -202,7 +182,6 @@ void Telnet::on_input(const char* str, byte clientId) {
     }
     if (strcmp(str, "cli.stop") == 0 || strcmp(str, "stop") == 0) {
       player.mode = STOPPED;
-      //display.title("[stopped]");
       info();
       return;
     }

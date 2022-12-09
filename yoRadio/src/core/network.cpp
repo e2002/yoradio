@@ -63,7 +63,6 @@ void Network::begin() {
   byte errcnt = 0;
   WiFi.mode(WIFI_STA);
   while (true) {
-    //BOOTLOG("Attempt to connect to %s...\n", config.ssids[ls].ssid);
     Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
     Serial.print("##[BOOT]#\t");
     display.putRequest(BOOTSTRING, ls);
