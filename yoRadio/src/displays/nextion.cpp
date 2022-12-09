@@ -156,7 +156,7 @@ void Nextion::loop() {
           if(strcmp(scanBuf, "player") == 0) display.putRequest(NEWMODE, PLAYER);
           if(strcmp(scanBuf, "playlist") == 0) display.putRequest(NEWMODE, STATIONS);
           if(strcmp(scanBuf, "info") == 0) {
-            putcmd("yoversion.txt", VERSION);
+            putcmd("yoversion.txt", YOVERSION);
             putcmd("espcore.txt", _espcoreversion);
             putcmd("ipaddr.txt", WiFi.localIP().toString().c_str());
             putcmd("ssid.txt", WiFi.SSID().c_str());

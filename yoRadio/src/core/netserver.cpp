@@ -599,7 +599,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
 }
 
 String processor(const String& var) { // %Templates%
-  if (var == "VERSION") return VERSION;
+  if (var == "VERSION") return YOVERSION;
   return String();
 }
 
