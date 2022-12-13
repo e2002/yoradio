@@ -9,6 +9,8 @@
 #endif
 
 enum audioMode_e { PLAYING, STOPPED };
+enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
+
 struct audiorequest_t
 {
   uint16_t station;

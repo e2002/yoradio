@@ -72,6 +72,10 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define ENC_HALFQUARD         true          /*  Experiment  with it */
 /******************************************/
 
+/*  SDCARD  */
+//#define SDC_SPI               18, 19, 23     /* SDCARD SPI pins (SCK, MISO, MOSI) */
+//#define SDC_CS                255            /* SDCARD CS pin */
+
 /*  ENCODER2  */
 //#define ENC2_BTNL              255           /*  Left rotation */
 //#define ENC2_BTNB              255           /*  Encoder button */

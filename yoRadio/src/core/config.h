@@ -3,6 +3,8 @@
 #include "Arduino.h"
 #include <Ticker.h>
 #include <SPI.h>
+#include <SPIFFS.h>
+#include <SD.h>
 #include "options.h"
 
 #define EEPROM_SIZE       768
@@ -14,6 +16,9 @@
 #define SSIDS_PATH        "/data/wifi.csv"
 #define TMP_PATH          "/data/tmpfile.txt"
 #define INDEX_PATH        "/data/index.dat"
+
+#define PLAYLIST_SD_PATH     "/data/playlistsd.csv"
+#define INDEX_SD_PATH        "/data/indexsd.dat"
 
 #ifdef DEBUG_V
 #define DBGH()       { Serial.printf("[%s:%s:%d] Heap: %d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, xPortGetFreeHeapSize()); }
@@ -90,7 +95,7 @@ struct config_t
   char      weatherkey[64];
   uint8_t   volsteps;
   uint16_t  encacc;
-  uint8_t   irto;
+  uint8_t   play_mode;  //0 WEB, 1 SD
   uint8_t   irtlp;
   bool      btnpullup;
   uint16_t  btnlongpress;
@@ -169,6 +174,9 @@ class Config {
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();
+    void listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels);
+    void initSDPlaylist();
+    void indexSDPlaylist();
     void fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum = false);
     void setTimezone(int8_t tzh, int8_t tzm);
     void setTimezoneOffset(uint16_t tzo);

@@ -54,6 +54,8 @@ bool NetServer::begin() {
   webserver.on("/", HTTP_ANY, handleHTTPArgs);
   webserver.on(PLAYLIST_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on(INDEX_PATH, HTTP_GET, handleHTTPArgs);
+  webserver.on(PLAYLIST_SD_PATH, HTTP_GET, handleHTTPArgs);
+  webserver.on(INDEX_SD_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on(SSIDS_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on("/upload", HTTP_POST, beginUpload, handleUpload);
   webserver.on("/update", HTTP_GET, handleHTTPArgs);
@@ -630,7 +632,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 void handleHTTPArgs(AsyncWebServerRequest * request) {
   if (request->method() == HTTP_GET) {
     DBGVB("[%s] client ip=%s request of %s", __func__, request->client()->remoteIP().toString().c_str(), request->url().c_str());
-    if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 || strcmp(request->url().c_str(), SSIDS_PATH) == 0 || strcmp(request->url().c_str(), INDEX_PATH) == 0 || strcmp(request->url().c_str(), TMP_PATH) == 0) {
+    if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 || strcmp(request->url().c_str(), SSIDS_PATH) == 0 || strcmp(request->url().c_str(), INDEX_PATH) == 0 || strcmp(request->url().c_str(), TMP_PATH) == 0 || strcmp(request->url().c_str(), PLAYLIST_SD_PATH) == 0 || strcmp(request->url().c_str(), INDEX_SD_PATH) == 0) {
 #ifdef MQTT_HOST
       if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
 #endif

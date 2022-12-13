@@ -1,6 +1,6 @@
 #include "config.h"
 #include <EEPROM.h>
-#include <SPIFFS.h>
+//#include <SPIFFS.h>
 #include "display.h"
 #include "player.h"
 
@@ -9,6 +9,7 @@ Config config;
 #if DSP_HSPI || TS_HSPI || VS_HSPI
 SPIClass  SPI2(HSPI);
 #endif
+SPIClass  SDSPI(VSPI);
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -22,13 +23,28 @@ void Config::init() {
 #endif
   eepromRead(EEPROM_START, store);
   if (store.config_set != 4262) setDefaults();
+  if(store.play_mode==80) store.play_mode=PM_WEB;
+
   //if (!SPIFFS.begin(false, "/spiffs", 30)) {
   if (!SPIFFS.begin(false)) {
     return;
   }
+  
   loadTheme();
   ssidsCount = 0;
-  initPlaylist();
+  if(SDC_CS!=255 && store.play_mode==/*PM_SDCARD*/PM_WEB){
+    pinMode(SDC_CS, OUTPUT);      digitalWrite(SDC_CS, HIGH);
+    SDSPI.begin(SDC_SPI);
+    SDSPI.setFrequency(1000000);
+    if(!SD.begin(SDC_CS)){
+      store.play_mode=PM_WEB;
+      Serial.println("##[ERROR]#\tCard Mount Failed");
+    }else{
+      initSDPlaylist();
+    }
+  }
+  if(store.play_mode==PM_WEB) initPlaylist();
+  
   if (store.lastStation == 0 && store.countStation > 0) {
     store.lastStation = 1;
     save();
@@ -138,7 +154,7 @@ void Config::setDefaults() {
   strlcpy(store.weatherkey,"", 64);
   store.volsteps = 1;
   store.encacc = 200;
-  store.irto = 80;
+  store.play_mode = 0;
   store.irtlp = 35;
   store.btnpullup = true;
   store.btnlongpress = 200;
@@ -262,6 +278,88 @@ void Config::initPlaylist() {
 
   if (SPIFFS.exists(INDEX_PATH)) {
     File index = SPIFFS.open(INDEX_PATH, "r");
+    store.countStation = index.size() / 4;
+    index.close();
+    save();
+  }
+}
+
+bool endsWith (const char* base, const char* str) {
+//fb
+  int slen = strlen(str) - 1;
+  const char *p = base + strlen(base) - 1;
+  while(p > base && isspace(*p)) p--;  // rtrim
+  p -= slen;
+  if (p < base) return false;
+  return (strncmp(p, str, slen) == 0);
+}
+    
+void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels){
+  File root = SD.open(dirname);
+  if(!root){
+    Serial.println("Failed to open directory");
+    return;
+  }
+  if(!root.isDirectory()){
+    Serial.println("Not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  uint32_t pos = 0;
+            
+  while(file){
+    
+    if(file.isDirectory()){
+//            Serial.print("  DIR : ");
+//            Serial.println(file.name());
+      if(levels){
+        listSD(plSDfile, plSDindex, file.path(), levels -1);
+      }
+    } else {
+//            Serial.print("  FILE: ");
+//            Serial.print(file.name());
+//            Serial.print("  SIZE: ");
+//            Serial.println(file.size());
+      if(endsWith(file.name(), ".mp3") || endsWith(file.name(), ".m4a") || endsWith(file.name(), ".aac") || endsWith(file.name(), ".wav") || endsWith(file.name(), ".flac")){
+        pos = plSDfile.position();
+        plSDfile.print(file.name()); plSDfile.print("\t"); plSDfile.print(file.path()); plSDfile.print("\t"); plSDfile.println(0);
+        plSDindex.write((byte *) &pos, 4);
+            Serial.print("  plSDfile.position:\t");
+            Serial.println(pos);
+      }
+    }
+    file = root.openNextFile();
+  }
+}
+
+void Config::indexSDPlaylist() {
+  File playlist = SPIFFS.open(PLAYLIST_SD_PATH, "w");
+  if (!playlist) {
+    return;
+  }
+  
+  
+//  char sName[BUFLEN], sUrl[BUFLEN];
+//  int sOvol;
+  File index = SPIFFS.open(INDEX_SD_PATH, "w");
+  listSD(playlist, index, "/", 2);
+/*  while (playlist.available()) {
+    uint32_t pos = playlist.position();
+    if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
+      index.write((byte *) &pos, 4);
+    }
+  }*/
+  index.close();
+  playlist.close();
+}
+
+void Config::initSDPlaylist() {
+  store.countStation = 0;
+  indexSDPlaylist();
+
+  if (SPIFFS.exists(INDEX_SD_PATH)) {
+    File index = SD.open(INDEX_SD_PATH, "r");
     store.countStation = index.size() / 4;
     index.close();
     save();
