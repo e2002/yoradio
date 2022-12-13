@@ -32,7 +32,7 @@ void Config::init() {
   
   loadTheme();
   ssidsCount = 0;
-  if(SDC_CS!=255 && store.play_mode==/*PM_SDCARD*/PM_WEB){
+  if(SDC_CS!=255 && store.play_mode==PM_WEB){
     pinMode(SDC_CS, OUTPUT);      digitalWrite(SDC_CS, HIGH);
     SDSPI.begin(SDC_SPI);
     SDSPI.setFrequency(1000000);
@@ -311,16 +311,10 @@ void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8
   while(file){
     
     if(file.isDirectory()){
-//            Serial.print("  DIR : ");
-//            Serial.println(file.name());
       if(levels){
         listSD(plSDfile, plSDindex, file.path(), levels -1);
       }
     } else {
-//            Serial.print("  FILE: ");
-//            Serial.print(file.name());
-//            Serial.print("  SIZE: ");
-//            Serial.println(file.size());
       if(endsWith(file.name(), ".mp3") || endsWith(file.name(), ".m4a") || endsWith(file.name(), ".aac") || endsWith(file.name(), ".wav") || endsWith(file.name(), ".flac")){
         pos = plSDfile.position();
         plSDfile.print(file.name()); plSDfile.print("\t"); plSDfile.print(file.path()); plSDfile.print("\t"); plSDfile.println(0);
@@ -338,18 +332,8 @@ void Config::indexSDPlaylist() {
   if (!playlist) {
     return;
   }
-  
-  
-//  char sName[BUFLEN], sUrl[BUFLEN];
-//  int sOvol;
   File index = SPIFFS.open(INDEX_SD_PATH, "w");
   listSD(playlist, index, "/", 2);
-/*  while (playlist.available()) {
-    uint32_t pos = playlist.position();
-    if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
-      index.write((byte *) &pos, 4);
-    }
-  }*/
   index.close();
   playlist.close();
 }
@@ -357,7 +341,6 @@ void Config::indexSDPlaylist() {
 void Config::initSDPlaylist() {
   store.countStation = 0;
   indexSDPlaylist();
-
   if (SPIFFS.exists(INDEX_SD_PATH)) {
     File index = SD.open(INDEX_SD_PATH, "r");
     store.countStation = index.size() / 4;
@@ -630,6 +613,16 @@ void Config::doSleep(){
 #endif
   if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
   esp_sleep_enable_timer_wakeup(config.sleepfor * 60 * 1000000ULL);
+  esp_deep_sleep_start();
+}
+
+void Config::doSleepW(){
+  if(BRIGHTNESS_PIN!=255) analogWrite(BRIGHTNESS_PIN, 0);
+  display.deepsleep();
+#ifdef USE_NEXTION
+  nextion.sleep();
+#endif
+  if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
   esp_deep_sleep_start();
 }
 

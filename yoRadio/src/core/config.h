@@ -29,6 +29,9 @@
 #endif
 #define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("##[BOOT]#\t"); Serial.println(buf); }
 #define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
+
+#define MAX_PLAY_MODE   1
+
 void u8fix(char *src);
 
 struct theme_t {
@@ -185,6 +188,7 @@ class Config {
     void setDspOn(bool dspon);
     void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
     void bootInfo();
+    void doSleepW();
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);

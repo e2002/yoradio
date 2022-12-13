@@ -10,10 +10,10 @@ long encOldPosition  = 0;
 long enc2OldPosition  = 0;
 int lpId = -1;
 
-#define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_CENTER!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255 || BTN_UP!=255 || BTN_DOWN!=255 || ENC2_BTNB!=255
+#define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_CENTER!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255 || BTN_UP!=255 || BTN_DOWN!=255 || ENC2_BTNB!=255 || BTN_MODE!=255
 #if ISPUSHBUTTONS
 #include "OneButton.h"
-OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN_INTERNALPULLUP}, {BTN_RIGHT, true, BTN_INTERNALPULLUP}, {ENC_BTNB, true, ENC_INTERNALPULLUP}, {BTN_UP, true, BTN_INTERNALPULLUP}, {BTN_DOWN, true, BTN_INTERNALPULLUP}, {ENC2_BTNB, true, ENC2_INTERNALPULLUP}};
+OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN_INTERNALPULLUP}, {BTN_RIGHT, true, BTN_INTERNALPULLUP}, {ENC_BTNB, true, ENC_INTERNALPULLUP}, {BTN_UP, true, BTN_INTERNALPULLUP}, {BTN_DOWN, true, BTN_INTERNALPULLUP}, {ENC2_BTNB, true, ENC2_INTERNALPULLUP}, {BTN_MODE, true, BTN_INTERNALPULLUP}};
 constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
@@ -95,7 +95,7 @@ void initControls() {
 #if ISPUSHBUTTONS
   for (int i = 0; i < nrOfButtons; i++)
   {
-    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255)) continue;
+    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255) || (i == 7 && BTN_MODE == 255)) continue;
     button[i].attachClick([](void* p) {
       onBtnClick((int)p);
     }, (void*)i);
@@ -324,7 +324,8 @@ void irLoop() {
                 break;
               }
             case IR_AST: {
-                ESP.restart();
+                //ESP.restart();
+                onBtnClick(EVT_BTNMODE);
                 break;
               }
           } /* switch (target) */
@@ -361,8 +362,12 @@ void onBtnLongPressStart(int id) {
         display.putRequest(NEWMODE, display.mode() == PLAYER ? VOL : PLAYER);
         break;
       }
-    default:
+    case EVT_BTNMODE: {
+        //onBtnClick(EVT_BTNMODE);
+        config.doSleepW();
         break;
+      }
+    default: break;
   }
 }
 
@@ -489,6 +494,16 @@ void onBtnClick(int id) {
         }
         break;
       }
+    case EVT_BTNMODE: {
+      config.store.play_mode++;
+      if(config.store.play_mode > MAX_PLAY_MODE){
+        config.store.play_mode=0;
+        config.save();
+        ESP.restart();
+      }
+      break;
+    }
+    default: break;
   }
 }
 
@@ -502,7 +517,8 @@ void onBtnDoubleClick(int id) {
     case EVT_BTNCENTER:
     case EVT_ENCBTNB:
     case EVT_ENC2BTNB: {
-        display.putRequest(NEWMODE, display.mode() == PLAYER ? VOL : PLAYER);
+        //display.putRequest(NEWMODE, display.mode() == PLAYER ? VOL : PLAYER);
+        onBtnClick(EVT_BTNMODE);
         break;
       }
     case EVT_BTNRIGHT: {
