@@ -262,6 +262,7 @@ void Display::_swichMode(displayMode_e newmode) {
   }
   if (newmode == LOST)      _showDialog(const_DlgLost);
   if (newmode == UPDATING)  _showDialog(const_DlgUpdate);
+  if (newmode == SLEEPING)  _showDialog("SLEEPING");
   if (newmode == INFO || newmode == SETTINGS || newmode == TIMEZONE || newmode == WIFI) _showDialog(const_DlgNextion);
   if (newmode == NUMBERS) _showDialog("");
   if (newmode == STATIONS) {
@@ -443,8 +444,12 @@ void Display::_title() {
     /*#ifdef USE_NEXTION
       nextion.newTitle(config.station.title);
     #endif*/
-    if (player_on_track_change) player_on_track_change();
+    
+  }else{
+    _title1.setText("");
+    if(_title2) _title2->setText("");
   }
+  if (player_on_track_change) player_on_track_change();
 }
 
 void Display::_time(bool redraw) {

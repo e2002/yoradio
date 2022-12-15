@@ -128,7 +128,7 @@ void Player::play(uint16_t stationId) {
   display.putRequest(PSTOP);
   setDefaults();
   setOutputPins(false);
-  config.setTitle(const_PlConnect);
+  config.setTitle(config.store.play_mode==PM_WEB?const_PlConnect:"");
   config.station.bitrate=0;
   netserver.requestOnChange(TITLE, 0);
   config.loadStation(stationId);
@@ -136,8 +136,10 @@ void Player::play(uint16_t stationId) {
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
-  if (connecttohost(config.station.url)) {
+  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url)) {
     mode = PLAYING;
+    config.setTitle("");
+    netserver.requestOnChange(TITLE, 0);
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
@@ -150,13 +152,19 @@ void Player::play(uint16_t stationId) {
 }
 
 void Player::prev() {
-  if (config.store.lastStation == 1) config.store.lastStation = config.store.countStation; else config.store.lastStation--;
+  if(config.store.play_mode==PM_WEB){
+    if (config.store.lastStation == 1) config.store.lastStation = config.store.countStation; else config.store.lastStation--;
+  }
   request.station = config.store.lastStation;
   request.doSave = true;
 }
 
 void Player::next() {
-  if (config.store.lastStation == config.store.countStation) config.store.lastStation = 1; else config.store.lastStation++;
+  if(config.store.play_mode==PM_WEB){
+    if (config.store.lastStation == config.store.countStation) config.store.lastStation = 1; else config.store.lastStation++;
+  }else{
+    config.store.lastStation = random(1, config.store.countStation);
+  }
   request.station = config.store.lastStation;
   request.doSave = true;
 }

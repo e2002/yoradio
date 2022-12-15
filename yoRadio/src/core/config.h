@@ -4,7 +4,7 @@
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
-#include <SD.h>
+#include "SD.h"
 #include "options.h"
 
 #define EEPROM_SIZE       768
@@ -29,6 +29,8 @@
 #endif
 #define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("##[BOOT]#\t"); Serial.println(buf); }
 #define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
+#define REAL_PLAYL   store.play_mode==PM_WEB?PLAYLIST_PATH:PLAYLIST_SD_PATH
+#define REAL_INDEX   store.play_mode==PM_WEB?INDEX_PATH:INDEX_SD_PATH
 
 #define MAX_PLAY_MODE   1
 

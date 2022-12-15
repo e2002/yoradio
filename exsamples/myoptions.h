@@ -73,6 +73,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 /******************************************/
 
 /*  SDCARD  */
+/*  MISO is the same as D0, MOSI is the same as D1 */
 //#define SDC_SPI               18, 19, 23     /* SDCARD SPI pins (SCK, MISO, MOSI) */
 //#define SDC_CS                255            /* SDCARD CS pin */
 

@@ -73,6 +73,10 @@ using namespace std;
 
 extern __attribute__((weak)) void audio_info(const char*);
 extern __attribute__((weak)) void audio_id3data(const char*); //ID3 metadata
+extern __attribute__((weak)) void audio_id3artist(const char*);
+extern __attribute__((weak)) void audio_id3album(const char*);
+extern __attribute__((weak)) void audio_id3title(const char*);
+extern __attribute__((weak)) void audio_beginSDread();
 extern __attribute__((weak)) void audio_id3image(File& file, const size_t pos, const size_t size); //ID3 metadata image
 extern __attribute__((weak)) void audio_eof_mp3(const char*); //end of mp3 file
 extern __attribute__((weak)) void audio_showstreamtitle(const char*);
@@ -213,7 +217,7 @@ public:
     void setI2SCommFMT_LSB(bool commFMT);
     int getCodec() {return m_codec;}
     const char *getCodecname() {return codecname[m_codec];}
-
+    void cardLock(bool lock);
 private:
 
     #ifndef ESP_ARDUINO_VERSION_VAL

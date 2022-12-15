@@ -36,6 +36,10 @@ extern __attribute__((weak)) void audio_showstreamtitle(const char*);
 extern __attribute__((weak)) void audio_showstation(const char*);
 extern __attribute__((weak)) void audio_showstreaminfo(const char*);
 extern __attribute__((weak)) void audio_id3data(const char*); //ID3 metadata
+extern __attribute__((weak)) void audio_id3artist(const char*);
+extern __attribute__((weak)) void audio_id3album(const char*);
+extern __attribute__((weak)) void audio_id3title(const char*);
+extern __attribute__((weak)) void audio_beginSDread();
 extern __attribute__((weak)) void audio_id3image(File& file, const size_t pos, const size_t size); //ID3 metadata image
 extern __attribute__((weak)) void audio_eof_mp3(const char*);
 extern __attribute__((weak)) void audio_eof_speech(const char*);
@@ -311,7 +315,7 @@ public:
     void     setVUmeter();
     void     getVUlevel();
     uint8_t  vuLeft, vuRight;
-    
+    void     cardLock(bool lock);
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}
     bool endsWith (const char* base, const char* str) {

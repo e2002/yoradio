@@ -363,8 +363,8 @@ void onBtnLongPressStart(int id) {
         break;
       }
     case EVT_BTNMODE: {
-        //onBtnClick(EVT_BTNMODE);
-        config.doSleepW();
+        //config.doSleepW();
+        display.putRequest(NEWMODE, SLEEPING);
         break;
       }
     default: break;
@@ -378,6 +378,10 @@ void onBtnLongPressStop(int id) {
     case EVT_BTNUP:
     case EVT_BTNDOWN: {
         lpId = -1;
+        break;
+      }
+    case EVT_BTNMODE: {
+        config.doSleepW();
         break;
       }
     default:
@@ -498,9 +502,9 @@ void onBtnClick(int id) {
       config.store.play_mode++;
       if(config.store.play_mode > MAX_PLAY_MODE){
         config.store.play_mode=0;
-        config.save();
-        ESP.restart();
       }
+      config.save();
+      ESP.restart();
       break;
     }
     default: break;

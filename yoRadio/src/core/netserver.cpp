@@ -636,7 +636,11 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
 #ifdef MQTT_HOST
       if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
 #endif
-      netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str());
+      if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.store.play_mode==PM_SDCARD){
+         netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH);
+      }else{
+        netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str());
+      }
       return;
     }
     if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {

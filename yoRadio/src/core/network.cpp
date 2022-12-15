@@ -76,6 +76,7 @@ void Network::begin() {
         errcnt = 0;
         ls++;
         if (ls > config.ssidsCount - 1) ls = 0;
+        Serial.println();
         break;
       }
     }

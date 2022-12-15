@@ -100,8 +100,17 @@ void audio_info(const char *info) {
   #ifdef USE_NEXTION
     nextion.audioinfo(info);
   #endif
+  if (strstr(info, "skip metadata") != NULL){
+    config.setTitle(config.station.name);
+    netserver.requestOnChange(TITLE, 0);
+  }
   if (strstr(info, "failed!") != NULL || strstr(info, " 404") != NULL || strstr(info, " 403") != NULL || strstr(info, "address is empty") != NULL) player.stop(info);
   if (strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) player.stop(info);
+  char* ici; char b[20]={0};
+  if ((ici = strstr(info, "BitRate: ")) != NULL) {
+    strlcpy(b, ici + 9, 50);
+    audio_bitrate(b);
+  }
 }
 
 void audio_bitrate(const char *info)
@@ -148,4 +157,42 @@ void audio_showstreamtitle(const char *info) {
     #endif
     netserver.requestOnChange(TITLE, 0);
   }
+}
+
+void audio_id3artist(const char *info){
+  if(printable(info)) config.setStation(info);
+  display.putRequest(NEWSTATION);
+  netserver.requestOnChange(STATION, 0);
+  
+}
+
+void audio_id3album(const char *info){
+  if(printable(info)){
+    if(strlen(config.station.title)==0){
+      config.setTitle(info);
+    }else{
+      char out[BUFLEN]= {0};
+      strlcat(out, config.station.title, BUFLEN);
+      strlcat(out, " - ", BUFLEN);
+      strlcat(out, info, BUFLEN);
+      config.setTitle(out);
+    }
+    netserver.requestOnChange(TITLE, 0);
+  }
+}
+
+void audio_id3title(const char *info){
+  audio_id3album(info);
+}
+
+void audio_beginSDread(){
+  config.setTitle("");
+  netserver.requestOnChange(TITLE, 0);
+}
+
+void audio_id3data(const char *info){  //id3 metadata
+    telnet.printf("##AUDIO.ID3#: %s\n", info);
+}
+void audio_eof_mp3(const char *info){  //end of file
+    player.play(random(1, config.store.countStation));
 }

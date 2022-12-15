@@ -9,7 +9,7 @@ Config config;
 #if DSP_HSPI || TS_HSPI || VS_HSPI
 SPIClass  SPI2(HSPI);
 #endif
-SPIClass  SDSPI(VSPI);
+//SPIClass  SDSPI(VSPI);
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -32,10 +32,11 @@ void Config::init() {
   
   loadTheme();
   ssidsCount = 0;
-  if(SDC_CS!=255 && store.play_mode==PM_WEB){
-    pinMode(SDC_CS, OUTPUT);      digitalWrite(SDC_CS, HIGH);
-    SDSPI.begin(SDC_SPI);
-    SDSPI.setFrequency(1000000);
+  if(SDC_CS!=255 && store.play_mode==PM_SDCARD){
+    //pinMode(SDC_CS, OUTPUT);      digitalWrite(SDC_CS, HIGH);
+    //SDSPI.begin(SDC_SPI);
+    //SDSPI.setFrequency(1000000);
+    //SDSPI.setFrequency(100000);
     if(!SD.begin(SDC_CS)){
       store.play_mode=PM_WEB;
       Serial.println("##[ERROR]#\tCard Mount Failed");
@@ -49,6 +50,7 @@ void Config::init() {
     store.lastStation = 1;
     save();
   }
+  
   loadStation(store.lastStation);
 #if IR_PIN!=255
   eepromRead(EEPROM_START_IR, ircodes);
@@ -297,11 +299,11 @@ bool endsWith (const char* base, const char* str) {
 void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels){
   File root = SD.open(dirname);
   if(!root){
-    Serial.println("Failed to open directory");
+    Serial.println("##[ERROR]#\tFailed to open directory");
     return;
   }
   if(!root.isDirectory()){
-    Serial.println("Not a directory");
+    Serial.println("##[ERROR]#\tNot a directory");
     return;
   }
 
@@ -315,12 +317,10 @@ void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8
         listSD(plSDfile, plSDindex, file.path(), levels -1);
       }
     } else {
-      if(endsWith(file.name(), ".mp3") || endsWith(file.name(), ".m4a") || endsWith(file.name(), ".aac") || endsWith(file.name(), ".wav") || endsWith(file.name(), ".flac")){
+      if(endsWith(strlwr((char*)file.name()), ".mp3") || endsWith(file.name(), ".m4a") || endsWith(file.name(), ".aac") || endsWith(file.name(), ".wav") || endsWith(file.name(), ".flac")){
         pos = plSDfile.position();
         plSDfile.print(file.name()); plSDfile.print("\t"); plSDfile.print(file.path()); plSDfile.print("\t"); plSDfile.println(0);
         plSDindex.write((byte *) &pos, 4);
-            Serial.print("  plSDfile.position:\t");
-            Serial.println(pos);
       }
     }
     file = root.openNextFile();
@@ -342,8 +342,9 @@ void Config::initSDPlaylist() {
   store.countStation = 0;
   indexSDPlaylist();
   if (SPIFFS.exists(INDEX_SD_PATH)) {
-    File index = SD.open(INDEX_SD_PATH, "r");
+    File index = SPIFFS.open(INDEX_SD_PATH, "r");
     store.countStation = index.size() / 4;
+    store.lastStation = random(1, store.countStation);
     index.close();
     save();
   }
@@ -362,9 +363,9 @@ void Config::loadStation(uint16_t ls) {
   if (ls > store.countStation) {
     ls = 1;
   }
-  File playlist = SPIFFS.open(PLAYLIST_PATH, "r");
+  File playlist = SPIFFS.open(REAL_PLAYL, "r");
 
-  File index = SPIFFS.open(INDEX_PATH, "r");
+  File index = SPIFFS.open(REAL_INDEX, "r");
   index.seek((ls - 1) * 4, SeekSet);
   uint32_t pos;
 
@@ -378,7 +379,7 @@ void Config::loadStation(uint16_t ls) {
     strncpy(station.name, sName, BUFLEN);
     strncpy(station.url, sUrl, BUFLEN);
     station.ovol = sOvol;
-    setLastStation(ls);
+    if(store.play_mode==PM_WEB) setLastStation(ls);
   }
   playlist.close();
 }
@@ -392,8 +393,8 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum)
   if (store.countStation == 0) {
     return;
   }
-  File playlist = SPIFFS.open(PLAYLIST_PATH, "r");
-  File index = SPIFFS.open(INDEX_PATH, "r");
+  File playlist = SPIFFS.open(REAL_PLAYL, "r");
+  File index = SPIFFS.open(REAL_INDEX, "r");
   while (true) {
     if (ls < 1) {
       ls++;

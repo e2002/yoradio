@@ -8,7 +8,7 @@
 
 #include "../displays/dspcore.h"
 
-enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING, INFO, SETTINGS, TIMEZONE, WIFI, CLEAR };
+enum displayMode_e { PLAYER, VOL, STATIONS, NUMBERS, LOST, UPDATING, INFO, SETTINGS, TIMEZONE, WIFI, CLEAR, SLEEPING };
 enum pages_e      : uint8_t  { PG_PLAYER=0, PG_DIALOG=1, PG_PLAYLIST=2 };
 //enum dialogType_e : uint8_t  { DG_NONE=0,   DG_VOLUME=1, DG_LOST=2, DG_UPDATING=3, DG_NEXTION=4 };
 

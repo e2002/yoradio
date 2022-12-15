@@ -568,6 +568,16 @@ void Audio::showstreamtitle(const char* ml) {
     }
 }
 //---------------------------------------------------------------------------------------------------------------------
+void Audio::cardLock(bool lock){
+#if (TFT_CS!=255) || (SDC_CS!=255)
+  if(lock){
+    xSemaphoreTake(mutex_pl, portMAX_DELAY);
+  }else{
+    xSemaphoreGive(mutex_pl);
+  }
+#endif
+}
+//---------------------------------------------------------------------------------------------------------------------
 void Audio::loop(){
     // - localfile - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if(m_f_localfile) {                                      // Playing file fron SPIFFS or SD?
@@ -634,7 +644,7 @@ void Audio::processLocalFile() {
            }
     }
     //----------------------------------------------------------------------------------------------------
-    bytesAddedToBuffer = audiofile.read(InBuff.getWritePtr(), bytesCanBeWritten);
+    cardLock(true); bytesAddedToBuffer = audiofile.read(InBuff.getWritePtr(), bytesCanBeWritten); cardLock(false);
     if(bytesAddedToBuffer > 0) {
         InBuff.bytesWritten(bytesAddedToBuffer);
     }
@@ -718,9 +728,9 @@ void Audio::processLocalFile() {
 
         f_stream = false;
         m_f_localfile = false;
-
+        cardLock(true);
         char *afn =strdup(audiofile.name()); // store temporary the name
-
+        cardLock(false);
         stopSong();
         sprintf(chbuf, "End of file \"%s\"", afn);
         if(audio_info) audio_info(chbuf);
@@ -1562,7 +1572,7 @@ uint32_t Audio::stop_mp3client(){
     uint32_t pos = 0;
     if(m_f_localfile){
         pos = getFilePos() - InBuff.bufferFilled();
-        audiofile.close();
+        cardLock(true); audiofile.close(); cardLock(false);
         m_f_localfile=false;
     }
     int v=read_register(SCI_VOL);
@@ -1897,14 +1907,14 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
 
     sprintf(chbuf, "Reading file: \"%s\"", audioName);
     if(audio_info) {vTaskDelay(2); audio_info(chbuf);}
-
-    audiofile.close();
+    if(audio_beginSDread) audio_beginSDread();
+    cardLock(true); audiofile.close(); cardLock(false);
     if(fs.exists(audioName)) {
-        audiofile = fs.open(audioName);
+        cardLock(true); audiofile = fs.open(audioName); cardLock(false);
     } else {
         UTF8toASCII(audioName);
         if(fs.exists(audioName)) {
-            audiofile = fs.open(audioName);
+            cardLock(true); audiofile = fs.open(audioName); cardLock(false);
         }
     }
 
@@ -1914,9 +1924,11 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     }
 
     m_f_localfile = true;
+    cardLock(true);
     m_file_size = audiofile.size();//TEST loop
-
+    
     char* afn = strdup(audiofile.name());                   // audioFileName
+    cardLock(false);
     uint8_t dotPos = lastIndexOf(afn, ".");
     for(uint8_t i = dotPos + 1; i < strlen(afn); i++){
         afn[i] = toLowerCase(afn[i]);
@@ -1960,7 +1972,7 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
 
     sprintf(chbuf, "The %s format is not supported", afn + dotPos);
     if(audio_info) audio_info(chbuf);
-    audiofile.close();
+    cardLock(true); audiofile.close(); cardLock(false);
     if(afn) free(afn);
     return false;
 }
@@ -2391,7 +2403,7 @@ void Audio::showID3Tag(const char* tag, const char* value){
     if(!strcmp(tag, "OWNE")) sprintf(chbuf, "Ownership: %s", value);
     // if(!strcmp(tag, "PRIV")) sprintf(chbuf, "Private: %s", value);
     if(!strcmp(tag, "SYLT")) sprintf(chbuf, "SynLyrics: %s", value);
-    if(!strcmp(tag, "TALB")) sprintf(chbuf, "Album: %s", value);
+    if(!strcmp(tag, "TALB")) { sprintf(chbuf, "Album: %s", value); if(audio_id3album) audio_id3album(value); }
     if(!strcmp(tag, "TBPM")) sprintf(chbuf, "BeatsPerMinute: %s", value);
     if(!strcmp(tag, "TCMP")) sprintf(chbuf, "Compilation: %s", value);
     if(!strcmp(tag, "TCOM")) sprintf(chbuf, "Composer: %s", value);
@@ -2401,7 +2413,7 @@ void Audio::showID3Tag(const char* tag, const char* value){
     if(!strcmp(tag, "TEXT")) sprintf(chbuf, "Lyricist: %s", value);
     if(!strcmp(tag, "TIME")) sprintf(chbuf, "Time: %s", value);
     if(!strcmp(tag, "TIT1")) sprintf(chbuf, "Grouping: %s", value);
-    if(!strcmp(tag, "TIT2")) sprintf(chbuf, "Title: %s", value);
+    if(!strcmp(tag, "TIT2")) { sprintf(chbuf, "Title: %s", value); if(audio_id3album) audio_id3album(value); }
     if(!strcmp(tag, "TIT3")) sprintf(chbuf, "Subtitle: %s", value);
     if(!strcmp(tag, "TLAN")) sprintf(chbuf, "Language: %s", value);
     if(!strcmp(tag, "TLEN")) sprintf(chbuf, "Length (ms): %s", value);
@@ -2409,7 +2421,7 @@ void Audio::showID3Tag(const char* tag, const char* value){
     if(!strcmp(tag, "TOAL")) sprintf(chbuf, "OriginalAlbum: %s", value);
     if(!strcmp(tag, "TOPE")) sprintf(chbuf, "OriginalArtist: %s", value);
     if(!strcmp(tag, "TORY")) sprintf(chbuf, "OriginalReleaseYear: %s", value);
-    if(!strcmp(tag, "TPE1")) sprintf(chbuf, "Artist: %s", value);
+    if(!strcmp(tag, "TPE1")) { sprintf(chbuf, "Artist: %s", value); if(audio_id3artist) audio_id3artist(value); }
     if(!strcmp(tag, "TPE2")) sprintf(chbuf, "Band: %s", value);
     if(!strcmp(tag, "TPE3")) sprintf(chbuf, "Conductor: %s", value);
     if(!strcmp(tag, "TPE4")) sprintf(chbuf, "InterpretedBy: %s", value);
@@ -2431,17 +2443,26 @@ void Audio::showID3Tag(const char* tag, const char* value){
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize(){
     if (!audiofile) return 0;
-    return audiofile.size();
+    cardLock(true);
+    uint32_t s = audiofile.size();
+    cardLock(false);
+    return s;
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFilePos(){
     if (!audiofile) return 0;
-    return audiofile.position();
+    cardLock(true);
+    uint32_t p = audiofile.position();
+    cardLock(false);
+    return p;
 }
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::setFilePos(uint32_t pos){
     if (!audiofile) return false;
-    return audiofile.seek(pos);
+    cardLock(true);
+    uint32_t s = audiofile.seek(pos);
+    cardLock(false);
+    return s;
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getAudioDataStartPos() {
