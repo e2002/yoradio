@@ -379,7 +379,7 @@ void Config::loadStation(uint16_t ls) {
     strncpy(station.name, sName, BUFLEN);
     strncpy(station.url, sUrl, BUFLEN);
     station.ovol = sOvol;
-    if(store.play_mode==PM_WEB) setLastStation(ls);
+    setLastStation(ls);
   }
   playlist.close();
 }
