@@ -64,6 +64,7 @@ void Player::stopInfo() {
 }
 
 void Player::stop(const char *nttl){
+  if(config.store.play_mode==PM_SDCARD) config.sdResumePos = player.getFilePos();
   mode = STOPPED;
   setOutputPins(false);
   if(nttl) config.setTitle(nttl);
@@ -136,7 +137,7 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
-  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,filePos)) {
+  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?filePos:config.sdResumePos)) {
     mode = PLAYING;
     config.setTitle("");
     netserver.requestOnChange(TITLE, 0);

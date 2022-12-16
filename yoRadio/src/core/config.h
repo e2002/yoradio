@@ -152,6 +152,7 @@ class Config {
     neworkItem ssids[5];
     byte ssidsCount;
     uint16_t sleepfor;
+    uint32_t sdResumePos;
   public:
     Config() {};
     void save();

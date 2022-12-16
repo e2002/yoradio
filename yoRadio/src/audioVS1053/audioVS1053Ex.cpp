@@ -2468,6 +2468,12 @@ bool Audio::setFilePos(uint32_t pos){
     cardLock(false);
     return s;
 }
+uint32_t Audio::getAudioFileDuration(){
+  return 0; //TODO
+}
+uint32_t Audio::getAudioCurrentTime(){
+  return 0; //TODO
+}
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getAudioDataStartPos() {
     if(!audiofile) return 0;

@@ -32,6 +32,7 @@ void Config::init() {
   
   loadTheme();
   ssidsCount = 0;
+  sdResumePos = 0;
   if(SDC_CS!=255 && store.play_mode==PM_SDCARD){
     //pinMode(SDC_CS, OUTPUT);      digitalWrite(SDC_CS, HIGH);
     //SDSPI.begin(SDC_SPI);
