@@ -33,6 +33,7 @@
 #define REAL_INDEX   store.play_mode==PM_WEB?INDEX_PATH:INDEX_SD_PATH
 
 #define MAX_PLAY_MODE   1
+enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 
 void u8fix(char *src);
 
@@ -179,9 +180,6 @@ class Config {
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();
-    void listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels);
-    void initSDPlaylist();
-    void indexSDPlaylist();
     void fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum = false);
     void setTimezone(int8_t tzh, int8_t tzm);
     void setTimezoneOffset(uint16_t tzo);
@@ -198,6 +196,10 @@ class Config {
     Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
+    void listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels);
+    void initSDPlaylist();
+    void indexSDPlaylist();
+    bool checkNoMedia(const char* path);
 };
 
 extern Config config;

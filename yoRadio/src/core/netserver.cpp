@@ -484,6 +484,7 @@ void NetServer::getPlaylist(uint8_t clientId) {
 }
 
 bool NetServer::importPlaylist() {
+  if(config.store.play_mode==PM_SDCARD) return false;
   File tempfile = SPIFFS.open(TMP_PATH, "r");
   if (!tempfile) {
     return false;

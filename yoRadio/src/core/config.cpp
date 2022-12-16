@@ -6,7 +6,7 @@
 
 Config config;
 
-#if DSP_HSPI || TS_HSPI || VS_HSPI
+#if DSP_HSPI || TS_HSPI || VS_HSPI || SD_HSPI
 SPIClass  SPI2(HSPI);
 #endif
 //SPIClass  SDSPI(VSPI);
@@ -296,6 +296,13 @@ bool endsWith (const char* base, const char* str) {
   return (strncmp(p, str, slen) == 0);
 }
     
+bool Config::checkNoMedia(const char* path){
+  char nomedia[BUFLEN]= {0};
+  strlcat(nomedia, path, BUFLEN);
+  strlcat(nomedia, "/.nomedia", BUFLEN);
+  return SD.exists(nomedia);
+}
+
 void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels){
   File root = SD.open(dirname);
   if(!root){
@@ -313,7 +320,7 @@ void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8
   while(file){
     
     if(file.isDirectory()){
-      if(levels){
+      if(levels && !checkNoMedia(file.path())){
         listSD(plSDfile, plSDindex, file.path(), levels -1);
       }
     } else {

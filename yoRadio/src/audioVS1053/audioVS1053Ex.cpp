@@ -10,6 +10,7 @@
 #ifndef VS_PATCH_ENABLE
 #define VS_PATCH_ENABLE  true
 #endif
+#include "../core/config.h"
 #include "audioVS1053Ex.h"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -569,10 +570,11 @@ void Audio::showstreamtitle(const char* ml) {
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::cardLock(bool lock){
-#if (TFT_CS!=255) || (SDC_CS!=255)
+#if (SDC_CS!=255)
   if(lock){
     xSemaphoreTake(mutex_pl, portMAX_DELAY);
   }else{
+//    digitalWrite(SDC_CS, HIGH);
     xSemaphoreGive(mutex_pl);
   }
 #endif
@@ -908,7 +910,6 @@ void Audio::processWebStream(){
             InBuff.bytesWasRead(bytesDecoded);
         }
         stopSong(); // Correct close when play known length sound #74 and before callback #112
-
         if(m_f_tts){
             sprintf(chbuf, "End of speech: \"%s\"", m_lastHost);
             if(audio_info) audio_info(chbuf);
@@ -1592,11 +1593,13 @@ void Audio::setDefaults(){
     InBuff.resetBuffer();
     vector_clear_and_shrink(m_playlistURL);
     vector_clear_and_shrink(m_playlistContent);
-    client.stop();
-    client.flush(); // release memory
-    clientsecure.stop();
-    clientsecure.flush();
-    _client = static_cast<WiFiClient*>(&client); /* default to *something* so that no NULL deref can happen */
+    if(config.store.play_mode!=PM_SDCARD){
+      client.stop();
+      client.flush(); // release memory
+      clientsecure.stop();
+      clientsecure.flush();
+      _client = static_cast<WiFiClient*>(&client); /* default to *something* so that no NULL deref can happen */
+    }
     m_f_ctseen=false;                                       // Contents type not seen yet
     m_metaint=0;                                            // No metaint yet
     m_LFcount=0;                                            // For detection end of header
@@ -1908,23 +1911,24 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     sprintf(chbuf, "Reading file: \"%s\"", audioName);
     if(audio_info) {vTaskDelay(2); audio_info(chbuf);}
     if(audio_beginSDread) audio_beginSDread();
-    cardLock(true); audiofile.close(); cardLock(false);
+    cardLock(true); 
+    audiofile.close();
     if(fs.exists(audioName)) {
-        cardLock(true); audiofile = fs.open(audioName); cardLock(false);
+        audiofile = fs.open(audioName);
     } else {
         UTF8toASCII(audioName);
         if(fs.exists(audioName)) {
-            cardLock(true); audiofile = fs.open(audioName); cardLock(false);
+            audiofile = fs.open(audioName);
         }
     }
 
     if(!audiofile) {
         if(audio_info) {vTaskDelay(2); audio_info("Failed to open file for reading");}
+        cardLock(false);
         return false;
     }
 
     m_f_localfile = true;
-    cardLock(true);
     m_file_size = audiofile.size();//TEST loop
     
     char* afn = strdup(audiofile.name());                   // audioFileName

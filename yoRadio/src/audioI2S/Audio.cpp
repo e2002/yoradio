@@ -14,6 +14,7 @@
 #include "mp3_decoder/mp3_decoder.h"
 #include "aac_decoder/aac_decoder.h"
 #include "flac_decoder/flac_decoder.h"
+#include "../core/config.h"
 
 #ifdef SDFATFS_USED
 fs::SDFATFS SD_SDFAT;
@@ -311,11 +312,13 @@ void Audio::setDefaults() {
     vector_clear_and_shrink(m_playlistURL);
     vector_clear_and_shrink(m_playlistContent);
     m_hashQueue.clear(); m_hashQueue.shrink_to_fit(); // uint32_t vector
-    client.stop();
-    client.flush(); // release memory
-    clientsecure.stop();
-    clientsecure.flush();
-    _client = static_cast<WiFiClient*>(&client); /* default to *something* so that no NULL deref can happen */
+    if(config.store.play_mode!=PM_SDCARD){
+      client.stop();
+      client.flush(); // release memory
+      clientsecure.stop();
+      clientsecure.flush();
+      _client = static_cast<WiFiClient*>(&client); /* default to *something* so that no NULL deref can happen */
+    }
     playI2Sremains();
 
     AUDIO_INFO("buffers freed, free Heap: %u bytes", ESP.getFreeHeap());
