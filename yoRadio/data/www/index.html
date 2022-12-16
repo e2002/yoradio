@@ -10,11 +10,12 @@
   <title>ёRadio - Player</title>
   <style> </style>
   </head>
-<body>
+<body class="%MODE%">
   <div class="content">
     <div class="logo"></div>
     <div id="navbar">
       <div class="playerbytton navbutton" id="playlistbutton" data-name="playlist"></div>
+      <div class="playerbytton navbutton" id="sdbutton" data-name="sdcard"></div>
       <div class="playerbytton navbutton" id="settingsbutton" data-name="settings"></div>
     </div>
     <div class="playerwrap">
@@ -55,7 +56,17 @@
 						  </li>
 				    </ul>
 		      </div>
-		      <input type="range" id="volrange" class="slider" name="volume" data-slaveid="volinfo" min="0" max="254" value="0">
+		      <div id="volnav">
+		        <input type="range" id="volrange" class="slider" name="volume" data-slaveid="volinfo" min="0" max="254" value="0">
+		      </div>
+		      <div id="sdnav" class="hidden">
+		        <div id="sdposvals">
+		          <div id="sdposvalscurrent">0:00</div>
+	            <div id="snuffle" class="playerbytton active" data-name="snuffle"></div>
+		          <div id="sdposvalsend">0:00</div>
+		        </div>
+		        <input type="range" id="sdpos" class="slider" name="sdpos" min="0" max="254" value="0">
+		      </div>
 		      <div class="infowrap">
 		        <div class="infoitem">volume: <span id="volinfo">0</span></div>
 		        <div class="infoitem" id="bitinfo">bitrate: 0kBit</div>

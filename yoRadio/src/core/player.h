@@ -30,7 +30,7 @@ class Player: public Audio {
     Player();
     void init();
     void loop();
-    void play(uint16_t stationId);
+    void play(uint16_t stationId, uint32_t filePos=0);
     void stop(const char *nttl = NULL);
     void prev();
     void next();

@@ -5,6 +5,7 @@
 #include "config.h"
 #include "telnet.h"
 #include "netserver.h"
+#include "player.h"
 
 Network network;
 
@@ -39,7 +40,7 @@ void ticks() {
     mktime(&network.timeinfo);
     display.putRequest(CLOCK);
   }
-
+  if(player.isRunning() && config.store.play_mode==PM_SDCARD) netserver.requestOnChange(SDPOS, 0);
   if(divrssi) {
     int rs = WiFi.RSSI();
     netserver.setRSSI(rs);

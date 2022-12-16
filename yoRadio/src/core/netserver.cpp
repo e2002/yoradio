@@ -413,6 +413,13 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         byte v = atoi(val);
         player.setVol(v, false);
       }
+      if (strcmp(cmd, "sdpos") == 0) {
+        if (config.store.play_mode==PM_SDCARD){
+          //byte v = atoi(val);
+          player.play(config.store.lastStation, atoi(val));
+          //Serial.printf("player.setFilePos(%d)\t******************************************\n", v);
+        }
+      }
       if (strcmp(cmd, "balance") == 0) {
         int8_t valb = atoi(val);
         player.setBalance(valb);
@@ -587,6 +594,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
     case TITLE:       sprintf (buf, "{\"meta\": \"%s\"}", config.station.title); if (player.requestToStart) { telnet.info(); player.requestToStart = false; } else { telnet.printf("##CLI.META#: %s\n> ", config.station.title); } break;
     case VOLUME:      sprintf (buf, "{\"vol\": %d}", config.store.volume); break;
     case NRSSI:       sprintf (buf, "{\"rssi\": %d}", rssi); rssi = 255; break;
+    case SDPOS:       sprintf (buf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}", player.getFilePos(), player.getFileSize(), 0, 0); break;
     case BITRATE:     sprintf (buf, "{\"bitrate\": %d}", config.station.bitrate); break;
     case MODE:        sprintf (buf, "{\"mode\": \"%s\"}", player.mode == PLAYING ? "playing" : "stopped"); break;
     case EQUALIZER:   sprintf (buf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
@@ -603,6 +611,13 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
 
 String processor(const String& var) { // %Templates%
   if (var == "VERSION") return YOVERSION;
+  if (var == "MODE") {
+    if(config.store.play_mode==PM_SDCARD) {
+      return "modescard";
+    }else{
+      return "modeweb";
+    }
+  }
   return String();
 }
 

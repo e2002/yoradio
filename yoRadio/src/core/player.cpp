@@ -124,7 +124,7 @@ void Player::setOutputPins(bool isPlaying) {
   if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, isPlaying?!MUTE_VAL:MUTE_VAL);
 }
 
-void Player::play(uint16_t stationId) {
+void Player::play(uint16_t stationId, uint32_t filePos) {
   display.putRequest(PSTOP);
   setDefaults();
   setOutputPins(false);
@@ -136,7 +136,7 @@ void Player::play(uint16_t stationId) {
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
-  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url)) {
+  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,filePos)) {
     mode = PLAYING;
     config.setTitle("");
     netserver.requestOnChange(TITLE, 0);

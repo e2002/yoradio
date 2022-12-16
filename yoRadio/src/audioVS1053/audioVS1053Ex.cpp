@@ -2464,7 +2464,7 @@ uint32_t Audio::getFilePos(){
 bool Audio::setFilePos(uint32_t pos){
     if (!audiofile) return false;
     cardLock(true);
-    uint32_t s = audiofile.seek(pos);
+    bool s = audiofile.seek(pos);
     cardLock(false);
     return s;
 }
