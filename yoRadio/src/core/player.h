@@ -26,10 +26,13 @@ class Player: public Audio {
     bool requestToStart;
     void zeroRequest();
     SemaphoreHandle_t playmutex=NULL;
+    bool lockOutput = true;
   public:
     Player();
     void init();
     void loop();
+    void initHeaders(const char *file);
+    void loopreader();
     void play(uint16_t stationId, uint32_t filePos=0);
     void stop(const char *nttl = NULL);
     void prev();

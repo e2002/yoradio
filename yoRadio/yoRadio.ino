@@ -55,6 +55,8 @@ void setup() {
   #ifdef MQTT_HOST
     mqttInit();
   #endif
+  if (config.store.play_mode==PM_SDCARD) player.initHeaders(config.station.url);
+  player.lockOutput=false;
   if (config.store.smartstart == 1) player.play(config.store.lastStation);
 }
 
@@ -96,6 +98,7 @@ void checkConnection(){
 //=============================================//
 
 void audio_info(const char *info) {
+  if(player.lockOutput) return;
   if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
   #ifdef USE_NEXTION
     nextion.audioinfo(info);
@@ -167,6 +170,7 @@ void audio_id3artist(const char *info){
 }
 
 void audio_id3album(const char *info){
+  if(player.lockOutput) return;
   if(printable(info)){
     if(strlen(config.station.title)==0){
       config.setTitle(info);
@@ -191,6 +195,7 @@ void audio_beginSDread(){
 }
 
 void audio_id3data(const char *info){  //id3 metadata
+    if(player.lockOutput) return;
     telnet.printf("##AUDIO.ID3#: %s\n", info);
 }
 void audio_eof_mp3(const char *info){  //end of file

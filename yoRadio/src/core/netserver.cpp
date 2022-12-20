@@ -544,8 +544,10 @@ bool NetServer::importPlaylist() {
 #else
   #define SHOW_WEATHER  false
 #endif
+char wsbuf[BUFLEN * 2];
 void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
-  char buf[BUFLEN * 2] = { 0 };
+  //char buf[BUFLEN * 2] = { 0 };
+  memset(wsbuf, 0, BUFLEN * 2);
   switch (request) {
     case PLAYLIST:        getPlaylist(clientId); break;
     case PLAYLISTSAVED:   config.indexPlaylist(); config.initPlaylist(); getPlaylist(clientId); break;
@@ -577,30 +579,31 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
           if (IR_PIN != 255 || dbgact)                        act += F("\"group_ir\",");
         }
                                                               act = act.substring(0, act.length() - 1);
-        sprintf (buf, "{\"act\":[%s]}", act.c_str());
+        sprintf (wsbuf, "{\"act\":[%s]}", act.c_str());
         break;
       }
-    case GETMODE:     sprintf (buf, "{\"pmode\":\"%s\"}", network.status == CONNECTED ? "player" : "ap"); break;
-    case GETINDEX:    requestOnChange(STATION, clientId); requestOnChange(TITLE, clientId); requestOnChange(VOLUME, clientId); requestOnChange(EQUALIZER, clientId); requestOnChange(BALANCE, clientId); requestOnChange(BITRATE, clientId); requestOnChange(MODE, clientId); return; break;
-    case GETSYSTEM:   sprintf (buf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d}", config.store.smartstart != 2, config.store.audioinfo, config.store.vumeter, config.store.softapdelay); break;
-    case GETSCREEN:   sprintf (buf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d}", config.store.flipscreen, config.store.invertdisplay, config.store.numplaylist, config.store.fliptouch, config.store.dbgtouch, config.store.dspon, config.store.brightness, config.store.contrast); break;
-    case GETTIMEZONE: sprintf (buf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", config.store.tzHour, config.store.tzMin, config.store.sntp1, config.store.sntp2); break;
-    case GETWEATHER:  sprintf (buf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}", config.store.showweather, config.store.weatherlat, config.store.weatherlon, config.store.weatherkey); break;
-    case GETCONTROLS: sprintf (buf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d}", config.store.volsteps, config.store.encacc, config.store.irtlp); break;
-    case DSPON:       sprintf (buf, "{\"dspontrue\":%d}", 1); break;
-    case STATION:     sprintf (buf, "{\"nameset\": \"%s\"}", config.station.name); requestOnChange(ITEM, clientId); break;
-    case ITEM:        sprintf (buf, "{\"current\": %d}", config.store.lastStation); break;
-    case TITLE:       sprintf (buf, "{\"meta\": \"%s\"}", config.station.title); if (player.requestToStart) { telnet.info(); player.requestToStart = false; } else { telnet.printf("##CLI.META#: %s\n> ", config.station.title); } break;
-    case VOLUME:      sprintf (buf, "{\"vol\": %d}", config.store.volume); break;
-    case NRSSI:       sprintf (buf, "{\"rssi\": %d}", rssi); rssi = 255; break;
-    case SDPOS:       if(player.getFilePos()>295903) sprintf (buf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}", player.getFilePos(), player.getFileSize(), player.getAudioCurrentTime(), player.getAudioFileDuration()); break;
-    case BITRATE:     sprintf (buf, "{\"bitrate\": %d}", config.station.bitrate); break;
-    case MODE:        sprintf (buf, "{\"mode\": \"%s\"}", player.mode == PLAYING ? "playing" : "stopped"); break;
-    case EQUALIZER:   sprintf (buf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
-    case BALANCE:     sprintf (buf, "{\"balance\": %d}", config.store.balance); break;
+    case GETMODE:     sprintf (wsbuf, "{\"pmode\":\"%s\"}", network.status == CONNECTED ? "player" : "ap"); break;
+    case GETINDEX:    requestOnChange(STATION, clientId); requestOnChange(TITLE, clientId); requestOnChange(VOLUME, clientId); requestOnChange(EQUALIZER, clientId); requestOnChange(BALANCE, clientId); requestOnChange(BITRATE, clientId); requestOnChange(MODE, clientId); if (config.store.play_mode==PM_SDCARD) requestOnChange(SDPOS, clientId); return; break;
+    case GETSYSTEM:   sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d}", config.store.smartstart != 2, config.store.audioinfo, config.store.vumeter, config.store.softapdelay); break;
+    case GETSCREEN:   sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d}", config.store.flipscreen, config.store.invertdisplay, config.store.numplaylist, config.store.fliptouch, config.store.dbgtouch, config.store.dspon, config.store.brightness, config.store.contrast); break;
+    case GETTIMEZONE: sprintf (wsbuf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", config.store.tzHour, config.store.tzMin, config.store.sntp1, config.store.sntp2); break;
+    case GETWEATHER:  sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}", config.store.showweather, config.store.weatherlat, config.store.weatherlon, config.store.weatherkey); break;
+    case GETCONTROLS: sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d}", config.store.volsteps, config.store.encacc, config.store.irtlp); break;
+    case DSPON:       sprintf (wsbuf, "{\"dspontrue\":%d}", 1); break;
+    case STATION:     requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
+    case STATIONNAME: sprintf (wsbuf, "{\"nameset\": \"%s\"}", config.station.name); break;
+    case ITEM:        sprintf (wsbuf, "{\"current\": %d}", config.store.lastStation); break;
+    case TITLE:       sprintf (wsbuf, "{\"meta\": \"%s\"}", config.station.title); if (player.requestToStart) { telnet.info(); player.requestToStart = false; } else { telnet.printf("##CLI.META#: %s\n> ", config.station.title); } break;
+    case VOLUME:      sprintf (wsbuf, "{\"vol\": %d}", config.store.volume); break;
+    case NRSSI:       sprintf (wsbuf, "{\"rssi\": %d}", rssi); rssi = 255; break;
+    case SDPOS:       sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}", player.getFilePos(), player.getFileSize(), player.getAudioCurrentTime(), player.getAudioFileDuration()); break;
+    case BITRATE:     sprintf (wsbuf, "{\"bitrate\": %d}", config.station.bitrate); break;
+    case MODE:        sprintf (wsbuf, "{\"mode\": \"%s\"}", player.mode == PLAYING ? "playing" : "stopped"); break;
+    case EQUALIZER:   sprintf (wsbuf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
+    case BALANCE:     sprintf (wsbuf, "{\"balance\": %d}", config.store.balance); break;
   }
-  if (strlen(buf) > 0) {
-    if (clientId == 0) { websocket.textAll(buf); }else{ websocket.text(clientId, buf); }
+  if (strlen(wsbuf) > 0) {
+    if (clientId == 0) { websocket.textAll(wsbuf); }else{ websocket.text(clientId, wsbuf); }
 #ifdef MQTT_HOST
     if (clientId == 0 && (request == STATION || request == ITEM || request == TITLE || request == MODE)) mqttPublishStatus();
     if (clientId == 0 && request == VOLUME) mqttPublishVolume();

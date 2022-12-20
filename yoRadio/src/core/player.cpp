@@ -82,6 +82,18 @@ void Player::stop(const char *nttl){
   if (player_on_stop_play) player_on_stop_play();
 }
 
+void Player::initHeaders(const char *file) {
+  if(strlen(file)==0) return;
+  connecttoFS(SD,file);
+  for(int c=0;c<20;c++) player.loopreader();
+  //netserver.requestOnChange(SDPOS, 0);
+  setDefaults();
+}
+
+void Player::loopreader() {
+  Audio::loop();
+}
+
 void Player::loop() {
   if (mode == PLAYING) {
     xSemaphoreTake(playmutex, portMAX_DELAY);
