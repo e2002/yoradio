@@ -9,6 +9,7 @@
 
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
+char topic[140], status[BUFLEN*3], vol[5], buf[20];
 
 void connectToMqtt() {
   mqttClient.connect();
@@ -25,9 +26,9 @@ void mqttInit() {
 }
 
 void onMqttConnect(bool sessionPresent) {
-  char buf[140];
-  sprintf(buf, "%s%s", MQTT_ROOT_TOPIC, "command");
-  mqttClient.subscribe(buf, 2);
+  memset(topic, 0, 140);
+  sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "command");
+  mqttClient.subscribe(topic, 2);
   mqttPublishStatus();
   mqttPublishVolume();
   mqttPublishPlaylist();
@@ -35,7 +36,8 @@ void onMqttConnect(bool sessionPresent) {
 
 void mqttPublishStatus() {
   if(mqttClient.connected()){
-    char topic[140], status[BUFLEN*3];
+    memset(topic, 0, 140);
+    memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
     sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\"}", player.mode==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title);
     mqttClient.publish(topic, 0, true, status);
@@ -44,16 +46,18 @@ void mqttPublishStatus() {
 
 void mqttPublishPlaylist() {
   if(mqttClient.connected()){
-    char topic[140], playlist[140];
+    memset(topic, 0, 140);
+    memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "playlist");
-    sprintf(playlist, "http://%s%s", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
-    mqttClient.publish(topic, 0, true, playlist);
+    sprintf(status, "http://%s%s", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
+    mqttClient.publish(topic, 0, true, status);
   }
 }
 
 void mqttPublishVolume(){
   if(mqttClient.connected()){
-    char topic[140], vol[5];
+    memset(topic, 0, 140);
+    memset(vol, 0, 5);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "volume");
     sprintf(vol, "%d", config.store.volume);
     mqttClient.publish(topic, 0, true, vol);
@@ -68,7 +72,7 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 
 void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
   if (len == 0) return;
-  char buf[20];
+  memset(buf, 0, 20);
   strlcpy(buf, payload, len+1);
   if (strcmp(buf, "prev") == 0) {
     player.prev();
@@ -88,7 +92,6 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     return;
   }
   if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) {
-    //player.play(config.store.lastStation);
     player.request.station = config.store.lastStation;
     return;
   }
@@ -111,12 +114,10 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     player.setVol(volume, false);
     return;
   }
-  //uint16_t sb;
   int sb;
   if (sscanf(buf, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;
-    //player.play(sb);
     player.request.station = (uint16_t)sb;
     player.request.doSave = true;
     return;
