@@ -194,5 +194,6 @@ void audio_id3data(const char *info){  //id3 metadata
     telnet.printf("##AUDIO.ID3#: %s\n", info);
 }
 void audio_eof_mp3(const char *info){  //end of file
+    config.sdResumePos = 0;
     player.play(random(1, config.store.countStation));
 }

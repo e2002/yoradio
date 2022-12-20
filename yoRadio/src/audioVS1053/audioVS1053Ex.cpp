@@ -2473,6 +2473,19 @@ uint32_t Audio::getAudioFileDuration(){
 }
 uint32_t Audio::getAudioCurrentTime(){
   return 0; //TODO
+  uint16_t MP3Status;
+  
+  MP3Status = read_register(SCI_HDAT1);
+  //Serial.print("SCI_HDAT1\t"); Serial.println(MP3Status, BIN);
+  Serial.print("LAYER\t"); Serial.println(MP3Status>>1 & 0b11);
+  Serial.print("ID\t"); Serial.println(MP3Status>>3 & 0b11);
+  //HDAT0[15:12] bitrate https://cdn-shop.adafruit.com/datasheets/vs1053.pdf
+  
+  MP3Status = read_register(SCI_HDAT0);
+  //Serial.print("SCI_HDAT0\t"); Serial.println(MP3Status, BIN);
+  Serial.print("BITRATE\t"); Serial.println(MP3Status>>12);
+  
+  return 0; //TODO
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getAudioDataStartPos() {
