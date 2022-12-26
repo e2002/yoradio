@@ -1300,6 +1300,7 @@ int Audio::read_WAV_Header(uint8_t* data, size_t len) {
             if(m_streamType == ST_WEBFILE) m_audioDataSize = m_contentlength - headerSize;
         }
         AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
+        if(audio_progress) audio_progress(headerSize, m_audioDataSize);
         return 4;
     }
     m_controlCounter = 100; // header succesfully read
@@ -1371,6 +1372,7 @@ int Audio::read_FLAC_Header(uint8_t *data, size_t len) {
         m_audioDataStart = headerSize;
         m_audioDataSize = m_contentlength - m_audioDataStart;
         AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
+        if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
         retvalue = 0;
         return 0;
     }
@@ -1519,6 +1521,7 @@ int Audio::read_ID3_Header(uint8_t *data, size_t len) {
             AUDIO_INFO("file has no mp3 tag, skip metadata");
             m_audioDataSize = m_contentlength;
             AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
+            if(audio_progress) audio_progress(295903, m_audioDataSize);
             return -1; // error, no ID3 signature found
         }
         ID3version = *(data + 3);
@@ -1733,6 +1736,7 @@ int Audio::read_ID3_Header(uint8_t *data, size_t len) {
             m_controlCounter = 100; // ok
             m_audioDataSize = m_contentlength - m_audioDataStart;
             AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
+            if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
             if(APIC_seen && audio_id3image){
                 cardLock(true);
                 size_t pos = audiofile.position();
@@ -1979,6 +1983,7 @@ int Audio::read_M4A_Header(uint8_t *data, size_t len) {
     if(m_controlCounter == M4A_MDAT) {  // mdat
         m_audioDataSize = bigEndian(data, 4) -8; // length of this atom - strlen(M4A_MDAT)
         AUDIO_INFO( "Audio-Length: %u",m_audioDataSize);
+        if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
         retvalue = 8;
         headerSize += 8;
         m_controlCounter = M4A_AMRDY;  // last step before starting the audio
@@ -1990,6 +1995,7 @@ int Audio::read_M4A_Header(uint8_t *data, size_t len) {
 //        m_contentlength = headerSize + m_audioDataSize; // after this mdat atom there may be other atoms
         if(getDatamode() == AUDIO_LOCALFILE){
             AUDIO_INFO("Content-Length: %u", m_contentlength);
+            if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
         }
         m_controlCounter = M4A_OKAY; // that's all
         return 0;
@@ -4441,7 +4447,10 @@ bool Audio::setFilePos(uint32_t pos) {
     InBuff.resetBuffer();
     if(pos < m_audioDataStart) pos = m_audioDataStart; // issue #96
     if(m_avr_bitrate) m_audioCurrentTime = ((pos-m_audioDataStart) / m_avr_bitrate) * 8; // #96
-    return audiofile.seek(pos);
+    cardLock(true);
+    uint32_t sk = audiofile.seek(pos);
+    cardLock(false);
+    return sk;
 }
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::audioFileSeek(const float speed) {

@@ -27,6 +27,7 @@ class Player: public Audio {
     void zeroRequest();
     SemaphoreHandle_t playmutex=NULL;
     bool lockOutput = true;
+    uint32_t sd_min, sd_max;
   public:
     Player();
     void init();

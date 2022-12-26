@@ -202,3 +202,8 @@ void audio_eof_mp3(const char *info){  //end of file
     config.sdResumePos = 0;
     player.play(random(1, config.store.countStation));
 }
+void audio_progress(uint32_t startpos, uint32_t endpos){
+  player.sd_min = startpos;
+  player.sd_max = endpos;
+  netserver.requestOnChange(SDLEN, 0);
+}

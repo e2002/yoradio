@@ -49,6 +49,7 @@ extern __attribute__((weak)) void audio_icyurl(const char*);
 extern __attribute__((weak)) void audio_icydescription(const char*);
 extern __attribute__((weak)) void audio_lasthost(const char*);
 extern __attribute__((weak)) void audio_eof_stream(const char*); // The webstream comes to an end
+extern __attribute__((weak)) void audio_progress(uint32_t start, uint32_t durarion);
 
 #define AUDIO_INFO(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); if(audio_info) audio_info(buff);}
 

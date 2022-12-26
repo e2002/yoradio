@@ -149,8 +149,9 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
-  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?filePos:config.sdResumePos)) {
+  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?filePos:config.sdResumePos-player.sd_min)) {
     mode = PLAYING;
+    if(config.store.play_mode==PM_SDCARD) config.sdResumePos = 0;
     config.setTitle("");
     netserver.requestOnChange(TITLE, 0);
     config.setSmartStart(1);
