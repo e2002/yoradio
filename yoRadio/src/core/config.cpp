@@ -23,6 +23,8 @@ void Config::init() {
 #endif
   eepromRead(EEPROM_START, store);
   if (store.config_set != 4262) setDefaults();
+  backupLastStation = store.lastStation;
+  Serial.print("Config::init, backupLastStation=\t"); Serial.println(backupLastStation);
   if(store.play_mode==80) store.play_mode=PM_WEB;
 
   //if (!SPIFFS.begin(false, "/spiffs", 30)) {
@@ -188,7 +190,11 @@ uint16_t Config::getTimezoneOffset() {
 }
 
 void Config::save() {
+  uint16_t ls = store.lastStation;
+  if(store.play_mode==PM_SDCARD) store.lastStation = backupLastStation;
+  if(store.play_mode==PM_WEB) backupLastStation = store.lastStation;
   eepromWrite(EEPROM_START, store);
+  store.lastStation = ls;
 }
 
 #if IR_PIN!=255

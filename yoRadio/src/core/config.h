@@ -153,6 +153,7 @@ class Config {
     byte ssidsCount;
     uint16_t sleepfor;
     uint32_t sdResumePos;
+    uint16_t backupLastStation;
   public:
     Config() {};
     void save();

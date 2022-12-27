@@ -500,10 +500,12 @@ void onBtnClick(int id) {
       }
     case EVT_BTNMODE: {
       if(SDC_CS==255) break;
+      if(config.store.play_mode==PM_SDCARD) config.store.lastStation = config.backupLastStation;
       config.store.play_mode++;
       if(config.store.play_mode > MAX_PLAY_MODE){
         config.store.play_mode=0;
       }
+      
       config.save();
       ESP.restart();
       break;
