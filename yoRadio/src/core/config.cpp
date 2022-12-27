@@ -25,8 +25,9 @@ void Config::init() {
   if (store.config_set != 4262) setDefaults();
   backupLastStation = store.lastStation;
   Serial.print("Config::init, backupLastStation=\t"); Serial.println(backupLastStation);
-  if(store.play_mode==80) store.play_mode=PM_WEB;
-
+  if(store.play_mode==80) store.play_mode=0b100;
+  sdSnuffle = bitRead(store.play_mode, 2);
+  store.play_mode = store.play_mode & 0b11;
   //if (!SPIFFS.begin(false, "/spiffs", 30)) {
   if (!SPIFFS.begin(false)) {
     return;
@@ -159,7 +160,7 @@ void Config::setDefaults() {
   strlcpy(store.weatherkey,"", 64);
   store.volsteps = 1;
   store.encacc = 200;
-  store.play_mode = 0;
+  store.play_mode = 0b100;
   store.irtlp = 35;
   store.btnpullup = true;
   store.btnlongpress = 200;
@@ -191,12 +192,20 @@ uint16_t Config::getTimezoneOffset() {
 
 void Config::save() {
   uint16_t ls = store.lastStation;
+  uint8_t  pm = store.play_mode;
   if(store.play_mode==PM_SDCARD) store.lastStation = backupLastStation;
   if(store.play_mode==PM_WEB) backupLastStation = store.lastStation;
+  bitWrite(store.play_mode, 2, sdSnuffle);
   eepromWrite(EEPROM_START, store);
   store.lastStation = ls;
+  store.play_mode = pm;
 }
-
+void Config::setSnuffle(bool sn){
+  sdSnuffle=sn;
+  save();
+  if(sdSnuffle) player.next();
+  //player blah blah blah
+}
 #if IR_PIN!=255
 void Config::saveIR(){
   eepromWrite(EEPROM_START_IR, ircodes);

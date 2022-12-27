@@ -154,6 +154,7 @@ class Config {
     uint16_t sleepfor;
     uint32_t sdResumePos;
     uint16_t backupLastStation;
+    bool     sdSnuffle;
   public:
     Config() {};
     void save();
@@ -191,6 +192,7 @@ class Config {
     void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
     void bootInfo();
     void doSleepW();
+    void setSnuffle(bool sn);
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);

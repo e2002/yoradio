@@ -165,7 +165,7 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
 }
 
 void Player::prev() {
-  if(config.store.play_mode==PM_WEB){
+  if(config.store.play_mode==PM_WEB || !config.sdSnuffle){
     if (config.store.lastStation == 1) config.store.lastStation = config.store.countStation; else config.store.lastStation--;
   }
   request.station = config.store.lastStation;
@@ -173,7 +173,7 @@ void Player::prev() {
 }
 
 void Player::next() {
-  if(config.store.play_mode==PM_WEB){
+  if(config.store.play_mode==PM_WEB || !config.sdSnuffle){
     if (config.store.lastStation == config.store.countStation) config.store.lastStation = 1; else config.store.lastStation++;
   }else{
     config.store.lastStation = random(1, config.store.countStation);

@@ -200,7 +200,11 @@ void audio_id3data(const char *info){  //id3 metadata
 }
 void audio_eof_mp3(const char *info){  //end of file
     config.sdResumePos = 0;
-    player.play(random(1, config.store.countStation));
+    if(config.sdSnuffle){
+      player.play(random(1, config.store.countStation));
+    }else{
+      player.next();
+    }
 }
 void audio_progress(uint32_t startpos, uint32_t endpos){
   player.sd_min = startpos;
