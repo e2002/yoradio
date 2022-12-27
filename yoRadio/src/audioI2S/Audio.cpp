@@ -1132,6 +1132,7 @@ size_t Audio::readAudioHeader(uint32_t bytes){
         if(res >= 0) bytesReaded = res;
         else{ // error, skip header
             m_controlCounter = 100;
+            eofHeader = true;
         }
     }
     if(m_codec == CODEC_MP3){
@@ -1139,6 +1140,7 @@ size_t Audio::readAudioHeader(uint32_t bytes){
         if(res >= 0) bytesReaded = res;
         else{ // error, skip header
             m_controlCounter = 100;
+            eofHeader = true;
         }
     }
     if(m_codec == CODEC_M4A){
@@ -1146,12 +1148,14 @@ size_t Audio::readAudioHeader(uint32_t bytes){
         if(res >= 0) bytesReaded = res;
         else{ // error, skip header
             m_controlCounter = 100;
+            eofHeader = true;
         }
     }
     if(m_codec == CODEC_AAC){
         // stream only, no header
         m_audioDataSize = getFileSize();
         m_controlCounter = 100;
+        eofHeader = true;
     }
     if(m_codec == CODEC_FLAC){
         int res = read_FLAC_Header(InBuff.getReadPtr(), bytes);
@@ -1159,6 +1163,7 @@ size_t Audio::readAudioHeader(uint32_t bytes){
         else{ // error, skip header
             stopSong();
             m_controlCounter = 100;
+            eofHeader = true;
         }
     }
     if(!isRunning()){
@@ -1304,6 +1309,7 @@ int Audio::read_WAV_Header(uint8_t* data, size_t len) {
         return 4;
     }
     m_controlCounter = 100; // header succesfully read
+    eofHeader = true;
     m_audioDataStart = headerSize;
     return 0;
 }
@@ -1369,6 +1375,7 @@ int Audio::read_FLAC_Header(uint8_t *data, size_t len) {
             return 0;
         }
         m_controlCounter = FLAC_OKAY;
+        eofHeader = true;
         m_audioDataStart = headerSize;
         m_audioDataSize = m_contentlength - m_audioDataStart;
         AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
@@ -1734,6 +1741,7 @@ int Audio::read_ID3_Header(uint8_t *data, size_t len) {
         }
         else {
             m_controlCounter = 100; // ok
+            eofHeader = true;
             m_audioDataSize = m_contentlength - m_audioDataStart;
             AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
             if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
@@ -1998,6 +2006,7 @@ int Audio::read_M4A_Header(uint8_t *data, size_t len) {
             if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
         }
         m_controlCounter = M4A_OKAY; // that's all
+        eofHeader = true;
         return 0;
     }
     // this section should never be reached
@@ -2203,6 +2212,7 @@ int Audio::read_OGG_Header(uint8_t *data, size_t len){
         AUDIO_INFO("FLACDecoder has been initialized, free Heap: %u bytes", ESP.getFreeHeap());
 
         m_controlCounter = OGG_OKAY; // 100
+        eofHeader = true;
         retvalue = 0;
         return 0;
     }

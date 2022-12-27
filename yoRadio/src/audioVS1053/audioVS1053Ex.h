@@ -319,6 +319,7 @@ public:
     void     getVUlevel();
     uint8_t  vuLeft, vuRight;
     void     cardLock(bool lock);
+    bool     eofHeader;
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}
     bool endsWith (const char* base, const char* str) {

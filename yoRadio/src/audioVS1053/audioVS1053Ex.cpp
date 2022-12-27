@@ -661,12 +661,14 @@ void Audio::processLocalFile() {
             if(m_codec == CODEC_WAV){
             //     int res = read_WAV_Header(InBuff.getReadPtr(), bytesCanBeRead);
                 m_controlCounter = 100;
+                eofHeader = true;
             }
             if(m_codec == CODEC_MP3){
                 int res = read_MP3_Header(InBuff.getReadPtr(), bytesCanBeRead);
                 if(res >= 0) bytesDecoded = res;
                 else{ // error, skip header
                     m_controlCounter = 100;
+                    eofHeader = true;
                 }
             }
             if(m_codec == CODEC_M4A){
@@ -674,12 +676,14 @@ void Audio::processLocalFile() {
             //     if(res >= 0) bytesDecoded = res;
             //     else{ // error, skip header
                     m_controlCounter = 100;
+                    eofHeader = true;
             //     }
             }
             if(m_codec == CODEC_AAC){
                 // stream only, no header
                 m_audioDataSize = getFileSize();
                 m_controlCounter = 100;
+                eofHeader = true;
             }
 
             if(m_codec == CODEC_FLAC){
@@ -688,11 +692,13 @@ void Audio::processLocalFile() {
             //     else{ // error, skip header
             //         stopSong();
                     m_controlCounter = 100;
+                    eofHeader = true;
             //     }
             }
 
             if(m_codec == CODEC_OGG){
                 m_controlCounter = 100;
+                eofHeader = true;
             }
         }
         else {
@@ -872,17 +878,20 @@ void Audio::processWebStream(){
         if(InBuff.bufferFilled() < maxFrameSize) return;
          if(m_codec == CODEC_WAV){
             m_controlCounter = 100;
+            eofHeader = true;
         }
         if(m_codec == CODEC_MP3){
             int res = read_MP3_Header(InBuff.getReadPtr(), InBuff.bufferFilled());
             if(res >= 0) bytesDecoded = res;
-            else{m_controlCounter = 100;} // error, skip header
+            else{m_controlCounter = 100;eofHeader = true;} // error, skip header
         }
         if(m_codec == CODEC_M4A){
             m_controlCounter = 100;
+            eofHeader = true;
         }
         if(m_codec == CODEC_FLAC){
             m_controlCounter = 100;
+            eofHeader = true;
         }
         InBuff.bytesWasRead(bytesDecoded);
         return;
@@ -2333,6 +2342,7 @@ int Audio::read_MP3_Header(uint8_t *data, size_t len) {
         }
         else {
             m_controlCounter = 100; // ok
+            eofHeader = true;
             m_audioDataSize = m_contentlength - m_audioDataStart;
             sprintf(chbuf, "Audio-Length: %u", m_audioDataSize);
             if(audio_info) audio_info(chbuf);

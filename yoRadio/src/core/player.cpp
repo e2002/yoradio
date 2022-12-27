@@ -53,6 +53,7 @@ void Player::init() {
   volTimer=false;
   zeroRequest();
   playmutex = xSemaphoreCreateMutex();
+  randomSeed(analogRead(0));
   Serial.println("done");
 }
 
@@ -85,13 +86,11 @@ void Player::stop(const char *nttl){
 void Player::initHeaders(const char *file) {
   if(strlen(file)==0) return;
   connecttoFS(SD,file);
-  for(int c=0;c<20;c++) player.loopreader();
+  eofHeader = false;
+  //for(int c=0;c<20;c++) player.loopreader();
+  while(!eofHeader) Audio::loop();
   //netserver.requestOnChange(SDPOS, 0);
   setDefaults();
-}
-
-void Player::loopreader() {
-  Audio::loop();
 }
 
 void Player::loop() {
@@ -161,7 +160,7 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
     display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
   }else{
-    Serial.println("some unknown bug...");
+    telnet.printf("##ERROR#:\tError connecting to %s\n", config.station.url);
   };
 }
 
