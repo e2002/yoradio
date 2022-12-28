@@ -345,7 +345,7 @@ void Display::loop() {
   nextion.loop();
 #endif
   requestParams_t request;
-  if(xQueueReceive(displayQueue, &request, 20)){
+  if(xQueueReceive(displayQueue, &request, 5)){
     switch (request.type){
       case NEWMODE: _swichMode((displayMode_e)request.payload); break;
       case CLOCK: 

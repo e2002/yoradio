@@ -282,7 +282,7 @@ void VuWidget::_draw(){
 #if !defined(USE_NEXTION) && I2S_DOUT==255
   static uint8_t cc = 0;
   cc++;
-  if(cc>1){
+  if(cc>0){
     player.getVUlevel();
     cc=0;
   }

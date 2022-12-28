@@ -44,7 +44,9 @@ void ticks() {
   if(divrssi) {
     int rs = WiFi.RSSI();
     netserver.setRSSI(rs);
+    netserver.requestOnChange(NRSSI, 0);
     display.putRequest(DSPRSSI, rs);
+    
   }
 }
 
