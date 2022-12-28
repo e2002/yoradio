@@ -142,6 +142,16 @@ https://www.aliexpress.com/item/33009687492.html
 | 5V | +5V | - |
 | DGND | GND | - |
 
+##### SD CARD
+| Display | ESP-32 | myoptions.h |
+| ------ | ------ | ------ |
+| GND | GND | - |
+| VCC | +5v | - |
+| SCK | 18 | - |
+| MISO | 19 | - |
+| MOSI | 23 | - |
+| CS | 255* | SDC_CS |
+
 _\#\# Important! You must choose between I2S DAC and VS1053 by disabling the second module in the settings (see below)_
 ##### Nextion Displays
 | Display | ESP-32 | myoptions.h |
@@ -301,6 +311,15 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.901
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+**Please backup playlist.csv and wifi.csv before updating.**
+- added SD Card support (more info in [connection table](#connection-tables) and [exsamples/myoptions.h](https://github.com/e2002/yoradio/blob/main/exsamples/myoptions.h))
+- added MODE button to switch SD/WEB modes (more info in [Controls.md](https://github.com/e2002/yoradio/blob/main/Controls.md))
+- asterisk on the remote control now switches SD/WEB modes
+- double click BTN_CENTER and ENC_BTNB now toggles SD/WEB modes
+- bug fixes
+
 #### v0.8.173
 - bootlog added
 - fixed work of start/stop button in configurations with DSP_DUMMY

@@ -21,7 +21,7 @@ Button actions:
  longpress: quick volume down
 - BTN_CENTER\
  click: start/stop playing\
- dblclick: toggle between PLAYER/PLAYLIST mode\
+ dblclick: switch SD/WEB mode\
  longpress: toggle between PLAYER/PLAYLIST mode
 - BTN_RIGHT\
  click: volume up\
@@ -35,7 +35,10 @@ Button actions:
  click: without display - prev station, with display - move down\
  dblclick: doing nothing\
  longpress: with display - quick move down
-
+- BTN_MODE\
+ click: switch SD/WEB mode\
+ longpress: go to sleep
+ 
 ---
 ### Encoders
 You can connect one or two encoders to replace/complete the buttons. One encoder (without buttons) is enough to control the device.

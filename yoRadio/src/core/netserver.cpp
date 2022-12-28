@@ -512,7 +512,6 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         }
       }
       if (strcmp(cmd, "snuffle") == 0) {
-        Serial.printf("snuffle=%s\t********************\n", val);
         config.setSnuffle(strcmp(val, "true") == 0);
         return;
       }

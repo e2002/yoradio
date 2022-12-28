@@ -74,7 +74,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 
 /*  SDCARD  */
 /*  MISO is the same as D0, MOSI is the same as D1 */
-//#define SDC_SPI               18, 19, 23     /* SDCARD SPI pins (SCK, MISO, MOSI) */
+/*  SD VSPI PINS. SD SCK must be connected to pin 18
+                  SD MISO must be connected to pin 19
+                  SD MOSI must be connected to pin 23  */
 //#define SDC_CS                255            /* SDCARD CS pin */
 
 /*  ENCODER2  */
@@ -95,6 +97,8 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define BTN_LONGPRESS_LOOP_DELAY    200     /*  Delay between calling DuringLongPress event */
 //#define BTN_CLICK_TICKS    300              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
 //#define BTN_PRESS_TICKS    500              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
+
+//#define BTN_MODE              255           /*  MODE switcher  */
 /******************************************/
 
 /*  LCD DISPLAY 1602  */

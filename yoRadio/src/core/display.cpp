@@ -332,7 +332,9 @@ void Display::_layoutChange(bool played){
     }
   }
 }
-    
+#ifndef DSP_QUEUE_TICKS
+  #define DSP_QUEUE_TICKS 8
+#endif
 void Display::loop() {
   if(_bootStep==0) {
     _pager.begin();
@@ -345,7 +347,7 @@ void Display::loop() {
   nextion.loop();
 #endif
   requestParams_t request;
-  if(xQueueReceive(displayQueue, &request, 5)){
+  if(xQueueReceive(displayQueue, &request, DSP_QUEUE_TICKS)){
     switch (request.type){
       case NEWMODE: _swichMode((displayMode_e)request.payload); break;
       case CLOCK: 

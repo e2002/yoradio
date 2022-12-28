@@ -9,7 +9,6 @@ Config config;
 #if DSP_HSPI || TS_HSPI || VS_HSPI || SD_HSPI
 SPIClass  SPI2(HSPI);
 #endif
-//SPIClass  SDSPI(VSPI);
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -24,7 +23,6 @@ void Config::init() {
   eepromRead(EEPROM_START, store);
   if (store.config_set != 4262) setDefaults();
   backupLastStation = store.lastStation;
-  Serial.print("Config::init, backupLastStation=\t"); Serial.println(backupLastStation);
   if(store.play_mode==80) store.play_mode=0b100;
   sdSnuffle = bitRead(store.play_mode, 2);
   store.play_mode = store.play_mode & 0b11;
@@ -37,10 +35,6 @@ void Config::init() {
   ssidsCount = 0;
   sdResumePos = 0;
   if(SDC_CS!=255){
-    //pinMode(SDC_CS, OUTPUT);      digitalWrite(SDC_CS, HIGH);
-    //SDSPI.begin(SDC_SPI);
-    //SDSPI.setFrequency(1000000);
-    //SDSPI.setFrequency(100000);
     if(!SD.begin(SDC_CS)){
       store.play_mode=PM_WEB;
       Serial.println("##[ERROR]#\tCard Mount Failed");
