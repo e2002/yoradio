@@ -660,6 +660,7 @@ void Audio::processLocalFile() {
         if(m_controlCounter != 100){
             if(m_codec == CODEC_WAV){
             //     int res = read_WAV_Header(InBuff.getReadPtr(), bytesCanBeRead);
+                if(audio_progress) audio_progress(0, getFileSize());
                 m_controlCounter = 100;
                 eofHeader = true;
             }
@@ -675,6 +676,7 @@ void Audio::processLocalFile() {
             //     int res = read_M4A_Header(InBuff.getReadPtr(), bytesCanBeRead);
             //     if(res >= 0) bytesDecoded = res;
             //     else{ // error, skip header
+                    if(audio_progress) audio_progress(0, getFileSize());
                     m_controlCounter = 100;
                     eofHeader = true;
             //     }
@@ -682,6 +684,7 @@ void Audio::processLocalFile() {
             if(m_codec == CODEC_AAC){
                 // stream only, no header
                 m_audioDataSize = getFileSize();
+                if(audio_progress) audio_progress(0, m_audioDataSize);
                 m_controlCounter = 100;
                 eofHeader = true;
             }
@@ -691,6 +694,7 @@ void Audio::processLocalFile() {
             //     if(res >= 0) bytesDecoded = res;
             //     else{ // error, skip header
             //         stopSong();
+                    if(audio_progress) audio_progress(0, getFileSize());
                     m_controlCounter = 100;
                     eofHeader = true;
             //     }
@@ -2130,6 +2134,7 @@ int Audio::read_MP3_Header(uint8_t *data, size_t len) {
             if(audio_info) audio_info("file has no mp3 tag, skip metadata");
             m_audioDataSize = m_contentlength;
             sprintf(chbuf, "Audio-Length: %u", m_audioDataSize);
+            if(audio_progress) audio_progress(295903, m_audioDataSize);
             if(audio_info) audio_info(chbuf);
             return -1; // error, no ID3 signature found
         }
@@ -2344,6 +2349,7 @@ int Audio::read_MP3_Header(uint8_t *data, size_t len) {
             m_controlCounter = 100; // ok
             eofHeader = true;
             m_audioDataSize = m_contentlength - m_audioDataStart;
+            if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
             sprintf(chbuf, "Audio-Length: %u", m_audioDataSize);
             if(audio_info) audio_info(chbuf);
             if(APIC_seen && audio_id3image) audio_id3image(audiofile, APIC_pos, APIC_size);
