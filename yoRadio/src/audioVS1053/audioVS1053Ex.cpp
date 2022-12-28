@@ -660,7 +660,8 @@ void Audio::processLocalFile() {
         if(m_controlCounter != 100){
             if(m_codec == CODEC_WAV){
             //     int res = read_WAV_Header(InBuff.getReadPtr(), bytesCanBeRead);
-                if(audio_progress) audio_progress(0, getFileSize());
+                m_audioDataSize = getFileSize();
+                if(audio_progress) audio_progress(0, m_audioDataSize);
                 m_controlCounter = 100;
                 eofHeader = true;
             }
@@ -676,7 +677,8 @@ void Audio::processLocalFile() {
             //     int res = read_M4A_Header(InBuff.getReadPtr(), bytesCanBeRead);
             //     if(res >= 0) bytesDecoded = res;
             //     else{ // error, skip header
-                    if(audio_progress) audio_progress(0, getFileSize());
+                    m_audioDataSize = getFileSize();
+                    if(audio_progress) audio_progress(0, m_audioDataSize);
                     m_controlCounter = 100;
                     eofHeader = true;
             //     }
@@ -694,7 +696,8 @@ void Audio::processLocalFile() {
             //     if(res >= 0) bytesDecoded = res;
             //     else{ // error, skip header
             //         stopSong();
-                    if(audio_progress) audio_progress(0, getFileSize());
+                    m_audioDataSize = getFileSize();
+                    if(audio_progress) audio_progress(0, m_audioDataSize);
                     m_controlCounter = 100;
                     eofHeader = true;
             //     }
@@ -1632,6 +1635,8 @@ void Audio::setDefaults(){
     m_streamType = ST_NONE;
     m_codec = CODEC_NONE;
     m_playlistFormat = FORMAT_NONE;
+    m_localBitrateSend = false;
+    m_audioFileDuration = 0;
 }
 //------------------------------------------------------------------------------
 /**
@@ -2485,23 +2490,49 @@ bool Audio::setFilePos(uint32_t pos){
     return s;
 }
 uint32_t Audio::getAudioFileDuration(){
-  return 0; //TODO
+  if(!audiofile) return 0;
+  return m_audioFileDuration;
 }
+
+const uint16_t l3id012[16] = {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0};
+const uint16_t l3id3[16]   = {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0};
+char           brbuf[32];
 uint32_t Audio::getAudioCurrentTime(){
-  return 0; //TODO
-  uint16_t MP3Status;
-  
-  MP3Status = read_register(SCI_HDAT1);
-  //Serial.print("SCI_HDAT1\t"); Serial.println(MP3Status, BIN);
-  Serial.print("LAYER\t"); Serial.println(MP3Status>>1 & 0b11);
-  Serial.print("ID\t"); Serial.println(MP3Status>>3 & 0b11);
-  //HDAT0[15:12] bitrate https://cdn-shop.adafruit.com/datasheets/vs1053.pdf
-  
-  MP3Status = read_register(SCI_HDAT0);
-  //Serial.print("SCI_HDAT0\t"); Serial.println(MP3Status, BIN);
-  Serial.print("BITRATE\t"); Serial.println(MP3Status>>12);
-  
-  return 0; //TODO
+  uint16_t SCIStatus;
+  uint32_t prev_bitrate = m_avr_bitrate;
+  if(m_codec == CODEC_MP3){
+    SCIStatus=read_register(SCI_HDAT1);
+    uint8_t layer = SCIStatus>>1 & 0b11;
+    uint8_t id    = SCIStatus>>3 & 0b11;
+    SCIStatus = read_register(SCI_HDAT0);
+    if(layer==1){ //layer3
+      if(id==3){
+        m_avr_bitrate = l3id3[SCIStatus>>12] * 1000;
+      }else{
+        m_avr_bitrate = l3id012[SCIStatus>>12] * 1000;
+      }
+      m_localBitrateSend = prev_bitrate==m_avr_bitrate;
+      if(m_avr_bitrate==0) return 0;
+      sprintf(brbuf, "%d", m_avr_bitrate);
+      if(audio_bitrate && !m_localBitrateSend) audio_bitrate(brbuf);
+      m_localBitrateSend = true;
+      m_audioFileDuration = 8 * ((float)m_audioDataSize / (m_avr_bitrate));
+      return 8 * ((float)getFilePos() / (m_avr_bitrate));
+    }
+    return 0;
+  }
+  if(m_codec == CODEC_AAC || m_codec == CODEC_FLAC || m_codec == CODEC_WAV || m_codec == CODEC_M4A){
+    SCIStatus=read_register(SCI_HDAT0);
+    m_avr_bitrate = SCIStatus * 8;
+    m_localBitrateSend = prev_bitrate==m_avr_bitrate;
+    if(m_avr_bitrate==0) return 0;
+    sprintf(brbuf, "%d", m_avr_bitrate);
+    if(audio_bitrate && !m_localBitrateSend) audio_bitrate(brbuf);
+    m_localBitrateSend = true;
+    m_audioFileDuration = 8 * ((float)m_audioDataSize / (m_avr_bitrate));
+    return 8 * ((float)getFilePos() / (m_avr_bitrate));
+  }
+  return 0;
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getAudioDataStartPos() {

@@ -17,7 +17,7 @@
 #define bootLogoTop     68
 
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
-const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 4, 30 };
+const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 3, 30 };
 const ScrollConfig title1Conf     PROGMEM = {{ TFT_FRAMEWDT, 26, 1, WA_LEFT }, 140, true, MAX_WIDTH-24, 5000, 3, 30 };
 const ScrollConfig title2Conf     PROGMEM = {{ TFT_FRAMEWDT, 36, 1, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 3, 30 };
 const ScrollConfig playlistConf   PROGMEM = {{ TFT_FRAMEWDT, 56, 2, WA_LEFT }, 140, true, MAX_WIDTH, 1000, 4, 30 };
@@ -50,7 +50,7 @@ const WidgetConfig bootWdtConf    PROGMEM = { 0, 90, 1, WA_CENTER };
 const ProgressConfig bootPrgConf  PROGMEM = { 90, 14, 4 };
 
 /* BANDS  */                             /* { onebandwidth, onebandheight, bandsHspace, bandsVspace, numofbands, fadespeed } */
-const VUBandsConfig bandsConf     PROGMEM = { 12, 50, 2, 1, 10, 3 };
+const VUBandsConfig bandsConf     PROGMEM = { 12, 50, 2, 1, 10, 1 };
 
 const BitrateConfig fullbitrateConf PROGMEM = {{DSP_WIDTH-TFT_FRAMEWDT-19, 23, 1, WA_LEFT}, 22 };
 /* STRINGS  */

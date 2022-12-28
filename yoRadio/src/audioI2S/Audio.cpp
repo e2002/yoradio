@@ -20,7 +20,7 @@
 fs::SDFATFS SD_SDFAT;
 #endif
 #ifndef DMA_BUFCOUNT
-#define DMA_BUFCOUNT  4
+#define DMA_BUFCOUNT  8
 #endif
 //---------------------------------------------------------------------------------------------------------------------
 AudioBuffer::AudioBuffer(size_t maxBlockSize) {

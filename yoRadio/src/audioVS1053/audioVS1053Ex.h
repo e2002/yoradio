@@ -186,7 +186,10 @@ private:
     uint8_t         m_rev=0;                        // Revision
     uint8_t         m_playlistFormat = 0;           // M3U, PLS, ASX
     size_t          m_file_size = 0;                // size of the file
+    uint32_t        m_audioFileDuration = 0;
     size_t          m_audioDataSize = 0;            //
+    uint32_t        m_avr_bitrate = 0;
+    bool            m_localBitrateSend = true;
     uint32_t        m_audioDataStart = 0;           // in bytes
     int             m_id3Size=0;                    // length id3 tag
     bool            m_f_ssl=false;
