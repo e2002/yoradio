@@ -17,6 +17,7 @@
 #define PLMITEMHEIGHT   22
 
 #define bootLogoTop     28
+//#define DSP_QUEUE_TICKS 5
 
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
 const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 2, WA_LEFT }, 140, true, DSP_WIDTH+10, 5000, 4, 30 };
@@ -51,7 +52,7 @@ const WidgetConfig bootWdtConf    PROGMEM = { 0, 130, 1, WA_CENTER };
 const ProgressConfig bootPrgConf  PROGMEM = { 90, 14, 4 };
 
 /* BANDS  */                             /* { onebandwidth, onebandheight, bandsHspace, bandsVspace, numofbands, fadespeed } */
-const VUBandsConfig bandsConf     PROGMEM = { 19, 90, 2, 2, 10, 4 };
+const VUBandsConfig bandsConf     PROGMEM = { 19, 90, 2, 2, 10, 2 };
 /* STRINGS  */
 const char         numtxtFmt[]    PROGMEM = "%d";
 const char           rssiFmt[]    PROGMEM = "WiFi %d";

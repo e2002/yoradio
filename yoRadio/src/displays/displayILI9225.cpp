@@ -93,7 +93,7 @@ void DspCore::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color){
 }
       
 void DspCore::initDisplay() {
-  TAKE_MUTEX();
+//  TAKE_MUTEX();
 #if DSP_HSPI
   begin(SPI2);
 #else
@@ -102,7 +102,7 @@ void DspCore::initDisplay() {
   invert();
   flip();
   setTextSize(1);
-  GIVE_MUTEX();
+//  GIVE_MUTEX();
 }
 
 void DspCore::drawLogo(uint16_t top) {
