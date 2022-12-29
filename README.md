@@ -143,10 +143,10 @@ https://www.aliexpress.com/item/33009687492.html
 | DGND | GND | - |
 
 ##### SD CARD
-| Display | ESP-32 | myoptions.h |
+| SD | ESP-32 | myoptions.h |
 | ------ | ------ | ------ |
 | GND | GND | - |
-| VCC | +5v | - |
+| VCC | +3v3 | - |
 | SCK | 18 | - |
 | MISO | 19 | - |
 | MOSI | 23 | - |
