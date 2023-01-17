@@ -2,7 +2,7 @@
 #define pages_h
 
 #include "Arduino.h"
-#include "StringArray.h"
+#include "../../AsyncWebServer/StringArray.h"
 
 class Page {
   protected:

@@ -3,7 +3,7 @@
 
 #if __has_include("../../mqttoptions.h")
 #include "../../mqttoptions.h"
-#include <AsyncMqttClient.h>
+#include "../async-mqtt-client/AsyncMqttClient.h"
 
 
 void mqttInit();

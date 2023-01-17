@@ -78,7 +78,8 @@ void Player::stop(const char *nttl){
   netserver.requestOnChange(BITRATE, 0);
   display.putRequest(DBITRATE);
   display.putRequest(PSTOP);
-  setDefaults();
+  //setDefaults();
+  stopSong();
   stopInfo();
   if (player_on_stop_play) player_on_stop_play();
 }

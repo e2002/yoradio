@@ -3,6 +3,13 @@
 
 ##### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) or/and [ESP32-vs1053_ext](https://github.com/schreibfaul1/ESP32-vs1053_ext) library
 ---
+#### NEW!
+##### yoRadio Printed Circuit Boards repository:
+[<img src="images/yopcb.jpg" width="830" height="auto" />](https://github.com/e2002/yopcb)
+
+https://github.com/e2002/yopcb
+
+---
 - [Hardware](#hardware)
 - [Connection tables](#connection-tables)
 - [Software dependencies](#dependencies)
@@ -176,8 +183,7 @@ _\** GPIO 16 and 17 are used by PSRAM on the WROVER modules._
 ## Dependencies
 #### Libraries:
 **Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, TFT_22_ILI9225\* (\* depending on display model), OneButton, IRremoteESP8266, XPT2046_Touchscreen \
-**Github**: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client)* \
-\* _if you need MQTT support_
+**Github**: ~~[ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client) (if you need MQTT support)~~ <<< **starting with version 0.8.920, these libraries have been moved into the project, and there is no need to install them additionally.**
 
 #### Tool:
 [ESP32 Filesystem Uploader](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/) \
@@ -311,6 +317,14 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.NEW
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+**Please backup playlist.csv and wifi.csv before updating.**
+- fixed bug with displaying horizontal scroll in playlist
+- fixed compilation error with IR_PIN=255
+- libraries async-mqtt-client, AsyncTCP, ESPAsyncWebServer moved to the project
+- new parameter #define XTASK_MEM_SIZE - buffer size for AsyncTCP task (4096 by default)
+
 #### v0.8.901
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**
