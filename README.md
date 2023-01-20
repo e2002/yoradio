@@ -62,6 +62,9 @@ https://aliexpress.com/item/32965676064.html
 - or **ILI9225** 2.0' 220x176 SPI https://aliexpress.com/item/32952021835.html
 - or **Nextion displays** - [more info](https://github.com/e2002/yoradio/tree/main/nextion)
 - or **ST7796** 3.5' 480x320 SPI https://aliexpress.com/item/1005004632953455.html?sku_id=12000029911293172
+- or **GC9A01A** 1.28' 240x240 https://aliexpress.com/item/1005004069703494.html?sku_id=12000029869654615
+- or **ILI9488** 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356570
+- or **ILI9486** (Testing mode) 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356568
 
 ##### Controls
 - Three tact buttons https://www.aliexpress.com/item/32907144687.html
@@ -317,7 +320,11 @@ Work is in progress...
 
 ---
 ## Version history
-#### v0.8.NEW
+#### v0.8.933
+- added support for ILI9488 display
+- added support for ILI9486 display in testing mode
+
+#### v0.8.920
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**
 - fixed bug with displaying horizontal scroll in playlist
