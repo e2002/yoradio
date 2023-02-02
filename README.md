@@ -3,13 +3,6 @@
 
 ##### Web-radio based on [ESP32-audioI2S](https://github.com/schreibfaul1/ESP32-audioI2S) or/and [ESP32-vs1053_ext](https://github.com/schreibfaul1/ESP32-vs1053_ext) library
 ---
-#### NEW!
-##### yoRadio Printed Circuit Boards repository:
-[<img src="images/yopcb.jpg" width="830" height="auto" />](https://github.com/e2002/yopcb)
-
-https://github.com/e2002/yopcb
-
----
 - [Hardware](#hardware)
 - [Connection tables](#connection-tables)
 - [Software dependencies](#dependencies)
@@ -26,7 +19,14 @@ https://github.com/e2002/yopcb
 - [Version history](#version-history)
 - [Описание на 4PDA](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=112992611)
 ---
-<img src="images/img0.jpg" width="830" height="443">
+#### NEW!
+##### yoRadio Printed Circuit Boards repository:
+[<img src="images/yopcb.jpg" width="830" height="auto" />](https://github.com/e2002/yopcb)
+
+https://github.com/e2002/yopcb
+
+---
+<img src="images/img0_2.jpg" width="830" height="467">
 
 ##### More images in [Images.md](Images.md)
 
