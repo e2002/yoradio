@@ -8,7 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.5.010'
+VERSION = '0.8.933'
 
 DOMAIN = "yoradio"
 
@@ -43,7 +43,6 @@ SUPPORT_YORADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
 DEFAULT_NAME = 'yoRadio'
 CONF_MAX_VOLUME = 'max_volume'
 CONF_ROOT_TOPIC = 'root_topic'
-YORADIO_SOURCE_TYPE = []
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
   vol.Required(CONF_ROOT_TOPIC, default="yoradio"): cv.string,
@@ -56,15 +55,17 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
   name = config.get(CONF_NAME)
   max_volume = int(config.get(CONF_MAX_VOLUME))
   session = async_get_clientsession(hass)
-  api = yoradioApi(root_topic, session, hass)
+  playlist = []
+  api = yoradioApi(root_topic, session, hass, playlist)
   add_devices([yoradioDevice(name, max_volume, api)], True)
 
 class yoradioApi():
-  def __init__(self, root_topic, session, hass):
+  def __init__(self, root_topic, session, hass, playlist):
     self.session = session
     self.hass = hass
     self.mqtt = hass.components.mqtt
     self.root_topic = root_topic
+    self.playlist = playlist
 
   async def set_command(self, command):
     try:
@@ -97,12 +98,13 @@ class yoradioApi():
     else:
       file = file.split('\n')
       counter = 1
-      YORADIO_SOURCE_TYPE.clear()
+      self.playlist.clear()
       for line in file:
         res = line.split('\t')
-        station = str(counter) + '. ' + res[0]
-        YORADIO_SOURCE_TYPE.append(station)
-        counter=counter+1
+        if res[0] != "":
+          station = str(counter) + '. ' + res[0]
+          self.playlist.append(station)
+          counter=counter+1
 
 class yoradioDevice(MediaPlayerEntity):
   def __init__(self, name, max_volume, api):
@@ -182,7 +184,7 @@ class yoradioDevice(MediaPlayerEntity):
 
   @property
   def source_list(self):
-    return YORADIO_SOURCE_TYPE
+    return self.api.playlist
 
   async def async_select_source(self, source):
     await self.api.set_source(source)

@@ -223,6 +223,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.933 (homeassistant component)
+- HA component >> fixed bugs of getting and generating a playlist
+
 #### v0.8.933
 - added support for ILI9488 display
 - added support for ILI9486 display in testing mode
