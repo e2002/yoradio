@@ -1,6 +1,6 @@
 #include "mqtt.h"
 
-#ifdef MQTT_HOST
+#ifdef MQTT_ROOT_TOPIC
 #include "WiFi.h"
 
 #include "telnet.h"
@@ -122,6 +122,12 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     player.request.doSave = true;
     return;
   }
+  if (strstr(buf, "http")==buf){
+    Serial.println(payload);
+    if(len+1>sizeof(player.burl)) return;
+    strlcpy(player.burl, payload, len+1);
+    return;
+  }
 }
 
-#endif // ifdef MQTT_HOST
+#endif // #ifdef MQTT_ROOT_TOPIC

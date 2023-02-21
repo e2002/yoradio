@@ -4,28 +4,35 @@ import logging
 import voluptuous as vol
 import json
 
+from homeassistant.components import media_source
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.8.933'
+VERSION = '0.8.950'
 
 DOMAIN = "yoradio"
 
 from homeassistant.helpers import config_validation as cv
 
+from homeassistant.components.media_player.browse_media import (
+    async_process_play_media_url,
+)
 from homeassistant.components.media_player import (
   MediaPlayerEntity,
+  MediaPlayerEnqueue,
+  BrowseMedia,
   PLATFORM_SCHEMA
 )
 
 from homeassistant.components.media_player.const import (
   MEDIA_TYPE_MUSIC,
+  MEDIA_TYPE_URL,
   SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
   SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET,
   SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_STOP,
   SUPPORT_PREVIOUS_TRACK, SUPPORT_NEXT_TRACK,
-  SUPPORT_SELECT_SOURCE
+  SUPPORT_SELECT_SOURCE, SUPPORT_BROWSE_MEDIA, SUPPORT_PLAY_MEDIA
 )
 
 from homeassistant.const import (
@@ -38,7 +45,7 @@ from homeassistant.const import (
 SUPPORT_YORADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
                   SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | \
                   SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | \
-                  SUPPORT_SELECT_SOURCE
+                  SUPPORT_SELECT_SOURCE | SUPPORT_BROWSE_MEDIA | SUPPORT_PLAY_MEDIA
 
 DEFAULT_NAME = 'yoRadio'
 CONF_MAX_VOLUME = 'max_volume'
@@ -88,6 +95,12 @@ class yoradioApi():
     except:
       await self.mqtt.async_publish(self.hass, self.root_topic + '/command', command)
 
+  async def set_browse_media(self, media_content_id):
+    try:
+      self.mqtt.async_publish(self.root_topic + '/command', media_content_id)
+    except:
+      await self.mqtt.async_publish(self.hass, self.root_topic + '/command', media_content_id)
+      
   async def load_playlist(self, msg):
     try:
       async with aiohttp.ClientSession() as session:
@@ -186,6 +199,32 @@ class yoradioDevice(MediaPlayerEntity):
   def source_list(self):
     return self.api.playlist
 
+  async def async_browse_media(
+    self, media_content_type: str | None = None, media_content_id: str | None = None
+  ) -> BrowseMedia:
+    #await self.api.set_browse_media(media_content_id)
+    """Implement the websocket media browsing helper."""
+    return await media_source.async_browse_media(
+      self.hass,
+      media_content_id,
+    )
+    
+  async def async_play_media(
+    self,
+    media_type: str,
+    media_id: str,
+    enqueue: MediaPlayerEnqueue | None = None,
+    announce: bool | None = None, **kwargs
+  ) -> None:
+    """Play a piece of media."""
+    if media_source.is_media_source_id(media_id):
+      media_type = MEDIA_TYPE_URL
+      play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
+      media_id = async_process_play_media_url(self.hass, play_item.url)
+    if media_type in (MEDIA_TYPE_URL):
+      media_id = async_process_play_media_url(self.hass, media_id)
+    await self.api.set_browse_media(media_id)
+    
   async def async_select_source(self, source):
     await self.api.set_source(source)
     self._current_source = source

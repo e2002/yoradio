@@ -27,13 +27,20 @@ class Player: public Audio {
     void zeroRequest();
     SemaphoreHandle_t playmutex=NULL;
     bool lockOutput = true;
+    bool resumeAfterUrl = false;
     uint32_t sd_min, sd_max;
+    #ifdef MQTT_ROOT_TOPIC
+    char      burl[400];  /* buffer for browseUrl  */
+    #endif
   public:
     Player();
     void init();
     void loop();
     void initHeaders(const char *file);
     void play(uint16_t stationId, uint32_t filePos=0);
+    #ifdef MQTT_ROOT_TOPIC
+    void browseUrl();
+    #endif
     void stop(const char *nttl = NULL);
     void prev();
     void next();

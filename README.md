@@ -223,6 +223,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.950
+- added support for remote media playback from Home Assistant (Local Media, Radio Browser, TTS)
+
 #### v0.8.933 (homeassistant component)
 - HA component >> fixed bugs of getting and generating a playlist
 

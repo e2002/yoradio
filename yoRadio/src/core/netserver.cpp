@@ -30,7 +30,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 
 bool  shouldReboot  = false;
-#ifdef MQTT_HOST
+#ifdef MQTT_ROOT_TOPIC
 Ticker mqttplaylistticker;
 bool  mqttplaylistblock = false;
 void mqttplaylistSend() {
@@ -231,7 +231,7 @@ void NetServer::processQueue(){
     }
     if (strlen(wsbuf) > 0) {
       if (clientId == 0) { websocket.textAll(wsbuf); }else{ websocket.text(clientId, wsbuf); }
-  #ifdef MQTT_HOST
+  #ifdef MQTT_ROOT_TOPIC
       if (clientId == 0 && (request.type == STATION || request.type == ITEM || request.type == TITLE || request.type == MODE)) mqttPublishStatus();
       if (clientId == 0 && request.type == VOLUME) mqttPublishVolume();
   #endif
@@ -548,7 +548,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(cmd, "submitplaylistdone") == 0) {
-#ifdef MQTT_HOST
+#ifdef MQTT_ROOT_TOPIC
         //mqttPublishPlaylist();
         mqttplaylistticker.attach(5, mqttplaylistSend);
 #endif
@@ -679,7 +679,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
   if (request->method() == HTTP_GET) {
     DBGVB("[%s] client ip=%s request of %s", __func__, request->client()->remoteIP().toString().c_str(), request->url().c_str());
     if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 || strcmp(request->url().c_str(), SSIDS_PATH) == 0 || strcmp(request->url().c_str(), INDEX_PATH) == 0 || strcmp(request->url().c_str(), TMP_PATH) == 0 || strcmp(request->url().c_str(), PLAYLIST_SD_PATH) == 0 || strcmp(request->url().c_str(), INDEX_SD_PATH) == 0) {
-#ifdef MQTT_HOST
+#ifdef MQTT_ROOT_TOPIC
       if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
 #endif
       if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.store.play_mode==PM_SDCARD){

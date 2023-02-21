@@ -52,7 +52,7 @@ void setup() {
   initControls();
   display.putRequest(DSP_START);
   while(!display.ready()) delay(10);
-  #ifdef MQTT_HOST
+  #ifdef MQTT_ROOT_TOPIC
     mqttInit();
   #endif
   if (config.store.play_mode==PM_SDCARD) player.initHeaders(config.station.url);
@@ -87,7 +87,7 @@ void checkConnection(){
     display.putRequest(NEWMODE, PLAYER);
     if (playing) player.request.station = config.store.lastStation;
     checkMillis = millis();
-    #ifdef MQTT_HOST
+    #ifdef MQTT_ROOT_TOPIC
       connectToMqtt();
     #endif
   }
@@ -142,6 +142,9 @@ void audio_showstation(const char *info) {
     bool p = printable(info);
     config.setTitle(p?info:config.station.name);
     netserver.requestOnChange(TITLE, 0);
+    config.setStation(p?info:config.station.name);
+    display.putRequest(NEWSTATION);
+    netserver.requestOnChange(STATION, 0);
   }
 }
 
@@ -198,6 +201,7 @@ void audio_id3data(const char *info){  //id3 metadata
     if(player.lockOutput) return;
     telnet.printf("##AUDIO.ID3#: %s\n", info);
 }
+
 void audio_eof_mp3(const char *info){  //end of file
     config.sdResumePos = 0;
     if(config.sdSnuffle){
@@ -206,6 +210,17 @@ void audio_eof_mp3(const char *info){  //end of file
       player.next();
     }
 }
+
+void audio_eof_stream(const char *info){
+  player.stop();
+  if(!player.resumeAfterUrl) return;
+  if (config.store.play_mode==PM_WEB){
+    player.play(config.store.lastStation);
+  }else{
+    player.play(config.store.lastStation, config.sdResumePos==0?0:config.sdResumePos-player.sd_min);
+  }
+}
+
 void audio_progress(uint32_t startpos, uint32_t endpos){
   player.sd_min = startpos;
   player.sd_max = endpos;

@@ -34,6 +34,9 @@ Player player;
 
 void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
+#ifdef MQTT_ROOT_TOPIC
+  memset(burl, 0, 400);
+#endif
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
   #if I2S_DOUT!=255
     #if !I2S_INTERNAL
@@ -124,6 +127,11 @@ void Player::loop() {
       volTimer=false;
     }
   }
+#ifdef MQTT_ROOT_TOPIC
+  if(strlen(burl)>0){
+    browseUrl();
+  }
+#endif
 }
 
 void Player::zeroRequest() {
@@ -164,6 +172,30 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
     telnet.printf("##ERROR#:\tError connecting to %s\n", config.station.url);
   };
 }
+
+#ifdef MQTT_ROOT_TOPIC
+void Player::browseUrl(){
+  resumeAfterUrl = mode==PLAYING;
+  display.putRequest(PSTOP);
+  setDefaults();
+  setOutputPins(false);
+  config.setTitle(const_PlConnect);
+  netserver.requestOnChange(TITLE, 0);
+  if (connecttohost(burl)){
+    mode = PLAYING;
+    config.setTitle("");
+    netserver.requestOnChange(TITLE, 0);
+    netserver.requestOnChange(MODE, 0);
+    setOutputPins(true);
+    requestToStart = true;
+    display.putRequest(PSTART);
+    if (player_on_start_play) player_on_start_play();
+  }else{
+    telnet.printf("##ERROR#:\tError connecting to %s\n", burl);
+  }
+  memset(burl, 0, 400);
+}
+#endif
 
 void Player::prev() {
   if(config.store.play_mode==PM_WEB || !config.sdSnuffle){
