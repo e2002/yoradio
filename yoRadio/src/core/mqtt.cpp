@@ -39,7 +39,7 @@ void mqttPublishStatus() {
     memset(topic, 0, 140);
     memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
-    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\"}", player.mode==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title);
+    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.mode==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title, config.store.dspon);
     mqttClient.publish(topic, 0, true, status);
   }
 }
@@ -105,6 +105,19 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   }
   if (strcmp(buf, "volp") == 0) {
     player.stepVol(true);
+    return;
+  }
+  if (strcmp(buf, "turnoff") == 0) {
+    uint8_t sst = config.store.smartstart;
+    player.stop();
+    config.store.smartstart = sst;
+    config.save();
+    config.setDspOn(0);
+    return;
+  }
+  if (strcmp(buf, "turnon") == 0) {
+    config.setDspOn(1);
+    if (config.store.smartstart == 1) player.play(config.store.lastStation);
     return;
   }
   int volume;

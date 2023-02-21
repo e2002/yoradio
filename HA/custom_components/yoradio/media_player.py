@@ -39,7 +39,8 @@ from homeassistant.const import (
   CONF_NAME,
   STATE_IDLE,
   STATE_PLAYING,
-  STATE_OFF
+  STATE_OFF,
+  STATE_ON,
 )
 
 SUPPORT_YORADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
@@ -264,4 +265,12 @@ class yoradioDevice(MediaPlayerEntity):
   async def async_media_pause(self):
       await self.api.set_command("stop")
       self._state = STATE_IDLE
+  
+  async def async_turn_off(self):
+      await self.api.set_command("turnoff")
+      self._state = STATE_OFF
 
+  async def async_turn_on(self, **kwargs):
+      await self.api.set_command("turnon")
+      self._state = STATE_ON
+      

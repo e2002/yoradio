@@ -142,9 +142,11 @@ void audio_showstation(const char *info) {
     bool p = printable(info);
     config.setTitle(p?info:config.station.name);
     netserver.requestOnChange(TITLE, 0);
-    config.setStation(p?info:config.station.name);
-    display.putRequest(NEWSTATION);
-    netserver.requestOnChange(STATION, 0);
+    if(player.remoteStationName){
+      config.setStation(p?info:config.station.name);
+      display.putRequest(NEWSTATION);
+      netserver.requestOnChange(STATION, 0);
+    }
   }
 }
 

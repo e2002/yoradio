@@ -146,6 +146,8 @@ void Player::setOutputPins(bool isPlaying) {
 }
 
 void Player::play(uint16_t stationId, uint32_t filePos) {
+  remoteStationName = false;
+  config.setDspOn(1);
   display.putRequest(PSTOP);
   setDefaults();
   setOutputPins(false);
@@ -175,6 +177,8 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
 
 #ifdef MQTT_ROOT_TOPIC
 void Player::browseUrl(){
+  remoteStationName = true;
+  config.setDspOn(1);
   resumeAfterUrl = mode==PLAYING;
   display.putRequest(PSTOP);
   setDefaults();

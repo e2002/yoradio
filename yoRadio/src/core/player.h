@@ -41,6 +41,7 @@ class Player: public Audio {
     #ifdef MQTT_ROOT_TOPIC
     void browseUrl();
     #endif
+    bool remoteStationName = false;
     void stop(const char *nttl = NULL);
     void prev();
     void next();
