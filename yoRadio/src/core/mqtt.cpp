@@ -136,7 +136,6 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     return;
   }
   if (strstr(buf, "http")==buf){
-    Serial.println(payload);
     if(len+1>sizeof(player.burl)) return;
     strlcpy(player.burl, payload, len+1);
     return;
