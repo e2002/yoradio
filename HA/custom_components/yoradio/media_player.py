@@ -45,6 +45,7 @@ from homeassistant.const import (
 
 SUPPORT_YORADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
                   SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | \
+                  SUPPORT_TURN_ON | SUPPORT_TURN_OFF | \
                   SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | \
                   SUPPORT_SELECT_SOURCE | SUPPORT_BROWSE_MEDIA | SUPPORT_PLAY_MEDIA
 
@@ -140,7 +141,10 @@ class yoradioDevice(MediaPlayerEntity):
     js = json.loads(msg.payload)
     self._media_title = js['title']
     self._track_artist = js['name']
-    self._state = STATE_PLAYING if js['status']==1 else STATE_IDLE
+    if js['on']==1:
+      self._state = STATE_PLAYING if js['status']==1 else STATE_IDLE
+    else:
+      self._state = STATE_OFF
     self._current_source = str(js['station']) + '. ' + js['name']
     try:
       self.async_schedule_update_ha_state()
@@ -245,10 +249,6 @@ class yoradioDevice(MediaPlayerEntity):
 
   async def async_media_previous_track(self):
       await self.api.set_command("prev")
-
-  async def async_turn_off(self):
-      await self.api.set_command("stop")
-      self._state = STATE_IDLE
 
   async def async_media_stop(self):
       await self.api.set_command("stop")

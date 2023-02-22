@@ -35,7 +35,7 @@ Player player;
 void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
 #ifdef MQTT_ROOT_TOPIC
-  memset(burl, 0, 400);
+  memset(burl, 0, MQTT_BURL_SIZE);
 #endif
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
   #if I2S_DOUT!=255
@@ -197,7 +197,7 @@ void Player::browseUrl(){
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", burl);
   }
-  memset(burl, 0, 400);
+  memset(burl, 0, MQTT_BURL_SIZE);
 }
 #endif
 

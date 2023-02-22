@@ -8,6 +8,10 @@
   #include "../audioVS1053/audioVS1053Ex.h"
 #endif
 
+#ifndef MQTT_BURL_SIZE
+  #define MQTT_BURL_SIZE  512
+#endif
+
 enum audioMode_e { PLAYING, STOPPED };
 
 struct audiorequest_t
@@ -30,7 +34,7 @@ class Player: public Audio {
     bool resumeAfterUrl = false;
     uint32_t sd_min, sd_max;
     #ifdef MQTT_ROOT_TOPIC
-    char      burl[400];  /* buffer for browseUrl  */
+    char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
     #endif
   public:
     Player();
