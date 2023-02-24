@@ -9,7 +9,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.8.957'
+VERSION = '0.8.962'
 
 DOMAIN = "yoradio"
 
