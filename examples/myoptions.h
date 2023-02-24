@@ -150,13 +150,13 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define WAKE_PIN          255               /*  Wake Pin (for manual wakeup from sleep mode. can match with BTN_XXXX, ENC_BTNB, ENC2_BTNB.  must be one of: 0,2,4,12,13,14,15,25,26,27,32,33,34,35,36,39) */
                                               /*  For sample #define ENC_BTNB 36 - next line - #define WAKE_PIN ENC_BTNB  */
 //#define LIGHT_SENSOR      255               /*  Light sensor  */
-//#define AUTOBACKLIGHT(x)  *function*        /*  Autobacklight function. See options.h for exsample  */
+//#define AUTOBACKLIGHT(x)  *function*        /*  Autobacklight function. See options.h for example  */
 //#define DSP_INVERT_TITLE  true              /* Invert title colors for OLED displays ?  */
 /******************************************/
 
 /*  IR control  */
 //#define IR_PIN                255
-//#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 exsample https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
+//#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 example https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
 
 /******************************************/
 
