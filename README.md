@@ -95,8 +95,8 @@ https://e2002.github.io/docs/myoptions-generator.html
 
 ---
 ## Hardware setup
-Dont edit the options.h! \
-Hardware is adjustment in the **[myoptions.h](exsamples/myoptions.h)** file.
+Don't edit the options.h! \
+Hardware is adjustment in the **[myoptions.h](examples/myoptions.h)** file.
 
 **Important!**
 You must choose between I2S DAC and VS1053 by disabling the second module in the settings:
@@ -137,12 +137,12 @@ Rotation of the display:
 <img src="images/board3.jpg" width="830" height="400"><br />
 
 - <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">Arduino IDE version 2.x.x is not supported. Use Arduino IDE 1.8.19</span>
-- <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 2.0.0 or higgest is [required](https://github.com/espressif/arduino-esp32)!</span>
+- <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 2.0.0 or higher is [required](https://github.com/espressif/arduino-esp32)!</span>
 1. Generate a myoptions.h file for your hardware configuration using [this tool](https://e2002.github.io/docs/myoptions-generator.html).
 2. Put myoptions.h file next to yoRadio.ino and restart Arduino IDE.
 3. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload ([it's here](images/board2.jpg))
 4. Upload the sketch to the board
-5. Connect to yoRadioAP acces point with password 12345987, go to http://192.168.4.1/ configure and wifi connections.  \
+5. Connect to yoRadioAP access point with password 12345987, go to http://192.168.4.1/ configure and wifi connections.  \
 _\*this step can be skipped if you add WiFiSSID WiFiPassword pairs to the [yoRadio/data/data/wifi.csv](yoRadio/data/data/wifi.csv) file (tab-separated values, one line per access point) before uploading the sketch data in step 1_
 6. After successful connection go to http://\<yoipaddress\>/ , add stations to playlist (or import WebStations.txt from KaRadio)
 7. Well done!
@@ -175,7 +175,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## MQTT
-1. Copy file exsamples/mqttoptions.h to yoRadio/ directory
+1. Copy file examples/mqttoptions.h to yoRadio/ directory
 2. In the mqttoptions.h file, change the options to the ones you need
 3. Well done!
 
@@ -185,14 +185,14 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 0. Requires [MQTT integration](https://www.home-assistant.io/integrations/mqtt/)
 1. Copy directory HA/custom_components/yoradio to .homeassistant/custom_components/
-2. Add yoRadio entity into .homeassistant/configuration.yaml ([see exsample](HA/exsample_configuration.yaml))
+2. Add yoRadio entity into .homeassistant/configuration.yaml ([see example](HA/example_configuration.yaml))
 3. Restart Home Assistant
 4. Add Lovelace Media Player card to UI (or [mini-media-player](https://github.com/kalkih/mini-media-player) card)
 5. Well done!
 
 ---
 ## More features
-- Сan add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
+- Can add up to 65535 stations to a playlist. Supports and imports [KaRadio](https://github.com/karawin/Ka-Radio32) playlists (WebStations.txt)
 - Telnet with KaRadio format output \
   **see [list of available commands](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST))**
 
@@ -218,11 +218,16 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Plugins
-There is no documentation yet, you will have to deal with the examples, which is in directory [exsamples/plugins/](https://github.com/e2002/yoradio/tree/main/exsamples/plugins).\
+There is no documentation yet, you will have to deal with the examples, which is in directory [examples/plugins/](https://github.com/e2002/yoradio/tree/main/examples/plugins).\
 Work is in progress...
 
 ---
 ## Version history
+#### v0.8.962
+- fixed reboot error after sending media from Home Assistant
+- fixed bug when playing media from Home Assistant for VS1053
+- fix grammar errors
+
 #### v0.8.950
 - added support for remote media playback from Home Assistant (Local Media, Radio Browser, TTS)
 
@@ -244,7 +249,7 @@ Work is in progress...
 #### v0.8.901
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**
-- added SD Card support (more info in [connection table](#connection-tables) and [exsamples/myoptions.h](https://github.com/e2002/yoradio/blob/main/exsamples/myoptions.h))
+- added SD Card support (more info in [connection table](#connection-tables) and [examples/myoptions.h](https://github.com/e2002/yoradio/blob/main/examples/myoptions.h))
 - added MODE button to switch SD/WEB modes (more info in [Controls.md](https://github.com/e2002/yoradio/blob/main/Controls.md))
 - asterisk on the remote control now switches SD/WEB modes
 - double click BTN_CENTER and ENC_BTNB now toggles SD/WEB modes
@@ -255,7 +260,7 @@ Work is in progress...
 - fixed work of start/stop button in configurations with DSP_DUMMY
 
 #### v0.8.138
-- fixed unclosed comment in exsamples/myoptions.h
+- fixed unclosed comment in examples/myoptions.h
 
 #### v0.8.137
 - fixed compilation error without encoder
@@ -278,7 +283,7 @@ Work is in progress...
 - increased length of SSID string to 30 characters (requires full update + ESP32 Data Upload)
 - fixed artifacts when adjusting the volume on OLED displays
 - fixed bug with missing current station in playlist on OLED displays
-- new parameter DSP_INVERT_TITLE - invert colors in station name for OLED displays (more details in exsamples/myoptions.h)
+- new parameter DSP_INVERT_TITLE - invert colors in station name for OLED displays (more details in examples/myoptions.h)
 
 #### v0.8.03b
 - added support for ST7796 display
@@ -292,11 +297,11 @@ Work is in progress...
 
 #### v0.8.02b
 - fixed artifacts when displaying the volume level
-- changes in mytheme.h . Added colors COLOR_PL_CURRENT, COLOR_PL_CURRENT_BG, COLOR_PL_CURRENT_FILL. Details in [exsamples/mytheme.h](exsamples/mytheme.h)
+- changes in mytheme.h . Added colors COLOR_PL_CURRENT, COLOR_PL_CURRENT_BG, COLOR_PL_CURRENT_FILL. Details in [examples/mytheme.h](examples/mytheme.h)
 
 #### v0.8.01b
 - fix INITR_MINI160x80 compiling error
-- fix ENC_INTERNALPULLUP descriotion in exsamples/myoptions.h
+- fix ENC_INTERNALPULLUP description in examples/myoptions.h
 
 #### v0.8.00b
 - rewritten the display engine
@@ -304,9 +309,9 @@ Work is in progress...
 - the VU_PARAMS3 parameter is deprecated. VUmeter configuration is done through yoRadio/src/displays/conf/ configs
 - added bitrate display on displays
 - added the ability to display the weather on all displays except LCD1602
-- examples of plug-ins related to displaying information on the display are outdated and no longer work. The examples have been removed from the exsamples/plugins folder.
+- examples of plug-ins related to displaying information on the display are outdated and no longer work. The examples have been removed from the examples/plugins folder.
 - the structure of the project files has been changed so that I don’t know what.
-- localization of information displayed on the display (rus, en). Option L10N_LANGUAGE (EN by default. see exsamples/myoptions.h for details)
+- localization of information displayed on the display (rus, en). Option L10N_LANGUAGE (EN by default. see examples/myoptions.h for details)
 - changes in mytheme.h . Added colors COLOR_STATION_BG, COLOR_STATION_FILL, COLOR_BITRATE
 - optimization, refactoring
 - bugs fixes
@@ -323,7 +328,7 @@ Work is in progress...
 - fixed clock operation when configured with DSP_DUMMY
 - fixed RSSI display in web interface when configured with DSP_DUMMY
 - added brightness control/on/off nextion displays from the web interface
-- new parameter WAKE_PIN (to wake up esp after sleep command earlier than given time (see exsamples/myoptions.h and list of commands)
+- new parameter WAKE_PIN (to wake up esp after sleep command earlier than given time (see examples/myoptions.h and list of commands)
 - minor memory optimization
 
 #### v0.7.490
@@ -350,25 +355,25 @@ _On red boards and normally working green boards, nothing else needs to be done.
 #### v0.7.402
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**
-- added the ability to themize color displays. Details in [exsamples/mytheme.h](exsamples/mytheme.h)
+- added the ability to themize color displays. Details in [examples/mytheme.h](examples/mytheme.h)
 - in this connection, examples of plugins displayhandlers.ino and rssibitrate.ino have been updated
 - parameter VU_PARAMS2 is deprecated. New parameter - VU_PARAMS3. Details in [yoRadio/display_vu.h](yoRadio/display_vu.h)
 - added deepsleep capability for LCD_I2C and OLED displays
 - in this connection, a full update with Sketch data upload is required
-- in this connection, example of plugi deepsleep.ino (exsamples/plugins/deepsleep.ino) have been updated
+- in this connection, example of plugin deepsleep.ino (examples/plugins/deepsleep.ino) have been updated
 - some bug fixes
 
 #### v0.7.355
 - updating libraries ESP32-audioI2S and ESP32-vs1053_ext to the latest version
 - optimization of the web interface during playback
 - fixed one js bug. a [full update](#update-over-web-interface) with Sketch data upload is desirable
-- plugin example for esp deep sleep when playback is stopped (exsamples/plugins/deepsleep.ino)
+- plugin example for esp deep sleep when playback is stopped (examples/plugins/deepsleep.ino)
 
 #### v0.7.330
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
 **Please backup playlist.csv and wifi.csv before updating.**
 - added the ability to configure parameters through the [web interface](images/settings.png)
-- new parameter BRIGHTNESS_PIN - pin for adjusting the brightness of the display. Details in [exsamples/myoptions.h](exsamples/myoptions.h#L105)
+- new parameter BRIGHTNESS_PIN - pin for adjusting the brightness of the display. Details in [examples/myoptions.h](examples/myoptions.h#L105)
 - the weather plugin is integrated into the code, the settings are made through the web interface
 
 _**PS:** Due to the change in the storage location of settings in the ESP memory, settings such as:_ \
@@ -396,9 +401,9 @@ _will have to be configured again through the web interface. Please understand a
 
 #### v0.6.494
 - adding VU meter for displays ST7735 160x128, ST7735 128x128, ILI9341 320x240, ST7789 320x240 \
-  option ENABLE_VU_METER (see [myoptions.h](exsamples/myoptions.h) for exsample) \
+  option ENABLE_VU_METER (see [myoptions.h](examples/myoptions.h) for example) \
   **!!! Important !!!** \
-  if you enable this feathure on the esp32 wroom, due to lack of memory, you must modify the file Arduino/libraries/AsyncTCP/src/AsyncTCP.cpp \
+  if you enable this feature on the esp32 wroom, due to lack of memory, you must modify the file Arduino/libraries/AsyncTCP/src/AsyncTCP.cpp \
   **replace the line 221** \
   _xTaskCreateUniversal(_async_service_task, "async_tcp", 8192 * 2, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);_ \
   **with** \
@@ -435,9 +440,9 @@ _will have to be configured again through the web interface. Please understand a
 
 #### v0.6.344
 - fixed SPI-display bugs when used with VS1053B module
-- added example plugin for analog volume control ([exsamples/plugins/analogvolume.ino](exsamples/plugins/analogvolume.ino))
-- added example plugin for backlight control depending on playback ([exsamples/plugins/backlightcontrols.ino](exsamples/plugins/backlightcontrols.ino))
-- added example plugin for replase a RSSI to bitrate information alternately ([exsamples/plugins/rssibitrate.ino](exsamples/plugins/rssibitrate.ino))
+- added example plugin for analog volume control ([examples/plugins/analogvolume.ino](examples/plugins/analogvolume.ino))
+- added example plugin for backlight control depending on playback ([examples/plugins/backlightcontrols.ino](examples/plugins/backlightcontrols.ino))
+- added example plugin for replace a RSSI to bitrate information alternately ([examples/plugins/rssibitrate.ino](examples/plugins/rssibitrate.ino))
 
 #### v0.6.320
 - fixed ILI9225 display bug when used with VS1053B module
@@ -445,9 +450,9 @@ _will have to be configured again through the web interface. Please understand a
 
 #### v0.6.313
 - added support for ILI9225 220x176 SPI displays
-- added support for I2S internal DAC, option I2S_INTERNAL (see [myoptions.h](exsamples/myoptions.h#L111) for exsample) \
+- added support for I2S internal DAC, option I2S_INTERNAL (see [myoptions.h](examples/myoptions.h#L111) for example) \
  _(this option worked only with esp32 core version==2.0.0)_
-- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](exsamples/myoptions.h) for exsample)
+- new option SOFT_AP_REBOOT_DELAY (see [myoptions.h](examples/myoptions.h) for example)
 - fixed MQTT connection when WiFi reconnected
 - fixed date display for ILI9341 displays
 - fixed garbage on volume control with displays ILI9341
@@ -455,7 +460,7 @@ _will have to be configured again through the web interface. Please understand a
 #### v0.6.290
 - fixed interface blocking error when synchronizing time
 - time sync optimization
-- new option **SNTP_SERVER**, to set your custom server for synchronization (see [myoptions.h](exsamples/myoptions.h) for exsample)
+- new option **SNTP_SERVER**, to set your custom server for synchronization (see [myoptions.h](examples/myoptions.h) for example)
 
 #### v0.6.278
 - added support for LCD2004 displays
@@ -467,7 +472,7 @@ _will have to be configured again through the web interface. Please understand a
 
 #### v0.6.262
 - change encoder library to [ai-esp32-rotary-encoder](https://github.com/igorantolic/ai-esp32-rotary-encoder) (injected to project)
-- added new option VOL_ACCELERATION - volume adjustment acceleration by encoder (see [myoptions.h](exsamples/myoptions.h) for exsample)
+- added new option VOL_ACCELERATION - volume adjustment acceleration by encoder (see [myoptions.h](examples/myoptions.h) for example)
 - fixed connection error with http-stations on esp32-core v2.0.3
 - fixed css errors (a [full update](#update-over-web-interface) is required)
 
@@ -489,14 +494,14 @@ _will have to be configured again through the web interface. Please understand a
 
 #### v0.6.202
 - fixed errors in the operation of the second encoder
-- rewrote [plugin example](exsamples/plugins/displayhandlers.ino)
+- rewrote [plugin example](examples/plugins/displayhandlers.ino)
 - fixed compilation errors on macOS #2
 
 #### v0.6.200
 - please backup your playlist and wifi settings before updating (export)
 - accelerated displays up to ~30fps (everything except LCD)
 - corrections/additions in the WEB interface (a [full update](#update) is required)
-- rewrote [plugin example](exsamples/plugins/displayhandlers.ino)
+- rewrote [plugin example](examples/plugins/displayhandlers.ino)
 - fixed compilation errors on macOS
 - changed the logic of the second encoder (switching to the volume control mode by double click)
 - optimization, bug fixes
@@ -581,7 +586,7 @@ _will have to be configured again through the web interface. Please understand a
 #### v0.4.292
 - added support for IR control
 - new options in options.h (ENC_INTERNALPULLUP, ENC_HALFQUARD, BTN_INTERNALPULLUP, VOL_STEP) _//Thanks for [Buska1968](https://4pda.to/forum/index.php?s=&showtopic=1010378&view=findpost&p=113385448)_
-- сompilation error for module SSD1306 with arduino-esp32 version newest than 2.0.0
+- compilation error for module SSD1306 with arduino-esp32 version newest than 2.0.0
 - fix compiler warnings in options.h
 - fix some compiler warnings
 

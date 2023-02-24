@@ -1,8 +1,9 @@
 #ifndef mqtt_h
 #define mqtt_h
-
-#if __has_include("../../mqttoptions.h")
-#include "../../mqttoptions.h"
+#include "options.h"
+#ifdef MQTT_ROOT_TOPIC
+//#if __has_include("../../mqttoptions.h")
+//#include "../../mqttoptions.h"
 #include "../async-mqtt-client/AsyncMqttClient.h"
 
 
@@ -15,7 +16,7 @@ void mqttPublishStatus();
 void mqttPublishPlaylist();
 void mqttPublishVolume();
 
-#endif // if __has_include("mqttoptions.h")
+#endif // #ifdef MQTT_ROOT_TOPIC
 
 
 #endif

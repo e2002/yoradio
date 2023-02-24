@@ -853,7 +853,7 @@ void Audio::processWebStream(){
 
         if(psramFound()) if(bytesCanBeWritten > 4096) bytesCanBeWritten = 4096; // PSRAM throttle
 
-        if(m_f_webfile){
+        if(m_streamType == ST_WEBFILE){
             // normally there is nothing to do here, if byteCounter == contentLength
             // then the file is completely read, but:
             // m4a files can have more data  (e.g. pictures ..) after the audio Block
@@ -864,7 +864,7 @@ void Audio::processWebStream(){
         bytesAddedToBuffer = _client->read(InBuff.getWritePtr(), bytesCanBeWritten);
 
         if(bytesAddedToBuffer > 0) {
-            if(m_f_webfile)             byteCounter  += bytesAddedToBuffer;  // Pull request #42
+            if(m_streamType == ST_WEBFILE)             byteCounter  += bytesAddedToBuffer;  // Pull request #42
             if(!m_f_swm)                metacount  -= bytesAddedToBuffer;
             if(m_f_chunked)             m_chunkcount -= bytesAddedToBuffer;
             InBuff.bytesWritten(bytesAddedToBuffer);
@@ -881,7 +881,7 @@ void Audio::processWebStream(){
     }
 
     // // if we have a webfile, read the file header first - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if(m_f_webfile && m_controlCounter != 100){
+    if(m_streamType == ST_WEBFILE && m_controlCounter != 100){
         if(InBuff.bufferFilled() < maxFrameSize) return;
          if(m_codec == CODEC_WAV){
             m_controlCounter = 100;
@@ -912,7 +912,7 @@ void Audio::processWebStream(){
     }
 
     // have we reached the end of the webfile?  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if(m_f_webfile && byteCounter == m_contentlength){
+    if(m_streamType == ST_WEBFILE && byteCounter == m_contentlength){
         while(InBuff.bufferFilled() > 0){
             if(InBuff.bufferFilled() == 128){ // post tag?
                 if(indexOf((const char*)InBuff.getReadPtr(), "TAG", 0) == 0){

@@ -181,7 +181,7 @@ void Player::browseUrl(){
   config.setDspOn(1);
   resumeAfterUrl = mode==PLAYING;
   display.putRequest(PSTOP);
-  setDefaults();
+//  setDefaults();
   setOutputPins(false);
   config.setTitle(const_PlConnect);
   netserver.requestOnChange(TITLE, 0);

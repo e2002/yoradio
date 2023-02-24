@@ -9,7 +9,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.8.950'
+VERSION = '0.8.957'
 
 DOMAIN = "yoradio"
 
@@ -226,8 +226,8 @@ class yoradioDevice(MediaPlayerEntity):
       media_type = MEDIA_TYPE_URL
       play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
       media_id = async_process_play_media_url(self.hass, play_item.url)
-    if media_type in (MEDIA_TYPE_URL):
-      media_id = async_process_play_media_url(self.hass, media_id)
+    #if media_type in (MEDIA_TYPE_URL):
+    #  media_id = async_process_play_media_url(self.hass, media_id)
     await self.api.set_browse_media(media_id)
     
   async def async_select_source(self, source):
