@@ -11,7 +11,9 @@
 #define EEPROM_START      500
 #define EEPROM_START_IR   0
 #define EEPROM_START_2    10
-#define BUFLEN            140
+#ifndef BUFLEN
+  #define BUFLEN            170
+#endif
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
 #define TMP_PATH          "/data/tmpfile.txt"

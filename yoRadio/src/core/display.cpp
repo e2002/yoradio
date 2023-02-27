@@ -116,7 +116,7 @@ void Display::_buildPager(){
   #endif
   _nums.init(numConf, 10, false, config.theme.digit, config.theme.background);
   #ifndef HIDE_WEATHER
-    _weather = new ScrollWidget("*", weatherConf, config.theme.weather, config.theme.background);
+    _weather = new ScrollWidget("\007", weatherConf, config.theme.weather, config.theme.background);
   #endif
   
   if(_volbar)   _footer.addWidget( _volbar);

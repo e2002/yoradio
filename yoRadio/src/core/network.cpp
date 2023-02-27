@@ -249,17 +249,17 @@ bool getWeather(char *wstr) {
   tmpe = strstr(tmps, ",\"");
   if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: temp not found !"); return false;}
   strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
+  cursor = tmpe + 1;
   float tempf = atof(temp);
 
-  tmps = strstr(cursor, "\"pressure\":");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
-  tmps += 11;
+  tmps = strstr(cursor, "\"feels_like\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: feels_like not found !"); return false;}
+  tmps += 13;
   tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
-  strlcpy(press, tmps, tmpe - tmps + 1);
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: feels_like not found !"); return false;}
+  strlcpy(temp, tmps, tmpe - tmps + 1);
   cursor = tmpe + 2;
-  int pressi = (float)atoi(press) / 1.333;
+  float tempfl = atof(temp);
 
   tmps = strstr(cursor, "humidity\":");
   if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
@@ -268,6 +268,35 @@ bool getWeather(char *wstr) {
   tmpc = strstr(tmps, "}");
   if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
   strlcpy(hum, tmps, tmpe - tmps + (tmpc>tmpe?1:0));
+  
+  tmps = strstr(cursor, "\"grnd_level\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
+  tmps += 13;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
+  strlcpy(press, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 2;
+  int pressi = (float)atoi(press) / 1.333;
+  
+  tmps = strstr(cursor, "\"speed\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: wind speed not found !"); return false;}
+  tmps += 8;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: wind speed not found !"); return false;}
+  strlcpy(temp, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 1;
+  float wind_speed = atof(temp);
+  
+  tmps = strstr(cursor, "\"deg\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: wind deg not found !"); return false;}
+  tmps += 6;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: wind deg not found !"); return false;}
+  strlcpy(temp, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 1;
+  int wind_deg = atof(temp)/22.5;
+  if(wind_deg<0) wind_deg = 16+wind_deg;
+  
   
   #ifdef USE_NEXTION
     nextion.putcmdf("press_txt.txt=\"%dmm\"", pressi);
@@ -294,7 +323,7 @@ bool getWeather(char *wstr) {
   #ifdef WEATHER_FMT_SHORT
   sprintf(wstr, weatherFmt, tempf, pressi, hum);
   #else
-  sprintf(wstr, weatherFmt, desc, tempf, pressi, hum);
+  sprintf(wstr, weatherFmt, desc, tempf, tempfl, pressi, hum, wind[wind_deg], wind_speed);
   #endif
   network.requestWeatherSync();
   return true;
