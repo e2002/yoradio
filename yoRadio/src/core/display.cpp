@@ -90,7 +90,11 @@ void Display::_buildPager(){
   #endif
   #if !defined(DSP_LCD) && DSP_MODEL!=DSP_NOKIA5110
     _plbackground = new FillWidget(playlBGConf, config.theme.plcurrentfill);
-    _metabackground = new FillWidget(metaBGConf, config.theme.metafill);
+    #if DSP_INVERT_TITLE
+      _metabackground = new FillWidget(metaBGConf, config.theme.metafill);
+    #else
+      _metabackground = new FillWidget(metaBGConfInv, config.theme.metafill);
+    #endif
   #endif
   #if DSP_MODEL==DSP_NOKIA5110
     _plbackground = new FillWidget(playlBGConf, 1);

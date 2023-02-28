@@ -101,6 +101,7 @@ void Config::loadTheme(){
   theme.playlist[2]   = color565(COLOR_PLAYLIST_2);
   theme.playlist[3]   = color565(COLOR_PLAYLIST_3);
   theme.playlist[4]   = color565(COLOR_PLAYLIST_4);
+  #include "../displays/tools/tftinverttitle.h"
 }
 
 template <class T> int Config::eepromWrite(int ee, const T& value) {

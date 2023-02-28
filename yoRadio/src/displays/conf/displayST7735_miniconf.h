@@ -32,6 +32,7 @@ const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 80-13, 1, WA_LEFT }
 
 /* BACKGROUNGC9106DS  */                       /* {{ left, top, fontsize, align }, width, height, outlined } */
 const FillConfig   metaBGConf     PROGMEM = {{ 0, 0, 0, WA_LEFT }, DSP_WIDTH, 16, false };
+const FillConfig   metaBGConfInv  PROGMEM = {{ 0, 16, 0, WA_LEFT }, DSP_WIDTH, 1, false };
 const FillConfig   volbarConf     PROGMEM = {{ TFT_FRAMEWDT, 80-1-1-2, 0, WA_LEFT }, MAX_WIDTH, 2, false };
 const FillConfig  playlBGConf     PROGMEM = {{ 0, 30, 0, WA_LEFT }, DSP_WIDTH, 20, false };
 const FillConfig  heapbarConf     PROGMEM = {{ 0, 79, 0, WA_LEFT }, DSP_WIDTH, 1, false };
