@@ -70,7 +70,11 @@ const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
 const char        apPassTxt[]    PROGMEM = "ПАРОЛЬ";
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
 const char        apSettFmt[]    PROGMEM = "НАСТРОЙКИ: HTTP://%s/";
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %s\013%.1f м/с";
+#if EXT_WEATHER
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %s\027%.1f м/с";
+#else
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 давление: %d mm \007 влажность: %s%%";
+#endif
 const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
 const char      weatherLang[]    PROGMEM = "ru";       /* https://openweathermap.org/current#multi */
 

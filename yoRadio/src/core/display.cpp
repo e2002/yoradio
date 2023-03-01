@@ -212,7 +212,7 @@ void Display::_start() {
   if(_weather && config.store.showweather)  _weather->setText(const_getWeather);
 
   if(_vuwidget) _vuwidget->lock();
-  if(_rssi)     _rssi->setText(WiFi.RSSI(), rssiFmt);
+  if(_rssi)     _setRSSI(WiFi.RSSI());
   #ifndef HIDE_IP
     if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
   #endif
@@ -408,7 +408,7 @@ void Display::loop() {
         #endif*/
         break;
       }
-      case DSPRSSI: if(_rssi){ _rssi->setText(request.payload, rssiFmt); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.inBufferFilled()); break;
+      case DSPRSSI: if(_rssi){ _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.inBufferFilled()); break;
       case PSTART: _layoutChange(true);   break;
       case PSTOP:  _layoutChange(false);  break;
       case DSP_START: _start();  break;
@@ -416,6 +416,21 @@ void Display::loop() {
     }
   }
   dsp.loop();
+}
+
+void Display::_setRSSI(int rssi) {
+  if(!_rssi) return;
+#if RSSI_DIGIT
+  _rssi->setText(rssi, rssiFmt);
+  return;
+#endif
+  char rssiG[3];
+  if(rssi >= -50) strlcpy(rssiG, "\004\006", 3);
+  if(rssi >= -60 && rssi < -50) strlcpy(rssiG, "\004\005", 3);
+  if(rssi >= -70 && rssi < -60) strlcpy(rssiG, "\004\002", 3);
+  if(rssi >= -80 && rssi < -70) strlcpy(rssiG, "\003\002", 3);
+  if(rssi <  -80 || rssi >=  0) strlcpy(rssiG, "\001\002", 3);
+  _rssi->setText(rssiG);
 }
 
 void Display::_station() {

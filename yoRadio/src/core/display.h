@@ -78,6 +78,7 @@ class Display {
     void _bootScreen();
     void _setReturnTicker(uint8_t time_s);
     void _layoutChange(bool played);
+    void _setRSSI(int rssi);
 };
 
 #else

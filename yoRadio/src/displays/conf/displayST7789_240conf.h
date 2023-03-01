@@ -37,7 +37,7 @@ const WidgetConfig bootstrConf    PROGMEM = { 0, 182, 1, WA_CENTER };
 const WidgetConfig bitrateConf    PROGMEM = { TFT_FRAMEWDT, 188, 1, WA_LEFT };
 const WidgetConfig voltxtConf     PROGMEM = { 80, 214, 1, WA_RIGHT };
 const WidgetConfig  iptxtConf     PROGMEM = { TFT_FRAMEWDT, 214, 1, WA_LEFT };
-const WidgetConfig   rssiConf     PROGMEM = { TFT_FRAMEWDT, 214, 1, WA_RIGHT };
+const WidgetConfig   rssiConf     PROGMEM = { TFT_FRAMEWDT, 214-6, 2, WA_RIGHT };
 const WidgetConfig numConf        PROGMEM = { 0, 120+30, 52, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { TFT_FRAMEWDT, 66, 2, WA_CENTER };
 const WidgetConfig apName2Conf    PROGMEM = { TFT_FRAMEWDT, 90, 2, WA_CENTER };
@@ -55,7 +55,7 @@ const VUBandsConfig bandsConf     PROGMEM = { 100, 20, 10, 2, 10, 5 };
 /* STRINGS  */
 const char         numtxtFmt[]    PROGMEM = "%d";
 const char           rssiFmt[]    PROGMEM = "WiFi %d";
-const char          iptxtFmt[]    PROGMEM = "IP %s";
+const char          iptxtFmt[]    PROGMEM = "%s";
 const char         voltxtFmt[]    PROGMEM = "%d";
 const char        bitrateFmt[]    PROGMEM = "%d kBs";
 
