@@ -58,7 +58,7 @@ const VUBandsConfig bandsConf     PROGMEM = { 90, 20, 6, 2, 10, 5 };
 const char         numtxtFmt[]    PROGMEM = "%d";
 const char           rssiFmt[]    PROGMEM = "WIFI %d";
 const char          iptxtFmt[]    PROGMEM = "%s";
-const char         voltxtFmt[]    PROGMEM = "\016 %d";
+const char         voltxtFmt[]    PROGMEM = "\023\025%d";
 const char        bitrateFmt[]    PROGMEM = "%d KBS";
 
 /* MOVES  */                             /* { left, top, width } */
