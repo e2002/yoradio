@@ -90,7 +90,7 @@ void Display::_buildPager(){
   #endif
   #if !defined(DSP_LCD) && DSP_MODEL!=DSP_NOKIA5110
     _plbackground = new FillWidget(playlBGConf, config.theme.plcurrentfill);
-    #if DSP_INVERT_TITLE
+    #if DSP_INVERT_TITLE || defined(DSP_OLED)
       _metabackground = new FillWidget(metaBGConf, config.theme.metafill);
     #else
       _metabackground = new FillWidget(metaBGConfInv, config.theme.metafill);
@@ -164,7 +164,7 @@ void Display::_apScreen() {
   #ifndef DSP_LCD
     _boot = new Page();
     #if DSP_MODEL!=DSP_NOKIA5110
-      #if DSP_INVERT_TITLE
+      #if DSP_INVERT_TITLE || defined(DSP_OLED)
       _boot->addWidget(new FillWidget(metaBGConf, config.theme.metafill));
       #else
       _boot->addWidget(new FillWidget(metaBGConfInv, config.theme.metafill));
