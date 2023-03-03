@@ -35,19 +35,19 @@ const char oct[] PROGMEM = "october";
 const char nov[] PROGMEM = "november";
 const char dec[] PROGMEM = "december";
 
-const char wn_N[]      PROGMEM = "N";
+const char wn_N[]      PROGMEM = "NORTH";
 const char wn_NNE[]    PROGMEM = "NNE";
 const char wn_NE[]     PROGMEM = "NE";
 const char wn_ENE[]    PROGMEM = "ENE";
-const char wn_E[]      PROGMEM = "E";
+const char wn_E[]      PROGMEM = "EAST";
 const char wn_ESE[]    PROGMEM = "ESE";
 const char wn_SE[]     PROGMEM = "SE";
 const char wn_SSE[]    PROGMEM = "SSE";
-const char wn_S[]      PROGMEM = "S";
+const char wn_S[]      PROGMEM = "SOUTH";
 const char wn_SSW[]    PROGMEM = "SSW";
 const char wn_SW[]     PROGMEM = "SW";
 const char wn_WSW[]    PROGMEM = "WSW";
-const char wn_W[]      PROGMEM = "W";
+const char wn_W[]      PROGMEM = "WEST";
 const char wn_WNW[]    PROGMEM = "WNW";
 const char wn_NW[]     PROGMEM = "NW";
 const char wn_NNW[]    PROGMEM = "NNW";
@@ -71,7 +71,7 @@ const char        apPassTxt[]    PROGMEM = "PASSWORD";
 const char       bootstrFmt[]    PROGMEM = "Trying to %s";
 const char        apSettFmt[]    PROGMEM = "SETTINGS PAGE ON: HTTP://%s/";
 #if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d мм * humidity: %s%% \007 wind: %s\027%.1f m/s";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d мм * humidity: %s%% \007 wind: %.1f m/s [%s]";
 #else
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 pressure: %d mm \007 humidity: %s%%";
 #endif

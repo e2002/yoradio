@@ -324,7 +324,7 @@ bool getWeather(char *wstr) {
   sprintf(wstr, weatherFmt, tempf, pressi, hum);
   #else
     #if EXT_WEATHER
-      sprintf(wstr, weatherFmt, desc, tempf, tempfl, pressi, hum, wind[wind_deg], wind_speed);
+      sprintf(wstr, weatherFmt, desc, tempf, tempfl, pressi, hum, wind_speed, wind[wind_deg]);
     #else
       sprintf(wstr, weatherFmt, desc, tempf, pressi, hum);
     #endif

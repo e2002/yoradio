@@ -35,19 +35,19 @@ const char oct[] PROGMEM = "октября";
 const char nov[] PROGMEM = "ноября";
 const char dec[] PROGMEM = "декабря";
 
-const char wn_N[]      PROGMEM = "С";
+const char wn_N[]      PROGMEM = "СЕВ";
 const char wn_NNE[]    PROGMEM = "ССВ";
 const char wn_NE[]     PROGMEM = "СВ";
 const char wn_ENE[]    PROGMEM = "ВСВ";
-const char wn_E[]      PROGMEM = "В";
+const char wn_E[]      PROGMEM = "ВОСТ";
 const char wn_ESE[]    PROGMEM = "ВЮВ";
 const char wn_SE[]     PROGMEM = "ЮВ";
 const char wn_SSE[]    PROGMEM = "ЮЮВ";
-const char wn_S[]      PROGMEM = "Ю";
+const char wn_S[]      PROGMEM = "ЮЖ";
 const char wn_SSW[]    PROGMEM = "ЮЮЗ";
 const char wn_SW[]     PROGMEM = "ЮЗ";
 const char wn_WSW[]    PROGMEM = "ЗЮЗ";
-const char wn_W[]      PROGMEM = "З";
+const char wn_W[]      PROGMEM = "ЗАП";
 const char wn_WNW[]    PROGMEM = "ЗСЗ";
 const char wn_NW[]     PROGMEM = "СЗ";
 const char wn_NNW[]    PROGMEM = "ССЗ";
@@ -71,7 +71,7 @@ const char        apPassTxt[]    PROGMEM = "ПАРОЛЬ";
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
 const char        apSettFmt[]    PROGMEM = "НАСТРОЙКИ: HTTP://%s/";
 #if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %s\027%.1f м/с";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
 #else
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 давление: %d mm \007 влажность: %s%%";
 #endif
