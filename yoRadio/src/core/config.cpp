@@ -15,8 +15,20 @@ void u8fix(char *src){
   if ((uint8_t)last >= 0xC2) src[strlen(src)-1]='\0';
 }
 
+bool Config::_isFSempty() {
+  const char* reqiredFiles[] = {"dragpl.js.gz","elogo.png","elogo84.png","index.html","ir.css.gz","ir.html","ir.js.gz","script.js.gz","settings.css.gz","settings.html","style.css.gz","update.html"};
+  const uint8_t reqiredFilesSize = 12;
+  char fullpath[28];
+  for (uint8_t i=0; i<reqiredFilesSize; i++){
+    sprintf(fullpath, "/www/%s", reqiredFiles[i]);
+    if(!SPIFFS.exists(fullpath)) return true;
+  }
+  return false;
+}
+
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
+  emptyFS = true;
 #if IR_PIN!=255
     irindex=-1;
 #endif
@@ -26,12 +38,16 @@ void Config::init() {
   if(store.play_mode==80) store.play_mode=0b100;
   sdSnuffle = bitRead(store.play_mode, 2);
   store.play_mode = store.play_mode & 0b11;
+  _initHW();
   //if (!SPIFFS.begin(false, "/spiffs", 30)) {
-  if (!SPIFFS.begin(false)) {
+  if (!SPIFFS.begin(true)) {
+    Serial.println("##[ERROR]#\tSPIFFS Mount Failed");
     return;
   }
-  
-  loadTheme();
+  BOOTLOG("SPIFFS mounted");
+  //emptyFS = !SPIFFS.exists("/www/index.html");
+  emptyFS = _isFSempty();
+  if(emptyFS) BOOTLOG("SPIFFS is empty!");
   ssidsCount = 0;
   sdResumePos = 0;
   if(SDC_CS!=255){
@@ -42,7 +58,7 @@ void Config::init() {
       if(store.play_mode==PM_SDCARD) initSDPlaylist();
     }
   }
-  if(store.play_mode==PM_WEB) initPlaylist();
+  if(store.play_mode==PM_WEB && !emptyFS) initPlaylist();
   
   if (store.lastStation == 0 && store.countStation > 0) {
     store.lastStation = 1;
@@ -50,18 +66,23 @@ void Config::init() {
   }
   
   loadStation(store.lastStation);
-#if IR_PIN!=255
+
+  bootInfo();
+}
+
+void Config::_initHW(){
+  loadTheme();
+  #if IR_PIN!=255
   eepromRead(EEPROM_START_IR, ircodes);
   if(ircodes.ir_set!=4224){
     ircodes.ir_set=4224;
     memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
   }
-#endif
-#if BRIGHTNESS_PIN!=255
-  pinMode(BRIGHTNESS_PIN, OUTPUT);
-  setBrightness(false);
-#endif
-  bootInfo();
+  #endif
+  #if BRIGHTNESS_PIN!=255
+    pinMode(BRIGHTNESS_PIN, OUTPUT);
+    setBrightness(false);
+  #endif
 }
 
 uint16_t Config::color565(uint8_t r, uint8_t g, uint8_t b)

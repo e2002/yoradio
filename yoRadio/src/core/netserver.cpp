@@ -25,6 +25,7 @@ AsyncUDP udp;
 
 String processor(const String& var);
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+void handleUploadWeb(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 void handleUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 void handleHTTPArgs(AsyncWebServerRequest * request);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
@@ -53,12 +54,21 @@ bool NetServer::begin() {
   irRecordEnable = false;
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
   while(nsQueue==NULL){;}
-  webserver.on("/", HTTP_ANY, handleHTTPArgs);
+  if(config.emptyFS){
+    webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html, processor); });
+    webserver.on("/", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); ESP.restart(); }, handleUploadWeb);
+  }else{
+    webserver.on("/", HTTP_ANY, handleHTTPArgs);
+    webserver.on("/webboard", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html, processor); });
+    webserver.on("/webboard", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); }, handleUploadWeb);
+  }
+  
   webserver.on(PLAYLIST_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on(INDEX_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on(PLAYLIST_SD_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on(INDEX_SD_PATH, HTTP_GET, handleHTTPArgs);
   webserver.on(SSIDS_PATH, HTTP_GET, handleHTTPArgs);
+  
   webserver.on("/upload", HTTP_POST, beginUpload, handleUpload);
   webserver.on("/update", HTTP_GET, handleHTTPArgs);
   webserver.on("/update", HTTP_POST, beginUpdate, handleUpdate);
@@ -640,6 +650,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
 }
 
 String processor(const String& var) { // %Templates%
+  if (var == "ACTION") return network.status == CONNECTED?"webboard":"";
   if (var == "VERSION") return YOVERSION;
   if (var == "MODE") {
     if(config.store.play_mode==PM_SDCARD) {
@@ -653,11 +664,29 @@ String processor(const String& var) { // %Templates%
 
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
+    //String spath = "/www/";
+    //if(filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
+    //request->_tempFile = SPIFFS.open(config.emptyFS?spath + filename:TMP_PATH , "w");
     request->_tempFile = SPIFFS.open(TMP_PATH , "w");
   }
   if (len) {
     request->_tempFile.write(data, len);
     //TODO check index+len size
+  }
+  if (final) {
+    request->_tempFile.close();
+  }
+}
+
+void handleUploadWeb(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  DBGVB("File: %s, size:%u bytes, index: %u, final: %s\n", filename.c_str(), len, index, final?"true":"false");
+  if (!index) {
+    String spath = "/www/";
+    if(filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
+    request->_tempFile = SPIFFS.open(spath + filename , "w");
+  }
+  if (len) {
+    request->_tempFile.write(data, len);
   }
   if (final) {
     request->_tempFile.close();

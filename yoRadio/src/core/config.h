@@ -157,6 +157,7 @@ class Config {
     uint32_t sdResumePos;
     uint16_t backupLastStation;
     bool     sdSnuffle;
+    bool     emptyFS;
   public:
     Config() {};
     void save();
@@ -206,6 +207,8 @@ class Config {
     void initSDPlaylist();
     void indexSDPlaylist();
     bool checkNoMedia(const char* path);
+    void _initHW();
+    bool _isFSempty();
 };
 
 extern Config config;
