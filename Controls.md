@@ -55,7 +55,7 @@ You can connect one or two encoders to replace/complete the buttons. One encoder
 ---
 ### IR receiver
 Starting from version 0.6.450, adding an IR remote control has been moved to the web interface. Can be added for up to three remotes.
-1. go to Settings - IR (fig.1)
+1. go to Settings >> controls >> IR Recorder (fig.1)
 2. press the button you need on the left to record the IR code (fig.2)
 
 <img src="images/irRecorder01.png" width="830" height="490"><br>

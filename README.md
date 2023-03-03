@@ -222,6 +222,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.8.990
+- fixed error displaying access point credentials when DSP_INVERT_TITLE is false
+- fixed compilation error for OLED displays when DSP_INVERT_TITLE is false
+
 #### v0.8.988
 - **DSP_INVERT_TITLE** now works for all displays when assigned
    ```#define DSP_INVERT_TITLE false```
