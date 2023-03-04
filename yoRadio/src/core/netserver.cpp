@@ -56,7 +56,18 @@ bool NetServer::begin() {
   while(nsQueue==NULL){;}
   if(config.emptyFS){
     webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html, processor); });
-    webserver.on("/", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); ESP.restart(); }, handleUploadWeb);
+    webserver.on("/", HTTP_POST, [](AsyncWebServerRequest *request) { 
+		  if(request->arg("ssid")!="" && request->arg("pass")!=""){
+		  	char buf[BUFLEN];
+		  	memset(buf, 0, BUFLEN);
+		  	snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid"), request->arg("pass"));
+		  	request->redirect("/");
+		  	config.saveWifiFromNextion(buf);
+		  	return;
+		  }
+		  request->redirect("/"); 
+		  ESP.restart(); 
+    }, handleUploadWeb);
   }else{
     webserver.on("/", HTTP_ANY, handleHTTPArgs);
     webserver.on("/webboard", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html, processor); });
@@ -650,7 +661,8 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
 }
 
 String processor(const String& var) { // %Templates%
-  if (var == "ACTION") return network.status == CONNECTED?"webboard":"";
+  if (var == "ACTION") return (network.status == CONNECTED && !config.emptyFS)?"webboard":"";
+  if (var == "UPLOADWIFI") return (network.status == CONNECTED || SPIFFS.exists("/data/wifi.csv"))?" hidden":"";
   if (var == "VERSION") return YOVERSION;
   if (var == "MODE") {
     if(config.store.play_mode==PM_SDCARD) {
@@ -690,6 +702,7 @@ void handleUploadWeb(AsyncWebServerRequest *request, String filename, size_t ind
   }
   if (final) {
     request->_tempFile.close();
+    if(filename=="playlist.csv") config.indexPlaylist();
   }
 }
 

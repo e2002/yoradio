@@ -261,6 +261,15 @@ bool getWeather(char *wstr) {
   cursor = tmpe + 2;
   float tempfl = atof(temp); (void)tempfl;
 
+  tmps = strstr(cursor, "\"pressure\":");
+  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
+  tmps += 11;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
+  strlcpy(press, tmps, tmpe - tmps + 1);
+  cursor = tmpe + 2;
+  int pressi = (float)atoi(press) / 1.333;
+  
   tmps = strstr(cursor, "humidity\":");
   if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: humidity not found !"); return false;}
   tmps += 10;
@@ -270,13 +279,15 @@ bool getWeather(char *wstr) {
   strlcpy(hum, tmps, tmpe - tmps + (tmpc>tmpe?1:0));
   
   tmps = strstr(cursor, "\"grnd_level\":");
-  if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
-  tmps += 13;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: pressure not found !"); return false;}
-  strlcpy(press, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  int pressi = (float)atoi(press) / 1.333;
+  bool grnd_level_pr = (tmps != NULL);
+  if(grnd_level_pr){
+    tmps += 13;
+    tmpe = strstr(tmps, ",\"");
+    if (tmpe == NULL) { Serial.println("## OPENWEATHERMAP ###: grnd_level not found !"); return false;}
+    strlcpy(press, tmps, tmpe - tmps + 1);
+    cursor = tmpe + 2;
+    pressi = (float)atoi(press) / 1.333;
+  }
   
   tmps = strstr(cursor, "\"speed\":");
   if (tmps == NULL) { Serial.println("## OPENWEATHERMAP ###: wind speed not found !"); return false;}
