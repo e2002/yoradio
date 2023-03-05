@@ -222,6 +222,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.000
+- added WEB Board Uploader. ESP32 Filesystem Uploader is no longer needed, the initial setup can be done in the browser. (see [wiki](https://github.com/e2002/yoradio/wiki/WEB-Board-Uploader) for more info)
+- fixed error getting weather for some locations
+
 #### v0.8.990
 - fixed error displaying access point credentials when DSP_INVERT_TITLE is false
 - fixed compilation error for OLED displays when DSP_INVERT_TITLE is false
