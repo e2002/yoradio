@@ -9,10 +9,11 @@ enum requestType_e : uint8_t  { PLAYLIST=1, STATION=2, STATIONNAME=3, ITEM=4, TI
 enum import_e      : uint8_t  { IMDONE=0, IMPL=1, IMWIFI=2 };
 const char emptyfs_html[] PROGMEM = R"(
 <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, minimum-scale=0.25"><meta charset="UTF-8"><link rel="icon" href="data:;base64,iVBORw0KGgo="><title>ёRadio - WEB Board Uploader</title><style>body{background-color:#000;color:#e3d25f;font-size:20px;}
-hr{margin:20px 0;border:0; border-top:#555 1px solid;} p{text-align:center;margin-bottom:10px;} section{max-width:500px; text-align:center;margin:0 auto;}
+hr{margin:20px 0;border:0; border-top:#555 1px solid;} p{text-align:center;margin-bottom:10px;} section{max-width:500px; text-align:center;margin:0 auto 30px auto;}
 input[type=file]{color:#ccc;} input[type=file]::file-selector-button, input[type=submit]{border:2px solid #e3d25f;color:#000;padding:6px 16px;border-radius:25px;background-color:#e3d25f;margin:0 6px;cursor:pointer;}
 input[type=submit]{font-size:18px;text-transform:uppercase;padding:8px 26px;margin-top:10px;font-family:Times;} span{color:#ccc} .flex{display:flex;justify-content: space-around;margin-top:10px;}
-input[type=text]{width:170px;background:#272727;color:#e3d25f;padding:6px 12px;font-size:20px;border:#2d2d2d 1px solid;margin:4px 0 0 4px;border-radius:4px;}input[type=text]{outline:none;}
+input[type=text],input[type=password]{width:170px;background:#272727;color:#e3d25f;padding:6px 12px;font-size:20px;border:#2d2d2d 1px solid;margin:4px 0 0 4px;border-radius:4px;outline:none;}
+@media screen and (max-width:480px) {section{zoom:0.7;-moz-transform:scale(0.7);}}
 </style></head><body>
 <section>
 <h2>ёRadio - WEB Board Uploader</h2>
@@ -32,7 +33,7 @@ input[type=text]{width:170px;background:#272727;color:#e3d25f;padding:6px 12px;f
 <form action="/%ACTION%" method="post" enctype="multipart/form-data">
 <span>-= OPTIONAL =-<br />If you can't connect from PC to 192.168.4.1 address<br />setup WiFi connection first</span>
 <div class="flex"><div><label for="ssid">ssid:</label><input type="text" id="ssid" name="ssid" value="" maxlength="30" autocomplete="off"></div>
-<div><label for="pass">pass:</label><input type="text" id="pass" name="pass" value="" maxlength="40" autocomplete="off"></div>
+<div><label for="pass">pass:</label><input type="password" id="pass" name="pass" value="" maxlength="40" autocomplete="off"></div>
 </div>
 <p><input type="submit" name="submit" value="Save Credentials"></p>
 </form>

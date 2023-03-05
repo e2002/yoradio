@@ -662,7 +662,7 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
 
 String processor(const String& var) { // %Templates%
   if (var == "ACTION") return (network.status == CONNECTED && !config.emptyFS)?"webboard":"";
-  if (var == "UPLOADWIFI") return (network.status == CONNECTED || SPIFFS.exists("/data/wifi.csv"))?" hidden":"";
+  if (var == "UPLOADWIFI") return (network.status == CONNECTED)?" hidden":"";
   if (var == "VERSION") return YOVERSION;
   if (var == "MODE") {
     if(config.store.play_mode==PM_SDCARD) {
