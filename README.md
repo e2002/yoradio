@@ -222,6 +222,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.001
+- fixed compilation error netserver.cpp:63:28 for some configurations
+
 #### v0.9.000
 - added WEB Board Uploader. ESP32 Filesystem Uploader is no longer needed, the initial setup can be done in the browser. (see [wiki](https://github.com/e2002/yoradio/wiki/WEB-Board-Uploader) for more info)
 - fixed error getting weather for some locations

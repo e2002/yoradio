@@ -60,7 +60,7 @@ bool NetServer::begin() {
 		  if(request->arg("ssid")!="" && request->arg("pass")!=""){
 		  	char buf[BUFLEN];
 		  	memset(buf, 0, BUFLEN);
-		  	snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid"), request->arg("pass"));
+		  	snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid").c_str(), request->arg("pass").c_str());
 		  	request->redirect("/");
 		  	config.saveWifiFromNextion(buf);
 		  	return;
