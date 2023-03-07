@@ -1,9 +1,11 @@
 #ifndef common_gfx_h
 #define common_gfx_h
-
+  public:
+    uint16_t plItemHeight, plTtemsCount, plCurrentPos;
+    int plYStart;
   public:
     DspCore();
-    char plMenu[PLMITEMS][PLMITEMLENGHT];
+    //char plMenu[PLMITEMS][PLMITEMLENGHT];
     void initDisplay();
     void drawLogo(uint16_t top);
     void clearDsp(bool black=false);
@@ -11,7 +13,7 @@
     void printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight, bool redraw);
     void clearClock();
     char* utf8Rus(const char* str, bool uppercase);
-    void drawPlaylist(uint16_t currentItem, char* currentItemText);
+    void drawPlaylist(uint16_t currentItem);
     void loop(bool force=false);
     void charSize(uint8_t textsize, uint8_t& width, uint16_t& height);
     #ifndef DSP_LCD
@@ -62,6 +64,7 @@
       void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
       uint16_t drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color = COLOR_WHITE);
     #endif
+    void printPLitem(uint8_t pos, const char* item, ScrollWidget& current);
   private:
     char  _timeBuf[20], _dateBuf[20], _oldTimeBuf[20], _oldDateBuf[20], _bufforseconds[4], _buffordate[40];
     uint16_t _timewidth, _timeleft, _datewidth, _dateleft, _oldtimeleft, _oldtimewidth, _olddateleft, _olddatewidth, clockTop, clockRightSpace, clockTimeHeight, _dotsLeft;

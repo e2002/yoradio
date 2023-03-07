@@ -140,6 +140,7 @@ class FillWidget: public Widget {
     FillWidget() {}
     FillWidget(FillConfig conf, uint16_t bgcolor) { init(conf, bgcolor); }
     void init(FillConfig conf, uint16_t bgcolor);
+    void setHeight(uint16_t newHeight);
   protected:
     uint16_t _height;
     void _draw();

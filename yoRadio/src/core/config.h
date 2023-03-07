@@ -186,7 +186,8 @@ class Config {
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();
-    void fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum = false);
+    uint8_t fillPlMenu(int from, uint8_t count);
+    char * stationByNum(uint16_t num);
     void setTimezone(int8_t tzh, int8_t tzm);
     void setTimezoneOffset(uint16_t tzo);
     uint16_t getTimezoneOffset();
@@ -209,6 +210,7 @@ class Config {
     bool checkNoMedia(const char* path);
     void _initHW();
     bool _isFSempty();
+    char _stationBuf[BUFLEN/2];
 };
 
 extern Config config;

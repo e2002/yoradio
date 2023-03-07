@@ -85,6 +85,7 @@ void Display::_buildPager(){
   #else
     _plcurrent.init("*", playlistConf, config.theme.plcurrent, config.theme.plcurrentbg);
   #endif
+  _plcurrent.moveTo({TFT_FRAMEWDT, (uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight), (int16_t)playlistConf.width});
   #ifndef HIDE_TITLE2
     _title2 = new ScrollWidget("*", title2Conf, config.theme.title2, config.theme.background);
   #endif
@@ -153,7 +154,11 @@ void Display::_buildPager(){
     pages[PG_DIALOG]->addPage(&_footer);
   #endif
   
-  if(_plbackground) pages[PG_PLAYLIST]->addWidget( _plbackground);
+  if(_plbackground) {
+    pages[PG_PLAYLIST]->addWidget( _plbackground);
+    _plbackground->setHeight(dsp.plItemHeight);
+    _plbackground->moveTo({0,(uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight-playlistConf.widget.textsize*2), (int16_t)playlBGConf.width});
+  }
   pages[PG_PLAYLIST]->addWidget(&_plcurrent);
 
   for(const auto& p: pages) _pager.addPage(p);
@@ -286,26 +291,18 @@ void Display::resetQueue(){
 }
 
 void Display::_drawPlaylist() {
-  char buf[PLMITEMLENGHT];
-  dsp.drawPlaylist(currentPlItem, buf);
-  _plcurrent.setText(buf);
-/*#ifdef USE_NEXTION
-  nextion.drawPlaylist(currentPlItem);
-#endif*/
+  dsp.drawPlaylist(currentPlItem);
   _setReturnTicker(30);
 }
 
 void Display::_drawNextStationNum(uint16_t num) {
-  char plMenu[1][40];
-  char currentItemText[40] = {0};
-  config.fillPlMenu(plMenu, num, 1, true);
-  strlcpy(currentItemText, plMenu[0], 39);
   _setReturnTicker(30);
-  _meta.setText(currentItemText);
+  _meta.setText(config.stationByNum(num));
   _nums.setText(num, "%d");
-/*#ifdef USE_NEXTION
-  nextion.drawNextStationNum(num);
-#endif*/
+}
+
+void Display::printPLitem(uint8_t pos, const char* item){
+  dsp.printPLitem(pos, item, _plcurrent);
 }
 
 void Display::putRequest(displayRequestType_e type, int payload){

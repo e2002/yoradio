@@ -11,9 +11,6 @@
 #define DSP_WIDTH       84
 #define TFT_FRAMEWDT    0
 #define MAX_WIDTH       DSP_WIDTH
-#define PLMITEMS        7
-#define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   10
 #define SCROLLDELAY     180
 
 #define HIDE_TITLE2

@@ -11,9 +11,6 @@
 #define DSP_WIDTH       320
 #define TFT_FRAMEWDT    8
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
-#define PLMITEMS        11
-#define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   22
 
 #define bootLogoTop     68
 

@@ -19,6 +19,10 @@ void FillWidget::_draw(){
   dsp.fillRect(_config.left, _config.top, _width, _height, _bgcolor);
 }
 
+void FillWidget::setHeight(uint16_t newHeight){
+  _height = newHeight;
+  //_draw();
+}
 /************************
       TEXT WIDGET
  ************************/

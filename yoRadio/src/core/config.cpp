@@ -423,20 +423,33 @@ void Config::loadStation(uint16_t ls) {
   playlist.close();
 }
 
-void Config::fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum) {
-  int ls = from;
-  byte c = 0;
-  bool finded = false;
-  char sName[BUFLEN], sUrl[BUFLEN];
-  int sOvol;
+char * Config::stationByNum(uint16_t num){
+  File playlist = SPIFFS.open(REAL_PLAYL, "r");
+  File index = SPIFFS.open(REAL_INDEX, "r");
+  index.seek((num - 1) * 4, SeekSet);
+  uint32_t pos;
+  memset(_stationBuf, 0, BUFLEN/2);
+  index.readBytes((char *) &pos, 4);
+  index.close();
+  playlist.seek(pos, SeekSet);
+  strncpy(_stationBuf, playlist.readStringUntil('\t').c_str(), BUFLEN/2);
+  playlist.close();
+  return _stationBuf;
+}
+
+uint8_t Config::fillPlMenu(int from, uint8_t count) {
+  int     ls      = from;
+  uint8_t c       = 0;
+  bool    finded  = false;
   if (store.countStation == 0) {
-    return;
+    return 0;
   }
   File playlist = SPIFFS.open(REAL_PLAYL, "r");
   File index = SPIFFS.open(REAL_INDEX, "r");
   while (true) {
     if (ls < 1) {
       ls++;
+      display.printPLitem(c, "");
       c++;
       continue;
     }
@@ -449,24 +462,16 @@ void Config::fillPlMenu(char plmenu[][40], int from, byte count, bool removeNum)
       playlist.seek(pos, SeekSet);
     }
     while (playlist.available()) {
-      if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
-        if(config.store.numplaylist){
-          if(removeNum){
-            strlcpy(plmenu[c], sName, 39);
-          }else{
-            char buf[BUFLEN+10];
-            sprintf(buf, "%d %s", (int)(from+c), sName);
-            strlcpy(plmenu[c], buf, 39);
-          }
-        }else{
-          strlcpy(plmenu[c], sName, 39);
-        }
-        c++;
-      }
+      String stationName = playlist.readStringUntil('\n');
+      stationName = stationName.substring(0, stationName.indexOf('\t'));
+      if(config.store.numplaylist) stationName = String(from+c)+" "+stationName;
+      display.printPLitem(c, stationName.c_str());
+      c++;
       if (c >= count) break;
     }
     break;
   }
+  return c;
   playlist.close();
 }
 
