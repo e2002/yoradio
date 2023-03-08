@@ -252,7 +252,8 @@ void Display::_setReturnTicker(uint8_t time_s){
 
 void Display::_swichMode(displayMode_e newmode) {
   #ifdef USE_NEXTION
-    nextion.swichMode(newmode);
+    //nextion.swichMode(newmode);
+    nextion.putRequest({NEWMODE, newmode});
   #endif
   if (newmode == _mode || network.status != CONNECTED) return;
   _mode = newmode;

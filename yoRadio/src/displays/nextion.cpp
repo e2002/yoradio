@@ -30,6 +30,7 @@ void nextionCore0( void * pvParameters ){
 
 void Nextion::begin(bool dummy) {
   _dummyDisplay=dummy;
+  mode=LOST;
   hSerial.begin(NEXTION_BAUD, SERIAL_8N1, NEXTION_RX, NEXTION_TX);
   if (!hSerial) {
     Serial.println("Invalid HardwareSerial pin configuration, check config");
@@ -459,7 +460,9 @@ void Nextion::swichMode(displayMode_e newmode){
   if (newmode == VOL) {
     _volDelay = millis();
   }
-  //if (newmode == mode) return;
+  if (newmode == mode) {
+  	return;
+  }
   mode = newmode;
 #ifdef DUMMYDISPLAY
   display.mode(newmode);
