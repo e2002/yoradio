@@ -107,7 +107,7 @@ void audio_info(const char *info) {
     config.setTitle(config.station.name);
     netserver.requestOnChange(TITLE, 0);
   }
-  if (strstr(info, "failed!") != NULL || strstr(info, " 404") != NULL || strstr(info, " 403") != NULL || strstr(info, "address is empty") != NULL) player.stop(info);
+  if (strstr(info, "failed!") != NULL || strstr(info, "address is empty") != NULL) player.stop(info);
   if (strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) player.stop(info);
   char* ici; char b[20]={0};
   if ((ici = strstr(info, "BitRate: ")) != NULL) {
