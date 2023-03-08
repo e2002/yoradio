@@ -437,7 +437,7 @@ char * Config::stationByNum(uint16_t num){
   return _stationBuf;
 }
 
-uint8_t Config::fillPlMenu(int from, uint8_t count) {
+uint8_t Config::fillPlMenu(int from, uint8_t count, bool fromNextion) {
   int     ls      = from;
   uint8_t c       = 0;
   bool    finded  = false;
@@ -449,7 +449,10 @@ uint8_t Config::fillPlMenu(int from, uint8_t count) {
   while (true) {
     if (ls < 1) {
       ls++;
-      display.printPLitem(c, "");
+      if(!fromNextion) display.printPLitem(c, "");
+  #ifdef USE_NEXTION
+    if(fromNextion) nextion.printPLitem(c, "");
+  #endif
       c++;
       continue;
     }
@@ -465,7 +468,10 @@ uint8_t Config::fillPlMenu(int from, uint8_t count) {
       String stationName = playlist.readStringUntil('\n');
       stationName = stationName.substring(0, stationName.indexOf('\t'));
       if(config.store.numplaylist) stationName = String(from+c)+" "+stationName;
-      display.printPLitem(c, stationName.c_str());
+      if(!fromNextion) display.printPLitem(c, stationName.c_str());
+  #ifdef USE_NEXTION
+    if(fromNextion) nextion.printPLitem(c, stationName.c_str());
+  #endif
       c++;
       if (c >= count) break;
     }

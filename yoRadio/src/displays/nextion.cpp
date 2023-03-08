@@ -42,18 +42,20 @@ void Nextion::begin(bool dummy) {
   snprintf(_espcoreversion, sizeof(_espcoreversion) - 1, "%d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
   putcmd("");
   putcmd("rest");
-  delay(200);
+  delay(300);
   putcmd("");
   putcmd("bkcmd=0");
 //  putcmd("page boot");
   
-    _displayQueue = xQueueCreate( 5, sizeof( requestParams_t ) );
+  _displayQueue = xQueueCreate( 10, sizeof( requestParams_t ) );
   if(dummy) {
     xTaskCreatePinnedToCore(nextionCore0, "TaskCore0", CORE_STACK_SIZE, NULL, 4, &_TaskCore0, !xPortGetCoreID());
   }
 }
 
 void Nextion::start(){
+	Serial.print("##[BOOT]#\tNextion.start\t");
+	delay(100);
   if (network.status != CONNECTED) {
     apScreen();
     return;
@@ -62,12 +64,11 @@ void Nextion::start(){
   display.mode(PLAYER);
   config.setTitle(const_PlReady);
 #endif
-  mode = PLAYER;
-  putcmd("page player");
-  delay(100);
-  newNameset(config.station.name);
-  newTitle(config.station.title);
-  setVol(config.store.volume, mode == VOL);
+  putRequest({NEWMODE, PLAYER});
+  putRequest({NEWSTATION, 0});
+  putRequest({NEWTITLE, 0});
+  putRequest({DRAWVOL, 0});
+  Serial.println("done");
 }
 
 void Nextion::apScreen() {
@@ -80,10 +81,14 @@ void Nextion::putRequest(requestParams_t request){
   xQueueSend(_displayQueue, &request, portMAX_DELAY);
 }
 
+#ifndef NEXTION_QUEUE_TICKS
+  #define NEXTION_QUEUE_TICKS 8
+#endif
+
 void Nextion::processQueue(){
   if(_displayQueue==NULL) return;
   requestParams_t request;
-  if(xQueueReceive(_displayQueue, &request, 20)){
+  if(xQueueReceive(_displayQueue, &request, NEXTION_QUEUE_TICKS)){
     switch (request.type){
       case NEWMODE: swichMode((displayMode_e)request.payload); break;
       case CLOCK: printClock(network.timeinfo); break;
@@ -427,26 +432,25 @@ void Nextion::localTime(struct tm timeinfo){
   putcmd(timeStringBuff);
 }
 
+void Nextion::printPLitem(uint8_t pos, const char* item){
+	char cmd[60]={0};
+	snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", pos, nextion.utf8Rus((char*)item, true));
+  putcmd(cmd);
+}
+
 void Nextion::drawPlaylist(uint16_t currentPlItem){
-  char plMenu[7][40];
-  for (byte i = 0; i < 7; i++) {
-    plMenu[i][0] = '\0';
-  }
-  config.fillPlMenu(plMenu, currentPlItem - 3, 7);
-  char cmd[60]={0};
-  for (byte i = 0; i < 7; i++) {
-    snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", i, nextion.utf8Rus(plMenu[i], true));
-    putcmd(cmd);
+	mode=STATIONS;
+  uint8_t lastPos = config.fillPlMenu(currentPlItem - 3, 7, true);
+  if(lastPos<7){
+  	for(int i=0;i<7-lastPos;i++){
+  		nextion.printPLitem(lastPos+i, "");
+  	}
   }
   _volDelay = millis();
 }
 
 void Nextion::drawNextStationNum(uint16_t num) {//dialog
-  char plMenu[1][40];
-  char currentItemText[40] = {0};
-  config.fillPlMenu(plMenu, num, 1, true);
-  strlcpy(currentItemText, plMenu[0], 39);
-  putcmd("dialog.title.txt", utf8Rus(currentItemText, true));
+  putcmd("dialog.title.txt", utf8Rus(config.stationByNum(num), true));
   putcmd("dialog.text.txt", num, true);
   _volDelay = millis();
 }
@@ -455,7 +459,7 @@ void Nextion::swichMode(displayMode_e newmode){
   if (newmode == VOL) {
     _volDelay = millis();
   }
-  if (newmode == mode) return;
+  //if (newmode == mode) return;
   mode = newmode;
 #ifdef DUMMYDISPLAY
   display.mode(newmode);

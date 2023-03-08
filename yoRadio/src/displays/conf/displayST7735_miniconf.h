@@ -25,7 +25,7 @@ const ScrollConfig title1Conf     PROGMEM = {{ TFT_FRAMEWDT, 19, 1, WA_LEFT }, 1
 const ScrollConfig playlistConf   PROGMEM = {{ TFT_FRAMEWDT, 33, 1, WA_LEFT }, 140, true, MAX_WIDTH, 0, 3, 30 };
 const ScrollConfig apTitleConf    PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 2, WA_CENTER }, 140, false, MAX_WIDTH, 0, 3, 30 };
 const ScrollConfig apSettConf     PROGMEM = {{ TFT_FRAMEWDT, 80-TFT_FRAMEWDT-8, 1, WA_LEFT }, 140, false, MAX_WIDTH, 0, 3, 30 };
-const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 80-13, 1, WA_LEFT }, 140, true, MAX_WIDTH-6*3-4, 0, 3, 30 }; // ПОГОДА!!
+const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 80-13, 1, WA_LEFT }, 140, true, MAX_WIDTH-6*3, 0, 3, 30 }; // ПОГОДА!!
 
 /* BACKGROUNGC9106DS  */                       /* {{ left, top, fontsize, align }, width, height, outlined } */
 const FillConfig   metaBGConf     PROGMEM = {{ 0, 0, 0, WA_LEFT }, DSP_WIDTH, 16, false };
@@ -63,7 +63,7 @@ const char        bitrateFmt[]    PROGMEM = "%d";
 
 /* MOVES  */                             /* { left, top, width } */
 const MoveConfig    clockMove     PROGMEM = { 14, 29+34, 0};
-const MoveConfig   weatherMove    PROGMEM = { TFT_FRAMEWDT, 80-13, MAX_WIDTH-6*3-4-30 };
-const MoveConfig   weatherMoveVU  PROGMEM = { 30, 80-13, MAX_WIDTH-6*3-4-30 };
+const MoveConfig   weatherMove    PROGMEM = { TFT_FRAMEWDT, 80-13, MAX_WIDTH-6*3-30 };
+const MoveConfig   weatherMoveVU  PROGMEM = { 30, 80-13, MAX_WIDTH-6*3-30 };
 
 #endif

@@ -57,6 +57,7 @@ class Nextion {
     void  weatherVisible(uint8_t vis);
     void  localTime(struct tm timeinfo);
     void  drawPlaylist(uint16_t currentPlItem);
+    void  printPLitem(uint8_t pos, const char* item);
     void  swichMode(displayMode_e newmode);
     void  drawNextStationNum(uint16_t num);
     void  putRequest(requestParams_t request);

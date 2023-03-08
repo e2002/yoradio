@@ -28,30 +28,35 @@ void DspCore::initDisplay() {
   invert();
   flip();
   setTextWrap(false);
+  
+  plItemHeight = playlistConf.widget.textsize*(CHARHEIGHT-1)+playlistConf.widget.textsize*4;
+  plTtemsCount = round((float)height()/plItemHeight);
+  if(plTtemsCount%2==0) plTtemsCount++;
+  plCurrentPos = plTtemsCount/2;
+  plYStart = (height() / 2 - plItemHeight / 2) - plItemHeight * (plTtemsCount - 1) / 2 + playlistConf.widget.textsize*2;
 }
 
 void DspCore::drawLogo(uint16_t top) {
   drawRGBBitmap((width() - 62) / 2, 5, bootlogo40, 62, 40);
 }
 
-void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
-  for (byte i = 0; i < PLMITEMS; i++) {
-    plMenu[i][0] = '\0';
+void DspCore::printPLitem(uint8_t pos, const char* item, ScrollWidget& current){
+  setTextSize(playlistConf.widget.textsize);
+  if (pos == plCurrentPos) {
+    current.setText(item);
+  } else {
+    uint8_t plColor = (abs(pos - plCurrentPos)-1)>4?4:abs(pos - plCurrentPos)-1;
+    setTextColor(config.theme.playlist[plColor], config.theme.background);
+    setCursor(TFT_FRAMEWDT, plYStart + pos * plItemHeight);
+    fillRect(0, plYStart + pos * plItemHeight - 1, width(), plItemHeight - 2, config.theme.background);
+    print(utf8Rus(item, true));
   }
-  config.fillPlMenu(plMenu, currentItem - 3, PLMITEMS);
-  setTextSize(2);
-  int yStart = (height() / 2 - PLMITEMHEIGHT / 2) - PLMITEMHEIGHT * (PLMITEMS - 1) / 2 + 3;
-  for (byte i = 0; i < PLMITEMS; i++) {
-    if (abs(i - 3) == 3) setTextColor(config.theme.playlist[2], config.theme.background);
-    if (abs(i - 3) == 2) setTextColor(config.theme.playlist[1], config.theme.background);
-    if (abs(i - 3) == 1) setTextColor(config.theme.playlist[0], config.theme.background);
-    if (i == 3) {
-      strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
-    } else {
-      setCursor(TFT_FRAMEWDT, yStart + i * PLMITEMHEIGHT);
-      fillRect(0, yStart + i * PLMITEMHEIGHT - 1, width(), PLMITEMHEIGHT - 4, config.theme.background);
-      print(utf8Rus(plMenu[i], true));
-    }
+}
+
+void DspCore::drawPlaylist(uint16_t currentItem) {
+  uint8_t lastPos = config.fillPlMenu(currentItem - plCurrentPos, plTtemsCount);
+  if(lastPos<plTtemsCount){
+    fillRect(0, lastPos*plItemHeight+plYStart, width(), height()/2, config.theme.background);
   }
 }
 

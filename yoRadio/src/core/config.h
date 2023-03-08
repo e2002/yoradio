@@ -186,7 +186,7 @@ class Config {
     void setSmartStart(byte ss);
     void initPlaylist();
     void indexPlaylist();
-    uint8_t fillPlMenu(int from, uint8_t count);
+    uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
     void setTimezone(int8_t tzh, int8_t tzm);
     void setTimezoneOffset(uint16_t tzo);

@@ -211,7 +211,7 @@ void Display::_start() {
     return;
   }
   #ifdef USE_NEXTION
-    nextion.putcmd("page player");
+    //nextion.putcmd("page player");
     nextion.start();
   #endif
   _buildPager();
@@ -539,6 +539,7 @@ void Display::init(){
 }
 void Display::_start(){
   #ifdef USE_NEXTION
+  //nextion.putcmd("page player");
   nextion.start();
   #endif
 }
