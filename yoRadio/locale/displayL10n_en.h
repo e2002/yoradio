@@ -71,7 +71,7 @@ const char        apPassTxt[]    PROGMEM = "PASSWORD";
 const char       bootstrFmt[]    PROGMEM = "Trying to %s";
 const char        apSettFmt[]    PROGMEM = "SETTINGS PAGE ON: HTTP://%s/";
 #if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d мм * humidity: %s%% \007 wind: %.1f m/s [%s]";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d мм \007 humidity: %s%% \007 wind: %.1f m/s [%s]";
 #else
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 pressure: %d mm \007 humidity: %s%%";
 #endif

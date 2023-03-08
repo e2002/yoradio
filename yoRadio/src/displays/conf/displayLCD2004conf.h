@@ -12,7 +12,6 @@
 #define TFT_FRAMEWDT    0
 #define MAX_WIDTH       20
 #define PLMITEMS        4
-#define PLMITEMLENGHT   40
 
 #define HIDE_IP
 #define HIDE_VOLBAR

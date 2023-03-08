@@ -31,8 +31,6 @@ void DspCore::apScreen() {
 #endif
 }
 
-byte Arrow[] PROGMEM = { B00000, B00100, B00010, B01001, B00010, B00100, B00000, B00000 };
-
 void DspCore::initDisplay() {
 #ifdef LCD_I2C
   init();
@@ -45,30 +43,29 @@ void DspCore::initDisplay() {
   #endif
 #endif
   clearClipping();
-  createChar(0, Arrow);
+  
+  plTtemsCount = PLMITEMS;
+  plCurrentPos = 1;
 }
 
 void DspCore::drawLogo(uint16_t top) { }
 
+void DspCore::printPLitem(uint8_t pos, const char* item, ScrollWidget& current){
+  if (pos == plCurrentPos) {
+    current.setText(item);
+  } else {
+    setCursor(1, pos);
+    char tmp[width()] = {0};
+    strlcpy(tmp, utf8Rus(item, true), width());
+    print(tmp);
+  }
+}
 
-void DspCore::drawPlaylist(uint16_t currentItem, char* currentItemText) {
-  clear();
-  for (byte i = 0; i < PLMITEMS; i++) {
-    plMenu[i][0] = '\0';
-  }
-  config.fillPlMenu(plMenu, currentItem-1, PLMITEMS);
-  for (byte i = 0; i < PLMITEMS; i++) {
-    if (i == 1) {
-      strlcpy(currentItemText, plMenu[i], PLMITEMLENGHT - 1);
-    } else {
-      char tmp[width()] = {0};
-      strlcpy(tmp, utf8Rus(plMenu[i], true), width());
-      setCursor(1, i);
-      print(tmp);
-    }
-  }
+void DspCore::drawPlaylist(uint16_t currentItem) {
+	clear();
+  config.fillPlMenu(currentItem - plCurrentPos, plTtemsCount);
   setCursor(0,1);
-  write(byte(0));
+  write(byte(126));
 }
 
 void DspCore::clearDsp(bool black) {

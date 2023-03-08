@@ -11,9 +11,6 @@
 #define DSP_WIDTH       128
 #define TFT_FRAMEWDT    1
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
-#define PLMITEMS        5
-#define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   10
 
 #define HIDE_IP
 #define HIDE_TITLE2

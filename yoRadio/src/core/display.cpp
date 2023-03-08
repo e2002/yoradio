@@ -85,7 +85,9 @@ void Display::_buildPager(){
   #else
     _plcurrent.init("*", playlistConf, config.theme.plcurrent, config.theme.plcurrentbg);
   #endif
-  _plcurrent.moveTo({TFT_FRAMEWDT, (uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight), (int16_t)playlistConf.width});
+  #if !defined(DSP_LCD)
+  	_plcurrent.moveTo({TFT_FRAMEWDT, (uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight), (int16_t)playlistConf.width});
+  #endif
   #ifndef HIDE_TITLE2
     _title2 = new ScrollWidget("*", title2Conf, config.theme.title2, config.theme.background);
   #endif
@@ -153,12 +155,13 @@ void Display::_buildPager(){
   #if !defined(DSP_LCD) && DSP_MODEL!=DSP_NOKIA5110
     pages[PG_DIALOG]->addPage(&_footer);
   #endif
-  
+  #if !defined(DSP_LCD)
   if(_plbackground) {
     pages[PG_PLAYLIST]->addWidget( _plbackground);
     _plbackground->setHeight(dsp.plItemHeight);
     _plbackground->moveTo({0,(uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight-playlistConf.widget.textsize*2), (int16_t)playlBGConf.width});
   }
+  #endif
   pages[PG_PLAYLIST]->addWidget(&_plcurrent);
 
   for(const auto& p: pages) _pager.addPage(p);
@@ -255,6 +258,9 @@ void Display::_swichMode(displayMode_e newmode) {
   _mode = newmode;
   dsp.setScrollId(NULL);
   if (newmode == PLAYER) {
+  	#ifdef DSP_LCD
+  		dsp.clearDsp();
+  	#endif
     numOfNextStation = 0;
     _returnTicker.detach();
     #ifdef META_MOVE

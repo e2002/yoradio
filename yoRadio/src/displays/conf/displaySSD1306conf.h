@@ -11,9 +11,6 @@
 #define DSP_WIDTH       128
 #define TFT_FRAMEWDT    1
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
-#define PLMITEMS        5
-#define PLMITEMLENGHT   40
-#define PLMITEMHEIGHT   18
 
 #define HIDE_HEAPBAR
 #define HIDE_VOL
@@ -25,7 +22,7 @@
 const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, 0, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 3, 15 };
 const ScrollConfig title1Conf     PROGMEM = {{ 0, 17, 1, WA_LEFT }, 140, true, DSP_WIDTH-6*4, 5000, 2, 35 };
 const ScrollConfig title2Conf     PROGMEM = {{ 0, 26, 1, WA_LEFT }, 140, true, DSP_WIDTH, 5000, 2, 35 };
-const ScrollConfig playlistConf   PROGMEM = {{ TFT_FRAMEWDT, 26, 2, WA_LEFT }, 140, true, MAX_WIDTH, 500, 2, 25 };
+const ScrollConfig playlistConf   PROGMEM = {{ TFT_FRAMEWDT, 26, 1, WA_LEFT }, 140, true, MAX_WIDTH, 500, 2, 25 };
 const ScrollConfig apTitleConf    PROGMEM = {{ TFT_FRAMEWDT, 0, 2, WA_CENTER }, 140, false, MAX_WIDTH, 0, 2, 35 };
 const ScrollConfig apSettConf     PROGMEM = {{ TFT_FRAMEWDT, 64-7, 1, WA_LEFT }, 140, false, MAX_WIDTH, 0, 2, 15 };
 const ScrollConfig weatherConf    PROGMEM = {{ 0, 64-11, 1, WA_LEFT }, 140, true, DSP_WIDTH-6*4, 0, 2, 25 }; // ПОГОДА!!

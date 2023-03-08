@@ -100,6 +100,8 @@ char* DspCore::utf8Rus(const char* str, bool uppercase) {
       }
       strn[sind - 1] = 0;
     } else {
+    	if(strn[index]==7) strn[index]=165;
+    	if(strn[index]==9) strn[index]=223;
       char Temp[2] = {(char) strn[index] , 0 } ;
       strcat(newStr, Temp);
     }
