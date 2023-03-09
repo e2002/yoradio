@@ -224,7 +224,7 @@ Work is in progress...
 ## Version history
 #### v0.9.022
 - optimization of the display of the list of stations
-- now the playlist size can be changed with one parameter in the yoRadio/src/displays/conf/display<<XXXX>>conf.h file >> const ScrollConfig playlistConf param #3
+- now the playlist size can be changed with one parameter in the yoRadio/src/displays/conf/display<span>_XXXX_</span>conf.h file --> _const ScrollConfig playlistConf_ param #3
 - fixed fonts for ILI9225 display
 - fixes in Nextion displays
 - bug fixes (including BUFFER FILLED IN 403 MS)
