@@ -65,7 +65,7 @@ https://aliexpress.com/item/32965676064.html
 - or **GC9A01A** 1.28' 240x240 https://aliexpress.com/item/1005004069703494.html?sku_id=12000029869654615
 - or **ILI9488** 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356570
 - or **ILI9486** (Testing mode) 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356568
-- or **SSD1322** 2.8' 256x64 SPI https://aliexpress.com/item/1005003480981568.html \
+- or **SSD1322** 2.8' 256x64 SPI https://aliexpress.com/item/1005003480981568.html
 
 (see [Wiki](https://github.com/e2002/yoradio/wiki/Available-display-models) for more details)
 
