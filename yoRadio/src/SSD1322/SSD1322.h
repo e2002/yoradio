@@ -40,7 +40,8 @@
 
 #define SSD1322_DISPLAYOFF 0xAE
 #define SSD1322_DISPLAYON 0xAF
-
+#define SSD1322_NORMALDISPLAY 0xA6
+#define SSD1322_INVERSEDISPLAY 0xA7
 /*! 
     @brief  Class that stores state and functions for interacting with
             SSD1322 OLED displays.
@@ -61,7 +62,8 @@ class Jamis_SSD1322 : public Adafruit_GFX {
     void         ssd1322_command(uint8_t c);
     boolean      getPixel(int16_t x, int16_t y);
     uint8_t      *getBuffer(void);
-    void         oled_command(uint8_t c) { ssd1322_command1(c); }
+    void         oled_command(uint8_t c) { ssd1322_command(c); }
+    void         invertDisplay(boolean flag);
   private:
     inline void  SPIwrite(uint8_t d) __attribute__((always_inline));
     void         drawFastHLineInternal(int16_t x, int16_t y, int16_t w,

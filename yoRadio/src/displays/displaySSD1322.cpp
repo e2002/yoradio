@@ -2,15 +2,12 @@
 #if DSP_MODEL==DSP_SSD1322
 
 #include "displaySSD1322.h"
-#include "../core/player.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
 
-#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
-#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
 
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        16000000UL      /*  set it to 0 for system default */
@@ -123,7 +120,6 @@ void DspCore::_clockDate(){  }
 
 void DspCore::_clockTime(){
   if(_oldtimeleft>0) dsp.fillRect(_oldtimeleft,  clockTop-clockTimeHeight+1, _oldtimewidth+CHARWIDTH*2+2, clockTimeHeight, config.theme.background);
-  //if(_oldtimeleft>0) dsp.fillRect(_oldtimeleft, clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
   _timeleft = (width()/*/2*/ - _timewidth/*/2*/)-clockRightSpace;
   setTextSize(1);
   setFont(&DS_DIGI28pt7b);
@@ -150,7 +146,6 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
 
 void DspCore::clearClock(){
   dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+2, clockTimeHeight, config.theme.background);
-  //dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+CHARWIDTH*3*2+24, clockTimeHeight+10+CHARHEIGHT, config.theme.background);
 }
 
 void DspCore::startWrite(void) {
@@ -164,7 +159,6 @@ void DspCore::endWrite(void) {
 }
 
 void DspCore::loop(bool force) {
-  //clearDisplay();
   display();
   delay(5);
 }

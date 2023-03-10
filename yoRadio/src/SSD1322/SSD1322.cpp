@@ -19,6 +19,7 @@
  *
  */
 #include "../core/options.h"
+#include "../core/player.h"
 #if DSP_MODEL==DSP_SSD1322
 
 
@@ -38,8 +39,10 @@
 #define SSD1322_MODE_DATA    digitalWrite(dcPin, HIGH); ///< Data mode
 
 #if defined(SPI_HAS_TRANSACTION)
-  #define SPI_TRANSACTION_START spi->beginTransaction(spiSettings) ///< Pre-SPI
-  #define SPI_TRANSACTION_END   spi->endTransaction()              ///< Post-SPI
+  #define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
+  #define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+  #define SPI_TRANSACTION_START TAKE_MUTEX(); spi->beginTransaction(spiSettings) ///< Pre-SPI
+  #define SPI_TRANSACTION_END   spi->endTransaction(); GIVE_MUTEX()             ///< Post-SPI
 #else // SPI transactions likewise not present in older Arduino SPI lib
   #define SPI_TRANSACTION_START ///< Dummy stand-in define
   #define SPI_TRANSACTION_END   ///< keeps compiler happy
@@ -549,6 +552,10 @@ void Jamis_SSD1322::display(void) {
   SSD1322_MODE_DATA
   while(count--) SPIwrite(*ptr++);
   TRANSACTION_END
+}
+
+void Jamis_SSD1322::invertDisplay(boolean flag) {
+    ssd1322_command(flag ? SSD1322_INVERSEDISPLAY : SSD1322_NORMALDISPLAY);
 }
 
 #endif //if DSP_MODEL==DSP_SSD1322
