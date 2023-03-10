@@ -381,7 +381,7 @@ void NumWidget::setText(const char* txt) {
   _getBounds();
   if (strcmp(_oldtext, _text) == 0) return;
   uint16_t realth = _textheight;
-#ifdef DSP_OLED
+#if defined(DSP_OLED) && DSP_MODEL!=DSP_SSD1322
   realth = _textheight*CHARHEIGHT;
 #endif
   if (_active) dsp.fillRect(_oldleft == 0 ? _realLeft() : min(_oldleft, _realLeft()),  _config.top-_textheight+1, max(_oldtextwidth, _textwidth), realth, _bgcolor);

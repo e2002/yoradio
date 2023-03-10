@@ -40,6 +40,8 @@
   #include "displayGC9A01A.h"
 #elif DSP_MODEL==DSP_ILI9488 || DSP_MODEL==DSP_ILI9486
   #include "displayILI9488.h"
+#elif DSP_MODEL==DSP_SSD1322
+  #include "displaySSD1322.h"
 #endif
 
 //extern DspCore dsp;
