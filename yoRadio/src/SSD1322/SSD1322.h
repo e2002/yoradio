@@ -33,9 +33,16 @@
 #endif
 
 #include <Adafruit_GFX.h>
-
 #define BLACK                          0 ///< Draw 'off' pixels
 #define WHITE                          0xf ///< Draw 'on' pixels
+#define GRAY_D                         0xd
+#define GRAY_B                         0xb
+#define GRAY_9                         0x9
+#define GRAY_7                         0x7
+#define GRAY_5                         0x5
+#define GRAY_3                         0x3
+#define GRAY_2                         0x2
+#define GRAY_1                         0x1
 #define INVERSE                        2 ///< Invert pixels
 
 #define SSD1322_DISPLAYOFF 0xAE

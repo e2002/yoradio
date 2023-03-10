@@ -315,6 +315,7 @@ void Jamis_SSD1322::drawPixel(int16_t x, int16_t y, uint16_t color) {
       ssd1322_swap(x, y);
       y = HEIGHT - y - 1;
       break;
+     default: break;
     }
     buffer[(x >> 1) + (y)*WIDTH/2] &= (x % 2) ? 0xF0 : 0x0F;
     buffer[(x >> 1) + (y)*WIDTH/2] |=  (color << (!(x & 1) * 4) );

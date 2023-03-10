@@ -12,7 +12,9 @@
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        16000000UL      /*  set it to 0 for system default */
 #endif
-
+#ifndef SSD1322_GRAYSCALE
+  #define SSD1322_GRAYSCALE   false
+#endif
 const unsigned char logo [] PROGMEM=
 {
     0x06, 0x03, 0x00, 0x0f, 0x07, 0x80, 0x1f, 0x8f, 0xc0, 0x1f, 0x8f, 0xc0,
@@ -35,7 +37,37 @@ const unsigned char logo [] PROGMEM=
 #include "tools/utf8RusGFX.h"
 
 void DspCore::initDisplay() {
-#include "tools/oledcolorfix.h"
+#if !SSD1322_GRAYSCALE
+  #include "tools/oledcolorfix.h"
+#else
+    config.theme.background = TFT_BG;
+  #if DSP_INVERT_TITLE
+    config.theme.meta       = TFT_BG;
+    config.theme.metabg     = GRAY_9;
+    config.theme.metafill   = GRAY_9;
+  #else
+    config.theme.meta       = GRAY_9;
+    config.theme.metabg     = TFT_BG;
+    config.theme.metafill   = TFT_BG;
+  #endif  
+    config.theme.clock      = TFT_FG;
+    config.theme.weather    = GRAY_2;
+    config.theme.title1     = GRAY_B;
+    config.theme.title2     = GRAY_3;
+    config.theme.rssi       = GRAY_5;
+    config.theme.ip         = GRAY_2;
+    config.theme.vol        = TFT_FG;
+    config.theme.bitrate    = TFT_FG;
+    config.theme.digit      = TFT_FG;
+    config.theme.buffer     = TFT_FG;
+    config.theme.volbarout  = GRAY_9;
+    config.theme.volbarin   = GRAY_9;
+    config.theme.plcurrent     = TFT_BG;
+    config.theme.plcurrentbg   = GRAY_7;
+    config.theme.plcurrentfill = GRAY_7;
+    for(byte i=0;i<5;i++) config.theme.playlist[i] = GRAY_1;
+#endif  //!SSD1322_GRAYSCALE
+
   begin();
   cp437(true);
   flip();
