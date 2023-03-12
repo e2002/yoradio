@@ -42,6 +42,8 @@
   #include "displayILI9488.h"
 #elif DSP_MODEL==DSP_SSD1322
   #include "displaySSD1322.h"
+#elif DSP_MODEL==DSP_ST7920
+  #include "displayST7920.h"
 #endif
 
 //extern DspCore dsp;
