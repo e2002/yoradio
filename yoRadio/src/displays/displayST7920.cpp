@@ -10,7 +10,7 @@
 #define LOGO_HEIGHT 32
 
 #ifndef DEF_SPI_FREQ
-  #define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
+  #define DEF_SPI_FREQ        8000000UL
 #endif
 
 const unsigned char logo [] PROGMEM=

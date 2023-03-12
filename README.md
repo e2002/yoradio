@@ -66,6 +66,7 @@ https://aliexpress.com/item/32965676064.html
 - or **ILI9488** 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356570
 - or **ILI9486** (Testing mode) 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356568
 - or **SSD1322** 2.8' 256x64 SPI https://aliexpress.com/item/1005003480981568.html
+- or **ST7920** 2.6' 128x64 SPI https://aliexpress.com/item/32699482638.html
 
 (see [Wiki](https://github.com/e2002/yoradio/wiki/Available-display-models) for more details)
 
@@ -225,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.058
+- added support for ST7920 128x64 2.6' OLED display https://aliexpress.com/item/32699482638.html
+
 #### v0.9.045
 - added support for SSD1322 256x64 2.8' OLED display https://aliexpress.com/item/1005003480981568.html
 
