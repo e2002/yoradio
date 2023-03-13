@@ -12,6 +12,7 @@
   config.theme.metafill   = TFT_BG;
 #endif  
   config.theme.clock      = TFT_FG;
+  config.theme.clockbg    = TFT_BG;
   config.theme.weather    = TFT_FG;
   config.theme.title1     = TFT_FG;
   config.theme.title2     = TFT_FG;

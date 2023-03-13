@@ -178,7 +178,7 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
 }
 
 void DspCore::clearClock(){
-  dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+2, clockTimeHeight, config.theme.background);
+  dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+2, clockTimeHeight+1, config.theme.background);
 }
 
 void DspCore::startWrite(void) {
