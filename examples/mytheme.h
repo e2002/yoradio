@@ -26,6 +26,7 @@
 //#define COLOR_VU_MAX            152, 138, 138     /*  max of VU meter                                           */
 //#define COLOR_VU_MIN            250, 130, 130     /*  min of VU meter                                           */
 //#define COLOR_CLOCK              60, 224,  33     /*  clock color                                               */
+//#define COLOR_CLOCK_BG           29,  29,   0     /*  clock color background                                    */
 //#define COLOR_SECONDS             0, 255, 255     /*  seconds color (DSP_ST7789, DSP_ILI9341, DSP_ILI9225)      */
 //#define COLOR_DAY_OF_W          255,   0,   0     /*  day of week color (DSP_ST7789, DSP_ILI9341, DSP_ILI9225)  */
 //#define COLOR_DATE                0,   0, 255     /*  date color (DSP_ST7789, DSP_ILI9341, DSP_ILI9225)         */

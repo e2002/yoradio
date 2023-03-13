@@ -4,9 +4,13 @@
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
-//#include <Adafruit_ST7796S_kbv.h>
 #include "../Adafruit_ST7796S/Adafruit_ST7796S_kbv.h"
-#include "fonts/DS_DIGI56pt7b.h"        // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+
+#if CLOCKFONT_MONO
+  #include "fonts/DS_DIGI56pt7b_mono.h"        // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+#else
+  #include "fonts/DS_DIGI56pt7b.h"
+#endif
 #include "tools/l10n.h"
 
 #define CHARWIDTH   6

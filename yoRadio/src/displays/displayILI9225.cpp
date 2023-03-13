@@ -188,10 +188,16 @@ void DspCore::_clockDate(){
 }
 
 void DspCore::_clockTime(){
-  if(_oldtimeleft>0) fillRect(_oldtimeleft, clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
+  if(_oldtimeleft>0 && !CLOCKFONT_MONO) fillRect(_oldtimeleft, clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
   _timeleft = width()-clockRightSpace-CHARWIDTH*2*2-24-_timewidth;
   setTextSize(1);
   setFont(&DS_DIGI28pt7b);
+  
+  if(CLOCKFONT_MONO) {
+    setCursor(_timeleft, clockTop);
+    setTextColor(config.theme.clockbg, config.theme.background);
+    print("88:88");
+  }
   setTextColor(config.theme.clock, config.theme.background);
   setCursor(_timeleft, clockTop);
   print(_timeBuf);

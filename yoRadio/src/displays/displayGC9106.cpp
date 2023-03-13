@@ -89,7 +89,7 @@ void DspCore::_getTimeBounds() {
 void DspCore::_clockSeconds(){
   setTextSize(1);
   setFont(&DS_DIGI28pt7b);
-  setTextColor((network.timeinfo.tm_sec % 2 == 0) ? config.theme.clock : config.theme.background, config.theme.background);
+  setTextColor((network.timeinfo.tm_sec % 2 == 0) ? config.theme.clock : (CLOCKFONT_MONO?config.theme.clockbg:config.theme.background), config.theme.background);
   setCursor(_timeleft+_dotsLeft, clockTop);
   print(":");                                     /* print dots */
   setFont();
@@ -98,10 +98,16 @@ void DspCore::_clockSeconds(){
 void DspCore::_clockDate(){ }
 
 void DspCore::_clockTime(){
-  if(_oldtimeleft>0) dsp.fillRect(_oldtimeleft,  clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
+  if(_oldtimeleft>0 && !CLOCKFONT_MONO) dsp.fillRect(_oldtimeleft,  clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
   _timeleft = (width()/2 - _timewidth/2)+clockRightSpace;
   setTextSize(1);
   setFont(&DS_DIGI28pt7b);
+  
+  if(CLOCKFONT_MONO) {
+    setCursor(_timeleft, clockTop);
+    setTextColor(config.theme.clockbg, config.theme.background);
+    print("88:88");
+  }
   setTextColor(config.theme.clock, config.theme.background);
   setCursor(_timeleft, clockTop);
   print(_timeBuf);

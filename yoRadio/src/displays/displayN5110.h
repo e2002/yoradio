@@ -7,7 +7,12 @@
 #include <Adafruit_PCD8544.h>
 #include "fonts/TinyFont5.h"
 #include "fonts/TinyFont6.h"
-#include "fonts/DS_DIGI15pt7b.h"
+
+#if CLOCKFONT_MONO
+  #include "fonts/DS_DIGI15pt7b_mono.h"
+#else
+  #include "fonts/DS_DIGI15pt7b.h"
+#endif
 #include "tools/l10n.h"
 
 #define CHARWIDTH   6

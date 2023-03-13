@@ -4,7 +4,12 @@
 //==================================================
 #include "Arduino.h"
 #include "../ILI9225Fix/TFT_22_ILI9225Fix.h"
-#include "fonts/DS_DIGI28pt7b.h"          // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+
+#if CLOCKFONT_MONO
+  #include "fonts/DS_DIGI28pt7b_mono.h"                          // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+#else
+  #include "fonts/DS_DIGI28pt7b.h"
+#endif
 #include "tools/l10n.h"
 
 #define CHARWIDTH   6

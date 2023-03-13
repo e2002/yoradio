@@ -5,7 +5,12 @@
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include "../Adafruit_GC9A01A/Adafruit_GC9A01A.h"
-#include "fonts/DS_DIGI42pt7b.h"        // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+
+#if CLOCKFONT_MONO
+  #include "fonts/DS_DIGI42pt7b_mono.h"        // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+#else
+  #include "fonts/DS_DIGI42pt7b.h"
+#endif
 #include "tools/l10n.h"
 
 #define CHARWIDTH   6
