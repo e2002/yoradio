@@ -226,6 +226,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.084
+- monospace fonts for clock on TFT displays. Fonts can be restored to their original form by adding the ```#define CLOCKFONT_MONO false``` parameter to the myoptions.h file
+- new parameter ```#define COLOR_CLOCK_BG R,G,B``` - color of inactive clock segments
+
 #### v0.9.058
 - added support for ST7920 128x64 2.6' OLED display https://aliexpress.com/item/32699482638.html
 

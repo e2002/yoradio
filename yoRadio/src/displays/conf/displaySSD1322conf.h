@@ -1,6 +1,6 @@
 /*************************************************************************************
-    SSD1305 128x64 displays configuration file.
-    Copy this file to yoRadio/src/displays/conf/displaySSD1305conf_custom.h
+    SSD1305 265x64 displays configuration file.
+    Copy this file to yoRadio/src/displays/conf/displaySSD1322conf_custom.h
     and modify it
     More info on https://github.com/e2002/yoradio/wiki/Widgets#widgets-description
 *************************************************************************************/
