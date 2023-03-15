@@ -9,6 +9,7 @@
 #include "netserver.h"
 
 Player player;
+QueueHandle_t playerQueue;
 
 #if VS1053_CS!=255 && !I2S_INTERNAL
   #if VS_HSPI
@@ -34,6 +35,8 @@ Player player;
 
 void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
+  playerQueue=NULL;
+  playerQueue = xQueueCreate( 5, sizeof( playerRequestParams_t ) );
 #ifdef MQTT_ROOT_TOPIC
   memset(burl, 0, MQTT_BURL_SIZE);
 #endif
@@ -50,30 +53,36 @@ void Player::init() {
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
-  mode = STOPPED;
+  _status = STOPPED;
   setOutputPins(false);
   requestToStart = true;
-  volTimer=false;
-  zeroRequest();
+  _volTimer=false;
   playmutex = xSemaphoreCreateMutex();
   randomSeed(analogRead(0));
+  #if PLAYER_FORCE_MONO
+    forceMono(true);
+  #endif
+  _loadVol(config.store.volume);
   Serial.println("done");
+}
+
+void Player::sendCommand(playerRequestParams_t request){
+  if(playerQueue==NULL) return;
+  xQueueSend(playerQueue, &request, portMAX_DELAY);
 }
 
 void Player::stopInfo() {
   config.setSmartStart(0);
-  telnet.info();
+  //telnet.info();
   netserver.requestOnChange(MODE, 0);
   requestToStart = true;
 }
 
-void Player::stop(const char *nttl){
+void Player::_stop(){
   if(config.store.play_mode==PM_SDCARD) config.sdResumePos = player.getFilePos();
-  mode = STOPPED;
+  _status = STOPPED;
   setOutputPins(false);
-  if(nttl) config.setTitle(nttl);
-  else config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
-  netserver.requestOnChange(TITLE, 0);
+  config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
   config.station.bitrate = 0;
   #ifdef USE_NEXTION
     nextion.bitrate(config.station.bitrate);
@@ -81,7 +90,9 @@ void Player::stop(const char *nttl){
   netserver.requestOnChange(BITRATE, 0);
   display.putRequest(DBITRATE);
   display.putRequest(PSTOP);
-  //setDefaults();
+  #ifdef CLEAR_BUFFERS
+    setDefaults();
+  #endif
   stopSong();
   stopInfo();
   if (player_on_stop_play) player_on_stop_play();
@@ -91,40 +102,45 @@ void Player::initHeaders(const char *file) {
   if(strlen(file)==0) return;
   connecttoFS(SD,file);
   eofHeader = false;
-  //for(int c=0;c<20;c++) player.loopreader();
   while(!eofHeader) Audio::loop();
   //netserver.requestOnChange(SDPOS, 0);
   setDefaults();
 }
 
+#ifndef PL_QUEUE_TICKS
+  #define PL_QUEUE_TICKS 2
+#endif
+
 void Player::loop() {
-  if (mode == PLAYING) {
-    xSemaphoreTake(playmutex, portMAX_DELAY);
-    Audio::loop();
-    xSemaphoreGive(playmutex);
-  } else {
-    if (isRunning())  stop();
-  }
-  if (request.station > 0) {
-    if (request.doSave) {
-      config.setLastStation(request.station);
+  if(playerQueue==NULL) return;
+  playerRequestParams_t requestP;
+  if(xQueueReceive(playerQueue, &requestP, PL_QUEUE_TICKS)){
+    switch (requestP.type){
+      case PR_STOP: _stop(); break;
+      case PR_PLAY: {
+        if (requestP.payload>0) {
+          config.setLastStation((uint16_t)requestP.payload);
+        }
+        _play((uint16_t)abs(requestP.payload)); 
+        if (player_on_station_change) player_on_station_change(); 
+        break;
+      }
+      case PR_VOL: {
+        config.setVolume(requestP.payload);
+        Audio::setVolume(volToI2S(requestP.payload));
+        break;
+      }
+      default: break;
     }
-    play(request.station);
-    if (player_on_station_change) player_on_station_change();
-    zeroRequest();
   }
-  if (request.volume >= 0) {
-    config.setVolume(request.volume);
-    telnet.printf("##CLI.VOL#: %d\n", config.store.volume);
-    Audio::setVolume(volToI2S(request.volume));
-    zeroRequest();
-    display.putRequest(DRAWVOL);
-    netserver.requestOnChange(VOLUME, 0);
-  }
-  if(volTimer){
-    if((millis()-volTicks)>3000){
+  xSemaphoreTake(playmutex, portMAX_DELAY);
+  Audio::loop();
+  xSemaphoreGive(playmutex);
+
+  if(_volTimer){
+    if((millis()-_volTicks)>3000){
       config.saveVolume();
-      volTimer=false;
+      _volTimer=false;
     }
   }
 #ifdef MQTT_ROOT_TOPIC
@@ -134,36 +150,26 @@ void Player::loop() {
 #endif
 }
 
-void Player::zeroRequest() {
-  request.station = 0;
-  request.volume = -1;
-  request.doSave = false;
-}
-
 void Player::setOutputPins(bool isPlaying) {
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
   if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, isPlaying?!MUTE_VAL:MUTE_VAL);
 }
 
-void Player::play(uint16_t stationId, uint32_t filePos) {
+void Player::_play(uint16_t stationId) {
   remoteStationName = false;
   config.setDspOn(1);
   display.putRequest(PSTOP);
-  setDefaults();
   setOutputPins(false);
   config.setTitle(config.store.play_mode==PM_WEB?const_PlConnect:"");
   config.station.bitrate=0;
-  netserver.requestOnChange(TITLE, 0);
   config.loadStation(stationId);
-  setVol(config.store.volume, true);
+  _loadVol(config.store.volume);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
-  telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
-  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?filePos:config.sdResumePos-player.sd_min)) {
-    mode = PLAYING;
+  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
+    _status = PLAYING;
     if(config.store.play_mode==PM_SDCARD) config.sdResumePos = 0;
     config.setTitle("");
-    netserver.requestOnChange(TITLE, 0);
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
@@ -179,16 +185,14 @@ void Player::play(uint16_t stationId, uint32_t filePos) {
 void Player::browseUrl(){
   remoteStationName = true;
   config.setDspOn(1);
-  resumeAfterUrl = mode==PLAYING;
+  resumeAfterUrl = _status==PLAYING;
   display.putRequest(PSTOP);
 //  setDefaults();
   setOutputPins(false);
   config.setTitle(const_PlConnect);
-  netserver.requestOnChange(TITLE, 0);
   if (connecttohost(burl)){
-    mode = PLAYING;
+    _status = PLAYING;
     config.setTitle("");
-    netserver.requestOnChange(TITLE, 0);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
     requestToStart = true;
@@ -205,8 +209,7 @@ void Player::prev() {
   if(config.store.play_mode==PM_WEB || !config.sdSnuffle){
     if (config.store.lastStation == 1) config.store.lastStation = config.store.countStation; else config.store.lastStation--;
   }
-  request.station = config.store.lastStation;
-  request.doSave = true;
+  sendCommand({PR_PLAY, config.store.lastStation});
 }
 
 void Player::next() {
@@ -215,48 +218,46 @@ void Player::next() {
   }else{
     config.store.lastStation = random(1, config.store.countStation);
   }
-  request.station = config.store.lastStation;
-  request.doSave = true;
+  sendCommand({PR_PLAY, config.store.lastStation});
 }
 
 void Player::toggle() {
-  if (mode == PLAYING) {
-    mode = STOPPED;
+  if (_status == PLAYING) {
+    sendCommand({PR_STOP, 0});
   } else {
-    request.station = config.store.lastStation;
+    sendCommand({PR_PLAY, config.store.lastStation});
   }
 }
 
 void Player::stepVol(bool up) {
   if (up) {
     if (config.store.volume <= 254 - config.store.volsteps) {
-      setVol(config.store.volume + config.store.volsteps, false);
+      setVol(config.store.volume + config.store.volsteps);
     }else{
-      setVol(254, false);
+      setVol(254);
     }
   } else {
     if (config.store.volume >= config.store.volsteps) {
-      setVol(config.store.volume - config.store.volsteps, false);
+      setVol(config.store.volume - config.store.volsteps);
     }else{
-      setVol(0, false);
+      setVol(0);
     }
   }
 }
 
-byte Player::volToI2S(byte volume) {
+uint8_t Player::volToI2S(uint8_t volume) {
   int vol = map(volume, 0, 254 - config.station.ovol * 3 , 0, 254);
   if (vol > 254) vol = 254;
   if (vol < 0) vol = 0;
   return vol;
 }
 
-void Player::setVol(byte volume, bool inside) {
-  if (inside) {
-    setVolume(volToI2S(volume));
-  } else {
-    volTicks = millis();
-    volTimer = true;
-    request.volume = volume;
-    request.doSave = true;
-  }
+void Player::_loadVol(uint8_t volume) {
+  setVolume(volToI2S(volume));
+}
+
+void Player::setVol(uint8_t volume) {
+  _volTicks = millis();
+  _volTimer = true;
+  player.sendCommand({PR_VOL, volume});
 }

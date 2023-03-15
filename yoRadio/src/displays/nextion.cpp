@@ -222,7 +222,7 @@ void Nextion::loop() {
           }
           if(strcmp(scanBuf, "go") == 0) {
             display.putRequest(NEWMODE, PLAYER);
-            player.request.station=display.currentPlItem;
+            player.sendCommand({PR_PLAY, display.currentPlItem});
           }
           if(strcmp(scanBuf, "toggle") == 0) {
             player.toggle();
@@ -230,8 +230,7 @@ void Nextion::loop() {
         }
         if (sscanf(rxbuf, "vol=%d", &scanDigit) == 1){
           _volInside = true;
-          player.request.volume=scanDigit;
-          player.request.doSave=true;
+          player.sendCommand({PR_VOL, scanDigit});
         }
         if (sscanf(rxbuf, "balance=%d", &scanDigit) == 1){
           config.setBalance((int8_t)scanDigit);

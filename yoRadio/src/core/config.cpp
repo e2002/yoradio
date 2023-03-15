@@ -3,6 +3,7 @@
 //#include <SPIFFS.h>
 #include "display.h"
 #include "player.h"
+#include "netserver.h"
 
 Config config;
 
@@ -236,6 +237,8 @@ void Config::saveVolume(){
 
 byte Config::setVolume(byte val) {
   store.volume = val;
+  display.putRequest(DRAWVOL);
+  netserver.requestOnChange(VOLUME, 0);
   return store.volume;
 }
 
@@ -280,6 +283,8 @@ void Config::setTitle(const char* title) {
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
   u8fix(config.station.title);
+  netserver.requestOnChange(TITLE, 0);
+  netserver.loop();
   display.putRequest(NEWTITLE);
 }
 

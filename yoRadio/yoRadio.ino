@@ -45,10 +45,6 @@ void setup() {
   }
   netserver.begin();
   telnet.begin();
-  #if PLAYER_FORCE_MONO
-    player.forceMono(true);
-  #endif
-  player.setVol(config.store.volume, true);
   initControls();
   display.putRequest(DSP_START);
   while(!display.ready()) delay(10);
@@ -57,7 +53,7 @@ void setup() {
   #endif
   if (config.store.play_mode==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
-  if (config.store.smartstart == 1) player.play(config.store.lastStation);
+  if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.store.lastStation});
 }
 
 void loop() {
@@ -75,7 +71,7 @@ void checkConnection(){
   static uint32_t checkInterval = 3000;
   if ((WiFi.status() != WL_CONNECTED) && (millis() - checkMillis >=checkInterval)) {
     bool playing = player.isRunning();
-    if (playing) player.mode = STOPPED;
+    if (playing) player.sendCommand({PR_STOP, 0});
     display.putRequest(NEWMODE, LOST);
     Serial.println("Lost connection, reconnecting...");
     while(true){
@@ -85,7 +81,7 @@ void checkConnection(){
       delay(3000);
     }
     display.putRequest(NEWMODE, PLAYER);
-    if (playing) player.request.station = config.store.lastStation;
+    if (playing) player.sendCommand({PR_PLAY, config.store.lastStation});
     checkMillis = millis();
     #ifdef MQTT_ROOT_TOPIC
       connectToMqtt();
@@ -103,12 +99,12 @@ void audio_info(const char *info) {
   #ifdef USE_NEXTION
     nextion.audioinfo(info);
   #endif
-  if (strstr(info, "skip metadata") != NULL){
-    config.setTitle(config.station.name);
-    netserver.requestOnChange(TITLE, 0);
+  if (strstr(info, "skip metadata") != NULL) config.setTitle(config.station.name);
+  if (strstr(info, "failed!") != NULL || strstr(info, "address is empty") != NULL || strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) {
+    //config.setTitle(info);
+    telnet.printf("##ERROR#:\t%s\n", info);
+    player.sendCommand({PR_STOP, 0});
   }
-  if (strstr(info, "failed!") != NULL || strstr(info, "address is empty") != NULL) player.stop(info);
-  if (strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) player.stop(info);
   char* ici; char b[20]={0};
   if ((ici = strstr(info, "BitRate: ")) != NULL) {
     strlcpy(b, ici + 9, 50);
@@ -141,7 +137,6 @@ void audio_showstation(const char *info) {
   if (strlen(info) > 0) {
     bool p = printable(info);
     config.setTitle(p?info:config.station.name);
-    netserver.requestOnChange(TITLE, 0);
     if(player.remoteStationName){
       config.setStation(p?info:config.station.name);
       display.putRequest(NEWSTATION);
@@ -153,7 +148,9 @@ void audio_showstation(const char *info) {
 void audio_showstreamtitle(const char *info) {
   DBGH();
   if (strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL){
-    player.stop(info);
+    //config.setTitle(info);
+    telnet.printf("##ERROR#:\t%s\n", info);
+    player.sendCommand({PR_STOP, 0});
     return;
   }
   if (strlen(info) > 0) {
@@ -163,7 +160,6 @@ void audio_showstreamtitle(const char *info) {
     #else
       config.setTitle(p?info:config.station.name);
     #endif
-    netserver.requestOnChange(TITLE, 0);
   }
 }
 
@@ -186,7 +182,6 @@ void audio_id3album(const char *info){
       strlcat(out, info, BUFLEN);
       config.setTitle(out);
     }
-    netserver.requestOnChange(TITLE, 0);
   }
 }
 
@@ -196,7 +191,6 @@ void audio_id3title(const char *info){
 
 void audio_beginSDread(){
   config.setTitle("");
-  netserver.requestOnChange(TITLE, 0);
 }
 
 void audio_id3data(const char *info){  //id3 metadata
@@ -207,19 +201,20 @@ void audio_id3data(const char *info){  //id3 metadata
 void audio_eof_mp3(const char *info){  //end of file
     config.sdResumePos = 0;
     if(config.sdSnuffle){
-      player.play(random(1, config.store.countStation));
+      player.sendCommand({PR_PLAY, random(1, config.store.countStation)});
     }else{
       player.next();
     }
 }
 
 void audio_eof_stream(const char *info){
-  player.stop();
+  player.sendCommand({PR_STOP, 0});
   if(!player.resumeAfterUrl) return;
   if (config.store.play_mode==PM_WEB){
-    player.play(config.store.lastStation);
+    player.sendCommand({PR_PLAY, config.store.lastStation});
   }else{
-    player.play(config.store.lastStation, config.sdResumePos==0?0:config.sdResumePos-player.sd_min);
+    player.setResumeFilePos( config.sdResumePos==0?0:config.sdResumePos-player.sd_min);
+    player.sendCommand({PR_PLAY, config.store.lastStation});
   }
 }
 

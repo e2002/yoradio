@@ -12,23 +12,27 @@
   #define MQTT_BURL_SIZE  512
 #endif
 
-enum audioMode_e { PLAYING, STOPPED };
-
-struct audiorequest_t
+enum playerRequestType_e : uint8_t { PR_PLAY = 1, PR_STOP = 2, PR_PREV = 3, PR_NEXT = 4, PR_VOL = 5 };
+struct playerRequestParams_t
 {
-  uint16_t station;
-  int volume;
-  bool doSave;
+  playerRequestType_e type;
+  int payload;
 };
+
+enum plStatus_e : uint8_t{ PLAYING = 1, STOPPED = 2 };
+
 class Player: public Audio {
   private:
-    uint32_t  volTicks;   /* delayed volume save  */
-    bool      volTimer;   /* delayed volume save  */
+    uint32_t    _volTicks;   /* delayed volume save  */
+    bool        _volTimer;   /* delayed volume save  */
+    uint32_t    _resumeFilePos;
+    plStatus_e _status;
+  private:
+    void _stop();
+    void _play(uint16_t stationId);
+    void _loadVol(uint8_t volume);
   public:
-    audioMode_e mode; 
-    audiorequest_t request;
     bool requestToStart;
-    void zeroRequest();
     SemaphoreHandle_t playmutex=NULL;
     bool lockOutput = true;
     bool resumeAfterUrl = false;
@@ -41,20 +45,21 @@ class Player: public Audio {
     void init();
     void loop();
     void initHeaders(const char *file);
-    void play(uint16_t stationId, uint32_t filePos=0);
+    void sendCommand(playerRequestParams_t request);
     #ifdef MQTT_ROOT_TOPIC
     void browseUrl();
     #endif
     bool remoteStationName = false;
-    void stop(const char *nttl = NULL);
+    plStatus_e status() { return _status; }
     void prev();
     void next();
     void toggle();
     void stepVol(bool up);
-    void setVol(byte volume, bool inside);
-    byte volToI2S(byte volume);
+    void setVol(uint8_t volume);
+    uint8_t volToI2S(uint8_t volume);
     void stopInfo();
     void setOutputPins(bool isPlaying);
+    void setResumeFilePos(uint32_t pos) { _resumeFilePos = pos; }
 };
 
 extern Player player;

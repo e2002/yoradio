@@ -165,7 +165,7 @@ void encodersLoop(yoEncoder *enc, bool first){
       int nv = config.store.volume+encoderDelta;
       if(nv<0) nv=0;
       if(nv>254) nv=254;
-      player.setVol((byte)nv, false);  
+      player.setVol((uint8_t)nv);  
     }else{
       if(encoderDelta > 0) player.next(); else player.prev();
     }
@@ -199,7 +199,7 @@ void encoder2Loop() {
 #if IR_PIN!=255
 void irBlink() {
   if(LED_BUILTIN==255) return;
-  if (player.mode == STOPPED) {
+  if (player.status() == STOPPED) {
     for (byte i = 0; i < 7; i++) {
       digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       delay(100);
@@ -249,7 +249,7 @@ void irLoop() {
                 irBlink();
                 if (display.mode() == NUMBERS) {
                   display.putRequest(NEWMODE, PLAYER);
-                  player.play(display.numOfNextStation);
+                  player.sendCommand({PR_PLAY, display.numOfNextStation});
                   display.numOfNextStation = 0;
                   break;
                 }
@@ -439,7 +439,7 @@ void controlsEvent(bool toRight, int8_t volDelta) {
       int nv = config.store.volume+volDelta;
       if(nv<0) nv=0;
       if(nv>254) nv=254;
-      player.setVol((byte)nv, false);
+      player.setVol((uint8_t)nv);
     }else{
       player.stepVol(toRight);
     }
@@ -472,7 +472,7 @@ void onBtnClick(int id) {
         }
         if (display.mode() == STATIONS) {
           display.putRequest(NEWMODE, PLAYER);
-          player.play(display.currentPlItem);
+          player.sendCommand({PR_PLAY, display.currentPlItem});
         }
         break;
       }

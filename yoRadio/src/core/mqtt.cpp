@@ -39,7 +39,7 @@ void mqttPublishStatus() {
     memset(topic, 0, 140);
     memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
-    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.mode==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title, config.store.dspon);
+    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.status()==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title, config.store.dspon);
     mqttClient.publish(topic, 0, true, status);
   }
 }
@@ -87,12 +87,12 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     return;
   }
   if (strcmp(buf, "stop") == 0) {
-    player.mode = STOPPED;
-    telnet.info();
+    player.sendCommand({PR_STOP, 0});
+    //telnet.info();
     return;
   }
   if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) {
-    player.request.station = config.store.lastStation;
+    player.sendCommand({PR_PLAY, config.store.lastStation});
     return;
   }
   if (strcmp(buf, "boot") == 0 || strcmp(buf, "reboot") == 0) {
@@ -110,8 +110,8 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   if (strcmp(buf, "turnoff") == 0) {
     uint8_t sst = config.store.smartstart;
     config.setDspOn(0);
-    player.mode = STOPPED;
-    telnet.info();
+    player.sendCommand({PR_STOP, 0});
+    //telnet.info();
     delay(100);
     config.store.smartstart = sst;
     config.save();
@@ -119,22 +119,21 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   }
   if (strcmp(buf, "turnon") == 0) {
     config.setDspOn(1);
-    if (config.store.smartstart == 1) player.request.station = config.store.lastStation;
+    if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.store.lastStation});
     return;
   }
   int volume;
   if ( sscanf(buf, "vol %d", &volume) == 1) {
     if (volume < 0) volume = 0;
     if (volume > 254) volume = 254;
-    player.setVol(volume, false);
+    player.setVol(volume);
     return;
   }
   int sb;
   if (sscanf(buf, "play %d", &sb) == 1 ) {
     if (sb < 1) sb = 1;
     if (sb >= config.store.countStation) sb = config.store.countStation;
-    player.request.station = (uint16_t)sb;
-    player.request.doSave = true;
+    player.sendCommand({PR_PLAY, (uint16_t)sb});
     return;
   }
   if (strstr(buf, "http")==buf){
