@@ -124,7 +124,8 @@ void Telnet::printf(const char *format, ...) {
       clients[id].print(buf);
     }
   }
-  if(strstr(buf,"> ")==NULL) Serial.print(buf);
+  if (strcmp(buf, "> ") == 0) return;
+  if(strstr(buf,"\n> ")==NULL) Serial.print(buf);
 }
 
 void Telnet::printf(byte id, const char *format, ...) {

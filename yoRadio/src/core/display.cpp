@@ -345,7 +345,7 @@ void Display::_layoutChange(bool played){
   }
 }
 #ifndef DSP_QUEUE_TICKS
-  #define DSP_QUEUE_TICKS 8
+  #define DSP_QUEUE_TICKS 0
 #endif
 void Display::loop() {
   if(_bootStep==0) {
@@ -483,9 +483,12 @@ void Display::_title() {
 }
 
 void Display::_time(bool redraw) {
+  
 #if LIGHT_SENSOR!=255
-  config.store.brightness = AUTOBACKLIGHT(analogRead(LIGHT_SENSOR));
-  config.setBrightness();
+  if(config.store.dspon) {
+    config.store.brightness = AUTOBACKLIGHT(analogRead(LIGHT_SENSOR));
+    config.setBrightness();
+  }
 #endif
   _clock.draw();
   /*#ifdef USE_NEXTION

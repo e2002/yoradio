@@ -28,7 +28,7 @@ class Player: public Audio {
     uint32_t    _resumeFilePos;
     plStatus_e _status;
   private:
-    void _stop();
+    void _stop(bool alreadyStopped = false);
     void _play(uint16_t stationId);
     void _loadVol(uint8_t volume);
   public:

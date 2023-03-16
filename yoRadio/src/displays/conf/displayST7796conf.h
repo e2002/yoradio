@@ -49,7 +49,7 @@ const WidgetConfig bootWdtConf    PROGMEM = { 0, 216, 1, WA_CENTER };
 const ProgressConfig bootPrgConf  PROGMEM = { 90, 14, 4 };
 
 /* BANDS  */                             /* { onebandwidth, onebandheight, bandsHspace, bandsVspace, numofbands, fadespeed } */
-const VUBandsConfig bandsConf     PROGMEM = { 32, 130, 4, 2, 10, 6 };
+const VUBandsConfig bandsConf     PROGMEM = { 32, 130, 4, 2, 10, 3 };
 
 /* STRINGS  */
 const char         numtxtFmt[]    PROGMEM = "%d";

@@ -20,7 +20,7 @@ typedef GFXcanvas16 Canvas;
 #include "widgets/widgets.h"
 #include "widgets/pages.h"
 
-#if __has_include("conf/displayST7796conf_custom.h")
+#if __has_include("conf/displayILI9488conf_custom.h")
   #include "conf/displayILI9488conf_custom.h"
 #else
   #include "conf/displayILI9488conf.h"

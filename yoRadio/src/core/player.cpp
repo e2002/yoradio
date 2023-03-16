@@ -63,6 +63,7 @@ void Player::init() {
     forceMono(true);
   #endif
   _loadVol(config.store.volume);
+  setConnectionTimeout(1700, 3700);
   Serial.println("done");
 }
 
@@ -78,7 +79,7 @@ void Player::stopInfo() {
   requestToStart = true;
 }
 
-void Player::_stop(){
+void Player::_stop(bool alreadyStopped){
   if(config.store.play_mode==PM_SDCARD) config.sdResumePos = player.getFilePos();
   _status = STOPPED;
   setOutputPins(false);
@@ -90,10 +91,8 @@ void Player::_stop(){
   netserver.requestOnChange(BITRATE, 0);
   display.putRequest(DBITRATE);
   display.putRequest(PSTOP);
-  #ifdef CLEAR_BUFFERS
-    setDefaults();
-  #endif
-  stopSong();
+  setDefaults();
+  if(!alreadyStopped) stopSong();
   stopInfo();
   if (player_on_stop_play) player_on_stop_play();
 }
@@ -108,7 +107,7 @@ void Player::initHeaders(const char *file) {
 }
 
 #ifndef PL_QUEUE_TICKS
-  #define PL_QUEUE_TICKS 2
+  #define PL_QUEUE_TICKS 0
 #endif
 
 void Player::loop() {
@@ -136,7 +135,7 @@ void Player::loop() {
   xSemaphoreTake(playmutex, portMAX_DELAY);
   Audio::loop();
   xSemaphoreGive(playmutex);
-
+  if(!isRunning() && _status==PLAYING) _stop(true);
   if(_volTimer){
     if((millis()-_volTicks)>3000){
       config.saveVolume();
@@ -166,10 +165,12 @@ void Player::_play(uint16_t stationId) {
   _loadVol(config.store.volume);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
+  netserver.loop();
+  netserver.loop();
   if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
     _status = PLAYING;
     if(config.store.play_mode==PM_SDCARD) config.sdResumePos = 0;
-    config.setTitle("");
+    //config.setTitle("");
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
@@ -178,6 +179,7 @@ void Player::_play(uint16_t stationId) {
     if (player_on_start_play) player_on_start_play();
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", config.station.url);
+    _stop(true);
   };
 }
 
@@ -200,6 +202,7 @@ void Player::browseUrl(){
     if (player_on_start_play) player_on_start_play();
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", burl);
+    _stop(true);
   }
   memset(burl, 0, MQTT_BURL_SIZE);
 }

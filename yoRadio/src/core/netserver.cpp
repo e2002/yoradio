@@ -187,7 +187,7 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
 #endif
 
 #ifndef NS_QUEUE_TICKS
-  #define NS_QUEUE_TICKS 2
+  #define NS_QUEUE_TICKS 0
 #endif
 
 char wsbuf[BUFLEN * 2];

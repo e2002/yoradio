@@ -100,10 +100,8 @@ void audio_info(const char *info) {
     nextion.audioinfo(info);
   #endif
   if (strstr(info, "skip metadata") != NULL) config.setTitle(config.station.name);
-  if (strstr(info, "failed!") != NULL || strstr(info, "address is empty") != NULL || strstr(info, "not supported") != NULL || strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) {
-    //config.setTitle(info);
+  if (strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) {
     telnet.printf("##ERROR#:\t%s\n", info);
-    player.sendCommand({PR_STOP, 0});
   }
   char* ici; char b[20]={0};
   if ((ici = strstr(info, "BitRate: ")) != NULL) {
@@ -134,40 +132,37 @@ bool printable(const char *info) {
 }
 
 void audio_showstation(const char *info) {
-  if (strlen(info) > 0) {
-    bool p = printable(info);
-    config.setTitle(p?info:config.station.name);
-    if(player.remoteStationName){
-      config.setStation(p?info:config.station.name);
-      display.putRequest(NEWSTATION);
-      netserver.requestOnChange(STATION, 0);
-    }
+  bool p = printable(info) && (strlen(info) > 0);
+  config.setTitle(p?info:config.station.name);
+  if(player.remoteStationName){
+    config.setStation(p?info:config.station.name);
+    display.putRequest(NEWSTATION);
+    netserver.requestOnChange(STATION, 0);
   }
 }
 
 void audio_showstreamtitle(const char *info) {
   DBGH();
   if (strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL){
-    //config.setTitle(info);
     telnet.printf("##ERROR#:\t%s\n", info);
-    player.sendCommand({PR_STOP, 0});
-    return;
   }
-  if (strlen(info) > 0) {
-    bool p = printable(info);
-    #ifdef DEBUG_TITLES
-      config.setTitle(DEBUG_TITLES);
-    #else
-      config.setTitle(p?info:config.station.name);
-    #endif
-  }
+  bool p = printable(info) && (strlen(info) > 0);
+  #ifdef DEBUG_TITLES
+    config.setTitle(DEBUG_TITLES);
+  #else
+    config.setTitle(p?info:config.station.name);
+  #endif
+}
+
+void audio_error(const char *info) {
+  config.setTitle(info);
+  telnet.printf("##ERROR#:\t%s\n", info);
 }
 
 void audio_id3artist(const char *info){
   if(printable(info)) config.setStation(info);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
-  
 }
 
 void audio_id3album(const char *info){

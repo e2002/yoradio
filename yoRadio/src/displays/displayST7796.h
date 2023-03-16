@@ -1,5 +1,5 @@
-#ifndef displayST7789_h
-#define displayST7789_h
+#ifndef displayST7796_h
+#define displayST7796_h
 #include "../core/options.h"
 
 #include "Arduino.h"

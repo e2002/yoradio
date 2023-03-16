@@ -1520,6 +1520,7 @@ bool Audio::parseContentType(char* ct) {
 
     else if(ct_val == CT_NONE){
         AUDIO_INFO("ContentType %s not supported", ct);
+        AUDIO_ERROR("ContentType %s not supported", ct);
         return false; // nothing valid had been seen
     }
     else {;}
@@ -1701,6 +1702,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
      if(host == NULL) {
         AUDIO_INFO("Hostaddress is empty");
+        if(audio_error) audio_error("Hostaddress is empty");
         return false;
     }
 
@@ -1708,6 +1710,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     if(lenHost >= 512 - 10) {
         AUDIO_INFO("Hostaddress is too long");
+        if(audio_error) audio_error("Hostaddress is too long");
         return false;
     }
 
@@ -1790,7 +1793,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     strcat(rqh, "User-Agent: Mozilla/5.0\r\n");
     strcat(rqh, "Connection: keep-alive\r\n\r\n");
 
-    if(ESP_ARDUINO_VERSION_MAJOR == 2 && ESP_ARDUINO_VERSION_MINOR == 0 && ESP_ARDUINO_VERSION_PATCH >= 3){
+    if(ESP_ARDUINO_VERSION_MAJOR == 2 && ESP_ARDUINO_VERSION_MINOR == 0 && ESP_ARDUINO_VERSION_PATCH >= 3 && MAX_AUDIO_SOCKET_TIMEOUT){
         m_timeout_ms_ssl = UINT16_MAX;  // bug in v2.0.3 if hostwoext is a IPaddr not a name
         m_timeout_ms = UINT16_MAX;  // [WiFiClient.cpp:253] connect(): select returned due to timeout 250 ms for fd 48
     }
@@ -1832,6 +1835,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     }
     else{
         AUDIO_INFO("Request %s failed!", l_host);
+        AUDIO_ERROR("Request %s failed!", l_host);
         if(audio_showstation) audio_showstation("");
         if(audio_showstreamtitle) audio_showstreamtitle("");
         if(audio_icydescription) audio_icydescription("");
@@ -1994,6 +1998,7 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
 
     sprintf(chbuf, "The %s format is not supported", afn + dotPos);
     if(audio_info) audio_info(chbuf);
+    if(audio_error) audio_error(chbuf);
     cardLock(true); audiofile.close(); cardLock(false);
     if(afn) free(afn);
     return false;

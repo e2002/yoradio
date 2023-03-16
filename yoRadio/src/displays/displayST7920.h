@@ -1,5 +1,5 @@
-#ifndef displaySSD1305_h
-#define displaySSD1305_h
+#ifndef displayST7920_h
+#define displayST7920_h
 #include "../core/options.h"
 
 #include "Arduino.h"

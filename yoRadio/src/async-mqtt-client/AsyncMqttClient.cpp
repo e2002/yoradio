@@ -736,7 +736,7 @@ uint16_t AsyncMqttClient::unsubscribe(const char* topic) {
 }
 
 uint16_t AsyncMqttClient::publish(const char* topic, uint8_t qos, bool retain, const char* payload, size_t length, bool dup, uint16_t message_id) {
-  if (_state != CONNECTED || GET_FREE_MEMORY() < MQTT_MIN_FREE_MEMORY) return 0;
+  if (_state != CONNECTED/* || GET_FREE_MEMORY() < MQTT_MIN_FREE_MEMORY*/) return 0;
   log_i("PUBLISH");
 
   AsyncMqttClientInternals::OutPacket* msg = new AsyncMqttClientInternals::PublishOutPacket(topic, qos, retain, payload, length);

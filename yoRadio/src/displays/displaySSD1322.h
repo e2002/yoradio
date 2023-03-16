@@ -1,5 +1,5 @@
-#ifndef displaySSD1305_h
-#define displaySSD1305_h
+#ifndef displaySSD1322_h
+#define displaySSD1322_h
 #include "../core/options.h"
 
 #include "Arduino.h"
@@ -22,7 +22,7 @@ typedef GFXcanvas1 Canvas;
 #include "widgets/widgets.h"
 #include "widgets/pages.h"
 
-#if __has_include("conf/displaySSD1305conf_custom.h")
+#if __has_include("conf/displaySSD1322conf_custom.h")
   #include "conf/displaySSD1322conf_custom.h"
 #else
   #include "conf/displaySSD1322conf.h"

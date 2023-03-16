@@ -20,7 +20,10 @@
 fs::SDFATFS SD_SDFAT;
 #endif
 #ifndef DMA_BUFCOUNT
-#define DMA_BUFCOUNT  8
+  #define DMA_BUFCOUNT  8
+#endif
+#ifndef DMA_BUFLEN
+  #define DMA_BUFLEN  512   //  (512)
 #endif
 //---------------------------------------------------------------------------------------------------------------------
 AudioBuffer::AudioBuffer(size_t maxBlockSize) {
@@ -182,7 +185,7 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_DAC
 #else
     m_i2s_config.dma_buf_count        = psramInit()?16:DMA_BUFCOUNT;
 #endif
-    m_i2s_config.dma_buf_len          = 512;
+    m_i2s_config.dma_buf_len          = psramInit()?512:DMA_BUFLEN;
     m_i2s_config.use_apll             = APLL_DISABLE; // must be disabled in V2.0.1-RC1
     m_i2s_config.tx_desc_auto_clear   = true;   // new in V1.0.1
     m_i2s_config.fixed_mclk           = I2S_PIN_NO_CHANGE;
@@ -374,6 +377,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     if(host == NULL) {
         AUDIO_INFO("Hostaddress is empty");
+        if(audio_error) audio_error("Hostaddress is empty");
         return false;
     }
 
@@ -381,6 +385,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     if(lenHost >= 512 - 10) {
         AUDIO_INFO("Hostaddress is too long");
+        if(audio_error) audio_error("Hostaddress is too long");
         return false;
     }
 
@@ -463,7 +468,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     strcat(rqh, "User-Agent: Mozilla/5.0\r\n");
     strcat(rqh, "Connection: keep-alive\r\n\r\n");
 
-    if(ESP_ARDUINO_VERSION_MAJOR == 2 && ESP_ARDUINO_VERSION_MINOR == 0 && ESP_ARDUINO_VERSION_PATCH >= 3){
+    if(ESP_ARDUINO_VERSION_MAJOR == 2 && ESP_ARDUINO_VERSION_MINOR == 0 && ESP_ARDUINO_VERSION_PATCH >= 3 && MAX_AUDIO_SOCKET_TIMEOUT){
         m_timeout_ms_ssl = UINT16_MAX;  // bug in v2.0.3 if hostwoext is a IPaddr not a name
         m_timeout_ms = UINT16_MAX;  // [WiFiClient.cpp:253] connect(): select returned due to timeout 250 ms for fd 48
     }
@@ -503,6 +508,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     }
     else{
         AUDIO_INFO("Request %s failed!", l_host);
+        AUDIO_ERROR("Request %s failed!", l_host);
         if(audio_showstation) audio_showstation("");
         if(audio_showstreamtitle) audio_showstreamtitle("");
         if(audio_icydescription) audio_icydescription("");
@@ -722,8 +728,10 @@ cardLock(false);
     if(endsWith(afn, ".wav"))  m_codec = CODEC_WAV;
     if(endsWith(afn, ".flac")) m_codec = CODEC_FLAC;
 
-    if(m_codec == CODEC_NONE) AUDIO_INFO("The %s format is not supported", afn + dotPos);
-
+    if(m_codec == CODEC_NONE) {
+      AUDIO_INFO("The %s format is not supported", afn + dotPos);
+      AUDIO_ERROR("The %s format is not supported", afn + dotPos);
+    }
     if(afn) {free(afn); afn = NULL;}
 
     bool ret = initializeDecoder();
@@ -3807,6 +3815,7 @@ bool Audio:: initializeDecoder(){
         case CODEC_OGG:
             m_codec = CODEC_OGG;
             AUDIO_INFO("ogg not supported");
+            AUDIO_ERROR("ogg not supported");
             goto exit;
             break;
         default:
@@ -3919,6 +3928,7 @@ bool Audio::parseContentType(char* ct) {
 
     else if(ct_val == CT_NONE){
         AUDIO_INFO("ContentType %s not supported", ct);
+        AUDIO_ERROR("ContentType %s not supported", ct);
         return false; // nothing valid had been seen
     }
     else {;}
