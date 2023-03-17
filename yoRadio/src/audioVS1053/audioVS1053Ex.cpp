@@ -1418,6 +1418,7 @@ bool Audio::parseHttpResponseHeader() { // this is the response to a GET / reque
         }
         else{
             AUDIO_INFO("unknown content found at: %s", m_lastHost);
+            AUDIO_ERROR("unknown content found at: %s", m_lastHost);
             goto exit;
         }
         return true;

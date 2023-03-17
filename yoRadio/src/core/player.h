@@ -12,6 +12,9 @@
   #define MQTT_BURL_SIZE  512
 #endif
 
+#define PLERR_LN        64
+#define SET_PLAY_ERROR(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); setError(buff);}
+
 enum playerRequestType_e : uint8_t { PR_PLAY = 1, PR_STOP = 2, PR_PREV = 3, PR_NEXT = 4, PR_VOL = 5 };
 struct playerRequestParams_t
 {
@@ -26,7 +29,8 @@ class Player: public Audio {
     uint32_t    _volTicks;   /* delayed volume save  */
     bool        _volTimer;   /* delayed volume save  */
     uint32_t    _resumeFilePos;
-    plStatus_e _status;
+    plStatus_e  _status;
+    char        _plError[PLERR_LN];
   private:
     void _stop(bool alreadyStopped = false);
     void _play(uint16_t stationId);
@@ -45,6 +49,8 @@ class Player: public Audio {
     void init();
     void loop();
     void initHeaders(const char *file);
+    void setError(const char *e);
+    bool hasError() { return strlen(_plError)>0; }
     void sendCommand(playerRequestParams_t request);
     #ifdef MQTT_ROOT_TOPIC
     void browseUrl();

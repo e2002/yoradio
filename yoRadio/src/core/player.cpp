@@ -37,6 +37,8 @@ void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
   playerQueue=NULL;
   playerQueue = xQueueCreate( 5, sizeof( playerRequestParams_t ) );
+  
+  memset(_plError, 0, PLERR_LN);
 #ifdef MQTT_ROOT_TOPIC
   memset(burl, 0, MQTT_BURL_SIZE);
 #endif
@@ -79,11 +81,19 @@ void Player::stopInfo() {
   requestToStart = true;
 }
 
+void Player::setError(const char *e){
+  strlcpy(_plError, e, PLERR_LN);
+  if(hasError()) {
+    config.setTitle(_plError);
+    telnet.printf("##ERROR#:\t%s\n", e);
+  }
+}
+
 void Player::_stop(bool alreadyStopped){
   if(config.store.play_mode==PM_SDCARD) config.sdResumePos = player.getFilePos();
   _status = STOPPED;
   setOutputPins(false);
-  config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
+  if(!hasError()) config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
   config.station.bitrate = 0;
   #ifdef USE_NEXTION
     nextion.bitrate(config.station.bitrate);
@@ -155,6 +165,7 @@ void Player::setOutputPins(bool isPlaying) {
 }
 
 void Player::_play(uint16_t stationId) {
+  setError("");
   remoteStationName = false;
   config.setDspOn(1);
   display.putRequest(PSTOP);
@@ -179,12 +190,14 @@ void Player::_play(uint16_t stationId) {
     if (player_on_start_play) player_on_start_play();
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", config.station.url);
+    SET_PLAY_ERROR("Error connecting to %s", config.station.url);
     _stop(true);
   };
 }
 
 #ifdef MQTT_ROOT_TOPIC
 void Player::browseUrl(){
+  setError("");
   remoteStationName = true;
   config.setDspOn(1);
   resumeAfterUrl = _status==PLAYING;
@@ -202,6 +215,7 @@ void Player::browseUrl(){
     if (player_on_start_play) player_on_start_play();
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", burl);
+    SET_PLAY_ERROR("Error connecting to %s", burl);
     _stop(true);
   }
   memset(burl, 0, MQTT_BURL_SIZE);
