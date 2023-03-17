@@ -35,7 +35,7 @@ extern "C" {
   #define CONFIG_ASYNC_TCP_RUNNING_CORE 0 //any available core (-1)
 #endif
 
-#ifndef CONFIG_ASYNC_TCP_RUNNING_CORE
+#ifndef CONFIG_ASYNC_TCP_USE_WDT
   #define CONFIG_ASYNC_TCP_USE_WDT 0 //if enabled, adds between 33us and 200us per event (1)
 #endif
 
