@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.110
+- optimization and bug fixes (display, player, netserver, telnet. mqtt)
+
 #### v0.9.084
 - monospace fonts for clock on TFT displays. Fonts can be restored to their original form by adding the ```#define CLOCKFONT_MONO false``` parameter to the myoptions.h file
 - new parameter ```#define COLOR_CLOCK_BG R,G,B``` - color of inactive clock segments
