@@ -76,7 +76,7 @@ void Player::sendCommand(playerRequestParams_t request){
 
 void Player::stopInfo() {
   config.setSmartStart(0);
-  //telnet.info();
+  telnet.info();
   netserver.requestOnChange(MODE, 0);
   requestToStart = true;
 }
