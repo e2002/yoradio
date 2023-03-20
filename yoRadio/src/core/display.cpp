@@ -546,6 +546,7 @@ void Display::_start(){
   //nextion.putcmd("page player");
   nextion.start();
   #endif
+  config.setTitle(const_PlReady);
 }
 void Display::putRequest(displayRequestType_e type, int payload){
   if(type==DSP_START) _start();
