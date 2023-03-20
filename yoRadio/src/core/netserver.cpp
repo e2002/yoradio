@@ -242,14 +242,14 @@ void NetServer::processQueue(){
       case STATION:     requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
       case STATIONNAME: sprintf (wsbuf, "{\"nameset\": \"%s\"}", config.station.name); break;
       case ITEM:        sprintf (wsbuf, "{\"current\": %d}", config.store.lastStation); break;
-      case TITLE:       sprintf (wsbuf, "{\"meta\": \"%s\"}", config.station.title); if (player.requestToStart) { telnet.info(); player.requestToStart = false; } else { telnet.printf("##CLI.META#: %s\n> ", config.station.title); } break;
+      case TITLE:       sprintf (wsbuf, "{\"meta\": \"%s\"}", config.station.title); telnet.printf("##CLI.META#: %s\n> ", config.station.title); break;
       case VOLUME:      sprintf (wsbuf, "{\"vol\": %d}", config.store.volume); telnet.printf("##CLI.VOL#: %d\n", config.store.volume); break;
       case NRSSI:       sprintf (wsbuf, "{\"rssi\": %d}", rssi); /*rssi = 255;*/ break;
       case SDPOS:       sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}", player.getFilePos(), player.getFileSize(), player.getAudioCurrentTime(), player.getAudioFileDuration()); break;
       case SDLEN:       sprintf (wsbuf, "{\"sdmin\": %d,\"sdmax\": %d}", player.sd_min, player.sd_max); break;
       case SDSNUFFLE:   sprintf (wsbuf, "{\"snuffle\": %d}", config.sdSnuffle); break;
       case BITRATE:     sprintf (wsbuf, "{\"bitrate\": %d}", config.station.bitrate); break;
-      case MODE:        sprintf (wsbuf, "{\"mode\": \"%s\"}", player.status() == PLAYING ? "playing" : "stopped"); break;
+      case MODE:        sprintf (wsbuf, "{\"mode\": \"%s\"}", player.status() == PLAYING ? "playing" : "stopped"); telnet.info(); break;
       case EQUALIZER:   sprintf (wsbuf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
       case BALANCE:     sprintf (wsbuf, "{\"balance\": %d}", config.store.balance); break;
       default:          break;

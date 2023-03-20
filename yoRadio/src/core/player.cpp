@@ -57,7 +57,6 @@ void Player::init() {
   setVolume(0);
   _status = STOPPED;
   setOutputPins(false);
-  requestToStart = true;
   _volTimer=false;
   playmutex = xSemaphoreCreateMutex();
   randomSeed(analogRead(0));
@@ -76,9 +75,8 @@ void Player::sendCommand(playerRequestParams_t request){
 
 void Player::stopInfo() {
   config.setSmartStart(0);
-  telnet.info();
+  //telnet.info();
   netserver.requestOnChange(MODE, 0);
-  requestToStart = true;
 }
 
 void Player::setError(const char *e){
@@ -185,7 +183,6 @@ void Player::_play(uint16_t stationId) {
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
-    requestToStart = true;
     display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
   }else{
@@ -210,7 +207,6 @@ void Player::browseUrl(){
     config.setTitle("");
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
-    requestToStart = true;
     display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
   }else{

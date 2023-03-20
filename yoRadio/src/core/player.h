@@ -36,7 +36,6 @@ class Player: public Audio {
     void _play(uint16_t stationId);
     void _loadVol(uint8_t volume);
   public:
-    bool requestToStart;
     SemaphoreHandle_t playmutex=NULL;
     bool lockOutput = true;
     bool resumeAfterUrl = false;
