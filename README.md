@@ -226,6 +226,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.122
+- fixed a bug in the operation of SSD1305 displays
+- fixed bug in operation of LCD1602/2004 displays
+- fixed errors in Serial Monitor output
+
 #### v0.9.110
 - optimization and bug fixes (display, player, netserver, telnet. mqtt)
 

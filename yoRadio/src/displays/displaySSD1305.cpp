@@ -13,6 +13,9 @@
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
 
+#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY); digitalWrite(TFT_CS, LOW)
+#define GIVE_MUTEX() digitalWrite(TFT_CS, HIGH); if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
 #endif
@@ -163,7 +166,13 @@ void DspCore::startWrite(void) { }
 void DspCore::endWrite(void) { }
 
 void DspCore::loop(bool force) {
+#if DSP_MODEL==DSP_SSD1305
+  TAKE_MUTEX();
+#endif
   display();
+#if DSP_MODEL==DSP_SSD1305
+  GIVE_MUTEX();
+#endif
   delay(5);
 }
 
@@ -177,15 +186,43 @@ void DspCore::setTextSize(uint8_t s){
 }
 
 void DspCore::flip(){
+#if DSP_MODEL==DSP_SSD1305
+  TAKE_MUTEX();
+#endif
   setRotation(config.store.flipscreen?2:0);
+#if DSP_MODEL==DSP_SSD1305
+  GIVE_MUTEX();
+#endif
 }
 
 void DspCore::invert(){
+#if DSP_MODEL==DSP_SSD1305
+  TAKE_MUTEX();
+#endif
   invertDisplay(config.store.invertdisplay);
+#if DSP_MODEL==DSP_SSD1305
+  GIVE_MUTEX();
+#endif
 }
 
-void DspCore::sleep(void) { oled_command(SSD1305_DISPLAYOFF); }
-void DspCore::wake(void) { oled_command(SSD1305_DISPLAYON); }
+void DspCore::sleep(void) { 
+#if DSP_MODEL==DSP_SSD1305
+  TAKE_MUTEX();
+#endif
+  oled_command(SSD1305_DISPLAYOFF); 
+#if DSP_MODEL==DSP_SSD1305
+  GIVE_MUTEX();
+#endif
+}
+void DspCore::wake(void) {
+#if DSP_MODEL==DSP_SSD1305
+  TAKE_MUTEX();
+#endif
+  oled_command(SSD1305_DISPLAYON);
+#if DSP_MODEL==DSP_SSD1305
+  GIVE_MUTEX();
+#endif
+}
 
 void DspCore::writePixel(int16_t x, int16_t y, uint16_t color) {
   if(_clipping){

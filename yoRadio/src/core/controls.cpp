@@ -472,6 +472,9 @@ void onBtnClick(int id) {
         }
         if (display.mode() == STATIONS) {
           display.putRequest(NEWMODE, PLAYER);
+          #ifdef DSP_LCD
+            delay(200);
+          #endif
           player.sendCommand({PR_PLAY, display.currentPlItem});
         }
         break;
