@@ -191,6 +191,7 @@ class SliderWidget: public Widget {
     void _draw();
     void _drawslider();
     void _clear();
+    void _reset();
 };
 
 class VuWidget: public Widget {

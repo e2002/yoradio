@@ -5,8 +5,8 @@
     More info on https://github.com/e2002/yoradio/wiki/Widgets#widgets-description
 *************************************************************************************/
 
-#ifndef displayLCD1602conf_h
-#define displayLCD1602conf_h
+#ifndef displayLCD2004conf_h
+#define displayLCD2004conf_h
 
 #define DSP_WIDTH       20
 #define TFT_FRAMEWDT    0

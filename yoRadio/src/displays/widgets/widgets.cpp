@@ -265,6 +265,9 @@ void SliderWidget::_clear() {
 //  _oldvalwidth = 0;
   dsp.fillRect(_config.left, _config.top, _width, _height, _bgcolor);
 }
+void SliderWidget::_reset() {
+  _oldvalwidth = 0;
+}
 /************************
       VU WIDGET
  ************************/

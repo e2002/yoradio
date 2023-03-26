@@ -180,8 +180,9 @@ void DspCore::clearClock(){
 
 
 void DspCore::loop(bool force) {
+  if(digitalRead(TFT_CS)==LOW) return;
   display();
-  delay(5);
+  delay(10);
 }
 
 void DspCore::charSize(uint8_t textsize, uint8_t& width, uint16_t& height){

@@ -104,7 +104,7 @@ static inline bool _init_async_event_queue(){
 }
 
 static inline bool _send_async_event(lwip_event_packet_t ** e){
-    return _async_queue && xQueueSend(_async_queue, e, portMAX_DELAY) == pdPASS;
+    return _async_queue && xQueueSend(_async_queue, e, SEND_ASYNC_EVENT_DELAY) == pdPASS;
 }
 
 static inline bool _prepend_async_event(lwip_event_packet_t ** e){

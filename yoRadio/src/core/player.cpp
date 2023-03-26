@@ -37,7 +37,8 @@ void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
   playerQueue=NULL;
   playerQueue = xQueueCreate( 5, sizeof( playerRequestParams_t ) );
-  
+  setOutputPins(false);
+  delay(50);
   memset(_plError, 0, PLERR_LN);
 #ifdef MQTT_ROOT_TOPIC
   memset(burl, 0, MQTT_BURL_SIZE);
@@ -56,7 +57,7 @@ void Player::init() {
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
   _status = STOPPED;
-  setOutputPins(false);
+  //setOutputPins(false);
   _volTimer=false;
   playmutex = xSemaphoreCreateMutex();
   randomSeed(analogRead(0));
@@ -159,7 +160,8 @@ void Player::loop() {
 
 void Player::setOutputPins(bool isPlaying) {
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
-  if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, isPlaying?!MUTE_VAL:MUTE_VAL);
+  bool _ml = MUTE_LOCK?!MUTE_VAL:(isPlaying?!MUTE_VAL:MUTE_VAL);
+  if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, _ml);
 }
 
 void Player::_play(uint16_t stationId) {

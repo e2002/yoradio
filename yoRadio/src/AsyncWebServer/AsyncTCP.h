@@ -46,7 +46,9 @@ extern "C" {
 #ifndef XQUEUE_SIZE
   #define XQUEUE_SIZE     128  // (32)
 #endif
-
+#ifndef SEND_ASYNC_EVENT_DELAY
+  #define SEND_ASYNC_EVENT_DELAY  portMAX_DELAY
+#endif
 class AsyncClient;
 
 #define ASYNC_MAX_ACK_TIME 5000
