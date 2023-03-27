@@ -226,6 +226,13 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.130
+- fixed crash in configurations with NOKIA5110 displays
+- fixed bug with displaying buffer indicator when switching audioinfo
+- fixed bug with displaying the buffer indicator when the connection is lost
+- fixed bug of MUTE_PIN failure when connection is lost
+- other minor fixes
+
 #### v0.9.122
 - fixed a bug in the operation of SSD1305 displays
 - fixed bug in operation of LCD1602/2004 displays
