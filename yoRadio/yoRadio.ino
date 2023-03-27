@@ -71,7 +71,7 @@ void checkConnection(){
   static uint32_t checkInterval = 3000;
   if ((WiFi.status() != WL_CONNECTED) && (millis() - checkMillis >=checkInterval)) {
     bool playing = player.isRunning();
-    if (playing) player.sendCommand({PR_STOP, 0});
+    if (playing) { player.sendCommand({PR_STOP, 0}); player.loop(); }
     display.putRequest(NEWMODE, LOST);
     Serial.println("Lost connection, reconnecting...");
     while(true){
