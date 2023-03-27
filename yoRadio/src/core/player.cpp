@@ -162,7 +162,6 @@ void Player::setOutputPins(bool isPlaying) {
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
   bool _ml = MUTE_LOCK?!MUTE_VAL:(isPlaying?!MUTE_VAL:MUTE_VAL);
   if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, _ml);
-  Serial.printf("********************************** setOutputPins %d\n", isPlaying);
 }
 
 void Player::_play(uint16_t stationId) {
