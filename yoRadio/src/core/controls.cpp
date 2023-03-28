@@ -67,12 +67,14 @@ decode_results irResults;
 #if ENC_BTNL!=255
 void IRAM_ATTR readEncoderISR()
 {
+  if(display.mode()==LOST || display.mode()==UPDATING) return;
   encoder.readEncoder_ISR();
 }
 #endif
 #if ENC2_BTNL!=255
 void IRAM_ATTR readEncoder2ISR()
 {
+  if(display.mode()==LOST || display.mode()==UPDATING) return;
   encoder2.readEncoder_ISR();
 }
 #endif

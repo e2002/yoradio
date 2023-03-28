@@ -2,6 +2,7 @@
 #define network_h
 #include <Ticker.h>
 #include "time.h"
+#include "WiFi.h"
 
 #define apSsid      "yoRadioAP"
 #define apPassword  "12345987"
@@ -16,6 +17,7 @@ class Network {
     n_Status_e status;
     struct tm timeinfo;
     bool firstRun, forceTimeSync, forceWeather;
+    bool lostPlaying = false, beginReconnect = false;
     //uint8_t tsFailCnt, wsFailCnt;
   public:
     Network() {};
@@ -28,6 +30,8 @@ class Network {
   private:
     Ticker rtimer;
     void raiseSoftAP();
+    static void WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
+    static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);
 };
 
 extern Network network;

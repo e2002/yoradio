@@ -1,11 +1,11 @@
 #include "network.h"
-#include "WiFi.h"
 #include "display.h"
 #include "options.h"
 #include "config.h"
 #include "telnet.h"
 #include "netserver.h"
 #include "player.h"
+#include "mqtt.h"
 
 Network network;
 
@@ -48,6 +48,27 @@ void ticks() {
     display.putRequest(DSPRSSI, rs);
     
   }
+}
+
+void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
+  network.beginReconnect = false;
+  delay(100);
+  display.putRequest(NEWMODE, PLAYER);
+  if (network.lostPlaying) player.sendCommand({PR_PLAY, config.store.lastStation});
+  #ifdef MQTT_ROOT_TOPIC
+    connectToMqtt();
+  #endif
+}
+
+void Network::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
+  if(!network.beginReconnect){
+    Serial.println("Lost connection, reconnecting...");
+    network.lostPlaying = player.isRunning();
+    if (network.lostPlaying) { player.sendCommand({PR_STOP, 0}); }
+    display.putRequest(NEWMODE, LOST);
+  }
+  network.beginReconnect = true;
+  WiFi.begin(config.ssids[config.store.lastSSID].ssid, config.ssids[config.store.lastSSID].password);
 }
 
 #define DBGAP false
@@ -98,7 +119,8 @@ void Network::begin() {
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
   WiFi.setSleep(false);
-  
+  WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
+  WiFi.onEvent(WiFiLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   weatherBuf=NULL;
   trueWeather = false;
   #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
