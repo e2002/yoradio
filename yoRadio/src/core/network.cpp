@@ -52,6 +52,7 @@ void ticks() {
 
 void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   network.beginReconnect = false;
+  player.lockOutput = false;
   delay(100);
   display.putRequest(NEWMODE, PLAYER);
   if (network.lostPlaying) player.sendCommand({PR_PLAY, config.store.lastStation});
@@ -64,7 +65,7 @@ void Network::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   if(!network.beginReconnect){
     Serial.println("Lost connection, reconnecting...");
     network.lostPlaying = player.isRunning();
-    if (network.lostPlaying) { player.sendCommand({PR_STOP, 0}); }
+    if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
     display.putRequest(NEWMODE, LOST);
   }
   network.beginReconnect = true;

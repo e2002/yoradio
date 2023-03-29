@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.142
+- fixed a bug with smartstart playback when the power is turned off
+
 #### v0.9.141
 - fixed error reconnecting to WiFi when connection is lost
 - ADDED a compilation error when choosing a board other than "ESP32 Dev Module" or "ESP32 Wrover Module"

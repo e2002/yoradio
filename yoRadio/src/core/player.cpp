@@ -102,7 +102,7 @@ void Player::_stop(bool alreadyStopped){
   display.putRequest(PSTOP);
   setDefaults();
   if(!alreadyStopped) stopSong();
-  stopInfo();
+  if(!lockOutput) stopInfo();
   if (player_on_stop_play) player_on_stop_play();
 }
 
