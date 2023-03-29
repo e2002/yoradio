@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.143
+- fixed NOKIA5110 display invert/off bug
+
 #### v0.9.142
 - fixed a bug with smartstart playback when the power is turned off
 
