@@ -45,7 +45,7 @@ void DspCore::data(uint8_t c) {
 
 void DspCore::initDisplay() {
   begin();
-  setReinitInterval(255);
+  setReinitInterval(0);
   config.theme.background = TFT_BG;
   config.theme.meta       = TFT_FG;
   config.theme.clock      = TFT_FG;
