@@ -94,6 +94,7 @@ void Player::_stop(bool alreadyStopped){
   setOutputPins(false);
   if(!hasError()) config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
   config.station.bitrate = 0;
+  config.setBitrateFormat(BF_UNCNOWN);
   #ifdef USE_NEXTION
     nextion.bitrate(config.station.bitrate);
   #endif
@@ -172,8 +173,10 @@ void Player::_play(uint16_t stationId) {
   setOutputPins(false);
   config.setTitle(config.store.play_mode==PM_WEB?const_PlConnect:"");
   config.station.bitrate=0;
+  config.setBitrateFormat(BF_UNCNOWN);
   config.loadStation(stationId);
   _loadVol(config.store.volume);
+  display.putRequest(DBITRATE);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   netserver.loop();

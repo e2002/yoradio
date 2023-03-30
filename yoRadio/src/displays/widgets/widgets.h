@@ -2,9 +2,9 @@
 #define widgets_h
 
 #include "Arduino.h"
-//#include "../../core/config.h"
+#include "../../core/config.h"
 enum WidgetAlign { WA_LEFT, WA_CENTER, WA_RIGHT };
-enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
+
 
 typedef struct clipArea {
   uint16_t left; 

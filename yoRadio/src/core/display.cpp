@@ -24,7 +24,10 @@ Page *pages[] = { new Page(), new Page(), new Page() };
 #ifndef DSP_TASK_DELAY
   #define DSP_TASK_DELAY  2
 #endif
-
+#if !((DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB) || DSP_MODEL==DSP_ST7789)
+  #undef  BITRATE_FULL
+  #define BITRATE_FULL     false
+#endif
 TaskHandle_t DspTask;
 QueueHandle_t displayQueue;
 
@@ -137,7 +140,7 @@ void Display::_buildPager(){
   pages[PG_PLAYER]->addWidget(&_title1);
   if(_title2) pages[PG_PLAYER]->addWidget(_title2);
   if(_weather) pages[PG_PLAYER]->addWidget(_weather);
-  #ifdef BITRATE_FULL
+  #if BITRATE_FULL
     _fullbitrate = new BitrateWidget(fullbitrateConf, config.theme.bitrate, config.theme.background);
     pages[PG_PLAYER]->addWidget( _fullbitrate);
   #else
@@ -380,7 +383,7 @@ void Display::loop() {
           if(_bitrate) { _bitrate->setText(config.station.bitrate==0?"":buf); } 
           if(_fullbitrate) { 
             _fullbitrate->setBitrate(config.station.bitrate); 
-            _fullbitrate->setFormat(BF_MP3); 
+            _fullbitrate->setFormat(config.configFmt); 
           } 
         }
         break;

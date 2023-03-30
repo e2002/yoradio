@@ -36,6 +36,7 @@
 
 #define MAX_PLAY_MODE   1
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
+enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
 
 void u8fix(char *src);
 
@@ -152,6 +153,7 @@ class Config {
     uint8_t irchck;
     ircodes_t ircodes;
 #endif
+    BitrateFormat configFmt = BF_UNCNOWN;
     neworkItem ssids[5];
     byte ssidsCount;
     uint16_t sleepfor;
@@ -185,6 +187,7 @@ class Config {
     bool saveWifi();
     bool saveWifiFromNextion(const char* post);
     void setSmartStart(byte ss);
+    void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
     uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
