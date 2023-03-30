@@ -10,6 +10,7 @@
 #define DSP_WIDTH       160
 #define TFT_FRAMEWDT    4
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
+
 #if BITRATE_FULL
   #define TITLE_FIX 24
 #else
@@ -50,11 +51,11 @@ const WidgetConfig vuConf         PROGMEM = { TFT_FRAMEWDT, 54, 1, WA_LEFT };
 
 const WidgetConfig bootWdtConf    PROGMEM = { 0, 90, 1, WA_CENTER };
 const ProgressConfig bootPrgConf  PROGMEM = { 90, 14, 4 };
+const BitrateConfig fullbitrateConf PROGMEM = {{DSP_WIDTH-TFT_FRAMEWDT-19, 23, 1, WA_LEFT}, 22 };
 
 /* BANDS  */                             /* { onebandwidth, onebandheight, bandsHspace, bandsVspace, numofbands, fadespeed } */
 const VUBandsConfig bandsConf     PROGMEM = { 12, 50, 2, 1, 10, 1 };
 
-const BitrateConfig fullbitrateConf PROGMEM = {{DSP_WIDTH-TFT_FRAMEWDT-19, 23, 1, WA_LEFT}, 22 };
 /* STRINGS  */
 const char         numtxtFmt[]    PROGMEM = "%d";
 const char           rssiFmt[]    PROGMEM = "%d";
