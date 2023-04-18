@@ -89,7 +89,7 @@ void Player::setError(const char *e){
 }
 
 void Player::_stop(bool alreadyStopped){
-  if(config.store.play_mode==PM_SDCARD) config.sdResumePos = player.getFilePos();
+  if(config.store.play_mode==PM_SDCARD && !alreadyStopped) config.sdResumePos = player.getFilePos();
   _status = STOPPED;
   setOutputPins(false);
   if(!hasError()) config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);

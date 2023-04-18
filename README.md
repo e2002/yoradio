@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.156
+- fixed bug of random change of playback location when playing files from SD card
+
 #### v0.9.155
 - added bitrate badget for displays ST7789, ST7796, ILI9488, ILI9486, ILI9341, ILI9225 and ST7735(BLACKTAB)
   (disable: #define BITRATE_FULL false)
