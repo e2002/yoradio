@@ -226,6 +226,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.161
+- fixed errors 403 Account already in use, 401 Authorization required
+- fixed bitrate icon overflow bug
+- fix html markup errors
+
 #### v0.9.156
 - fixed bug of random change of playback location when playing files from SD card
 

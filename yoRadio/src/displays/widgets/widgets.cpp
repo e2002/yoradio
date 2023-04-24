@@ -467,6 +467,7 @@ void BitrateWidget::init(BitrateConfig bconf, uint16_t fgcolor, uint16_t bgcolor
 
 void BitrateWidget::setBitrate(uint16_t bitrate){
   _bitrate = bitrate;
+  if(_bitrate>999) _bitrate=999;
   _draw();
 }
 
