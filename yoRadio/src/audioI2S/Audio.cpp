@@ -724,11 +724,26 @@ cardLock(false);
         afn[i] = toLowerCase(afn[i]);
     }
 
-    if(endsWith(afn, ".mp3"))  m_codec = CODEC_MP3; // m_codec is by default CODEC_NONE
-    if(endsWith(afn, ".m4a"))  m_codec = CODEC_M4A;
-    if(endsWith(afn, ".aac"))  m_codec = CODEC_AAC;
-    if(endsWith(afn, ".wav"))  m_codec = CODEC_WAV;
-    if(endsWith(afn, ".flac")) m_codec = CODEC_FLAC;
+    if(endsWith(afn, ".mp3"))  {
+      m_codec = CODEC_MP3; // m_codec is by default CODEC_NONE
+      if(audio_info) audio_info("format is mp3");
+    }
+    if(endsWith(afn, ".m4a"))  {
+      m_codec = CODEC_M4A;
+      if(audio_info) audio_info("format is aac");
+    }
+    if(endsWith(afn, ".aac"))  {
+      m_codec = CODEC_AAC;
+      if(audio_info) audio_info("format is aac");
+    }
+    if(endsWith(afn, ".wav"))  {
+      m_codec = CODEC_WAV;
+      if(audio_info) audio_info("format is wav");
+    }
+    if(endsWith(afn, ".flac")) {
+      m_codec = CODEC_FLAC;
+      if(audio_info) audio_info("format is flac");
+    }
 
     if(m_codec == CODEC_NONE) {
       AUDIO_INFO("The %s format is not supported", afn + dotPos);

@@ -40,6 +40,7 @@ char* DspCore::utf8Rus(const char* str, bool uppercase) {
       *iter = toupper(*iter);
     }
   }
+  if(L10N_LANGUAGE==EN) return strn;
   while (strn[index])
   {
     if (strn[index] >= 0xBF)

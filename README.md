@@ -226,6 +226,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.174
+- added forced shutdown of smartstart when WebSocket freezes on problem stations
+- added bitrate icon when playing files from SD card
+- fix html markup errors
+
 #### v0.9.161
 - fixed errors 403 Account already in use, 401 Authorization required
 - fixed bitrate icon overflow bug

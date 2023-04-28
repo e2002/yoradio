@@ -181,6 +181,7 @@ void Player::_play(uint16_t stationId) {
   netserver.requestOnChange(STATION, 0);
   netserver.loop();
   netserver.loop();
+  config.setSmartStart(0);
   if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
     _status = PLAYING;
     if(config.store.play_mode==PM_SDCARD) config.sdResumePos = 0;

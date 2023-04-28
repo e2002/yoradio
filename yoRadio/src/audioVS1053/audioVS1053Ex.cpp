@@ -1966,17 +1966,20 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     if(endsWith(afn, ".mp3")){      // MP3 section
         m_codec = CODEC_MP3;
         m_f_running = true;
+        if(audio_info) audio_info("format is mp3");
         return true;
     } // end MP3 section
 
     if(endsWith(afn, ".m4a")){      // M4A section, iTunes
         m_codec = CODEC_M4A;
         m_f_running = true;
+        if(audio_info) audio_info("format is aac");
         return true;
     } // end M4A section
 
     if(endsWith(afn, ".aac")){      // AAC section, without FileHeader
         m_codec = CODEC_AAC;
+        if(audio_info) audio_info("format is aac");
         m_f_running = true;
         return true;
     } // end AAC section
@@ -1984,18 +1987,21 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     if(endsWith(afn, ".wav")){      // WAVE section
         m_codec = CODEC_WAV;
         m_f_running = true;
+        if(audio_info) audio_info("format is wav");
         return true;
     } // end WAVE section
 
     if(endsWith(afn, ".flac")) {     // FLAC section
         m_codec = CODEC_FLAC;
         m_f_running = true;
+        if(audio_info) audio_info("format is flac");
         return true;
     } // end FLAC section
 
     if(endsWith(afn, ".ogg")) {     // FLAC section
         m_codec = CODEC_OGG;
         m_f_running = true;
+        if(audio_info) audio_info("format is ogg");
         return true;
     } // end FLAC section
 
