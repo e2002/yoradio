@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.177
+- fixed bitrate display error when playing SD on VS1053B modules
+
 #### v0.9.174
 - added forced shutdown of smartstart when WebSocket freezes on problem stations
 - added bitrate icon when playing files from SD card

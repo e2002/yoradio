@@ -1921,7 +1921,7 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     m_resumeFilePos = resumeFilePos;
 
     char audioName[256];
-
+    m_avr_bitrate = 0;
     setDefaults(); // free buffers an set defaults
 
     memcpy(audioName, path, strlen(path)+1);
