@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.180
+- OneButton library moved to the project
+
 #### v0.9.177
 - fixed bitrate display error when playing SD on VS1053B modules
 
