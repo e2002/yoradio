@@ -205,7 +205,7 @@ void NetServer::processQueue(){
           config.initSDPlaylist();
         }
         if(config.store.play_mode==PM_WEB){
-        //  config.indexPlaylist(); 
+          config.indexPlaylist(); 
           config.initPlaylist(); 
         }
         getPlaylist(clientId); break;

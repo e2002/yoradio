@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.201
+- fixed a bug when importing a playlist
+
 #### v0.9.200
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - implementation of WEB/SD mode switching without reboot
