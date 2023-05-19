@@ -36,6 +36,7 @@
 
 #define MAX_PLAY_MODE   1
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
+enum cardStatus_e    : uint8_t  { CS_NONE=0, CS_PRESENT=1, CS_MOUNTED=2, CS_EJECTED=3 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
 
 void u8fix(char *src);
@@ -159,8 +160,11 @@ class Config {
     uint16_t sleepfor;
     uint32_t sdResumePos;
     uint16_t backupLastStation;
+    uint16_t backupSDStation;
     bool     sdSnuffle;
     bool     emptyFS;
+    bool     SDinit;
+    bool     mountSDbusy;
   public:
     Config() {};
     void save();
@@ -190,6 +194,8 @@ class Config {
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
+    void initSDPlaylist();
+    void indexSDPlaylist();
     uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
     void setTimezone(int8_t tzh, int8_t tzm);
@@ -201,19 +207,26 @@ class Config {
     void bootInfo();
     void doSleepW();
     void setSnuffle(bool sn);
+    void changeMode(int newmode=-1);
+    void initPlaylistMode();
+    void checkSD();
+    cardStatus_e getSDStatus(){ return _cardStatus; };
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);
+    cardStatus_e _cardStatus;
+    bool _bootDone;
     void setDefaults();
     Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
     void listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels);
-    void initSDPlaylist();
-    void indexSDPlaylist();
     bool checkNoMedia(const char* path);
     void _initHW();
     bool _isFSempty();
+    bool _sdCardIsConnected();
+    void _mountSD();
+    bool _sdBegin();
     char _stationBuf[BUFLEN/2];
 };
 

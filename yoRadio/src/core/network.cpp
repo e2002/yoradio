@@ -14,6 +14,8 @@ bool getWeather(char *wstr);
 void doSync(void * pvParameters);
 
 void ticks() {
+  if(!display.ready()) return; //waiting for SD is ready
+  
   static const uint16_t weatherSyncInterval=1800;
   //static const uint16_t weatherSyncIntervalFail=10;
   static const uint16_t timeSyncInterval=3600;
@@ -42,11 +44,10 @@ void ticks() {
   }
   if(player.isRunning() && config.store.play_mode==PM_SDCARD) netserver.requestOnChange(SDPOS, 0);
   if(divrssi) {
-    int rs = WiFi.RSSI();
-    netserver.setRSSI(rs);
+    netserver.setRSSI(WiFi.RSSI());
     netserver.requestOnChange(NRSSI, 0);
-    display.putRequest(DSPRSSI, rs);
-    
+    display.putRequest(DSPRSSI, netserver.getRSSI());
+    if(!config.mountSDbusy) player.sendCommand({PR_CHECKSD, 0});
   }
 }
 

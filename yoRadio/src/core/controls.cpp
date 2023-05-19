@@ -41,7 +41,7 @@ constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
   #endif
 #endif
 
-#if TS_MODEL!=TS_MODEL_UNDEFINED
+#if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
   #include "touchscreen.h"
   TouchScreen touchscreen;
 #endif
@@ -114,7 +114,7 @@ void initControls() {
     button[i].setPressTicks(BTN_PRESS_TICKS);
   }
 #endif
-#if TS_MODEL!=TS_MODEL_UNDEFINED
+#if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
   touchscreen.init();
 #endif
 #if IR_PIN!=255
@@ -129,7 +129,7 @@ void initControls() {
 }
 
 void loopControls() {
-  if(display.mode()==LOST || display.mode()==UPDATING) return;
+  if(display.mode()==LOST || display.mode()==UPDATING || display.mode()==SDCHANGE) return;
   if (ctrls_on_loop) ctrls_on_loop();
 #if ENC_BTNL!=255
   encoder1Loop();
@@ -151,7 +151,7 @@ void loopControls() {
 #if IR_PIN!=255
   irLoop();
 #endif
-#if TS_MODEL!=TS_MODEL_UNDEFINED
+#if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
   touchscreen.loop();
 #endif
 }
@@ -504,15 +504,7 @@ void onBtnClick(int id) {
         break;
       }
     case EVT_BTNMODE: {
-      if(SDC_CS==255) break;
-      if(config.store.play_mode==PM_SDCARD) config.store.lastStation = config.backupLastStation;
-      config.store.play_mode++;
-      if(config.store.play_mode > MAX_PLAY_MODE){
-        config.store.play_mode=0;
-      }
-      
-      config.save();
-      ESP.restart();
+      config.changeMode();
       break;
     }
     default: break;
@@ -560,7 +552,7 @@ void setEncAcceleration(uint16_t acc){
 #endif
 }
 void flipTS(){
-#if TS_MODEL!=TS_MODEL_UNDEFINED
+#if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
   touchscreen.flip();
 #endif
 }

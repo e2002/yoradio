@@ -38,14 +38,15 @@ void DspCore::setCursor(int16_t x, int16_t y){
 }
 
 uint16_t DspCore::print(const char* s){
-  TAKE_MUTEX();
+  
   if(_gFont){
+    TAKE_MUTEX();
     drawGFXText(_cursorx, _cursory, s, _fgcolor);
     GIVE_MUTEX();
     return 0;
   }else{
     _cursorx=drawText(_cursorx, _cursory, s, _fgcolor);
-    GIVE_MUTEX();
+    //GIVE_MUTEX();
     return _cursorx;
   }
 }
@@ -279,7 +280,10 @@ uint16_t DspCore::drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color) 
       return cfont.width;
     }
   }
-  return TFT_22_ILI9225::drawChar(x, y, ch, color);
+  TAKE_MUTEX();
+  uint16_t ret=TFT_22_ILI9225::drawChar(x, y, ch, color);
+  GIVE_MUTEX();
+  return ret;
 }
 
 void DspCore::setClipping(clipArea ca){

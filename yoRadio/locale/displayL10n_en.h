@@ -65,6 +65,7 @@ const char    const_DlgLost[]    PROGMEM = "* LOST *";
 const char  const_DlgUpdate[]    PROGMEM = "* UPDATING *";
 const char const_DlgNextion[]    PROGMEM = "* NEXTION *";
 const char const_getWeather[]    PROGMEM = "";
+const char  const_waitForSD[]    PROGMEM = "WAIT FOR SD";
 
 const char        apNameTxt[]    PROGMEM = "AP NAME";
 const char        apPassTxt[]    PROGMEM = "PASSWORD";

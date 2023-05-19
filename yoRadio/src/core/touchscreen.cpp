@@ -1,5 +1,5 @@
 #include "options.h"
-#if TS_MODEL!=TS_MODEL_UNDEFINED
+#if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
 
 #include "touchscreen.h"
 #include "config.h"

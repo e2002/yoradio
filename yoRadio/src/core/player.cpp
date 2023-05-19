@@ -60,7 +60,7 @@ void Player::init() {
   //setOutputPins(false);
   _volTimer=false;
   playmutex = xSemaphoreCreateMutex();
-  randomSeed(analogRead(0));
+  //randomSeed(analogRead(0));
   #if PLAYER_FORCE_MONO
     forceMono(true);
   #endif
@@ -108,7 +108,7 @@ void Player::_stop(bool alreadyStopped){
 }
 
 void Player::initHeaders(const char *file) {
-  if(strlen(file)==0) return;
+  if(strlen(file)==0 || true) return; //TODO Read TAGs
   connecttoFS(SD,file);
   eofHeader = false;
   while(!eofHeader) Audio::loop();
@@ -137,6 +137,10 @@ void Player::loop() {
       case PR_VOL: {
         config.setVolume(requestP.payload);
         Audio::setVolume(volToI2S(requestP.payload));
+        break;
+      }
+      case PR_CHECKSD: {
+        config.checkSD();
         break;
       }
       default: break;
@@ -182,9 +186,18 @@ void Player::_play(uint16_t stationId) {
   netserver.loop();
   netserver.loop();
   config.setSmartStart(0);
-  if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
+  bool isConnected = false;
+  if(config.store.play_mode==PM_SDCARD && SDC_CS!=255)
+    isConnected=connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min);
+  else config.store.play_mode=PM_WEB;
+  if(config.store.play_mode==PM_WEB) isConnected=connecttohost(config.station.url);
+  if(isConnected){
+  //if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
     _status = PLAYING;
-    if(config.store.play_mode==PM_SDCARD) config.sdResumePos = 0;
+    if(config.store.play_mode==PM_SDCARD) {
+      config.sdResumePos = 0;
+      config.backupSDStation = stationId;
+    }
     //config.setTitle("");
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);

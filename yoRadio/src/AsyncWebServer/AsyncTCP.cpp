@@ -201,6 +201,9 @@ static void _async_service_task(void *pvParameters){
             }
 #endif
         }
+#if ATCP_TASK_DELAY>0
+        vTaskDelay(ATCP_TASK_DELAY);
+#endif
     }
     vTaskDelete(NULL);
     _async_service_task_handle = NULL;
@@ -218,7 +221,7 @@ static bool _start_async_task(){
         return false;
     }
     if(!_async_service_task_handle){
-        xTaskCreateUniversal(_async_service_task, "async_tcp", XTASK_MEM_SIZE, NULL, 3, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
+        xTaskCreateUniversal(_async_service_task, "async_tcp", XTASK_MEM_SIZE, NULL, XTASK_PRIOTITY, &_async_service_task_handle, CONFIG_ASYNC_TCP_RUNNING_CORE);
         if(!_async_service_task_handle){
             return false;
         }

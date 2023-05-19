@@ -152,6 +152,7 @@ Audio::Audio(uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi, 
     m_endFillByte=0;
     curvol=50;
     m_LFcount=0;
+    mutex_pl = xSemaphoreCreateMutex();
 }
 Audio::~Audio(){
     // destructor
@@ -302,7 +303,7 @@ void Audio::begin(){
     pinMode(dreq_pin, INPUT);                               // DREQ is an input
     pinMode(cs_pin, OUTPUT);                                // The SCI and SDI signals
     pinMode(dcs_pin, OUTPUT);
-    mutex_pl = xSemaphoreCreateMutex();
+    //mutex_pl = xSemaphoreCreateMutex();
     DCS_HIGH();
     CS_HIGH();
     delay(170);
@@ -743,9 +744,9 @@ void Audio::processLocalFile() {
 
         f_stream = false;
         m_f_localfile = false;
-        cardLock(true);
+        //cardLock(true);
         char *afn =strdup(audiofile.name()); // store temporary the name
-        cardLock(false);
+        //cardLock(false);
         stopSong();
         sprintf(chbuf, "End of file \"%s\"", afn);
         if(audio_info) audio_info(chbuf);
@@ -2153,7 +2154,8 @@ int Audio::read_MP3_Header(uint8_t *data, size_t len) {
             if(audio_info) audio_info("file has no mp3 tag, skip metadata");
             m_audioDataSize = m_contentlength;
             sprintf(chbuf, "Audio-Length: %u", m_audioDataSize);
-            if(audio_progress) audio_progress(295903, m_audioDataSize);
+            //if(audio_progress) audio_progress(295903, m_audioDataSize);
+            if(audio_progress) audio_progress(0, m_audioDataSize);
             if(audio_info) audio_info(chbuf);
             return -1; // error, no ID3 signature found
         }
@@ -2482,9 +2484,9 @@ void Audio::showID3Tag(const char* tag, const char* value){
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize(){
     if (!audiofile) return 0;
-    cardLock(true);
+    //cardLock(true);
     uint32_t s = audiofile.size();
-    cardLock(false);
+    //cardLock(false);
     return s;
 }
 //---------------------------------------------------------------------------------------------------------------------

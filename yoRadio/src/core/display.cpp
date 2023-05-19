@@ -286,6 +286,7 @@ void Display::_swichMode(displayMode_e newmode) {
   if (newmode == LOST)      _showDialog(const_DlgLost);
   if (newmode == UPDATING)  _showDialog(const_DlgUpdate);
   if (newmode == SLEEPING)  _showDialog("SLEEPING");
+  if (newmode == SDCHANGE)  _showDialog(const_waitForSD);
   if (newmode == INFO || newmode == SETTINGS || newmode == TIMEZONE || newmode == WIFI) _showDialog(const_DlgNextion);
   if (newmode == NUMBERS) _showDialog("");
   if (newmode == STATIONS) {
@@ -417,6 +418,10 @@ void Display::loop() {
           snprintf(buf, 50, bootstrFmt, config.ssids[request.payload].ssid);
           nextion.bootString(buf);
         #endif*/
+        break;
+      }
+      case WAITFORSD: {
+        if(_bootstring) _bootstring->setText(const_waitForSD);
         break;
       }
       case DSPRSSI: if(_rssi){ _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.isRunning()?player.inBufferFilled():0); break;

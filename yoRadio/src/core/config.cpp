@@ -7,9 +7,14 @@
 
 Config config;
 
-#if DSP_HSPI || TS_HSPI || VS_HSPI || SD_HSPI
+#if DSP_HSPI || TS_HSPI || VS_HSPI
 SPIClass  SPI2(HSPI);
 #endif
+#if defined(SD_SPIPINS) || SD_HSPI
+SPIClass  SDSPI(HSPI);
+#endif
+#define SDL() if(player.mutex_pl!=NULL) player.cardLock(true)
+#define SDU() vTaskDelay(2); if(player.mutex_pl!=NULL) player.cardLock(false) 
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -33,6 +38,13 @@ void Config::init() {
 #if IR_PIN!=255
     irindex=-1;
 #endif
+#if defined(SD_SPIPINS) || SD_HSPI
+  #if !defined(SD_SPIPINS)
+    SDSPI.begin();
+  #else
+    SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
+  #endif
+#endif
   eepromRead(EEPROM_START, store);
   if (store.config_set != 4262) setDefaults();
   backupLastStation = store.lastStation;
@@ -50,25 +62,112 @@ void Config::init() {
   emptyFS = _isFSempty();
   if(emptyFS) BOOTLOG("SPIFFS is empty!");
   ssidsCount = 0;
-  sdResumePos = 0;
-  if(SDC_CS!=255){
-    if(!SD.begin(SDC_CS)){
-      store.play_mode=PM_WEB;
-      Serial.println("##[ERROR]#\tCard Mount Failed");
+  _cardStatus = CS_NONE;
+  mountSDbusy = false;
+  if(SDC_CS!=255) randomSeed(analogRead(SDC_CS));
+  backupSDStation = 0;
+  //checkSD();
+  _bootDone=false;
+  bootInfo();
+}
+
+bool Config::_sdCardIsConnected() {
+  if(SD.sectorSize()<1) return false;
+  SDL();
+  uint8_t buff[SD.sectorSize()] = { 0 };
+  bool bread = SD.readRAW(buff, 1);
+  if(SD.sectorSize()>0 && !bread) SD.end();
+  SDU();
+  return bread;
+}
+
+bool Config::_sdBegin(){
+  bool out;
+  SDL();
+#if defined(SD_SPIPINS) || SD_HSPI
+  out = SD.begin(SDC_CS, SDSPI);
+#else
+  out = SD.begin(SDC_CS);
+#endif
+  SDU();
+  return out;
+}
+
+void Config::checkSD(){
+  if(SDC_CS==255) return;
+  mountSDbusy = true;
+  cardStatus_e prevCardStatus = _cardStatus;
+  if(_sdCardIsConnected()){
+    if(_cardStatus==CS_NONE || _cardStatus==CS_PRESENT || _cardStatus==CS_EJECTED) {
+      _cardStatus=CS_PRESENT;
     }else{
-      if(store.play_mode==PM_SDCARD) initSDPlaylist();
+      _cardStatus=CS_MOUNTED;
     }
+    if(_cardStatus==CS_PRESENT && store.play_mode==PM_WEB && SD_AUTOPLAY && prevCardStatus==CS_EJECTED) config.changeMode(PM_SDCARD);
+  }else{
+    if(_cardStatus==CS_MOUNTED || _cardStatus==CS_PRESENT || _cardStatus==CS_EJECTED){
+      if(_cardStatus!=CS_EJECTED && store.play_mode==PM_SDCARD && SD_AUTOPLAY) config.changeMode(PM_WEB);
+      _cardStatus=CS_EJECTED;
+    }
+    backupSDStation = 0;
+  }
+  mountSDbusy = false;
+}
+
+void Config::_mountSD(){
+  if(SDC_CS==255 || mountSDbusy || display.mode()==SDCHANGE) return;
+  mountSDbusy = true;
+  if(SD.sectorSize()<1) SDinit = _sdBegin();
+  if(!_sdCardIsConnected()) {
+    if(store.play_mode==PM_SDCARD){
+      SDinit = false;
+    }
+  }else{
+    if(!SDinit){
+      if(!_sdBegin()){
+        Serial.println("##[ERROR]#\tCard Mount Failed");
+      }else{
+        SDinit = true;
+      }
+    }
+  }
+  mountSDbusy = false;
+}
+
+void Config::initPlaylistMode(){
+  sdResumePos = 0;
+  SDinit = false;
+  if(SDC_CS!=255){
+    if(!_sdBegin()){
+      store.play_mode=PM_WEB;
+      Serial.println("SD Mount Failed");
+    }else{
+      Serial.println("SD Mounted");
+      if(store.play_mode==PM_SDCARD) {
+        if(_cardStatus!=CS_MOUNTED){
+          _cardStatus=CS_MOUNTED;
+          if(_bootDone) Serial.println("Waiting for SD card indexing..."); else BOOTLOG("Waiting for SD card indexing...");
+          initSDPlaylist();
+        }else{
+          if(backupSDStation==0) {
+            store.lastStation = random(1, store.countStation);
+            backupSDStation = store.lastStation;
+          }else store.lastStation = backupSDStation;
+        }
+      }
+      SDinit = true;
+    }
+  }else{
+    store.play_mode=PM_WEB;
   }
   if(store.play_mode==PM_WEB && !emptyFS) initPlaylist();
   
   if (store.lastStation == 0 && store.countStation > 0) {
-    store.lastStation = 1;
+    store.lastStation = store.play_mode==PM_WEB?1:random(1, store.countStation);
     save();
   }
-  
+  _bootDone = true;
   loadStation(store.lastStation);
-
-  bootInfo();
 }
 
 void Config::_initHW(){
@@ -218,12 +317,51 @@ void Config::save() {
   store.lastStation = ls;
   store.play_mode = pm;
 }
+
 void Config::setSnuffle(bool sn){
   sdSnuffle=sn;
   save();
   if(sdSnuffle) player.next();
   //player blah blah blah
 }
+
+void Config::changeMode(int newmode){
+  if(SDC_CS==255) return;
+  if(!SDinit) {
+    _mountSD();
+    if(!SDinit){
+      Serial.println("##[ERROR]#\tSD Not Found");
+      netserver.requestOnChange(GETPLAYERMODE, 0);
+      return;
+    }
+  }
+  if(store.play_mode==PM_SDCARD) store.lastStation = config.backupLastStation;
+  if(newmode<0){
+    store.play_mode++;
+    if(store.play_mode > MAX_PLAY_MODE){
+      store.play_mode=0;
+    }
+  }else{
+    store.play_mode=(playMode_e)newmode;
+  }
+  save();
+  if(store.play_mode==PM_SDCARD && _cardStatus!=CS_MOUNTED){
+    display.putRequest(NEWMODE, SDCHANGE);
+    while(display.mode()!=SDCHANGE)
+      delay(10);
+    delay(50);
+  }
+  initPlaylistMode();
+
+  if (store.smartstart == 1) player.sendCommand({PR_PLAY, store.lastStation});
+  else
+    player.sendCommand({PR_STOP, 0});
+  netserver.requestOnChange(GETPLAYERMODE, 0);
+  netserver.requestOnChange(GETMODE, 0);
+  display.putRequest(NEWMODE, PLAYER);
+  display.putRequest(NEWSTATION);
+}
+
 #if IR_PIN!=255
 void Config::saveIR(){
   eepromWrite(EEPROM_START_IR, ircodes);
@@ -325,10 +463,9 @@ void Config::initPlaylist() {
 }
 
 bool endsWith (const char* base, const char* str) {
-//fb
   int slen = strlen(str) - 1;
   const char *p = base + strlen(base) - 1;
-  while(p > base && isspace(*p)) p--;  // rtrim
+  while(p > base && isspace(*p)) p--;
   p -= slen;
   if (p < base) return false;
   return (strncmp(p, str, slen) == 0);
@@ -338,11 +475,12 @@ bool Config::checkNoMedia(const char* path){
   char nomedia[BUFLEN]= {0};
   strlcat(nomedia, path, BUFLEN);
   strlcat(nomedia, "/.nomedia", BUFLEN);
-  return SD.exists(nomedia);
+  SDL(); bool nm = SD.exists(nomedia); SDU();
+  return nm;
 }
 
 void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels){
-  File root = SD.open(dirname);
+  SDL(); File root = SD.open(dirname); SDU();
   if(!root){
     Serial.println("##[ERROR]#\tFailed to open directory");
     return;
@@ -352,9 +490,9 @@ void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8
     return;
   }
 
-  File file = root.openNextFile();
+  SDL(); File file = root.openNextFile(); SDU();
   uint32_t pos = 0;
-            
+  //vTaskDelay(5);
   while(file){
     
     if(file.isDirectory()){
@@ -368,19 +506,22 @@ void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8
         plSDindex.write((byte *) &pos, 4);
       }
     }
-    file = root.openNextFile();
+    SDL(); file = root.openNextFile(); SDU();
   }
 }
 
 void Config::indexSDPlaylist() {
+  mountSDbusy = true;
   File playlist = SPIFFS.open(PLAYLIST_SD_PATH, "w");
   if (!playlist) {
+    mountSDbusy = false;
     return;
   }
   File index = SPIFFS.open(INDEX_SD_PATH, "w");
   listSD(playlist, index, "/", 2);
   index.close();
   playlist.close();
+  mountSDbusy = false;
 }
 
 void Config::initSDPlaylist() {
@@ -390,6 +531,7 @@ void Config::initSDPlaylist() {
     File index = SPIFFS.open(INDEX_SD_PATH, "r");
     store.countStation = index.size() / 4;
     store.lastStation = random(1, store.countStation);
+    backupSDStation = store.lastStation;
     index.close();
     save();
   }
@@ -715,9 +857,10 @@ void Config::bootInfo() {
   BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
   BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
   BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
-  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, pullup=%s", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_INTERNALPULLUP?"true":"false");
+  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, mode=%d, pullup=%s", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_MODE, BTN_INTERNALPULLUP?"true":"false");
   BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"true":"false", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"true":"false");
   BOOTLOG("ir:\t\t%d", IR_PIN);
+  if(SDC_CS!=255) BOOTLOG("SD:\t\t%d", SDC_CS);
   BOOTLOG("------------------------------------------------");
 }
 

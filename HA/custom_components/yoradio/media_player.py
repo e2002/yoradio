@@ -144,7 +144,7 @@ class yoradioDevice(MediaPlayerEntity):
     if js['on']==1:
       self._state = STATE_PLAYING if js['status']==1 else STATE_IDLE
     else:
-      self._state = STATE_OFF
+      self._state = STATE_PLAYING if js['status']==1 else STATE_OFF
     self._current_source = str(js['station']) + '. ' + js['name']
     try:
       self.async_schedule_update_ha_state()

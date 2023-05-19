@@ -10,7 +10,7 @@
   <title>ёRadio - Player</title>
   <style> </style>
   </head>
-<body class="%MODE%">
+<body class="modeweb">
   <div class="content">
     <div class="logo"></div>
     <div id="navbar">
@@ -57,12 +57,13 @@
 				    </ul>
 		      </div>
 		      <div id="volnav">
+		        <div id="modeline"><span id="modeweb" class="modeitem" data-name="web">Web</span><span id="modesd" data-name="sd" class="modeitem">SD</span></div>
 		        <input type="range" id="volrange" class="slider" name="volume" data-slaveid="volinfo" min="0" max="254" value="0">
 		      </div>
 		      <div id="sdnav" class="hidden">
 		        <div id="sdposvals">
 		          <div id="sdposvalscurrent">0:00</div>
-	            <div id="snuffle" class="playerbytton active" data-name="snuffle"></div>
+	            <div id="snuffle" class="playerbytton active" data-name="snuffle"><span></span></div>
 		          <div id="sdposvalsend">0:00</div>
 		        </div>
 		        <input type="range" id="sdpos" class="slider" name="sdpos" min="0" max="100" value="0">

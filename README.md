@@ -226,6 +226,19 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.200
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
+- implementation of WEB/SD mode switching without reboot
+- replacement of SD cards without turning off the power
+- switching WEB / SD from the web interface. full update required, including SPIFFS Data
+- fixing the Home Assistant integration behavior logic
+- SD_HSPI parameter now works. Pins HSPI - 13(MOSI) 12(MISO) 14(CLK)
+- new parameter SD_SPIPINS. ```#define SD_SPIPINS sck, miso, mosi```
+- sck, miso, mosi - any available pins. Used for "TTGO Tm Music Album" boards ```#define SD_SPIPINS 14, 2, 15```
+- fixed a bug with garbage appearing on display ILI9225
+- the slider for moving along the SD track is temporarily not working.
+- bug fixes
+
 #### v0.9.180
 - OneButton library moved to the project
 

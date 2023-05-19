@@ -711,14 +711,14 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     m_file_size = audiofile.size();//TEST loop
     cardLock(false);
     char* afn = NULL;  // audioFileName
-cardLock(true);
+//cardLock(true);
 #ifdef SDFATFS_USED
     audiofile.getName(chbuf, sizeof(chbuf));
     afn = strdup(chbuf);
 #else
     afn = strdup(audiofile.name());
 #endif
-cardLock(false);
+//cardLock(false);
     uint8_t dotPos = lastIndexOf(afn, ".");
     for(uint8_t i = dotPos + 1; i < strlen(afn); i++){
         afn[i] = toLowerCase(afn[i]);
@@ -1553,7 +1553,8 @@ int Audio::read_ID3_Header(uint8_t *data, size_t len) {
             AUDIO_INFO("file has no mp3 tag, skip metadata");
             m_audioDataSize = m_contentlength;
             AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
-            if(audio_progress) audio_progress(295903, m_audioDataSize);
+            //if(audio_progress) audio_progress(295903, m_audioDataSize);
+            if(audio_progress) audio_progress(0, m_audioDataSize);
             return -1; // error, no ID3 signature found
         }
         ID3version = *(data + 3);
@@ -3034,14 +3035,14 @@ void Audio::processLocalFile() {
         } //TEST loop
         f_stream = false;
         m_streamType = ST_NONE;
-cardLock(true);
+//cardLock(true);
 #ifdef SDFATFS_USED
         audiofile.getName(chbuf, sizeof(chbuf));
         char *afn =strdup(chbuf);
 #else
         char *afn =strdup(audiofile.name()); // store temporary the name
 #endif
-cardLock(false);
+//cardLock(false);
         stopSong();
         if(m_codec == CODEC_MP3)   MP3Decoder_FreeBuffers();
         if(m_codec == CODEC_AAC)   AACDecoder_FreeBuffers();
@@ -4399,9 +4400,9 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN, int8_
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize() {
     if(!audiofile) return 0;
-    cardLock(true);
+    //cardLock(true);
     uint32_t s = audiofile.size();
-    cardLock(false);
+    //cardLock(false);
     return s;
 }
 //---------------------------------------------------------------------------------------------------------------------
