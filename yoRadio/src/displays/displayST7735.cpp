@@ -3,7 +3,7 @@
 
 #include "displayST7735.h"
 #include "fonts/bootlogo40.h"
-#include "../core/player.h"
+#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
@@ -11,8 +11,8 @@
 #define DEF_SPI_FREQ        26000000UL      /*  set it to 0 for system default */
 #endif
 
-#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
-#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+#define TAKE_MUTEX() sdog.takeMutex()
+#define GIVE_MUTEX() sdog.giveMutex()
 
 #if DSP_HSPI
 DspCore::DspCore(): Adafruit_ST7735(&SPI2, TFT_CS, TFT_DC, TFT_RST) {}

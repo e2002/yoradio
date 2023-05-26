@@ -1,4 +1,5 @@
 #include "../core/options.h"
+#include "../core/spidog.h"
 #if I2S_DOUT==255
 /*
  *  vs1053_ext.cpp
@@ -152,7 +153,6 @@ Audio::Audio(uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi, 
     m_endFillByte=0;
     curvol=50;
     m_LFcount=0;
-    mutex_pl = xSemaphoreCreateMutex();
 }
 Audio::~Audio(){
     // destructor
@@ -180,18 +180,18 @@ void Audio::control_mode_off()
 {
     CS_HIGH();                                     // End control mode
     spi_VS1053->endTransaction();                  // Allow other SPI users
-    xSemaphoreGive(mutex_pl);
+    sdog.giveMutex();
 }
 void Audio::control_mode_on()
 {
-    xSemaphoreTake(mutex_pl, portMAX_DELAY);
+    sdog.takeMutex();
     spi_VS1053->beginTransaction(VS1053_SPI_CTL);   // Prevent other SPI users
     DCS_HIGH();                                     // Bring slave in control mode
     CS_LOW();
 }
 void Audio::data_mode_on()
 {
-    xSemaphoreTake(mutex_pl, portMAX_DELAY);
+    sdog.takeMutex();
     spi_VS1053->beginTransaction(VS1053_SPI_DATA);  // Prevent other SPI users
     CS_HIGH();                                      // Bring slave in data mode
     DCS_LOW();
@@ -201,7 +201,7 @@ void Audio::data_mode_off()
     //digitalWrite(dcs_pin, HIGH);              // End data mode
     DCS_HIGH();
     spi_VS1053->endTransaction();                       // Allow other SPI users
-    xSemaphoreGive(mutex_pl);
+    sdog.giveMutex();
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint16_t Audio::read_register(uint8_t _reg)
@@ -303,7 +303,6 @@ void Audio::begin(){
     pinMode(dreq_pin, INPUT);                               // DREQ is an input
     pinMode(cs_pin, OUTPUT);                                // The SCI and SDI signals
     pinMode(dcs_pin, OUTPUT);
-    //mutex_pl = xSemaphoreCreateMutex();
     DCS_HIGH();
     CS_HIGH();
     delay(170);
@@ -573,10 +572,9 @@ void Audio::showstreamtitle(const char* ml) {
 void Audio::cardLock(bool lock){
 #if (SDC_CS!=255)
   if(lock){
-    xSemaphoreTake(mutex_pl, portMAX_DELAY);
+    sdog.takeMutex();
   }else{
-//    digitalWrite(SDC_CS, HIGH);
-    xSemaphoreGive(mutex_pl);
+    sdog.giveMutex();
   }
 #endif
 }
@@ -744,9 +742,9 @@ void Audio::processLocalFile() {
 
         f_stream = false;
         m_f_localfile = false;
-        //cardLock(true);
+        cardLock(true);
         char *afn =strdup(audiofile.name()); // store temporary the name
-        //cardLock(false);
+        cardLock(false);
         stopSong();
         sprintf(chbuf, "End of file \"%s\"", afn);
         if(audio_info) audio_info(chbuf);
@@ -1612,7 +1610,7 @@ void Audio::setDefaults(){
     InBuff.resetBuffer();
     vector_clear_and_shrink(m_playlistURL);
     vector_clear_and_shrink(m_playlistContent);
-    if(config.store.play_mode!=PM_SDCARD){
+    if(config.getMode()!=PM_SDCARD){
       client.stop();
       client.flush(); // release memory
       clientsecure.stop();
@@ -2484,9 +2482,9 @@ void Audio::showID3Tag(const char* tag, const char* value){
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize(){
     if (!audiofile) return 0;
-    //cardLock(true);
+    cardLock(true);
     uint32_t s = audiofile.size();
-    //cardLock(false);
+    cardLock(false);
     return s;
 }
 //---------------------------------------------------------------------------------------------------------------------

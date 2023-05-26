@@ -166,13 +166,17 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
   return canread;
 }
 
-void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool gzip) {
+void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool doproc) {
   memset(chunkedPathBuffer, 0, sizeof(chunkedPathBuffer));
   strlcpy(chunkedPathBuffer, path, sizeof(chunkedPathBuffer)-1);
-  AsyncWebServerResponse *response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback, processor);
-  xSemaphoreTake(player.playmutex, portMAX_DELAY);
+  AsyncWebServerResponse *response;
+  if(doproc)
+  	response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback, processor);
+  else
+  	response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback);
+  //xSemaphoreTake(player.playmutex, portMAX_DELAY);
   request->send(response);
-  xSemaphoreGive(player.playmutex);
+  //xSemaphoreGive(player.playmutex);
 }
 
 #ifndef DSP_NOT_FLIPPED
@@ -200,11 +204,11 @@ void NetServer::processQueue(){
     switch (request.type) {
       case PLAYLIST:        getPlaylist(clientId); break;
       case PLAYLISTSAVED:   {
-        if(config.store.play_mode==PM_SDCARD) {
+        if(config.getMode()==PM_SDCARD) {
         //  config.indexSDPlaylist();
           config.initSDPlaylist();
         }
-        if(config.store.play_mode==PM_WEB){
+        if(config.getMode()==PM_WEB){
           config.indexPlaylist(); 
           config.initPlaylist(); 
         }
@@ -242,7 +246,7 @@ void NetServer::processQueue(){
           break;
         }
       case GETMODE:       sprintf (wsbuf, "{\"pmode\":\"%s\"}", network.status == CONNECTED ? "player" : "ap"); break;
-      case GETINDEX:      requestOnChange(STATION, clientId); requestOnChange(TITLE, clientId); requestOnChange(VOLUME, clientId); requestOnChange(EQUALIZER, clientId); requestOnChange(BALANCE, clientId); requestOnChange(BITRATE, clientId); requestOnChange(MODE, clientId); requestOnChange(SDINIT, clientId);requestOnChange(GETPLAYERMODE, clientId); if (config.store.play_mode==PM_SDCARD) { requestOnChange(SDPOS, clientId); requestOnChange(SDLEN, clientId); requestOnChange(SDSNUFFLE, clientId); } return; break;
+      case GETINDEX:      requestOnChange(STATION, clientId); requestOnChange(TITLE, clientId); requestOnChange(VOLUME, clientId); requestOnChange(EQUALIZER, clientId); requestOnChange(BALANCE, clientId); requestOnChange(BITRATE, clientId); requestOnChange(MODE, clientId); requestOnChange(SDINIT, clientId);requestOnChange(GETPLAYERMODE, clientId); if (config.getMode()==PM_SDCARD) { requestOnChange(SDPOS, clientId); requestOnChange(SDLEN, clientId); requestOnChange(SDSNUFFLE, clientId); } return; break;
       case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d}", config.store.smartstart != 2, config.store.audioinfo, config.store.vumeter, config.store.softapdelay); break;
       case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d}", config.store.flipscreen, config.store.invertdisplay, config.store.numplaylist, config.store.fliptouch, config.store.dbgtouch, config.store.dspon, config.store.brightness, config.store.contrast); break;
       case GETTIMEZONE:   sprintf (wsbuf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", config.store.tzHour, config.store.tzMin, config.store.sntp1, config.store.sntp2); break;
@@ -263,7 +267,7 @@ void NetServer::processQueue(){
       case EQUALIZER:     sprintf (wsbuf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
       case BALANCE:       sprintf (wsbuf, "{\"balance\": %d}", config.store.balance); break;
       case SDINIT:        sprintf (wsbuf, "{\"sdinit\": %d}", SDC_CS!=255); break;
-      case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.store.play_mode==PM_SDCARD?"modesd":"modeweb"); break;
+      case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
       case CHANGEMODE:    config.changeMode(newConfigMode); return; break;
       default:          break;
     }
@@ -541,8 +545,8 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         player.setVol(v);
       }
       if (strcmp(cmd, "sdpos") == 0) {
-        return;
-        if (config.store.play_mode==PM_SDCARD){
+        //return;
+        if (config.getMode()==PM_SDCARD){
           config.sdResumePos = 0;
           if(!player.isRunning()){
             player.setResumeFilePos(atoi(val)-player.sd_min);
@@ -626,41 +630,42 @@ void NetServer::getPlaylist(uint8_t clientId) {
   if (clientId == 0) { websocket.textAll(buf); } else { websocket.text(clientId, buf); }
 }
 
+int NetServer::_readPlaylistLine(File &file, char * line, size_t size){
+  int bytesRead = file.readBytesUntil('\n', line, size);
+  if(bytesRead>0){
+    line[bytesRead] = 0;
+    if(line[bytesRead-1]=='\r') line[bytesRead-1]=0;
+  }
+  return bytesRead;
+}
+
 bool NetServer::importPlaylist() {
-  if(config.store.play_mode==PM_SDCARD) return false;
+  if(config.getMode()==PM_SDCARD) return false;
   File tempfile = SPIFFS.open(TMP_PATH, "r");
   if (!tempfile) {
     return false;
   }
-  char sName[BUFLEN], sUrl[BUFLEN];
+  char sName[BUFLEN], sUrl[BUFLEN], linePl[BUFLEN*3];;
   int sOvol;
-  String line = tempfile.readStringUntil('\n');
-  if (config.parseCSV(line.c_str(), sName, sUrl, sOvol)) {
-    File playlistfile = SPIFFS.open(PLAYLIST_PATH, "w");
-    playlistfile.println(line);
-    while (tempfile.available()) {
-      line = tempfile.readStringUntil('\n');
-      if (config.parseCSV(line.c_str(), sName, sUrl, sOvol)) {
-        playlistfile.println(line);
-      }
-    }
-    playlistfile.close();
+  _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
+  if (config.parseCSV(linePl, sName, sUrl, sOvol)) {
     tempfile.close();
-    SPIFFS.remove(TMP_PATH);
+    SPIFFS.rename(TMP_PATH, PLAYLIST_PATH);
     requestOnChange(PLAYLISTSAVED, 0);
     return true;
   }
-  if (config.parseJSON(line.c_str(), sName, sUrl, sOvol)) {
+  if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
     File playlistfile = SPIFFS.open(PLAYLIST_PATH, "w");
-    String wline = String(sName) + "\t" + String(sUrl) + "\t" + String(sOvol);
-    playlistfile.println(wline);
+    snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, 0);
+    playlistfile.println(linePl);
     while (tempfile.available()) {
-      line = tempfile.readStringUntil('\n');
-      if (config.parseJSON(line.c_str(), sName, sUrl, sOvol)) {
-        wline = String(sName) + "\t" + String(sUrl) + "\t" + String(sOvol);
-        playlistfile.println(wline);
+      _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
+      if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
+        snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, 0);
+        playlistfile.println(linePl);
       }
     }
+    playlistfile.flush();
     playlistfile.close();
     tempfile.close();
     SPIFFS.remove(TMP_PATH);
@@ -684,26 +689,26 @@ String processor(const String& var) { // %Templates%
   if (var == "ACTION") return (network.status == CONNECTED && !config.emptyFS)?"webboard":"";
   if (var == "UPLOADWIFI") return (network.status == CONNECTED)?" hidden":"";
   if (var == "VERSION") return YOVERSION;
-  /*if (var == "MODE") {
-    if(config.store.play_mode==PM_SDCARD) {
-      return "modescard";
-    }else{
-      return "modeweb";
-    }
-  }*/
   return String();
 }
 
+int freeSpace;
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
-    //String spath = "/www/";
-    //if(filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
-    //request->_tempFile = SPIFFS.open(config.emptyFS?spath + filename:TMP_PATH , "w");
+  	if(filename!="tempwifi.csv"){
+		  if(SPIFFS.exists(PLAYLIST_PATH)) SPIFFS.remove(PLAYLIST_PATH);
+		  if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
+		  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_PATH);
+		  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_PATH);
+		  config.clearCardStatus();
+    }
+    freeSpace = (float)SPIFFS.totalBytes()/100*68-SPIFFS.usedBytes();
     request->_tempFile = SPIFFS.open(TMP_PATH , "w");
   }
   if (len) {
-    request->_tempFile.write(data, len);
-    //TODO check index+len size
+  	if(freeSpace>index+len){
+		  request->_tempFile.write(data, len);
+    }
   }
   if (final) {
     request->_tempFile.close();
@@ -744,10 +749,10 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
 #ifdef MQTT_ROOT_TOPIC
       if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
 #endif
-      if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.store.play_mode==PM_SDCARD){
-         netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH);
+      if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.getMode()==PM_SDCARD){
+         netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH, false);
       }else{
-        netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str());
+        netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str(), false);
       }
       return;
     }
@@ -797,6 +802,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       int id = atoi(p->value().c_str());
       if (id < 1) id = 1;
       if (id > config.store.countStation) id = config.store.countStation;
+      config.sdResumePos = 0;
       player.sendCommand({PR_PLAY, id});
       commandFound=true;
       DBGVB("[%s] play=%d", __func__, id);
@@ -839,6 +845,17 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
         config.sleepForAfter(sford, safterd);
         commandFound=true;
       }
+    }
+    if (request->hasArg("clearspiffs")) {
+      if(config.spiffsCleanup()){
+        config.store.play_mode = PM_WEB;
+        config.save();
+        request->redirect("/");
+        ESP.restart();
+      }else{
+        request->send(200);
+      }
+      return;
     }
     if (request->params() > 0) {
       request->send(commandFound?200:404);

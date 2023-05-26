@@ -3,15 +3,15 @@
 
 #include "displayN5110.h"
 #include <Wire.h>
-#include "../core/player.h"
+#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 28
 
-#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
-#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+#define TAKE_MUTEX() sdog.takeMutex()
+#define GIVE_MUTEX() sdog.giveMutex()
 
 const unsigned char logo [] PROGMEM=
 {

@@ -1,5 +1,5 @@
 #include "../core/options.h"
-#include "../core/player.h"
+#include "../core/spidog.h"
 #if DSP_MODEL==DSP_ST7920
 
 #include "Adafruit_GFX.h"
@@ -10,8 +10,8 @@
 //This display is split into two halfs. Pages are 16bit long and pages are arranged in that way that are lied horizontaly instead of verticaly, unlike SSD1306 OLED, Nokia 5110 LCD, etc.
 //After 8 horizonral page is written, it jumps to half of the screen (Y = 32) and continues until 16 lines of page have been written. After that, we have set cursor in new line.
 
-#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
-#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+#define TAKE_MUTEX() sdog.takeMutex()
+#define GIVE_MUTEX() sdog.giveMutex()
 #define st7920_swap(a, b) (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b)))
 
 void ST7920::drawPixel(int16_t x, int16_t y, uint16_t color) {

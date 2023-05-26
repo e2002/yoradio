@@ -31,8 +31,8 @@
 #endif
 #define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("##[BOOT]#\t"); Serial.println(buf); }
 #define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
-#define REAL_PLAYL   store.play_mode==PM_WEB?PLAYLIST_PATH:PLAYLIST_SD_PATH
-#define REAL_INDEX   store.play_mode==PM_WEB?INDEX_PATH:INDEX_SD_PATH
+#define REAL_PLAYL   getMode()==PM_WEB?PLAYLIST_PATH:PLAYLIST_SD_PATH
+#define REAL_INDEX   getMode()==PM_WEB?INDEX_PATH:INDEX_SD_PATH
 
 #define MAX_PLAY_MODE   1
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
@@ -194,7 +194,7 @@ class Config {
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
-    void initSDPlaylist();
+    void initSDPlaylist(bool doIndex = true);
     void indexSDPlaylist();
     uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
@@ -208,9 +208,12 @@ class Config {
     void doSleepW();
     void setSnuffle(bool sn);
     void changeMode(int newmode=-1);
+    uint8_t getMode() { return store.play_mode & 0b11; }
     void initPlaylistMode();
     void checkSD();
     cardStatus_e getSDStatus(){ return _cardStatus; };
+    void clearCardStatus() { if(_cardStatus!=CS_NONE) _cardStatus=CS_NONE; }
+    bool spiffsCleanup();
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);

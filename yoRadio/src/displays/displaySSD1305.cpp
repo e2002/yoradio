@@ -2,7 +2,7 @@
 #if DSP_MODEL==DSP_SSD1305 || DSP_MODEL==DSP_SSD1305I2C
 
 #include "displaySSD1305.h"
-#include "../core/player.h"
+#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
@@ -13,8 +13,8 @@
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
 
-#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY); digitalWrite(TFT_CS, LOW)
-#define GIVE_MUTEX() digitalWrite(TFT_CS, HIGH); if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+#define TAKE_MUTEX() sdog.takeMutex(); digitalWrite(TFT_CS, LOW)
+#define GIVE_MUTEX() digitalWrite(TFT_CS, HIGH); sdog.giveMutex()
 
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */

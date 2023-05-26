@@ -4,15 +4,15 @@
 #include "displayILI9225.h"
 #include <SPI.h>
 #include "fonts/bootlogo.h"
-#include "../core/player.h"
 #include "../core/config.h"
 #include "../core/network.h"
+#include "../core/spidog.h"
 
 extern unsigned char yofont5x7[];
 extern unsigned char yofont10x14[];
 
-#define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
-#define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+#define TAKE_MUTEX() sdog.takeMutex()
+#define GIVE_MUTEX() sdog.giveMutex()
 
 DspCore::DspCore(): TFT_22_ILI9225(TFT_RST, TFT_DC, TFT_CS, 0) {}
 

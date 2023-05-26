@@ -112,17 +112,13 @@ void audio_id3data(const char *info){  //id3 metadata
 
 void audio_eof_mp3(const char *info){  //end of file
     config.sdResumePos = 0;
-    if(config.sdSnuffle){
-      player.sendCommand({PR_PLAY, random(1, config.store.countStation)});
-    }else{
-      player.next();
-    }
+    player.next();
 }
 
 void audio_eof_stream(const char *info){
   player.sendCommand({PR_STOP, 0});
   if(!player.resumeAfterUrl) return;
-  if (config.store.play_mode==PM_WEB){
+  if (config.getMode()==PM_WEB){
     player.sendCommand({PR_PLAY, config.store.lastStation});
   }else{
     player.setResumeFilePos( config.sdResumePos==0?0:config.sdResumePos-player.sd_min);

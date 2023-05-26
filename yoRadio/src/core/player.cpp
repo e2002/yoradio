@@ -89,7 +89,7 @@ void Player::setError(const char *e){
 }
 
 void Player::_stop(bool alreadyStopped){
-  if(config.store.play_mode==PM_SDCARD && !alreadyStopped) config.sdResumePos = player.getFilePos();
+  if(config.getMode()==PM_SDCARD && !alreadyStopped) config.sdResumePos = player.getFilePos();
   _status = STOPPED;
   setOutputPins(false);
   if(!hasError()) config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
@@ -175,7 +175,7 @@ void Player::_play(uint16_t stationId) {
   config.setDspOn(1);
   display.putRequest(PSTOP);
   setOutputPins(false);
-  config.setTitle(config.store.play_mode==PM_WEB?const_PlConnect:"");
+  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
   config.station.bitrate=0;
   config.setBitrateFormat(BF_UNCNOWN);
   config.loadStation(stationId);
@@ -187,14 +187,17 @@ void Player::_play(uint16_t stationId) {
   netserver.loop();
   config.setSmartStart(0);
   bool isConnected = false;
-  if(config.store.play_mode==PM_SDCARD && SDC_CS!=255)
+  if(config.getMode()==PM_SDCARD && SDC_CS!=255)
     isConnected=connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min);
-  else config.store.play_mode=PM_WEB;
-  if(config.store.play_mode==PM_WEB) isConnected=connecttohost(config.station.url);
+  else {
+  	config.store.play_mode=PM_WEB;
+  	config.save();
+  }
+  if(config.getMode()==PM_WEB) isConnected=connecttohost(config.station.url);
   if(isConnected){
   //if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
     _status = PLAYING;
-    if(config.store.play_mode==PM_SDCARD) {
+    if(config.getMode()==PM_SDCARD) {
       config.sdResumePos = 0;
       config.backupSDStation = stationId;
     }
@@ -238,14 +241,14 @@ void Player::browseUrl(){
 #endif
 
 void Player::prev() {
-  if(config.store.play_mode==PM_WEB || !config.sdSnuffle){
+  if(config.getMode()==PM_WEB || !config.sdSnuffle){
     if (config.store.lastStation == 1) config.store.lastStation = config.store.countStation; else config.store.lastStation--;
   }
   sendCommand({PR_PLAY, config.store.lastStation});
 }
 
 void Player::next() {
-  if(config.store.play_mode==PM_WEB || !config.sdSnuffle){
+  if(config.getMode()==PM_WEB || !config.sdSnuffle){
     if (config.store.lastStation == config.store.countStation) config.store.lastStation = 1; else config.store.lastStation++;
   }else{
     config.store.lastStation = random(1, config.store.countStation);

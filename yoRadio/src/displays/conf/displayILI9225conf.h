@@ -14,7 +14,7 @@
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
 
 #if BITRATE_FULL
-  #define TITLE_FIX 24
+  #define TITLE_FIX 28
 #else
   #define TITLE_FIX 0
 #endif

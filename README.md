@@ -226,6 +226,15 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.220
+- fixed SD prelist indexing error when switching Web>>SD
+- fixed a bug of switching to the next track when accidentally playing SD
+- fixed import of large playlists (tried). PS: import playlist size is limited by SPIFFS size (SPIFFS.totalBytes()/100*65-SPIFFS.usedBytes() = approximately 60kb )
+- new url parameter - http://YPRADIOIP/?clearspiffs - for clearing tails from SD playlist
+- optimization of the issuance of the WEB-interface
+- brought back the functionality of the track slider
+- fixing bugs in the application logic
+
 #### v0.9.201
 - fixed a bug when importing a playlist
 

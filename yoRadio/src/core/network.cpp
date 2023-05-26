@@ -42,12 +42,14 @@ void ticks() {
     mktime(&network.timeinfo);
     display.putRequest(CLOCK);
   }
-  if(player.isRunning() && config.store.play_mode==PM_SDCARD) netserver.requestOnChange(SDPOS, 0);
+  if(player.isRunning() && config.getMode()==PM_SDCARD) netserver.requestOnChange(SDPOS, 0);
   if(divrssi) {
     netserver.setRSSI(WiFi.RSSI());
     netserver.requestOnChange(NRSSI, 0);
     display.putRequest(DSPRSSI, netserver.getRSSI());
+#if SDC_CS!=255
     if(!config.mountSDbusy) player.sendCommand({PR_CHECKSD, 0});
+#endif
   }
 }
 

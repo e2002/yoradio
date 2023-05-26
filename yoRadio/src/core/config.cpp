@@ -4,6 +4,7 @@
 #include "display.h"
 #include "player.h"
 #include "netserver.h"
+#include "spidog.h"
 
 Config config;
 
@@ -13,8 +14,6 @@ SPIClass  SPI2(HSPI);
 #if defined(SD_SPIPINS) || SD_HSPI
 SPIClass  SDSPI(HSPI);
 #endif
-#define SDL() if(player.mutex_pl!=NULL) player.cardLock(true)
-#define SDU() vTaskDelay(2); if(player.mutex_pl!=NULL) player.cardLock(false) 
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -34,6 +33,7 @@ bool Config::_isFSempty() {
 
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
+  sdog.begin();
   emptyFS = true;
 #if IR_PIN!=255
     irindex=-1;
@@ -72,29 +72,37 @@ void Config::init() {
 }
 
 bool Config::_sdCardIsConnected() {
-  if(SD.sectorSize()<1) return false;
-  SDL();
+#if SDC_CS!=255
+	sdog.takeMutex();
+  if(SD.sectorSize()<1) {
+  	sdog.giveMutex();
+  	return false;
+  }
   uint8_t buff[SD.sectorSize()] = { 0 };
   bool bread = SD.readRAW(buff, 1);
   if(SD.sectorSize()>0 && !bread) SD.end();
-  SDU();
+  sdog.giveMutex();
   return bread;
+#endif
+	return false;
 }
 
 bool Config::_sdBegin(){
-  bool out;
-  SDL();
-#if defined(SD_SPIPINS) || SD_HSPI
-  out = SD.begin(SDC_CS, SDSPI);
-#else
-  out = SD.begin(SDC_CS);
+  bool out = false;
+#if SDC_CS!=255
+		sdog.takeMutex();
+	#if defined(SD_SPIPINS) || SD_HSPI
+		out = SD.begin(SDC_CS, SDSPI);
+	#else
+		out = SD.begin(SDC_CS);
+	#endif
+		sdog.giveMutex();
 #endif
-  SDU();
   return out;
 }
 
 void Config::checkSD(){
-  if(SDC_CS==255) return;
+#if SDC_CS!=255
   mountSDbusy = true;
   cardStatus_e prevCardStatus = _cardStatus;
   if(_sdCardIsConnected()){
@@ -103,23 +111,34 @@ void Config::checkSD(){
     }else{
       _cardStatus=CS_MOUNTED;
     }
-    if(_cardStatus==CS_PRESENT && store.play_mode==PM_WEB && SD_AUTOPLAY && prevCardStatus==CS_EJECTED) config.changeMode(PM_SDCARD);
+    if(_cardStatus==CS_PRESENT && getMode()==PM_WEB && SD_AUTOPLAY && prevCardStatus==CS_EJECTED) config.changeMode(PM_SDCARD);
   }else{
     if(_cardStatus==CS_MOUNTED || _cardStatus==CS_PRESENT || _cardStatus==CS_EJECTED){
-      if(_cardStatus!=CS_EJECTED && store.play_mode==PM_SDCARD && SD_AUTOPLAY) config.changeMode(PM_WEB);
+      if(_cardStatus!=CS_EJECTED && getMode()==PM_SDCARD && SD_AUTOPLAY) config.changeMode(PM_WEB);
       _cardStatus=CS_EJECTED;
     }
     backupSDStation = 0;
   }
   mountSDbusy = false;
+#endif
+}
+
+bool Config::spiffsCleanup(){
+  bool ret = (SPIFFS.exists(PLAYLIST_SD_PATH)) || (SPIFFS.exists(INDEX_SD_PATH)) || (SPIFFS.exists(INDEX_PATH));
+  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
+  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
+  if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
+  return ret;
 }
 
 void Config::_mountSD(){
+#if SDC_CS!=255
   if(SDC_CS==255 || mountSDbusy || display.mode()==SDCHANGE) return;
   mountSDbusy = true;
-  if(SD.sectorSize()<1) SDinit = _sdBegin();
+  sdog.takeMutex(); uint16_t ssz = SD.sectorSize(); sdog.giveMutex();
+  if(ssz<1) SDinit = _sdBegin();
   if(!_sdCardIsConnected()) {
-    if(store.play_mode==PM_SDCARD){
+    if(getMode()==PM_SDCARD){
       SDinit = false;
     }
   }else{
@@ -132,6 +151,7 @@ void Config::_mountSD(){
     }
   }
   mountSDbusy = false;
+#endif
 }
 
 void Config::initPlaylistMode(){
@@ -143,12 +163,13 @@ void Config::initPlaylistMode(){
       Serial.println("SD Mount Failed");
     }else{
       Serial.println("SD Mounted");
-      if(store.play_mode==PM_SDCARD) {
+      if(getMode()==PM_SDCARD) {
         if(_cardStatus!=CS_MOUNTED){
           _cardStatus=CS_MOUNTED;
           if(_bootDone) Serial.println("Waiting for SD card indexing..."); else BOOTLOG("Waiting for SD card indexing...");
           initSDPlaylist();
         }else{
+        	initSDPlaylist(false);
           if(backupSDStation==0) {
             store.lastStation = random(1, store.countStation);
             backupSDStation = store.lastStation;
@@ -160,12 +181,13 @@ void Config::initPlaylistMode(){
   }else{
     store.play_mode=PM_WEB;
   }
-  if(store.play_mode==PM_WEB && !emptyFS) initPlaylist();
+  if(getMode()==PM_WEB && !emptyFS) initPlaylist();
   
   if (store.lastStation == 0 && store.countStation > 0) {
-    store.lastStation = store.play_mode==PM_WEB?1:random(1, store.countStation);
-    save();
+    store.lastStation = getMode()==PM_WEB?1:random(1, store.countStation);
+    //save();
   }
+  save();
   _bootDone = true;
   loadStation(store.lastStation);
 }
@@ -310,8 +332,8 @@ uint16_t Config::getTimezoneOffset() {
 void Config::save() {
   uint16_t ls = store.lastStation;
   uint8_t  pm = store.play_mode;
-  if(store.play_mode==PM_SDCARD) store.lastStation = backupLastStation;
-  if(store.play_mode==PM_WEB) backupLastStation = store.lastStation;
+  if(getMode()==PM_SDCARD) store.lastStation = backupLastStation;
+  if(getMode()==PM_WEB) backupLastStation = store.lastStation;
   bitWrite(store.play_mode, 2, sdSnuffle);
   eepromWrite(EEPROM_START, store);
   store.lastStation = ls;
@@ -322,10 +344,10 @@ void Config::setSnuffle(bool sn){
   sdSnuffle=sn;
   save();
   if(sdSnuffle) player.next();
-  //player blah blah blah
 }
 
 void Config::changeMode(int newmode){
+#if SDC_CS!=255
   if(SDC_CS==255) return;
   if(!SDinit) {
     _mountSD();
@@ -335,17 +357,17 @@ void Config::changeMode(int newmode){
       return;
     }
   }
-  if(store.play_mode==PM_SDCARD) store.lastStation = config.backupLastStation;
+  if(getMode()==PM_SDCARD) store.lastStation = config.backupLastStation;
   if(newmode<0){
     store.play_mode++;
-    if(store.play_mode > MAX_PLAY_MODE){
+    if(getMode() > MAX_PLAY_MODE){
       store.play_mode=0;
     }
   }else{
     store.play_mode=(playMode_e)newmode;
   }
   save();
-  if(store.play_mode==PM_SDCARD && _cardStatus!=CS_MOUNTED){
+  if(getMode()==PM_SDCARD && _cardStatus!=CS_MOUNTED){
     display.putRequest(NEWMODE, SDCHANGE);
     while(display.mode()!=SDCHANGE)
       delay(10);
@@ -360,6 +382,7 @@ void Config::changeMode(int newmode){
   netserver.requestOnChange(GETMODE, 0);
   display.putRequest(NEWMODE, PLAYER);
   display.putRequest(NEWSTATION);
+#endif
 }
 
 #if IR_PIN!=255
@@ -475,12 +498,12 @@ bool Config::checkNoMedia(const char* path){
   char nomedia[BUFLEN]= {0};
   strlcat(nomedia, path, BUFLEN);
   strlcat(nomedia, "/.nomedia", BUFLEN);
-  SDL(); bool nm = SD.exists(nomedia); SDU();
+  sdog.takeMutex(); bool nm = SD.exists(nomedia); sdog.giveMutex();
   return nm;
 }
 
 void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels){
-  SDL(); File root = SD.open(dirname); SDU();
+  sdog.takeMutex(); File root = SD.open(dirname); sdog.giveMutex();
   if(!root){
     Serial.println("##[ERROR]#\tFailed to open directory");
     return;
@@ -490,28 +513,34 @@ void Config::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8
     return;
   }
 
-  SDL(); File file = root.openNextFile(); SDU();
+  sdog.takeMutex(); File file = root.openNextFile(); sdog.giveMutex();
   uint32_t pos = 0;
   //vTaskDelay(5);
   while(file){
-    
-    if(file.isDirectory()){
-      if(levels && !checkNoMedia(file.path())){
-        listSD(plSDfile, plSDindex, file.path(), levels -1);
+  	sdog.takeMutex();
+    bool fid = file.isDirectory();
+    const char * fp = file.path();
+    const char * fn = file.name();
+    sdog.giveMutex();
+    if(fid){
+      if(levels && !checkNoMedia(fp)){
+        listSD(plSDfile, plSDindex, fp, levels -1);
       }
     } else {
-      if(endsWith(strlwr((char*)file.name()), ".mp3") || endsWith(file.name(), ".m4a") || endsWith(file.name(), ".aac") || endsWith(file.name(), ".wav") || endsWith(file.name(), ".flac")){
+      if(endsWith(strlwr((char*)fn), ".mp3") || endsWith(fn, ".m4a") || endsWith(fn, ".aac") || endsWith(fn, ".wav") || endsWith(fn, ".flac")){
         pos = plSDfile.position();
-        plSDfile.print(file.name()); plSDfile.print("\t"); plSDfile.print(file.path()); plSDfile.print("\t"); plSDfile.println(0);
+        plSDfile.print(fn); plSDfile.print("\t"); plSDfile.print(fp); plSDfile.print("\t"); plSDfile.println(0);
         plSDindex.write((byte *) &pos, 4);
       }
     }
-    SDL(); file = root.openNextFile(); SDU();
+    sdog.takeMutex(); file = root.openNextFile(); sdog.giveMutex();
   }
 }
 
 void Config::indexSDPlaylist() {
   mountSDbusy = true;
+  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
+  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
   File playlist = SPIFFS.open(PLAYLIST_SD_PATH, "w");
   if (!playlist) {
     mountSDbusy = false;
@@ -519,19 +548,24 @@ void Config::indexSDPlaylist() {
   }
   File index = SPIFFS.open(INDEX_SD_PATH, "w");
   listSD(playlist, index, "/", 2);
+  index.flush();
   index.close();
+  playlist.flush();
   playlist.close();
+  delay(50);
   mountSDbusy = false;
 }
 
-void Config::initSDPlaylist() {
+void Config::initSDPlaylist(bool doIndex) {
   store.countStation = 0;
-  indexSDPlaylist();
+  if(doIndex) indexSDPlaylist();
   if (SPIFFS.exists(INDEX_SD_PATH)) {
     File index = SPIFFS.open(INDEX_SD_PATH, "r");
     store.countStation = index.size() / 4;
-    store.lastStation = random(1, store.countStation);
-    backupSDStation = store.lastStation;
+    if(doIndex){
+		  store.lastStation = random(1, store.countStation);
+		  backupSDStation = store.lastStation;
+    }
     index.close();
     save();
   }

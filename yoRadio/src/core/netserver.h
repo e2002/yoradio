@@ -60,7 +60,7 @@ class NetServer {
     void requestOnChange(requestType_e request, uint8_t clientId);
     void setRSSI(int val) { rssi = val; };
     int  getRSSI()        { return rssi; };
-    void chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool gzip = false);
+    void chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool doproc = true);
     void onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId);
     bool irRecordEnable;
 #if IR_PIN!=255
@@ -77,6 +77,7 @@ class NetServer {
     static void beginUpload(AsyncWebServerRequest *request);
     static void beginUpdate(AsyncWebServerRequest *request);
     void processQueue();
+    int _readPlaylistLine(File &file, char * line, size_t size);
 };
 
 extern NetServer netserver;

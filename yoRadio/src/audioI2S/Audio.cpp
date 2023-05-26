@@ -1,4 +1,5 @@
 #include "../core/options.h"
+#include "../core/spidog.h"
 #if VS1053_CS==255
 /*
  * Audio.cpp
@@ -170,7 +171,6 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_DAC
 #ifdef AUDIO_LOG
     m_f_Log = true;
 #endif
-    mutex_pl = xSemaphoreCreateMutex();
     clientsecure.setInsecure();  // if that can't be resolved update to ESP32 Arduino version 1.0.5-rc05 or higher
     m_f_channelEnabled = channelEnabled;
     m_f_internalDAC = internalDAC;
@@ -315,7 +315,7 @@ void Audio::setDefaults() {
     vector_clear_and_shrink(m_playlistURL);
     vector_clear_and_shrink(m_playlistContent);
     m_hashQueue.clear(); m_hashQueue.shrink_to_fit(); // uint32_t vector
-    if(config.store.play_mode!=PM_SDCARD){
+    if(config.getMode()!=PM_SDCARD){
       client.stop();
       client.flush(); // release memory
       clientsecure.stop();
@@ -711,14 +711,14 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     m_file_size = audiofile.size();//TEST loop
     cardLock(false);
     char* afn = NULL;  // audioFileName
-//cardLock(true);
+cardLock(true);
 #ifdef SDFATFS_USED
     audiofile.getName(chbuf, sizeof(chbuf));
     afn = strdup(chbuf);
 #else
     afn = strdup(audiofile.name());
 #endif
-//cardLock(false);
+cardLock(false);
     uint8_t dotPos = lastIndexOf(afn, ".");
     for(uint8_t i = dotPos + 1; i < strlen(afn); i++){
         afn[i] = toLowerCase(afn[i]);
@@ -2458,9 +2458,9 @@ bool Audio::playChunk() {
 void Audio::cardLock(bool lock){
 #if (TFT_CS!=255) || (SDC_CS!=255)
   if(lock){
-    xSemaphoreTake(mutex_pl, portMAX_DELAY);
+    sdog.takeMutex();
   }else{
-    xSemaphoreGive(mutex_pl);
+    sdog.giveMutex();
   }
 #endif
 }
@@ -3035,14 +3035,14 @@ void Audio::processLocalFile() {
         } //TEST loop
         f_stream = false;
         m_streamType = ST_NONE;
-//cardLock(true);
+cardLock(true);
 #ifdef SDFATFS_USED
         audiofile.getName(chbuf, sizeof(chbuf));
         char *afn =strdup(chbuf);
 #else
         char *afn =strdup(audiofile.name()); // store temporary the name
 #endif
-//cardLock(false);
+cardLock(false);
         stopSong();
         if(m_codec == CODEC_MP3)   MP3Decoder_FreeBuffers();
         if(m_codec == CODEC_AAC)   AACDecoder_FreeBuffers();
@@ -4400,9 +4400,9 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN, int8_
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize() {
     if(!audiofile) return 0;
-    //cardLock(true);
+    cardLock(true);
     uint32_t s = audiofile.size();
-    //cardLock(false);
+    cardLock(false);
     return s;
 }
 //---------------------------------------------------------------------------------------------------------------------

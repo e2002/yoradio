@@ -19,7 +19,7 @@
  *
  */
 #include "../core/options.h"
-#include "../core/player.h"
+#include "../core/spidog.h"
 #if DSP_MODEL==DSP_SSD1322
 
 
@@ -39,8 +39,8 @@
 #define SSD1322_MODE_DATA    digitalWrite(dcPin, HIGH); ///< Data mode
 
 #if defined(SPI_HAS_TRANSACTION)
-  #define TAKE_MUTEX() if(player.mutex_pl) xSemaphoreTake(player.mutex_pl, portMAX_DELAY)
-  #define GIVE_MUTEX() if(player.mutex_pl) xSemaphoreGive(player.mutex_pl)
+  #define TAKE_MUTEX() sdog.takeMutex()
+	#define GIVE_MUTEX() sdog.giveMutex()
   #define SPI_TRANSACTION_START TAKE_MUTEX(); spi->beginTransaction(spiSettings) ///< Pre-SPI
   #define SPI_TRANSACTION_END   spi->endTransaction(); GIVE_MUTEX()             ///< Post-SPI
 #else // SPI transactions likewise not present in older Arduino SPI lib

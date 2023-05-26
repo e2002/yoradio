@@ -310,7 +310,6 @@ public:
     bool     setFilePos(uint32_t pos);
     uint32_t getAudioFileDuration();
     uint32_t getAudioCurrentTime();
-    SemaphoreHandle_t mutex_pl=NULL;
     size_t   bufferFilled();
     size_t   bufferFree();
     size_t   inBufferFilled(){ return bufferFilled(); }
