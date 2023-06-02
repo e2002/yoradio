@@ -226,6 +226,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.236
+- fix compilation error 'class NetServer' has no member named 'resetQueue'
+
 #### v0.9.235
 - SD card playlist moved from SPIFFS to SD card
 - new parameter #define SD_MAX_LEVELS - Search depth for files on SD card
