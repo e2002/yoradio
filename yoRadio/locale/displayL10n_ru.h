@@ -65,7 +65,7 @@ const char    const_DlgLost[]    PROGMEM = "ОТКЛЮЧЕНО";
 const char  const_DlgUpdate[]    PROGMEM = "ОБНОВЛЕНИЕ";
 const char const_DlgNextion[]    PROGMEM = "NEXTION";
 const char const_getWeather[]    PROGMEM = "";
-const char  const_waitForSD[]    PROGMEM = "ОЖИДАНИЕ SD";
+const char  const_waitForSD[]    PROGMEM = "ИНДЕКС SD";
 
 const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
 const char        apPassTxt[]    PROGMEM = "ПАРОЛЬ";

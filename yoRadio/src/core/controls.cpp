@@ -503,10 +503,12 @@ void onBtnClick(int id) {
         }
         break;
       }
+    #ifdef USE_SD
     case EVT_BTNMODE: {
       config.changeMode();
       break;
     }
+    #endif
     default: break;
   }
 }

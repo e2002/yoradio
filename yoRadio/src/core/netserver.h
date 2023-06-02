@@ -66,6 +66,7 @@ class NetServer {
 #if IR_PIN!=255
     void irToWs(const char* protocol, uint64_t irvalue);
     void irValsToWs(); 
+    void resetQueue();
 #endif
   private:
     requestType_e request;

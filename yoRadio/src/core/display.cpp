@@ -424,6 +424,10 @@ void Display::loop() {
         if(_bootstring) _bootstring->setText(const_waitForSD);
         break;
       }
+      case SDFILEINDEX: {
+      	if(_mode == SDCHANGE) _nums.setText(request.payload, "%d");
+      	break;
+      }
       case DSPRSSI: if(_rssi){ _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.isRunning()?player.inBufferFilled():0); break;
       case PSTART: _layoutChange(true);   break;
       case PSTOP:  _layoutChange(false);  break;

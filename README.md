@@ -226,6 +226,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.235
+- SD card playlist moved from SPIFFS to SD card
+- new parameter #define SD_MAX_LEVELS - Search depth for files on SD card
+- fixed bugs with SD card in multi-threaded mode
+
 #### v0.9.220
 - fixed SD prelist indexing error when switching Web>>SD
 - fixed a bug of switching to the next track when accidentally playing SD

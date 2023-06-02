@@ -10,11 +10,19 @@
 #include "mqtt.h"
 #include "controls.h"
 #include <Update.h>
+#include "spidog.h"
 
 #ifndef MIN_MALLOC
 #define MIN_MALLOC 24112
 #endif
 
+#ifdef USE_SD
+	#define CARDLOCK() sdog.tm()
+	#define CARDUNLOCK() sdog.gm()
+#else
+	#define CARDLOCK() {}
+	#define CARDUNLOCK() {}
+#endif
 //#define CORS_DEBUG
 
 NetServer netserver;
@@ -152,17 +160,33 @@ void NetServer::beginUpload(AsyncWebServerRequest *request) {
 }
 
 size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index){
-  File requiredfile = SPIFFS.open(netserver.chunkedPathBuffer, "r");
+  File requiredfile;
+  bool sdpl = strcmp(netserver.chunkedPathBuffer, PLAYLIST_SD_PATH) == 0;
+  if(sdpl){
+  	CARDLOCK();
+  	requiredfile = config.SDPLFS()->open(netserver.chunkedPathBuffer, "r");
+  	CARDUNLOCK();
+  }else{
+  	requiredfile = SPIFFS.open(netserver.chunkedPathBuffer, "r");
+  }
   if (!requiredfile) return 0;
+  if(sdpl) CARDLOCK();
   size_t filesize = requiredfile.size();
+  if(sdpl) CARDUNLOCK();
   size_t needread = filesize - index;
-  if (!needread) return 0;
+  if (!needread) {
+		if(sdpl) { CARDLOCK(); requiredfile.close(); CARDUNLOCK(); }
+  	return 0;
+  }
   size_t canread = (needread > maxLen) ? maxLen : needread;
   DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, netserver.chunkedPathBuffer, canread, maxLen);
+  if(sdpl) CARDLOCK();
   requiredfile.seek(index, SeekSet);
+  //vTaskDelay(1);
   requiredfile.read(buffer, canread);
   index += canread;
   if (requiredfile) requiredfile.close();
+  if(sdpl) CARDUNLOCK();
   return canread;
 }
 
@@ -204,10 +228,12 @@ void NetServer::processQueue(){
     switch (request.type) {
       case PLAYLIST:        getPlaylist(clientId); break;
       case PLAYLISTSAVED:   {
+      	#ifdef USE_SD
         if(config.getMode()==PM_SDCARD) {
         //  config.indexSDPlaylist();
           config.initSDPlaylist();
         }
+        #endif
         if(config.getMode()==PM_WEB){
           config.indexPlaylist(); 
           config.initPlaylist(); 
@@ -268,7 +294,9 @@ void NetServer::processQueue(){
       case BALANCE:       sprintf (wsbuf, "{\"balance\": %d}", config.store.balance); break;
       case SDINIT:        sprintf (wsbuf, "{\"sdinit\": %d}", SDC_CS!=255); break;
       case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
-      case CHANGEMODE:    config.changeMode(newConfigMode); return; break;
+      #ifdef USE_SD
+      	case CHANGEMODE:    config.changeMode(newConfigMode); return; break;
+      #endif
       default:          break;
     }
     if (strlen(wsbuf) > 0) {
@@ -685,6 +713,10 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
   xQueueSend(nsQueue, &nsrequest, portMAX_DELAY);
 }
 
+void NetServer::resetQueue(){
+  xQueueReset(nsQueue);
+}
+
 String processor(const String& var) { // %Templates%
   if (var == "ACTION") return (network.status == CONNECTED && !config.emptyFS)?"webboard":"";
   if (var == "UPLOADWIFI") return (network.status == CONNECTED)?" hidden":"";
@@ -698,8 +730,8 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
   	if(filename!="tempwifi.csv"){
 		  if(SPIFFS.exists(PLAYLIST_PATH)) SPIFFS.remove(PLAYLIST_PATH);
 		  if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
-		  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_PATH);
-		  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_PATH);
+		  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
+		  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
 		  config.clearCardStatus();
     }
     freeSpace = (float)SPIFFS.totalBytes()/100*68-SPIFFS.usedBytes();

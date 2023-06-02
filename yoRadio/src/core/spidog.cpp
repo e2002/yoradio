@@ -7,24 +7,32 @@ SPIDog::SPIDog() {
 }
 
 bool SPIDog::begin(){
-	_spiMutex = xSemaphoreCreateMutex();
-	return (_spiMutex != NULL);
+	if(_spiMutex==NULL){
+		_spiMutex = xSemaphoreCreateMutex();
+		if(_spiMutex==NULL) return false;
+	}
+	return true;
 }
 
 bool SPIDog::takeMutex(){
 	if(_spiMutex == NULL) {
 		return false; 
 	}
-	if(xSemaphoreTake(_spiMutex, SDOG_PORT_DELAY) == pdTRUE){
-		_busy = true;
-		return true;
-	}
-	return false;
+	do { } while (xSemaphoreTake(_spiMutex, portMAX_DELAY) != pdPASS);
+	_busy = true;
+	return true;
 }
 
 void SPIDog::giveMutex(){
 	if(_spiMutex != NULL) xSemaphoreGive(_spiMutex);
 	_busy = false;
+}
+
+bool SPIDog::canTake(){
+	if(_spiMutex == NULL) {
+		return false; 
+	}
+	return xSemaphoreTake(_spiMutex, 0) == pdPASS;
 }
 
 bool SPIDog::breakMutex(uint8_t ticks){

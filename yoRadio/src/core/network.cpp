@@ -47,8 +47,8 @@ void ticks() {
     netserver.setRSSI(WiFi.RSSI());
     netserver.requestOnChange(NRSSI, 0);
     display.putRequest(DSPRSSI, netserver.getRSSI());
-#if SDC_CS!=255
-    if(!config.mountSDbusy) player.sendCommand({PR_CHECKSD, 0});
+#ifdef USE_SD
+    if(display.mode()!=SDCHANGE) player.sendCommand({PR_CHECKSD, 0});
 #endif
   }
 }

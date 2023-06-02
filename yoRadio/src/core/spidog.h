@@ -17,6 +17,7 @@ class SPIDog {
   	bool begin();
   	bool takeMutex();
   	void giveMutex();
+  	bool canTake();
   	bool breakMutex(uint8_t ticks=5);
   	bool busy() { return _busy; }
   	bool tm() { return takeMutex(); }

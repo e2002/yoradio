@@ -139,10 +139,12 @@ void Player::loop() {
         Audio::setVolume(volToI2S(requestP.payload));
         break;
       }
+      #ifdef USE_SD
       case PR_CHECKSD: {
         config.checkSD();
         break;
       }
+      #endif
       default: break;
     }
   }
@@ -173,7 +175,7 @@ void Player::_play(uint16_t stationId) {
   setError("");
   remoteStationName = false;
   config.setDspOn(1);
-  display.putRequest(PSTOP);
+  //display.putRequest(PSTOP);
   setOutputPins(false);
   config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
   config.station.bitrate=0;
