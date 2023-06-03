@@ -425,7 +425,9 @@ void Audio::stopSong()
 {
     uint16_t modereg;                                       // Read from mode register
     int i;                                                  // Loop control
-
+		if(audiofile){
+			cardLock(true);audiofile.close();cardLock(false);
+		}
     m_f_localfile = false;
     m_f_webfile = false;
     m_f_webstream = false;

@@ -226,6 +226,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.242
+- fixed a hang bug when scrolling through an SD playlist with an encoder in configurations with VS1053B
+- fixed a hang bug when quickly switching SD / WEB modes from the WEB interface in configurations with VS1053B
+- fixes in the logic of work
+
 #### v0.9.236
 - fix compilation error 'class NetServer' has no member named 'resetQueue'
 

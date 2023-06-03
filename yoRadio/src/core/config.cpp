@@ -64,7 +64,8 @@ void Config::init() {
   ssidsCount = 0;
   _cardStatus = CS_NONE;
   _SDplaylistFS = getMode()==PM_SDCARD?&SD:(true?&SPIFFS:_SDplaylistFS);
-  if(SDC_CS!=255) randomSeed(analogRead(SDC_CS));
+  //if(SDC_CS!=255) randomSeed(analogRead(SDC_CS));
+  randomSeed(esp_random());
   backupSDStation = 0;
   //checkSD();
   _bootDone=false;
@@ -162,6 +163,7 @@ void Config::changeMode(int newmode){
       delay(10);
     delay(50);
   }
+  if(getMode()==PM_WEB) player.setResumeFilePos(0);
   initPlaylistMode();
   if (store.smartstart == 1) player.sendCommand({PR_PLAY, store.lastStation});
   //else
@@ -661,23 +663,25 @@ uint8_t Config::fillPlMenu(int from, uint8_t count, bool fromNextion) {
       playlist.seek(pos, SeekSet);
       sdog.giveMutex();
     }
-    while (playlist.available()) {
+    bool pla = true;
+    while (pla) {
     	sdog.takeMutex();
+    	pla = playlist.available();
       String stationName = playlist.readStringUntil('\n');
       sdog.giveMutex();
       stationName = stationName.substring(0, stationName.indexOf('\t'));
-      if(config.store.numplaylist) stationName = String(from+c)+" "+stationName;
+      if(config.store.numplaylist && stationName.length()>0) stationName = String(from+c)+" "+stationName;
       if(!fromNextion) display.printPLitem(c, stationName.c_str());
-  #ifdef USE_NEXTION
-    if(fromNextion) nextion.printPLitem(c, stationName.c_str());
-  #endif
+			#ifdef USE_NEXTION
+				if(fromNextion) nextion.printPLitem(c, stationName.c_str());
+			#endif
       c++;
       if (c >= count) break;
     }
     break;
   }
-  return c;
   sdog.takeMutex();playlist.close();sdog.giveMutex();
+  return c;
 }
 
 bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {

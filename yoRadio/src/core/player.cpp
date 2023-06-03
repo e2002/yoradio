@@ -36,6 +36,7 @@ QueueHandle_t playerQueue;
 void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
   playerQueue=NULL;
+  _resumeFilePos = 0;
   playerQueue = xQueueCreate( 5, sizeof( playerRequestParams_t ) );
   setOutputPins(false);
   delay(50);
