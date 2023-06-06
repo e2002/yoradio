@@ -79,6 +79,9 @@ https://aliexpress.com/item/4000699838567.html
 https://www.aliexpress.com/item/33009687492.html
 - Touchscreen https://aliexpress.com/item/33048191074.html
 
+##### RTC
+- DS1307 or DS3231 https://aliexpress.com/item/4001130860369.html
+
 ---
 ## Connection tables
 ##### Use [this tool](https://e2002.github.io/docs/myoptions-generator.html) to build your own connection table and myoptions.h file.
@@ -89,7 +92,7 @@ https://e2002.github.io/docs/myoptions-generator.html
 ---
 ## Dependencies
 #### Libraries:
-**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, TFT_22_ILI9225\* (\* depending on display model), OneButton, IRremoteESP8266, XPT2046_Touchscreen \
+**Library Manager**: Adafruit_GFX, Adafruit_ST7735\*, Adafruit_SSD1306\*, Adafruit_PCD8544\*, Adafruit_SH110X\*, Adafruit_SSD1327\*, Adafruit_ILI9341\*, Adafruit_SSD1305\*, TFT_22_ILI9225\* (\* depending on display model), OneButton, IRremoteESP8266, XPT2046_Touchscreen, RTCLib \
 **Github**: ~~[ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer), [AsyncTCP](https://github.com/me-no-dev/AsyncTCP), [async-mqtt-client](https://github.com/marvinroger/async-mqtt-client) (if you need MQTT support)~~ <<< **starting with version 0.8.920, these libraries have been moved into the project, and there is no need to install them additionally.**
 
 #### Tool:
@@ -226,6 +229,15 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.250
+- added support for DS1307 or DS3231 RTC module (you need to install the RTCLib library in the library manager)
+- setup
+```
+#define RTC_MODULE	DS3231	/* or DS1307	*/
+#define RTC_SDA       <pin>
+#define RTC_SCL       <pin>
+```
+
 #### v0.9.242
 - fixed a hang bug when scrolling through an SD playlist with an encoder in configurations with VS1053B
 - fixed a hang bug when quickly switching SD / WEB modes from the WEB interface in configurations with VS1053B

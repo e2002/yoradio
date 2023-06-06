@@ -6,6 +6,7 @@
 #include <SPIFFS.h>
 #include "SD.h"
 #include "options.h"
+#include "rtcsupport.h"
 
 #define EEPROM_SIZE       768
 #define EEPROM_START      500
@@ -220,11 +221,17 @@ class Config {
     void clearCardStatus() { if(_cardStatus!=CS_NONE) _cardStatus=CS_NONE; }
     bool spiffsCleanup();
     FS* SDPLFS(){ return _SDplaylistFS; }
+    #if RTCSUPPORTED
+    	bool isRTCFound(){ return _rtcFound; };
+    #endif
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);
     cardStatus_e _cardStatus;
     bool _bootDone;
+    #if RTCSUPPORTED
+    	bool _rtcFound;
+    #endif
     FS* _SDplaylistFS;
     void setDefaults();
     Ticker   _sleepTimer;

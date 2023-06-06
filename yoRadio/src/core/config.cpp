@@ -34,6 +34,17 @@ bool Config::_isFSempty() {
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
   sdog.begin();
+  bootInfo();
+#if RTCSUPPORTED
+	_rtcFound = false;
+	BOOTLOG("RTC begin(SDA=%d,SCL=%d)", RTC_SDA, RTC_SCL);
+	if(rtc.init()){
+		BOOTLOG("done");
+		_rtcFound = true;
+	}else{
+		BOOTLOG("[ERROR] - Couldn't find RTC");
+	}
+#endif
   emptyFS = true;
 #if IR_PIN!=255
     irindex=-1;
@@ -69,7 +80,7 @@ void Config::init() {
   backupSDStation = 0;
   //checkSD();
   _bootDone=false;
-  bootInfo();
+  //bootInfo();
 }
 
 #ifdef USE_SD

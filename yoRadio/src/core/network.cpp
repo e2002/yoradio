@@ -18,8 +18,13 @@ void ticks() {
   
   static const uint16_t weatherSyncInterval=1800;
   //static const uint16_t weatherSyncIntervalFail=10;
-  static const uint16_t timeSyncInterval=3600;
-  static uint16_t timeSyncTicks = 0;
+#if RTCSUPPORTED
+  static const uint32_t timeSyncInterval=86400;
+  static uint32_t timeSyncTicks = 0;
+#else
+	static const uint16_t timeSyncInterval=3600;
+	static uint16_t timeSyncTicks = 0;
+#endif
   static uint16_t weatherSyncTicks = 0;
   static bool divrssi;
   timeSyncTicks++;
@@ -36,12 +41,17 @@ void ticks() {
     weatherSyncTicks=0;
     network.forceWeather = true;
   }
-  
-  if(network.timeinfo.tm_year>100) {
+#if RTCSUPPORTED
+	rtc.getTime(&network.timeinfo);
+	mktime(&network.timeinfo);
+  display.putRequest(CLOCK);
+#else
+  if(network.timeinfo.tm_year>100 || network.status == SDREADY) {
     network.timeinfo.tm_sec++;
     mktime(&network.timeinfo);
     display.putRequest(CLOCK);
   }
+#endif
   if(player.isRunning() && config.getMode()==PM_SDCARD) netserver.requestOnChange(SDPOS, 0);
   if(divrssi) {
     netserver.setRSSI(WiFi.RSSI());
@@ -137,6 +147,11 @@ void Network::begin() {
   }else if(strlen(config.store.sntp1)>0){
     configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
   }
+#if RTCSUPPORTED
+	rtc.getTime(&network.timeinfo);
+	mktime(&network.timeinfo);
+  display.putRequest(CLOCK);
+#endif
   ctimer.attach(1, ticks);
   if (network_on_connect) network_on_connect();
 }
@@ -187,6 +202,9 @@ void doSync( void * pvParameters ) {
       mktime(&network.timeinfo);
       display.putRequest(CLOCK);
       network.requestTimeSync(true);
+      #if RTCSUPPORTED
+      	if (config.isRTCFound()) rtc.setTime(&network.timeinfo);
+      #endif
     }else{
       if(tsFailCnt<4){
         network.forceTimeSync = true;

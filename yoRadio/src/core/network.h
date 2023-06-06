@@ -3,6 +3,7 @@
 #include <Ticker.h>
 #include "time.h"
 #include "WiFi.h"
+#include "rtcsupport.h"
 
 #define apSsid      "yoRadioAP"
 #define apPassword  "12345987"
@@ -10,7 +11,7 @@
 #define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour
 #define WEATHER_STRING_L  254
 
-enum n_Status_e { CONNECTED, SOFT_AP, FAILED };
+enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 
 class Network {
   public:
