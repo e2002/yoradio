@@ -72,7 +72,11 @@ void Player::init() {
 
 void Player::sendCommand(playerRequestParams_t request){
   if(playerQueue==NULL) return;
-  xQueueSend(playerQueue, &request, portMAX_DELAY);
+  xQueueSend(playerQueue, &request, PLQ_SEND_DELAY);
+}
+
+void Player::resetQueue(){
+	if(playerQueue!=NULL) xQueueReset(playerQueue);
 }
 
 void Player::stopInfo() {

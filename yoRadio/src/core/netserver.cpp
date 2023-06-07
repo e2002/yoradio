@@ -15,6 +15,9 @@
 #ifndef MIN_MALLOC
 #define MIN_MALLOC 24112
 #endif
+#ifndef NSQ_SEND_DELAY
+	#define NSQ_SEND_DELAY 			(TickType_t)100	//portMAX_DELAY?
+#endif
 
 #ifdef USE_SD
 	#define CARDLOCK() sdog.tm()
@@ -710,11 +713,11 @@ void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
   nsRequestParams_t nsrequest;
   nsrequest.type = request;
   nsrequest.clientId = clientId;
-  xQueueSend(nsQueue, &nsrequest, portMAX_DELAY);
+  xQueueSend(nsQueue, &nsrequest, NSQ_SEND_DELAY);
 }
 
 void NetServer::resetQueue(){
-  xQueueReset(nsQueue);
+  if(nsQueue!=NULL) xQueueReset(nsQueue);
 }
 
 String processor(const String& var) { // %Templates%

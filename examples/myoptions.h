@@ -77,7 +77,16 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 /*  SD VSPI PINS. SD SCK must be connected to pin 18
                   SD MISO must be connected to pin 19
                   SD MOSI must be connected to pin 23  */
-//#define SDC_CS                255            /* SDCARD CS pin */
+/*  SD HSPI PINS. SD SCK must be connected to pin 14
+                  SD MISO must be connected to pin 12
+                  SD MOSI must be connected to pin 13  */
+//#define SDC_CS                 255           /* SDCARD CS pin */
+//#define SD_HSPI       				 false				 /* use HSPI for SD (miso=12, mosi=13, clk=14) instead of VSPI (by default)	*/
+
+/*        RTC                     */
+//#define RTC_MODULE            RTC_MODULE_UNDEFINED	/*	one of DS3231, DS1307, RTC_MODULE_UNDEFINED(default)	*/
+//#define RTC_SDA               255						 /*	RTC_SDA	*/
+//#define RTC_SCL               255						 /*	RTC_SCL	*/
 
 /*  ENCODER2  */
 //#define ENC2_BTNL              255           /*  Left rotation */

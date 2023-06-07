@@ -229,6 +229,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.259
+- fixed a hang bug when switching to SD mode after removing the SD
+- fixed a hangup error when the connection to the stream was lost in WEB mode
+
 #### v0.9.250
 - added support for DS1307 or DS3231 RTC module (you need to install the RTCLib library in the library manager)
 - setup

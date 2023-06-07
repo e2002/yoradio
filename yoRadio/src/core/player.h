@@ -12,6 +12,10 @@
   #define MQTT_BURL_SIZE  512
 #endif
 
+#ifndef PLQ_SEND_DELAY
+	#define PLQ_SEND_DELAY portMAX_DELAY
+#endif
+
 #define PLERR_LN        64
 #define SET_PLAY_ERROR(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); setError(buff);}
 
@@ -51,6 +55,7 @@ class Player: public Audio {
     void setError(const char *e);
     bool hasError() { return strlen(_plError)>0; }
     void sendCommand(playerRequestParams_t request);
+    void resetQueue();
     #ifdef MQTT_ROOT_TOPIC
     void browseUrl();
     #endif

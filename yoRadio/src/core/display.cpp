@@ -18,6 +18,10 @@ DspCore dsp;
 
 Page *pages[] = { new Page(), new Page(), new Page() };
 
+#ifndef DSQ_SEND_DELAY
+	#define DSQ_SEND_DELAY portMAX_DELAY
+#endif
+
 #ifndef CORE_STACK_SIZE
   #define CORE_STACK_SIZE  1024*3
 #endif
@@ -298,7 +302,7 @@ void Display::_swichMode(displayMode_e newmode) {
 }
 
 void Display::resetQueue(){
-  xQueueReset(displayQueue);
+  if(displayQueue!=NULL) xQueueReset(displayQueue);
 }
 
 void Display::_drawPlaylist() {
@@ -321,7 +325,7 @@ void Display::putRequest(displayRequestType_e type, int payload){
   requestParams_t request;
   request.type = type;
   request.payload = payload;
-  xQueueSend(displayQueue, &request, portMAX_DELAY);
+  xQueueSend(displayQueue, &request, DSQ_SEND_DELAY);
   #ifdef USE_NEXTION
     nextion.putRequest(request);
   #endif
