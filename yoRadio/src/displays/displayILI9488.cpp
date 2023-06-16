@@ -103,7 +103,7 @@ void DspCore::_clockSeconds(){
 
 void DspCore::_clockDate(){
   if(_olddateleft>0)
-    dsp.fillRect(_olddateleft,  clockTop+10, _olddatewidth, CHARHEIGHT, config.theme.background);
+    dsp.fillRect(_olddateleft,  clockTop+14, _olddatewidth, CHARHEIGHT*2, config.theme.background);
   setTextColor(config.theme.date, config.theme.background);
   setCursor(_dateleft, clockTop+15);
   setTextSize(2);

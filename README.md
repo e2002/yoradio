@@ -229,6 +229,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.260
+- fixed date display bug for ILI9488/ILI9486 displays
+
 #### v0.9.259
 - fixed a hang bug when switching to SD mode after removing the SD
 - fixed a hangup error when the connection to the stream was lost in WEB mode
