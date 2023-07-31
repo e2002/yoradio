@@ -1,15 +1,15 @@
-import aiohttp
 import asyncio
 import logging
 import voluptuous as vol
 import json
+import urllib.request
 
 from homeassistant.components import media_source
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.8.962'
+VERSION = '0.9.260'
 
 DOMAIN = "yoradio"
 
@@ -75,6 +75,7 @@ class yoradioApi():
     self.mqtt = hass.components.mqtt
     self.root_topic = root_topic
     self.playlist = playlist
+    self.playlisturl = ""
 
   async def set_command(self, command):
     try:
@@ -88,7 +89,15 @@ class yoradioApi():
       self.mqtt.async_publish(self.root_topic + '/command', command)
     except:
       await self.mqtt.async_publish(self.hass, self.root_topic + '/command', command)
-
+      
+  def fetch_data(self):
+    try:
+      html = urllib.request.urlopen(self.playlisturl).read().decode("utf-8")
+      return str(html)
+    except Exception as e:
+      _LOGGER.error("Unable to fetch data: " + str(e))
+      return ""
+        
   async def set_source(self, source):
     number = source.split('.')
     command = "play " + number[0]
@@ -105,10 +114,9 @@ class yoradioApi():
       
   async def load_playlist(self, msg):
     try:
-      async with aiohttp.ClientSession() as session:
-        async with session.get(msg.payload) as resp:
-          file = await resp.text()
-    except aiohttp.ClientConnectorError as e:
+      self.playlisturl = msg.payload
+      file = await self.hass.async_add_executor_job(self.fetch_data)
+    except uException as e:
       _LOGGER.error('Error downloading ' + msg.payload)
     else:
       file = file.split('\n')
