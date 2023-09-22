@@ -1613,10 +1613,7 @@ void Audio::setDefaults(){
     vector_clear_and_shrink(m_playlistURL);
     vector_clear_and_shrink(m_playlistContent);
     if(config.getMode()!=PM_SDCARD){
-      client.stop();
-      client.flush(); // release memory
-      clientsecure.stop();
-      clientsecure.flush();
+      if(_client) _client->stop();
       _client = static_cast<WiFiClient*>(&client); /* default to *something* so that no NULL deref can happen */
     }
     m_f_ctseen=false;                                       // Contents type not seen yet
