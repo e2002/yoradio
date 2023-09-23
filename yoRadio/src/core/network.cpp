@@ -68,7 +68,10 @@ void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   player.lockOutput = false;
   delay(100);
   display.putRequest(NEWMODE, PLAYER);
-  if (network.lostPlaying) player.sendCommand({PR_PLAY, config.store.lastStation});
+  if (network.lostPlaying) {
+    config.setTitle(const_PlConnect);
+    player.sendCommand({PR_PLAY, config.store.lastStation});
+  }
   #ifdef MQTT_ROOT_TOPIC
     connectToMqtt();
   #endif
@@ -76,13 +79,13 @@ void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
 
 void Network::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   if(!network.beginReconnect){
-    Serial.println("Lost connection, reconnecting...");
+    Serial.printf("Lost connection, reconnecting to %s...\n", config.ssids[config.store.lastSSID-1].ssid);
     network.lostPlaying = player.isRunning();
     if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
     display.putRequest(NEWMODE, LOST);
   }
   network.beginReconnect = true;
-  WiFi.begin(config.ssids[config.store.lastSSID].ssid, config.ssids[config.store.lastSSID].password);
+  WiFi.begin(config.ssids[config.store.lastSSID-1].ssid, config.ssids[config.store.lastSSID-1].password);
 }
 
 #define DBGAP false
@@ -133,7 +136,7 @@ void Network::begin() {
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
   status = CONNECTED;
   WiFi.setSleep(false);
-  WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
+  WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.onEvent(WiFiLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   weatherBuf=NULL;
   trueWeather = false;

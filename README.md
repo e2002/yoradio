@@ -229,8 +229,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.280
+- fixed an issue where it was impossible to reconnect when the WiFi connection was lost
+
 #### v0.9.273
-- fixed an "Guru Meditation Error" when playing streams with installed the ESP32 v2.0.10 and higher core installed
+- fixed an "Guru Meditation Error" when playing streams with the ESP32 v2.0.10 and higher core installed
 
 #### v0.9.260
 - fixed date display bug for ILI9488/ILI9486 displays
