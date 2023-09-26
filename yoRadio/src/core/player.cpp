@@ -181,8 +181,12 @@ void Player::_play(uint16_t stationId) {
   remoteStationName = false;
   config.setDspOn(1);
   //display.putRequest(PSTOP);
+  if(config.getMode()!=PM_SDCARD) {
+  	display.putRequest(PSTOP);
+  }
   setOutputPins(false);
-  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
+  //config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
+  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"[next track]");
   config.station.bitrate=0;
   config.setBitrateFormat(BF_UNCNOWN);
   config.loadStation(stationId);

@@ -37,8 +37,9 @@ void setup() {
   display.init();
   player.init();
   network.begin();
-  if (network.status != CONNECTED) {
+  if (network.status != CONNECTED && network.status!=SDREADY) {
     netserver.begin();
+    initControls();
     display.putRequest(DSP_START);
     while(!display.ready()) delay(10);
     return;
@@ -63,10 +64,11 @@ void setup() {
 
 void loop() {
   telnet.loop();
-  if (network.status == CONNECTED) {
+  if (network.status == CONNECTED || network.status==SDREADY) {
     player.loop();
-    loopControls();
+    //loopControls();
   }
+  loopControls();
   netserver.loop();
 }
 

@@ -20,14 +20,16 @@ class Network {
     bool firstRun, forceTimeSync, forceWeather;
     bool lostPlaying = false, beginReconnect = false;
     //uint8_t tsFailCnt, wsFailCnt;
+    Ticker ctimer;
+    char *weatherBuf;
+    bool trueWeather;
   public:
     Network() {};
     void begin();
     void requestTimeSync(bool withTelnetOutput=false, uint8_t clientId=0);
     void requestWeatherSync();
-    Ticker ctimer;
-    char *weatherBuf;
-    bool trueWeather;
+    void setWifiParams();
+    bool wifiBegin(bool silent=false);
   private:
     Ticker rtimer;
     void raiseSoftAP();

@@ -7,9 +7,15 @@
 #include "player.h"
 #include "mqtt.h"
 
+#ifndef WIFI_ATTEMPTS
+	#define WIFI_ATTEMPTS	16
+#endif
+
 Network network;
 
 TaskHandle_t syncTaskHandle;
+//TaskHandle_t reconnectTaskHandle;
+
 bool getWeather(char *wstr);
 void doSync(void * pvParameters);
 
@@ -30,16 +36,18 @@ void ticks() {
   timeSyncTicks++;
   weatherSyncTicks++;
   divrssi = !divrssi;
-  if(network.forceTimeSync || network.forceWeather){
-    xTaskCreatePinnedToCore(doSync, "doSync", 1024 * 4, NULL, 0, &syncTaskHandle, 0);
-  }
-  if(timeSyncTicks >= timeSyncInterval){
-    timeSyncTicks=0;
-    network.forceTimeSync = true;
-  }
-  if(weatherSyncTicks >= weatherSyncInterval){
-    weatherSyncTicks=0;
-    network.forceWeather = true;
+  if(network.status == CONNECTED){
+    if(network.forceTimeSync || network.forceWeather){
+      xTaskCreatePinnedToCore(doSync, "doSync", 1024 * 4, NULL, 0, &syncTaskHandle, 0);
+    }
+    if(timeSyncTicks >= timeSyncInterval){
+      timeSyncTicks=0;
+      network.forceTimeSync = true;
+    }
+    if(weatherSyncTicks >= weatherSyncInterval){
+      weatherSyncTicks=0;
+      network.forceWeather = true;
+    }
   }
 #if RTCSUPPORTED
 	rtc.getTime(&network.timeinfo);
@@ -54,9 +62,11 @@ void ticks() {
 #endif
   if(player.isRunning() && config.getMode()==PM_SDCARD) netserver.requestOnChange(SDPOS, 0);
   if(divrssi) {
-    netserver.setRSSI(WiFi.RSSI());
-    netserver.requestOnChange(NRSSI, 0);
-    display.putRequest(DSPRSSI, netserver.getRSSI());
+    if(network.status == CONNECTED){
+      netserver.setRSSI(WiFi.RSSI());
+      netserver.requestOnChange(NRSSI, 0);
+      display.putRequest(DSPRSSI, netserver.getRSSI());
+    }
 #ifdef USE_SD
     if(display.mode()!=SDCHANGE) player.sendCommand({PR_CHECKSD, 0});
 #endif
@@ -68,9 +78,12 @@ void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   player.lockOutput = false;
   delay(100);
   display.putRequest(NEWMODE, PLAYER);
-  if (network.lostPlaying) {
-    config.setTitle(const_PlConnect);
-    player.sendCommand({PR_PLAY, config.store.lastStation});
+  if(config.getMode()==PM_SDCARD) {
+  	network.status=CONNECTED;
+  	display.putRequest(NEWIP, 0);
+  }else{
+		display.putRequest(NEWMODE, PLAYER);
+		if (network.lostPlaying) player.sendCommand({PR_PLAY, config.store.lastStation});
   }
   #ifdef MQTT_ROOT_TOPIC
     connectToMqtt();
@@ -80,12 +93,67 @@ void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
 void Network::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   if(!network.beginReconnect){
     Serial.printf("Lost connection, reconnecting to %s...\n", config.ssids[config.store.lastSSID-1].ssid);
-    network.lostPlaying = player.isRunning();
-    if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
-    display.putRequest(NEWMODE, LOST);
+    if(config.getMode()==PM_SDCARD) {
+			network.status=SDREADY;
+			display.putRequest(NEWIP, 0);
+		}else{
+		  network.lostPlaying = player.isRunning();
+		  if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
+		  display.putRequest(NEWMODE, LOST);
+    }
   }
   network.beginReconnect = true;
-  WiFi.begin(config.ssids[config.store.lastSSID-1].ssid, config.ssids[config.store.lastSSID-1].password);
+  WiFi.reconnect();
+}
+
+bool Network::wifiBegin(bool silent){
+  uint8_t ls = (config.store.lastSSID == 0 || config.store.lastSSID > config.ssidsCount) ? 0 : config.store.lastSSID - 1;
+  uint8_t startedls = ls;
+  uint8_t errcnt = 0;
+  WiFi.mode(WIFI_STA);
+  while (true) {
+    if(!silent){
+      Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
+      Serial.print("##[BOOT]#\t");
+      display.putRequest(BOOTSTRING, ls);
+    }
+    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+    while (WiFi.status() != WL_CONNECTED) {
+      if(!silent) Serial.print(".");
+      delay(500);
+      if(LED_BUILTIN!=255 && !silent) digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      errcnt++;
+      if (errcnt > WIFI_ATTEMPTS) {
+        errcnt = 0;
+        ls++;
+        if (ls > config.ssidsCount - 1) ls = 0;
+        if(!silent) Serial.println();
+        break;
+      }
+    }
+    if (WiFi.status() != WL_CONNECTED && ls == startedls) {
+      return false; break;
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+      config.setLastSSID(ls + 1);
+      return true; break;
+    }
+  }
+  return false;
+}
+
+void searchWiFi(void * pvParameters){
+	if(!network.wifiBegin(true)){
+  	delay(10000);
+    xTaskCreatePinnedToCore(searchWiFi, "searchWiFi", 1024 * 4, NULL, 0, NULL, 0);
+  }else{
+    network.status = CONNECTED;
+    netserver.begin(true);
+    telnet.begin(true);
+    network.setWifiParams();
+    display.putRequest(NEWIP, 0);
+  }
+	vTaskDelete( NULL );
 }
 
 #define DBGAP false
@@ -99,42 +167,33 @@ void Network::begin() {
     raiseSoftAP();
     return;
   }
-  byte ls = (config.store.lastSSID == 0 || config.store.lastSSID > config.ssidsCount) ? 0 : config.store.lastSSID - 1;
-  byte startedls = ls;
-  byte errcnt = 0;
-  WiFi.mode(WIFI_STA);
-  while (true) {
-    Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
-    Serial.print("##[BOOT]#\t");
-    display.putRequest(BOOTSTRING, ls);
-    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
-    while (WiFi.status() != WL_CONNECTED) {
-      Serial.print(".");
-      delay(500);
-      if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-      errcnt++;
-      if (errcnt > 16) {
-        errcnt = 0;
-        ls++;
-        if (ls > config.ssidsCount - 1) ls = 0;
-        Serial.println();
-        break;
-      }
-    }
-    if (WiFi.status() != WL_CONNECTED && ls == startedls) {
+  if(config.getMode()!=PM_SDCARD){
+    if(!wifiBegin()){
       raiseSoftAP();
       Serial.println("##[BOOT]#\tdone");
       return;
     }
-    if (WiFi.status() == WL_CONNECTED) {
-      config.setLastSSID(ls + 1);
-      break; // отстрелялись
-    }
+    Serial.println(".");
+    status = CONNECTED;
+    setWifiParams();
+  }else{
+  	status = SDREADY;
+  	xTaskCreatePinnedToCore(searchWiFi, "searchWiFi", 1024 * 4, NULL, 0, NULL, 0);
   }
-  Serial.println(".");
+  
   Serial.println("##[BOOT]#\tdone");
   if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
-  status = CONNECTED;
+  
+#if RTCSUPPORTED
+	rtc.getTime(&network.timeinfo);
+	mktime(&network.timeinfo);
+  display.putRequest(CLOCK);
+#endif
+  ctimer.attach(1, ticks);
+  if (network_on_connect) network_on_connect();
+}
+
+void Network::setWifiParams(){
   WiFi.setSleep(false);
   WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.onEvent(WiFiLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -144,19 +203,11 @@ void Network::begin() {
     weatherBuf = (char *) malloc(sizeof(char) * WEATHER_STRING_L);
     memset(weatherBuf, 0, WEATHER_STRING_L);
   #endif
-  
   if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
     configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
   }else if(strlen(config.store.sntp1)>0){
     configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
   }
-#if RTCSUPPORTED
-	rtc.getTime(&network.timeinfo);
-	mktime(&network.timeinfo);
-  display.putRequest(CLOCK);
-#endif
-  ctimer.attach(1, ticks);
-  if (network_on_connect) network_on_connect();
 }
 
 void Network::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {

@@ -229,6 +229,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.300
+- added the ability to play SDCARD without an Internet connection. More in [Wiki](https://github.com/e2002/yoradio/wiki/A-little-about-SD-CARD-and-RTC)
+
 #### v0.9.280
 - fixed an issue where it was impossible to reconnect when the WiFi connection was lost
 

@@ -12,16 +12,24 @@ bool Telnet::_isIPSet(IPAddress ip) {
   return ip.toString() == "0.0.0.0";
 }
 
-bool Telnet::begin() {
-  Serial.print("##[BOOT]#\ttelnet.begin\t");
+bool Telnet::begin(bool quiet) {
+	if(network.status==SDREADY) {
+		BOOTLOG("Ready in SD Mode!");
+    BOOTLOG("------------------------------------------------");
+    Serial.println("##[BOOT]#");
+		return true;
+	}
+  if(!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
   if (WiFi.status() == WL_CONNECTED || _isIPSet(WiFi.softAPIP())) {
     server.begin();
     server.setNoDelay(true);
-    Serial.println("done");
-    Serial.println("##[BOOT]#");
-    BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
-    BOOTLOG("------------------------------------------------");
-    Serial.println("##[BOOT]#");
+    if(!quiet){
+		  Serial.println("done");
+		  Serial.println("##[BOOT]#");
+		  BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
+		  BOOTLOG("------------------------------------------------");
+		  Serial.println("##[BOOT]#");
+    }
     return true;
   } else {
     return false;
@@ -59,6 +67,10 @@ void Telnet::handleSerial(){
 }
 
 void Telnet::loop() {
+  if(network.status==SDREADY || network.status!=CONNECTED) {
+		handleSerial();
+		return;
+	}
   uint8_t i;
   if (WiFi.status() == WL_CONNECTED) {
     if (server.hasClient()) {

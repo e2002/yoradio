@@ -59,8 +59,9 @@ char* updateError() {
   return ret;
 }
 
-bool NetServer::begin() {
-  Serial.print("##[BOOT]#\tnetserver.begin\t");
+bool NetServer::begin(bool quiet) {
+  if(network.status==SDREADY) return true;
+  if(!quiet) Serial.print("##[BOOT]#\tnetserver.begin\t");
   importRequest = IMDONE;
   irRecordEnable = false;
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
@@ -112,7 +113,7 @@ bool NetServer::begin() {
         packet.println(WiFi.localIP());
     });
   }
-  Serial.println("done");
+  if(!quiet) Serial.println("done");
   return true;
 }
 
@@ -313,6 +314,7 @@ void NetServer::processQueue(){
 }
 
 void NetServer::loop() {
+  if(network.status==SDREADY) return;
   if (shouldReboot) {
     Serial.println("Rebooting...");
     delay(100);

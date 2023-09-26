@@ -209,7 +209,7 @@ void Display::_start() {
   #ifdef USE_NEXTION
     nextion.wake();
   #endif
-  if (network.status != CONNECTED) {
+  if (network.status != CONNECTED && network.status != SDREADY) {
     _apScreen();
     #ifdef USE_NEXTION
       nextion.apScreen();
@@ -262,7 +262,7 @@ void Display::_swichMode(displayMode_e newmode) {
     //nextion.swichMode(newmode);
     nextion.putRequest({NEWMODE, newmode});
   #endif
-  if (newmode == _mode || network.status != CONNECTED) return;
+  if (newmode == _mode || (network.status != CONNECTED && network.status != SDREADY)) return;
   _mode = newmode;
   dsp.setScrollId(NULL);
   if (newmode == PLAYER) {
@@ -436,6 +436,12 @@ void Display::loop() {
       case PSTART: _layoutChange(true);   break;
       case PSTOP:  _layoutChange(false);  break;
       case DSP_START: _start();  break;
+      case NEWIP: {
+				#ifndef HIDE_IP
+					if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
+				#endif
+      	break;
+      }
       default: break;
     }
   }

@@ -55,7 +55,7 @@ class NetServer {
     char chunkedPathBuffer[40];
   public:
     NetServer() {};
-    bool begin();
+    bool begin(bool quiet=false);
     void loop();
     void requestOnChange(requestType_e request, uint8_t clientId);
     void setRSSI(int val) { rssi = val; };

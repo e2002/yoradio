@@ -9,7 +9,7 @@
 class Telnet {
   public:
     Telnet() {};
-    bool begin();
+    bool begin(bool quiet=false);
     void loop();
     void stop();
     void print(byte id, const char *buf);

@@ -3,6 +3,7 @@
 //#include <SPIFFS.h>
 #include "display.h"
 #include "player.h"
+#include "network.h"
 #include "netserver.h"
 #include "spidog.h"
 
@@ -149,6 +150,13 @@ void Config::_mountSD(){
 }
 
 void Config::changeMode(int newmode){
+  if(SDC_CS==255) return;
+  if(network.status==SOFT_AP || display.mode()==LOST){
+  	store.play_mode=PM_SDCARD;
+  	save();
+  	delay(50);
+  	ESP.restart();
+  }
   if(!SDinit) {
     _mountSD();
     if(!SDinit){
@@ -174,7 +182,8 @@ void Config::changeMode(int newmode){
       delay(10);
     delay(50);
   }
-  if(getMode()==PM_WEB) player.setResumeFilePos(0);
+  //if(getMode()==PM_WEB) player.setResumeFilePos(0);
+  if((getMode()==PM_WEB && network.status==SDREADY)) ESP.restart();
   initPlaylistMode();
   if (store.smartstart == 1) player.sendCommand({PR_PLAY, store.lastStation});
   //else

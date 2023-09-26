@@ -4,6 +4,7 @@
 #include "config.h"
 #include "player.h"
 #include "display.h"
+#include "network.h"
 #include "netserver.h"
 
 long encOldPosition  = 0;
@@ -67,14 +68,14 @@ decode_results irResults;
 #if ENC_BTNL!=255
 void IRAM_ATTR readEncoderISR()
 {
-  if(display.mode()==LOST || display.mode()==UPDATING) return;
+  if((SDC_CS==255 && display.mode()==LOST) || display.mode()==UPDATING) return;
   encoder.readEncoder_ISR();
 }
 #endif
 #if ENC2_BTNL!=255
 void IRAM_ATTR readEncoder2ISR()
 {
-  if(display.mode()==LOST || display.mode()==UPDATING) return;
+  if((SDC_CS==255 && display.mode()==LOST) || display.mode()==UPDATING) return;
   encoder2.readEncoder_ISR();
 }
 #endif
@@ -129,8 +130,9 @@ void initControls() {
 }
 
 void loopControls() {
-  if(display.mode()==LOST || display.mode()==UPDATING || display.mode()==SDCHANGE) return;
-  if (ctrls_on_loop) ctrls_on_loop();
+  if(display.mode()==UPDATING || display.mode()==SDCHANGE) return;
+  if(SDC_CS==255 && display.mode()==LOST) return;
+  if(ctrls_on_loop) ctrls_on_loop();
 #if ENC_BTNL!=255
   encoder1Loop();
 #endif
@@ -152,11 +154,13 @@ void loopControls() {
   irLoop();
 #endif
 #if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
-  touchscreen.loop();
+  if (network.status == CONNECTED || network.status==SDREADY) touchscreen.loop();
 #endif
 }
 #if ENC_BTNL!=255 || ENC2_BTNL!=255
 void encodersLoop(yoEncoder *enc, bool first){
+  if (network.status != CONNECTED && network.status!=SDREADY) return;
+  if(display.mode()==LOST) return;
   int8_t encoderDelta = enc->encoderChanged();
   if (encoderDelta!=0)
   {
@@ -246,6 +250,8 @@ void irLoop() {
     for(int target=0; target<17; target++){
       for(int j=0; j<3; j++){
         if(config.ircodes.irVals[target][j]==irResults.value){
+          if (network.status != CONNECTED && network.status!=SDREADY && target!=IR_AST) return;
+          if(target!=IR_AST && display.mode()==LOST) return;
           switch (target){
             case IR_PLAY: {
                 irBlink();
@@ -402,6 +408,7 @@ boolean checklpdelay(int m, unsigned long &tstamp) {
 }
 
 void onBtnDuringLongPress(int id) {
+  if (network.status != CONNECTED && network.status!=SDREADY) return;
   if (checklpdelay(BTN_LONGPRESS_LOOP_DELAY, lpdelay)) {
     switch ((controlEvt_e)id) {
       case EVT_BTNLEFT: {
@@ -457,6 +464,8 @@ void controlsEvent(bool toRight, int8_t volDelta) {
 }
 
 void onBtnClick(int id) {
+  bool passBnCenter = (controlEvt_e)id==EVT_BTNCENTER || (controlEvt_e)id==EVT_ENCBTNB || (controlEvt_e)id==EVT_ENC2BTNB;
+  if (network.status != CONNECTED && network.status!=SDREADY && (controlEvt_e)id!=EVT_BTNMODE && !passBnCenter) return;
   switch ((controlEvt_e)id) {
     case EVT_BTNLEFT: {
         controlsEvent(false);
@@ -478,6 +487,11 @@ void onBtnClick(int id) {
             delay(200);
           #endif
           player.sendCommand({PR_PLAY, display.currentPlItem});
+        }
+        if(network.status==SOFT_AP || display.mode()==LOST){
+          #ifdef USE_SD
+            config.changeMode();
+          #endif
         }
         break;
       }
@@ -517,6 +531,7 @@ void onBtnDoubleClick(int id) {
   switch ((controlEvt_e)id) {
     case EVT_BTNLEFT: {
         if (display.mode() != PLAYER) return;
+        if (network.status != CONNECTED && network.status!=SDREADY) return;
         player.prev();
         break;
       }
@@ -529,6 +544,7 @@ void onBtnDoubleClick(int id) {
       }
     case EVT_BTNRIGHT: {
         if (display.mode() != PLAYER) return;
+        if (network.status != CONNECTED && network.status!=SDREADY) return;
         player.next();
         break;
       }
