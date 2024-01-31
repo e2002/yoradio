@@ -26,6 +26,7 @@
 
 #include "UC1609.h"
 #include <Adafruit_GFX.h>
+#include "../core/spidog.h"
 
 // SOME DEFINES AND STATIC VARIABLES USED INTERNALLY -----------------------
 
@@ -70,8 +71,10 @@
 #endif
 
 #if defined(SPI_HAS_TRANSACTION)
-#define SPI_TRANSACTION_START spi->beginTransaction(spiSettings) ///< Pre-SPI
-#define SPI_TRANSACTION_END spi->endTransaction()                ///< Post-SPI
+#define TAKE_MUTEX() sdog.takeMutex()
+#define GIVE_MUTEX() sdog.giveMutex()
+#define SPI_TRANSACTION_START TAKE_MUTEX(); spi->beginTransaction(spiSettings) ///< Pre-SPI
+#define SPI_TRANSACTION_END spi->endTransaction(); GIVE_MUTEX()                ///< Post-SPI
 #else // SPI transactions likewise not present in older Arduino SPI lib
 #define SPI_TRANSACTION_START ///< Dummy stand-in define
 #define SPI_TRANSACTION_END   ///< keeps compiler happy
@@ -654,18 +657,12 @@ void UC1609::invertDisplay(bool i) {
   @param val Contrast value
  */
 void UC1609::setContrast(uint8_t val) {
-  _contrast = val;
+  _contrast = map(val, 0, 100, 0, 255); // Input range: 0~100
   TRANSACTION_START
   uc1609_command1(UC1609_GN_PM);
   uc1609_command1(_contrast);
   TRANSACTION_END
 }
-
-/*!
-  @brief  Get the contrast level
-  @return Contrast value
- */
-uint8_t UC1609::getContrast() { return _contrast; }
 
 /*!
     @brief  Put the display driver into a low power mode instead of just turning

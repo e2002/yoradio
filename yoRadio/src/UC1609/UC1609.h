@@ -101,8 +101,6 @@ public:
   uint8_t *getBuffer(void);
 
   void setContrast(uint8_t val);
-  uint8_t getContrast(void);
-
   void sleep(void);
   void wake(void);
 
