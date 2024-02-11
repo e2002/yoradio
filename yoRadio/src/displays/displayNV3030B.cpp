@@ -118,7 +118,6 @@ void DspCore::_clockDate(){
 void DspCore::_clockTime(){
   if(_oldtimeleft>0 && !CLOCKFONT_MONO) dsp.fillRect(_oldtimeleft, clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
   _timeleft = width()-clockRightSpace-CHARWIDTH*3*2-24-_timewidth;
-  clearClock();
   setTextSize(1);
   setFont(&DS_DIGI42pt7b);
   
@@ -139,30 +138,24 @@ void DspCore::_clockTime(){
   sprintf(_buffordate, "%2d %s %d", network.timeinfo.tm_mday,mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
   strlcpy(_dateBuf, utf8Rus(_buffordate, true), sizeof(_dateBuf));
   _datewidth = strlen(_dateBuf) * CHARWIDTH;
-  //_dateleft = width() - 8 - clockRightSpace - _datewidth;
-  _dateleft = (width() - _datewidth)/2;
+  _dateleft = width() - 8 - clockRightSpace - _datewidth;
 }
 
 void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight, bool redraw){
   clockTop = top;
-  clockRightSpace = (width()-_timewidth-CHARWIDTH*3*2-36)/2;//rightspace;
+  clockRightSpace = rightspace;
   clockTimeHeight = timeheight;
   strftime(_timeBuf, sizeof(_timeBuf), "%H:%M", &network.timeinfo);
   if(strcmp(_oldTimeBuf, _timeBuf)!=0 || redraw){
     _getTimeBounds();
-    clockRightSpace = (width()-_timewidth-CHARWIDTH*3*2-36)/2;
     _clockTime();
-    /*if(strcmp(_oldDateBuf, _dateBuf)!=0 || redraw) */_clockDate();
+    if(strcmp(_oldDateBuf, _dateBuf)!=0 || redraw) _clockDate();
   }
   _clockSeconds();
 }
 
 void DspCore::clearClock(){
-  if(_oldtimeleft>0){
-    dsp.fillRect(_oldtimeleft,  clockTop-clockTimeHeight, _oldtimewidth+CHARWIDTH*3*2+24, clockTimeHeight+10+CHARHEIGHT, config.theme.background);
-  }else{
-    dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+CHARWIDTH*3*2+24, clockTimeHeight+10+CHARHEIGHT, config.theme.background);
-  }
+  dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+CHARWIDTH*3*2+24, clockTimeHeight+10+CHARHEIGHT, config.theme.background);
 }
 
 void DspCore::startWrite(void) {
