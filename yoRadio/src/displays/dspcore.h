@@ -44,6 +44,8 @@
   #include "displaySSD1322.h"
 #elif DSP_MODEL==DSP_ST7920
   #include "displayST7920.h"
+#elif DSP_MODEL==DSP_NV3030B
+  #include "displayNV3030B.h"
 #elif DSP_MODEL==DSP_UC1609
   #include "displayUC1609.h"
 #endif
