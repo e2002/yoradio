@@ -10,7 +10,7 @@ TAMC_GT911::TAMC_GT911(uint8_t _sda, uint8_t _scl, uint8_t _int, uint8_t _rst, u
 
 void TAMC_GT911::begin(uint8_t _addr) {
   addr = _addr;
-  Wire.begin(pinSda, pinScl);
+  Wire.begin((int)pinSda, (int)pinScl);
   reset();
 }
 void TAMC_GT911::reset() {
