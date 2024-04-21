@@ -908,7 +908,7 @@ void Config::sleepForAfter(uint16_t sf, uint16_t sa){
 
 void Config::bootInfo() {
   BOOTLOG("************************************************");
-  BOOTLOG("*               ёRadio v%s                *", YOVERSION);
+  BOOTLOG("*               ёRadio %s                *", YOVERSION);
   BOOTLOG("************************************************");
   BOOTLOG("------------------------------------------------");
   BOOTLOG("arduino:\t%d", ARDUINO);
