@@ -2,12 +2,12 @@
  * flac_decoder.h
  *
  * Created on: Jul 03,2020
- * Updated on: Apr 27,2021
+ * Updated on: Apr 12,2024
  *
  *      Author: wolle
  *
  *  Restrictions:
- *  blocksize must not exceed 8192
+ *  blocksize must not exceed 16342 bytes
  *  bits per sample must be 8 or 16
  *  num Channels must be 1 or 2
  *
@@ -17,20 +17,17 @@
 #pragma GCC optimize ("Ofast")
 
 #include "Arduino.h"
+#include <vector>
+using namespace std;
 
 #define MAX_CHANNELS 2
 #define MAX_BLOCKSIZE 8192
-#define APLL_DISABLE 0
-#define EXTERNAL_I2S  0
-
-
-typedef struct FLACsubFramesBuff_t{
-    int32_t samplesBuffer[MAX_CHANNELS][MAX_BLOCKSIZE];
-}FLACsubframesBuffer_t;
 
 enum : uint8_t {FLACDECODER_INIT, FLACDECODER_READ_IN, FLACDECODER_WRITE_OUT};
 enum : uint8_t {DECODE_FRAME, DECODE_SUBFRAMES, OUT_SAMPLES};
-enum : int8_t  {GIVE_NEXT_LOOP = +1,
+enum : int8_t  {FLAC_PARSE_OGG_DONE = 100,
+                FLAC_DECODE_FRAMES_LOOP = 100,
+                GIVE_NEXT_LOOP = +1,
                 ERR_FLAC_NONE = 0,
                 ERR_FLAC_BLOCKSIZE_TOO_BIG = -1,
                 ERR_FLAC_RESERVED_BLOCKSIZE_UNSUPPORTED = -2,
@@ -42,7 +39,9 @@ enum : int8_t  {GIVE_NEXT_LOOP = +1,
                 ERR_FLAC_RESERVED_RESIDUAL_CODING = -8,
                 ERR_FLAC_WRONG_RICE_PARTITION_NR = -9,
                 ERR_FLAC_BITS_PER_SAMPLE_TOO_BIG = -10,
-                ERR_FLAG_BITS_PER_SAMPLE_UNKNOWN = 11};
+                ERR_FLAG_BITS_PER_SAMPLE_UNKNOWN = -11,
+                ERR_FLAC_DECODER_ASYNC = -12,
+                ERR_FLAC_UNIMPLEMENTED = -13};
 
 typedef struct FLACMetadataBlock_t{
                               // METADATA_BLOCK_STREAMINFO
@@ -145,31 +144,42 @@ typedef struct FLACFrameHeader_t {
 
 }FLACFrameHeader_t;
 
-int      FLACFindSyncWord(unsigned char *buf, int nBytes);
-int      FLACFindOggSyncWord(unsigned char *buf, int nBytes);
-int      FLACparseOggHeader(unsigned char *buf);
-bool     FLACDecoder_AllocateBuffers(void);
-void     FLACDecoder_ClearBuffer();
-void     FLACDecoder_FreeBuffers();
-void     FLACSetRawBlockParams(uint8_t Chans, uint32_t SampRate, uint8_t BPS, uint32_t tsis, uint32_t AuDaLength);
-void     FLACDecoderReset();
-int8_t   FLACDecode(uint8_t *inbuf, int *bytesLeft, short *outbuf);
-uint16_t FLACGetOutputSamps();
-uint64_t FLACGetTotoalSamplesInStream();
-uint8_t  FLACGetBitsPerSample();
-uint8_t  FLACGetChannels();
-uint32_t FLACGetSampRate();
-uint32_t FLACGetBitRate();
-uint32_t FLACGetAudioFileDuration();
-uint32_t readUint(uint8_t nBits);
-int32_t  readSignedInt(int nBits);
-int64_t  readRiceSignedInt(uint8_t param);
-void     alignToByte();
-int8_t   decodeSubframes();
-int8_t   decodeSubframe(uint8_t sampleDepth, uint8_t ch);
-int8_t   decodeFixedPredictionSubframe(uint8_t predOrder, uint8_t sampleDepth, uint8_t ch);
-int8_t   decodeLinearPredictiveCodingSubframe(int lpcOrder, int sampleDepth, uint8_t ch);
-int8_t   decodeResiduals(uint8_t warmup, uint8_t ch);
-void     restoreLinearPrediction(uint8_t ch, uint8_t shift);
-
-
+int              FLACFindSyncWord(unsigned char* buf, int nBytes);
+boolean          FLACFindMagicWord(unsigned char* buf, int nBytes);
+char*            FLACgetStreamTitle();
+int              FLACparseOGG(uint8_t* inbuf, int* bytesLeft);
+vector<uint32_t> FLACgetMetadataBlockPicture();
+int              parseFlacFirstPacket(uint8_t* inbuf, int16_t nBytes);
+int              parseMetaDataBlockHeader(uint8_t* inbuf, int16_t nBytes);
+bool             FLACDecoder_AllocateBuffers(void);
+void             FLACDecoder_setDefaults();
+void             FLACDecoder_ClearBuffer();
+void             FLACDecoder_FreeBuffers();
+void             FLACSetRawBlockParams(uint8_t Chans, uint32_t SampRate, uint8_t BPS, uint32_t tsis, uint32_t AuDaLength);
+void             FLACDecoderReset();
+int8_t           FLACDecode(uint8_t* inbuf, int* bytesLeft, short* outbuf);
+int8_t           FLACDecodeNative(uint8_t* inbuf, int* bytesLeft, short* outbuf);
+int8_t           flacDecodeFrame(uint8_t* inbuf, int* bytesLeft);
+uint16_t         FLACGetOutputSamps();
+uint64_t         FLACGetTotoalSamplesInStream();
+uint8_t          FLACGetBitsPerSample();
+uint8_t          FLACGetChannels();
+uint32_t         FLACGetSampRate();
+uint32_t         FLACGetBitRate();
+uint32_t         FLACGetAudioDataStart();
+uint32_t         FLACGetAudioFileDuration();
+uint32_t         readUint(uint8_t nBits, int* bytesLeft);
+int32_t          readSignedInt(int nBits, int* bytesLeft);
+int64_t          readRiceSignedInt(uint8_t param, int* bytesLeft);
+void             alignToByte();
+int8_t           decodeSubframes(int* bytesLeft);
+int8_t           decodeSubframe(uint8_t sampleDepth, uint8_t ch, int* bytesLeft);
+int8_t           decodeFixedPredictionSubframe(uint8_t predOrder, uint8_t sampleDepth, uint8_t ch, int* bytesLeft);
+int8_t           decodeLinearPredictiveCodingSubframe(int lpcOrder, int sampleDepth, uint8_t ch, int* bytesLeft);
+int8_t           decodeResiduals(uint8_t warmup, uint8_t ch, int* bytesLeft);
+void             restoreLinearPrediction(uint8_t ch, uint8_t shift);
+int              FLAC_specialIndexOf(uint8_t* base, const char* str, int baselen, bool exact = false);
+char*            flac_x_ps_malloc(uint16_t len);
+char*            flac_x_ps_calloc(uint16_t len, uint8_t size);
+char*            flac_x_ps_strdup(const char* str);
+char*            flac_x_ps_strndup(const char* str, uint16_t n);
