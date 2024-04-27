@@ -168,6 +168,8 @@ public:
     uint32_t getTotalPlayingTime();
     uint16_t getVUlevel();
 
+    void setDefaults();
+    uint8_t  vuLeft, vuRight;
     uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
     uint32_t inBufferFree();   // returns the number of free bytes in the inputbuffer
     uint32_t inBufferSize();   // returns the size of the inputbuffer in bytes
@@ -189,7 +191,6 @@ private:
 
   void            UTF8toASCII(char* str);
   bool            latinToUTF8(char* buff, size_t bufflen);
-  void            setDefaults(); // free buffers and set defaults
   void            initInBuff();
   bool            httpPrint(const char* host);
   void            processLocalFile();

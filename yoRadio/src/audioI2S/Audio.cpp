@@ -5029,8 +5029,8 @@ void Audio::computeVUlevel(int16_t sample[2]) {
     }
     if(f_vu) {
         f_vu = false;
-        m_vuLeft = avg(sampleArray[LEFTCHANNEL][3]);
-        m_vuRight = avg(sampleArray[RIGHTCHANNEL][3]);
+        vuLeft = avg(sampleArray[LEFTCHANNEL][3]);
+        vuRight = avg(sampleArray[RIGHTCHANNEL][3]);
     }
     cnt1++;
 }
