@@ -478,13 +478,16 @@ void BitrateWidget::setFormat(BitrateFormat format){
 
 void BitrateWidget::_draw(){
   _clear();
-  if(!_active || _format == BF_UNCNOWN || _bitrate==0) return;
+  if(!_active) return;
   dsp.drawRect(_config.left, _config.top, _dimension, _dimension, _fgcolor);
   dsp.fillRect(_config.left, _config.top + _dimension/2, _dimension, _dimension/2, _fgcolor);
   dsp.setFont();
   dsp.setTextSize(_config.textsize);
   dsp.setTextColor(_fgcolor, _bgcolor);
-  snprintf(_buf, 6, "%d", _bitrate);
+  if (_bitrate==0)
+    snprintf(_buf, 6, "%s", "N/A");
+  else
+    snprintf(_buf, 6, "%d", _bitrate);
   dsp.setCursor(_config.left + _dimension/2 - _charWidth*strlen(_buf)/2 + 1, _config.top + _dimension/4 - _textheight/2+1);
   dsp.print(_buf);
   dsp.setTextColor(_bgcolor, _fgcolor);
@@ -495,7 +498,7 @@ void BitrateWidget::_draw(){
     case BF_FLAC: dsp.print("FLC"); break;
     case BF_OGG:  dsp.print("OGG"); break;
     case BF_WAV:  dsp.print("WAV"); break;
-    default:                        break;
+    default:      dsp.print("N/A"); break;
   }
 }
 
