@@ -4290,7 +4290,6 @@ void Audio::showCodecParams() {
     AUDIO_INFO("SampleRate: %lu", (long unsigned int)getSampleRate());
     AUDIO_INFO("BitsPerSample: %u", getBitsPerSample());
     if(getBitRate()) { AUDIO_INFO("BitRate: %lu", (long unsigned int)getBitRate()); }
-    else { AUDIO_INFO("BitRate: N/A"); }
 
     if(m_codec == CODEC_AAC) {
         uint8_t answ = AACGetFormat();
