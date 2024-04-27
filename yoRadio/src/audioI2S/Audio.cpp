@@ -859,14 +859,38 @@ bool Audio::connecttoFS(fs::FS& fs, const char* path, int32_t fileStartPos) {
     uint8_t dotPos = lastIndexOf(afn, ".");
     for(uint8_t i = dotPos + 1; i < strlen(afn); i++) { afn[i] = toLowerCase(afn[i]); }
 
-    if(endsWith(afn, ".mp3")) m_codec = CODEC_MP3; // m_codec is by default CODEC_NONE
-    if(endsWith(afn, ".m4a")) m_codec = CODEC_M4A;
-    if(endsWith(afn, ".aac")) m_codec = CODEC_AAC;
-    if(endsWith(afn, ".wav")) m_codec = CODEC_WAV;
-    if(endsWith(afn, ".flac")) m_codec = CODEC_FLAC;
-    if(endsWith(afn, ".opus")) m_codec = CODEC_OPUS;
-    if(endsWith(afn, ".ogg")) m_codec = CODEC_OGG;
-    if(endsWith(afn, ".oga")) m_codec = CODEC_OGG;
+    if(endsWith(afn, ".mp3"))  {
+      m_codec = CODEC_MP3; // m_codec is by default CODEC_NONE
+      if(audio_info) audio_info("format is mp3");
+    }
+    if(endsWith(afn, ".m4a"))  {
+      m_codec = CODEC_M4A;
+      if(audio_info) audio_info("format is aac");
+    }
+    if(endsWith(afn, ".aac"))  {
+      m_codec = CODEC_AAC;
+      if(audio_info) audio_info("format is aac");
+    }
+    if(endsWith(afn, ".wav"))  {
+      m_codec = CODEC_WAV;
+      if(audio_info) audio_info("format is wav");
+    }
+    if(endsWith(afn, ".flac")) {
+      m_codec = CODEC_FLAC;
+      if(audio_info) audio_info("format is flac");
+    }
+    if(endsWith(afn, ".opus")) {
+      m_codec = CODEC_OPUS;
+      if(audio_info) audio_info("format is opus");
+    }
+    if(endsWith(afn, ".ogg")) {
+      m_codec = CODEC_OGG;
+      if(audio_info) audio_info("format is ogg");
+    }
+    if(endsWith(afn, ".oga")) {
+      m_codec = CODEC_OGG;
+      if(audio_info) audio_info("format is oga");
+    }
 
     if(m_codec == CODEC_NONE) AUDIO_INFO("The %s format is not supported", afn + dotPos);
 
@@ -4038,30 +4062,37 @@ bool Audio::parseContentType(char* ct) {
         case CT_MP3:
             m_codec = CODEC_MP3;
             if(m_f_Log) { log_i("ContentType %s, format is mp3", ct); } // ok is likely mp3
+            if(audio_info) audio_info("format is mp3");
             break;
         case CT_AAC:
             m_codec = CODEC_AAC;
             if(m_f_Log) { log_i("ContentType %s, format is aac", ct); }
+            if(audio_info) audio_info("format is aac");
             break;
         case CT_M4A:
             m_codec = CODEC_M4A;
             if(m_f_Log) { log_i("ContentType %s, format is aac", ct); }
+            if(audio_info) audio_info("format is aac");
             break;
         case CT_FLAC:
             m_codec = CODEC_FLAC;
             if(m_f_Log) { log_i("ContentType %s, format is flac", ct); }
+            if(audio_info) audio_info("format is flac");
             break;
         case CT_OPUS:
             m_codec = CODEC_OPUS;
             if(m_f_Log) { log_i("ContentType %s, format is opus", ct); }
+            if(audio_info) audio_info("format is opus");
             break;
         case CT_VORBIS:
             m_codec = CODEC_VORBIS;
             log_i("ContentType %s, format is vorbis", ct);
+            if(audio_info) audio_info("format is vorbis");
             break;
         case CT_WAV:
             m_codec = CODEC_WAV;
             if(m_f_Log) { log_i("ContentType %s, format is wav", ct); }
+            if(audio_info) audio_info("format is wav");
             break;
         case CT_OGG:
             if(m_expectedCodec == CODEC_OPUS) m_codec = CODEC_OPUS;
