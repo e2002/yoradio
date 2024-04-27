@@ -166,9 +166,11 @@ public:
     uint32_t getAudioFileDuration();
     uint32_t getAudioCurrentTime();
     uint32_t getTotalPlayingTime();
-    uint16_t getVUlevel();
 
     void setDefaults();
+    /* VU METER */
+    void     setVUmeter() {};
+    void     getVUlevel() {};
     uint8_t  vuLeft, vuRight;
     uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
     uint32_t inBufferFree();   // returns the number of free bytes in the inputbuffer
