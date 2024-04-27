@@ -1,3 +1,6 @@
+#include "../core/options.h"
+#include "../core/spidog.h"
+#if VS1053_CS==255
 /*
  * Audio.cpp
  *
@@ -8,13 +11,23 @@
  *      Author: Wolle (schreibfaul1)
  *
  */
-#include "Audio.h"
+#include "AudioEx.h"
 #include "aac_decoder/aac_decoder.h"
 #include "flac_decoder/flac_decoder.h"
 #include "mp3_decoder/mp3_decoder.h"
 #include "opus_decoder/opus_decoder.h"
 #include "vorbis_decoder/vorbis_decoder.h"
+#include "../core/config.h"
 
+#ifdef SDFATFS_USED
+fs::SDFATFS SD_SDFAT;
+#endif
+#ifndef DMA_BUFCOUNT
+  #define DMA_BUFCOUNT  8
+#endif
+#ifndef DMA_BUFLEN
+  #define DMA_BUFLEN  512   //  (512)
+#endif
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 AudioBuffer::AudioBuffer(size_t maxBlockSize) {
     // if maxBlockSize isn't set use defaultspace (1600 bytes) is enough for aac and mp3 player
@@ -6238,3 +6251,4 @@ uint8_t Audio::determineOggCodec(uint8_t* data, uint16_t len) {
 }
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+#endif  //  if VS1053_CS==255

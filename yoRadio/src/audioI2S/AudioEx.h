@@ -29,6 +29,10 @@
 #include <driver/i2s.h>
 #endif
 
+#ifndef AUDIOBUFFER_MULTIPLIER2
+#define AUDIOBUFFER_MULTIPLIER2    8
+#endif
+
 #ifndef I2S_GPIO_UNUSED
   #define I2S_GPIO_UNUSED -1 // = I2S_PIN_NO_CHANGE in IDF < 5
 #endif
@@ -172,6 +176,8 @@ public:
     void     setVUmeter() {};
     void     getVUlevel() {};
     uint8_t  vuLeft, vuRight;
+    bool     eofHeader;
+    esp_err_t i2s_mclk_pin_select(const uint8_t pin);
     uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
     uint32_t inBufferFree();   // returns the number of free bytes in the inputbuffer
     uint32_t inBufferSize();   // returns the size of the inputbuffer in bytes
