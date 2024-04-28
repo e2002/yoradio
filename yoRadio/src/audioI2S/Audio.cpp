@@ -4070,7 +4070,7 @@ bool Audio::parseContentType(char* ct) {
             break;
         case CT_VORBIS:
             m_codec = CODEC_VORBIS;
-            log_i("ContentType %s, format is vorbis", ct);
+            if(m_f_Log) { log_i("ContentType %s, format is vorbis", ct); }
             break;
         case CT_WAV:
             m_codec = CODEC_WAV;
