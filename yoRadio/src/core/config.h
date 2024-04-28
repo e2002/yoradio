@@ -42,7 +42,7 @@
 #endif
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum cardStatus_e    : uint8_t  { CS_NONE=0, CS_PRESENT=1, CS_MOUNTED=2, CS_EJECTED=3 };
-enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
+enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV, BF_OPUS, BF_VORBIS };
 
 void u8fix(char *src);
 

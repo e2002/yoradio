@@ -493,12 +493,14 @@ void BitrateWidget::_draw(){
   dsp.setTextColor(_bgcolor, _fgcolor);
   dsp.setCursor(_config.left + _dimension/2 - _charWidth*3/2 + 1, _config.top + _dimension - _dimension/4 - _textheight/2);
   switch(_format){
-    case BF_MP3:  dsp.print("MP3"); break;
-    case BF_AAC:  dsp.print("AAC"); break;
-    case BF_FLAC: dsp.print("FLC"); break;
-    case BF_OGG:  dsp.print("OGG"); break;
-    case BF_WAV:  dsp.print("WAV"); break;
-    default:      dsp.print("N/A"); break;
+    case BF_MP3:    dsp.print("MP3"); break;
+    case BF_AAC:    dsp.print("AAC"); break;
+    case BF_FLAC:   dsp.print("FLC"); break;
+    case BF_OGG:    dsp.print("OGG"); break;
+    case BF_WAV:    dsp.print("WAV"); break;
+    case BF_OPUS:   dsp.print("OPS"); break;   //dsp.print("OPUS"); break;
+    case BF_VORBIS: dsp.print("VBS"); break; //dsp.print("VORBIS"); break;
+    default:        dsp.print("N/A"); break;
   }
 }
 
