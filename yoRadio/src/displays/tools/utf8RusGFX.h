@@ -1,6 +1,40 @@
 #ifndef utf8RusGFX_h
 #define  utf8RusGFX_h
 
+void UTF8toASCII(char* str) {
+
+    const uint8_t ascii[60] = {
+    //129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148  // UTF8(C3)
+    //                Ä    Å    Æ    Ç         É                                       Ñ                  // CHAR
+      000, 000, 000, 142, 143, 146, 128, 000, 144, 000, 000, 000, 000, 000, 000, 000, 165, 000, 000, 000, // ASCII
+    //149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168
+    //      Ö                             Ü              ß    à                   ä    å    æ    ç    è
+      000, 153, 000, 000, 000, 000, 000, 154, 000, 000, 225, 133, 000, 000, 000, 132, 134, 145, 135, 138,
+    //169, 170, 171, 172. 173. 174. 175, 176, 177, 179, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188
+    // é    ê    ë    ì         î    ï         ñ    ò         ô         ö              ù         û    ü
+      130, 136, 137, 141, 000, 140, 139, 000, 164, 149, 000, 147, 000, 148, 000, 000, 151, 000, 150, 129};
+
+    uint16_t i = 0, j = 0, s = 0;
+    bool     f_C3_seen = false;
+
+    while(str[i] != 0) {    // convert UTF8 to ASCII
+        if(str[i] == 195) { // C3
+            i++;
+            f_C3_seen = true;
+            continue;
+        }
+        str[j] = str[i];
+        if(str[j] > 128 && str[j] < 189 && f_C3_seen == true) {
+            s = ascii[str[j] - 129];
+            if(s != 0) str[j] = s; // found a related ASCII sign
+            f_C3_seen = false;
+        }
+        i++;
+        j++;
+    }
+    str[j] = 0;
+}
+
 char* DspCore::utf8Rus(const char* str, bool uppercase) {
   int index = 0;
   static char strn[BUFLEN];
@@ -40,7 +74,10 @@ char* DspCore::utf8Rus(const char* str, bool uppercase) {
       *iter = toupper(*iter);
     }
   }
-  if(L10N_LANGUAGE==EN) return strn;
+  if(L10N_LANGUAGE==EN) {
+    UTF8toASCII(strn);
+    return strn;
+  }
   while (strn[index])
   {
     if (strn[index] >= 0xBF)
