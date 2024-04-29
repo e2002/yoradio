@@ -74,7 +74,7 @@ char* DspCore::utf8Rus(const char* str, bool uppercase) {
       *iter = toupper(*iter);
     }
   }
-  if(L10N_LANGUAGE==EN) {
+  if(L10N_LANGUAGE!=RU) {
     UTF8toASCII(strn);
     return strn;
   }

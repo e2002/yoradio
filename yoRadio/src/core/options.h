@@ -450,6 +450,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 
 #define EN  1
 #define RU  2
+#define DE  3
 #ifndef L10N_LANGUAGE
   #define L10N_LANGUAGE EN
 #endif
