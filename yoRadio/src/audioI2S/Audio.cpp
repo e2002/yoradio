@@ -672,10 +672,11 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 bool Audio::httpPrint(const char* host) {
     // user and pwd for authentification only, can be empty
 
+    bool ret_val = false;
     if(host == NULL) {
         AUDIO_INFO("Hostaddress is empty");
         stopSong();
-        return false;
+        return ret_val;
     }
 
     char* h_host = NULL; // pointer of l_host without http:// or https://
@@ -745,7 +746,7 @@ bool Audio::httpPrint(const char* host) {
         if(!_client->connect(hostwoext, port)) {
             log_e("connection lost");
             stopSong();
-            return false;
+            goto exit;
         }
     }
     _client->print(rqh);
@@ -764,7 +765,9 @@ bool Audio::httpPrint(const char* host) {
     m_streamType = ST_WEBSTREAM;
     m_contentlength = 0;
     m_f_chunked = false;
+    ret_val = true;
 
+    exit:
     if(hostwoext) {
         free(hostwoext);
         hostwoext = NULL;
@@ -777,7 +780,7 @@ bool Audio::httpPrint(const char* host) {
         free(h_host);
         h_host = NULL;
     }
-    return true;
+    return ret_val;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 bool Audio::setFileLoop(bool input) {
