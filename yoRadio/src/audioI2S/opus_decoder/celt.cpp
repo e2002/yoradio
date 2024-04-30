@@ -2114,7 +2114,7 @@ void deemphasis(int32_t *in[], int16_t *pcm, int32_t N) {
         for(j = 0; j < N; j++) {
             int32_t tmp = x[j] +  m;
             m = MULT16_32_Q15(coef0, tmp);
-            y[j * CC] = sig2word16(tmp);
+            scratch[j * CC] = sig2word16(tmp);
         }
 
         mem[c] = m;
