@@ -279,14 +279,15 @@ void doSync( void * pvParameters ) {
 bool getWeather(char *wstr) {
 #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
   WiFiClient client;
-  const char* host  = "api.openweathermap.org";
+  //https://api.open-meteo.com/v1/forecast?latitude=48.69&longitude=9.42&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_speed_10m,wind_direction_10m&timezone=GMT
+  const char* host  = "api.open-meteo.com";
   
   if (!client.connect(host, 80)) {
     Serial.println("##WEATHER###: connection  failed");
     return false;
   }
   char httpget[250] = {0};
-  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, weatherUnits, weatherLang, config.store.weatherkey, host);
+  sprintf(httpget, "GET /v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_speed_10m,wind_direction_10m&timezone=GMT HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, host);
   client.print(httpget);
   unsigned long timeout = millis();
   while (client.available() == 0) {
@@ -302,7 +303,7 @@ bool getWeather(char *wstr) {
     while (client.available())
     {
       line = client.readStringUntil('\n');
-      if (strstr(line.c_str(), "\"temp\"") != NULL) {
+      if (strstr(line.c_str(), "\"temperature_2m\"") != NULL) {
         client.stop();
         break;
       }
@@ -314,7 +315,7 @@ bool getWeather(char *wstr) {
       }
     }
   }
-  if (strstr(line.c_str(), "\"temp\"") == NULL) {
+  if (strstr(line.c_str(), "\"temperature_2m\"") == NULL) {
     Serial.println("##WEATHER###: weather not found !");
     return false;
   }
@@ -324,6 +325,7 @@ bool getWeather(char *wstr) {
   const char* cursor = line.c_str();
   char desc[120], temp[20], hum[20], press[20], icon[5];
 
+  /*
   tmps = strstr(cursor, "\"description\":\"");
   if (tmps == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
   tmps += 15;
@@ -340,42 +342,44 @@ bool getWeather(char *wstr) {
   if (tmpe == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
   strlcpy(icon, tmps, tmpe - tmps + 1);
   cursor = tmpe + 2;
-  
-  tmps = strstr(cursor, "\"temp\":");
+  */
+  cursor = strstr(cursor, "\"current\":");
+  tmps = strstr(cursor, "\"temperature_2m\":");
   if (tmps == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-  tmps += 7;
+  tmps += 17;
   tmpe = strstr(tmps, ",\"");
   if (tmpe == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
   strlcpy(temp, tmps, tmpe - tmps + 1);
   cursor = tmpe + 1;
   float tempf = atof(temp);
 
-  tmps = strstr(cursor, "\"feels_like\":");
+  tmps = strstr(cursor, "\"relative_humidity_2m\":");
+  if (tmps == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
+  tmps += 23;
+  tmpe = strstr(tmps, ",\"");
+  if (tmpe == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
+  cursor = tmpe + 1;
+  strlcpy(hum, tmps, tmpe - tmps + 1);
+ 
+  tmps = strstr(cursor, "\"apparent_temperature\":");
   if (tmps == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-  tmps += 13;
+  tmps += 23;
   tmpe = strstr(tmps, ",\"");
   if (tmpe == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
   strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  float tempfl = atof(temp); (void)tempfl;
+  cursor = tmpe + 1;
+  float tempfl = atof(temp); //(void)tempfl;
 
-  tmps = strstr(cursor, "\"pressure\":");
+  tmps = strstr(cursor, "\"surface_pressure\":");
   if (tmps == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-  tmps += 11;
+  tmps += 19;
   tmpe = strstr(tmps, ",\"");
   if (tmpe == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
   strlcpy(press, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  int pressi = (float)atoi(press) / 1.333;
+  cursor = tmpe + 1;
+  int pressi = (float)atoi(press);
   
-  tmps = strstr(cursor, "humidity\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-  tmps += 10;
-  tmpe = strstr(tmps, ",\"");
-  tmpc = strstr(tmps, "}");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-  strlcpy(hum, tmps, tmpe - tmps + (tmpc>tmpe?1:0));
-  
+  /*
   tmps = strstr(cursor, "\"grnd_level\":");
   bool grnd_level_pr = (tmps != NULL);
   if(grnd_level_pr){
@@ -386,20 +390,20 @@ bool getWeather(char *wstr) {
     cursor = tmpe + 2;
     pressi = (float)atoi(press) / 1.333;
   }
-  
-  tmps = strstr(cursor, "\"speed\":");
+  */
+  tmps = strstr(cursor, "\"wind_speed_10m\":");
   if (tmps == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-  tmps += 8;
+  tmps += 17;
   tmpe = strstr(tmps, ",\"");
   if (tmpe == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
   strlcpy(temp, tmps, tmpe - tmps + 1);
   cursor = tmpe + 1;
   float wind_speed = atof(temp); (void)wind_speed;
-  
-  tmps = strstr(cursor, "\"deg\":");
+
+  tmps = strstr(cursor, "\"wind_direction_10m\":");
   if (tmps == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-  tmps += 6;
-  tmpe = strstr(tmps, ",\"");
+  tmps += 21;
+  tmpe = strstr(tmps, "}");
   if (tmpe == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
   strlcpy(temp, tmps, tmpe - tmps + 1);
   cursor = tmpe + 1;
@@ -433,7 +437,7 @@ bool getWeather(char *wstr) {
   sprintf(wstr, weatherFmt, tempf, pressi, hum);
   #else
     #if EXT_WEATHER
-      sprintf(wstr, weatherFmt, desc, tempf, tempfl, pressi, hum, wind_speed, wind[wind_deg]);
+      sprintf(wstr, weatherFmt, tempf, tempfl, pressi, hum, wind_speed, wind[wind_deg]);
     #else
       sprintf(wstr, weatherFmt, desc, tempf, pressi, hum);
     #endif
