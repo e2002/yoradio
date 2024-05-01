@@ -6,6 +6,7 @@
 #include "netserver.h"
 #include "player.h"
 #include "mqtt.h"
+#include <ArduinoJson.h>
 
 #ifndef WIFI_ATTEMPTS
 	#define WIFI_ATTEMPTS	16
@@ -324,129 +325,38 @@ bool getWeather(char *wstr) {
     Serial.println("##WEATHER###: weather not found !");
     return false;
   }
-  char *tmpe;
-  char *tmps;
-  char *tmpc;
-  const char* cursor = line.c_str();
-  char desc[120], temp[20], hum[20], press[20], icon[5];
 
-  /*
-  tmps = strstr(cursor, "\"description\":\"");
-  if (tmps == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
-  tmps += 15;
-  tmpe = strstr(tmps, "\",\"");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
-  strlcpy(desc, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  
-  // "ясно","icon":"01d"}],
-  tmps = strstr(cursor, "\"icon\":\"");
-  if (tmps == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
-  tmps += 8;
-  tmpe = strstr(tmps, "\"}");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
-  strlcpy(icon, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 2;
-  */
-  cursor = strstr(cursor, "\"current\":");
-  tmps = strstr(cursor, "\"temperature_2m\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-  tmps += 17;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-  strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 1;
-  float tempf = atof(temp);
+  JsonDocument doc;
 
-  tmps = strstr(cursor, "\"relative_humidity_2m\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-  tmps += 23;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-  cursor = tmpe + 1;
-  strlcpy(hum, tmps, tmpe - tmps + 1);
- 
-  tmps = strstr(cursor, "\"apparent_temperature\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-  tmps += 23;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-  strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 1;
-  float tempfl = atof(temp); //(void)tempfl;
+  DeserializationError error = deserializeJson(doc, line);
 
-  tmps = strstr(cursor, "\"surface_pressure\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-  tmps += 19;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-  strlcpy(press, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 1;
-  int pressi = (float)atoi(press);
-  
-  /*
-  tmps = strstr(cursor, "\"grnd_level\":");
-  bool grnd_level_pr = (tmps != NULL);
-  if(grnd_level_pr){
-    tmps += 13;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: grnd_level not found !"); return false;}
-    strlcpy(press, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    pressi = (float)atoi(press) / 1.333;
+  if (error) {
+    Serial.print("##WEATHER###: deserializeJson() failed: ");
+    Serial.println(error.c_str());
+    Serial.println(line);
+    return false;
   }
-  */
-  tmps = strstr(cursor, "\"wind_speed_10m\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-  tmps += 17;
-  tmpe = strstr(tmps, ",\"");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-  strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 1;
-  float wind_speed = atof(temp); (void)wind_speed;
 
-  tmps = strstr(cursor, "\"wind_direction_10m\":");
-  if (tmps == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-  tmps += 21;
-  tmpe = strstr(tmps, "}");
-  if (tmpe == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-  strlcpy(temp, tmps, tmpe - tmps + 1);
-  cursor = tmpe + 1;
-  int wind_deg = atof(temp)/22.5;
+  JsonObject current = doc["current"];
+
+  float tempf = current["temperature_2m"];
+  String hum = current["relative_humidity_2m"];
+  float tempfl = current["apparent_temperature"];
+  int pressi = current["surface_pressure"];
+  float wind_speed = current["wind_speed_10m"];
+  int wind_deg = (int)((int)current["wind_direction_10m"]/22.5);
   if(wind_deg<0) wind_deg = 16+wind_deg;
-  
-  
-  #ifdef USE_NEXTION
-    nextion.putcmdf("press_txt.txt=\"%dmm\"", pressi);
-    nextion.putcmdf("hum_txt.txt=\"%d%%\"", atoi(hum));
-    char cmd[30];
-    snprintf(cmd, sizeof(cmd)-1,"temp_txt.txt=\"%.1f\"", tempf);
-    nextion.putcmd(cmd);
-    int iconofset;
-    if(strstr(icon,"01")!=NULL)      iconofset = 0;
-    else if(strstr(icon,"02")!=NULL) iconofset = 1;
-    else if(strstr(icon,"03")!=NULL) iconofset = 2;
-    else if(strstr(icon,"04")!=NULL) iconofset = 3;
-    else if(strstr(icon,"09")!=NULL) iconofset = 4;
-    else if(strstr(icon,"10")!=NULL) iconofset = 5;
-    else if(strstr(icon,"11")!=NULL) iconofset = 6;
-    else if(strstr(icon,"13")!=NULL) iconofset = 7;
-    else if(strstr(icon,"50")!=NULL) iconofset = 8;
-    else                             iconofset = 9;
-    nextion.putcmd("cond_img.pic", 50+iconofset);
-    nextion.weatherVisible(1);
-  #endif
-  
-  Serial.printf("##WEATHER###: description: %s, temp:%.1f C, pressure:%dmmHg, humidity:%s%%\n", desc, tempf, pressi, hum);
+
   #ifdef WEATHER_FMT_SHORT
-  sprintf(wstr, weatherFmt, tempf, pressi, hum);
+    sprintf(wstr, (const char*)&weatherFmt[3], tempf, pressi, hum.c_str());
   #else
     #if EXT_WEATHER
-      sprintf(wstr, weatherFmt, tempf, tempfl, pressi, hum, wind_speed, wind[wind_deg]);
+      sprintf(wstr, (const char*)&weatherFmt[3], tempf, tempfl, pressi, hum.c_str(), wind_speed, wind[wind_deg]);
     #else
-      sprintf(wstr, weatherFmt, desc, tempf, pressi, hum);
+      sprintf(wstr, (const char*)&weatherFmt[3], tempf, pressi, hum.c_str());
     #endif
   #endif
+  Serial.printf("##WEATHER###: %s\n", wstr);
   network.requestWeatherSync();
   return true;
 #endif // if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
