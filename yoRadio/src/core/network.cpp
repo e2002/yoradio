@@ -279,15 +279,20 @@ void doSync( void * pvParameters ) {
 bool getWeather(char *wstr) {
 #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
   WiFiClient client;
-  //https://api.open-meteo.com/v1/forecast?latitude=48.69&longitude=9.42&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_speed_10m,wind_direction_10m&timezone=GMT
+  //https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=GMT
   const char* host  = "api.open-meteo.com";
   
   if (!client.connect(host, 80)) {
     Serial.println("##WEATHER###: connection  failed");
     return false;
   }
-  char httpget[250] = {0};
-  sprintf(httpget, "GET /v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_speed_10m,wind_direction_10m&timezone=GMT HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, host);
+  char httpget[300] = {0};
+  int j;
+  j = snprintf(httpget, sizeof httpget, "GET /v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=GMT HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, host);
+  if (j >= sizeof httpget) {
+    Serial.printf("##WEATHER###: httpget buffer length exceeded; increase size of httpget.\n");
+    return false;
+  }
   client.print(httpget);
   unsigned long timeout = millis();
   while (client.available() == 0) {
