@@ -35,6 +35,7 @@ bool Config::_isFSempty() {
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
   sdog.begin();
+  eepromRead(EEPROM_START, store);
   bootInfo();
 #if RTCSUPPORTED
 	_rtcFound = false;
@@ -57,7 +58,6 @@ void Config::init() {
     SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
   #endif
 #endif
-  eepromRead(EEPROM_START, store);
   if (store.config_set != 4262) setDefaults();
   backupLastStation = store.lastStation;
   if(store.play_mode==80) store.play_mode=0b100;
