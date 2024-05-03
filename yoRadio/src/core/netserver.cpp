@@ -726,6 +726,7 @@ String processor(const String& var) { // %Templates%
   if (var == "ACTION") return (network.status == CONNECTED && !config.emptyFS)?"webboard":"";
   if (var == "UPLOADWIFI") return (network.status == CONNECTED)?" hidden":"";
   if (var == "VERSION") return YOVERSION;
+  if (var == "URL") return YOURL;
   return String();
 }
 
