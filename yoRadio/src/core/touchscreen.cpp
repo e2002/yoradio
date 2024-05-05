@@ -32,7 +32,7 @@
   typedef TS_Point TSPoint;
 #elif TS_MODEL==TS_MODEL_GT911
   #include "../GT911_Touchscreen/TAMC_GT911.h"
-  TAMC_GT911 ts = TAMC_GT911(TS_SDA, TS_SCL, TS_INT, TS_RST, 0, 0);
+  TAMC_GT911 ts = TAMC_GT911(TS_SDA, TS_SCL, TS_INT, TS_RST, DSP_WIDTH, DSP_HEIGHT);
   typedef TP_Point TSPoint;
 #endif
 
