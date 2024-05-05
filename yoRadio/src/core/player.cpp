@@ -57,6 +57,7 @@ void Player::init() {
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
+  setVolumeSteps(254);
   _status = STOPPED;
   //setOutputPins(false);
   _volTimer=false;
