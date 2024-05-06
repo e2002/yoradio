@@ -82,7 +82,7 @@ bool OPUSDecoder_AllocateBuffers(){
         log_e("internal error");
     }
     else{
-        log_i("silkDecSizeBytes %i", silkDecSizeBytes);
+      //log_i("silkDecSizeBytes %i", silkDecSizeBytes);
     }
     return true;
 }
@@ -575,7 +575,7 @@ int8_t opus_FramePacking_Code3(uint8_t *inbuf, int *bytesLeft, short *outbuf, in
         inbuf += paddingLength;
         *frameCount = M;
         if(M == 0) return -1; // div0
-        log_i("packetLen %i,  M %i   FS %i", packetLen, M, packetLen / M);
+        //log_i("packetLen %i,  M %i   FS %i", packetLen, M, packetLen / M);
 
         fs = (packetLen - paddingBytes) / *frameCount;
     }
