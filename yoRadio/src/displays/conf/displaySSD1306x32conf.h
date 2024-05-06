@@ -9,6 +9,7 @@
 #define displaySSD1306conf_h
 
 #define DSP_WIDTH       128
+#define DSP_HEIGHT      32
 #define TFT_FRAMEWDT    1
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
 

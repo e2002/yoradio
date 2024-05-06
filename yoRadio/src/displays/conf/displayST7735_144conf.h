@@ -9,6 +9,7 @@
 #define displayST7789conf_h
 
 #define DSP_WIDTH       128
+#define DSP_HEIGHT      128
 #define TFT_FRAMEWDT    4
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
 

@@ -9,6 +9,7 @@
 #define displayGC9106conf_h
 
 #define DSP_WIDTH       160
+#define DSP_HEIGHT      80
 #define TFT_FRAMEWDT    1
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
 

@@ -9,6 +9,7 @@
 #define displayN5110conf_h
 
 #define DSP_WIDTH       84
+#define DSP_HEIGHT      48
 #define TFT_FRAMEWDT    0
 #define MAX_WIDTH       DSP_WIDTH
 #define SCROLLDELAY     180

@@ -9,6 +9,7 @@
 #define displayLCD2004conf_h
 
 #define DSP_WIDTH       20
+#define DSP_HEIGHT      4
 #define TFT_FRAMEWDT    0
 #define MAX_WIDTH       20
 #define PLMITEMS        4

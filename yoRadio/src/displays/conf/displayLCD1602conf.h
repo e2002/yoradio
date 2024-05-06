@@ -9,6 +9,7 @@
 #define displayLCD1602conf_h
 
 #define DSP_WIDTH       16
+#define DSP_HEIGHT      2
 #define TFT_FRAMEWDT    0
 #define MAX_WIDTH       16
 #define PLMITEMS        2

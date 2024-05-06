@@ -9,6 +9,7 @@
 #define displaySH1106conf_h
 
 #define DSP_WIDTH       128
+#define DSP_HEIGHT      64
 #define TFT_FRAMEWDT    1
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
 
