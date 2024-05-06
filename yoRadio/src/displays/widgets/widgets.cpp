@@ -297,8 +297,8 @@ void VuWidget::_draw(){
   static uint16_t measL, measR;
   uint16_t bandColor;
   uint16_t dimension = _config.align?_bands.width:_bands.height;
-  uint8_t L = map(player.vuLeft, 255, 0, 0, dimension);
-  uint8_t R = map(player.vuRight, 255, 0, 0, dimension);
+  uint8_t L = map(player.vuLeft, 0, 127, 0, dimension);
+  uint8_t R = map(player.vuRight, 0,127, 0, dimension);
   bool played = player.isRunning();
   if(played){
     measL=(L>=measL)?measL + _bands.fadespeed:L;
