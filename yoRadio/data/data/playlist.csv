@@ -1,11 +1,20 @@
-swr3	https://www.swr3.de/musik/webradio/swr3-radio-100.m3u	0
-antenne 1 mp3 128kbit/s	http://stream.antenne1.de/a1stg/livestream2.mp3	0
-antenne 1 aac 64kbit/s	http://stream.antenne1.de/a1stg/livestream1.aac	0
-DasDing aac 96kbit/s	https://liveradio.swr.de/d245tgd/dasding/	0
-DasDing mp3 128kbit/s	https://liveradio.swr.de/d9zadj3/dasding/	0
-AFN The Eagle	https://19993.live.streamtheworld.com/AFNE_STUAAC.aac	0
-bigfm	http://srv05.bigstreams.de/bigfm-mp3-96.m3u	0
-radio energy	http://energyradio.de/stuttgart	0
-freies Radio Stuttgart	http://streaming.fueralle.org:8000/frs-hi.mp3.m3u	0
-Rock Antenne	http://mp3.webradio.rockantenne.de:80	0
-1 live	http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3	0
+SWR3 | 48k aac	https://liveradio.swr.de/sw890cl/swr3/	0
+Hitradio Antenne 1 Stuttgart	http://stream.antenne1.de/a1stg/livestream1.aac	0
+DASDING	https://liveradio.swr.de/d245tgd/dasding/	0
+DASDING | 48k aac	https://liveradio.swr.de/sw890cl/dasding/	0
+AFN 360 Stuttgart	http://playerservices.streamtheworld.com/m3u/AFNE_STU.m3u	0
+bigFM Oldschool Rap & Hip-Hop	http://streams.bigfm.de/bigfm-oldschool-128-aac	0
+bigFM US Rap	http://streams.bigfm.de/bigfm-usrap-128-aac	0
+bigFM Deutschland	https://streams.bigfm.de/bigfm-deutschland-128-mp3	0
+bigFM Baden-Württemberg	http://streams.bigfm.de/bigfm-bw-128-aac?usid=0-0-H-A-D-30	0
+Rock Antenne - Heavy Metal	http://mp3channels.webradio.rockantenne.de/heavy-metal	0
+Big R Radio - 80s Metal FM	http://bigrradio.cdnstream1.com/5186_128	0
+# 100 GREATEST HEAVY METAL	https://cast1.torontocast.com:4660/stream	0
+OpenFM - Classic Metal	http://stream.open.fm/108	0
+NRJ Reggeaton	https://scdn.nrjaudio.fm/adwz1/fr/31023/aac_64.mp3?origine=playernrj&aw_0_req.userConsentV2=&aw_0_1st.station=NRJ-Reggaeton	0
+Café del Mar	https://streams.radio.co/se1a320b47/listen	0
+Costa Del Mar - Chillout (AAC 96kbps)	http://stream.cdm-chillout.com:8020/stream-AAC-Chill	0
+__LOUNGE__ by rautemusik (rm.fm)	https://lounge-high.rautemusik.fm/?ref=radiobrowser	0
+Jazz Lounge	http://eu8.fastcast4u.com:5068/;	0
+Klassik Radio - Lounge	http://stream.klassikradio.de/lounge/mp3-128/www.klassikradio.de/	0
+1.FM - Chillout Lounge Radio	http://strm112.1.fm/chilloutlounge_mobile_mp3	0
