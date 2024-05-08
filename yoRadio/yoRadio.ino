@@ -31,14 +31,14 @@ extern __attribute__((weak)) void yoradio_on_setup();
 
 void setup() {
   Serial.begin(115200);
-  if(LED_BUILTIN!=255) pinMode(LED_BUILTIN, OUTPUT);
-#if defined (LED_BUILTIN2)
-  pinMode(LED_BUILTIN2, OUTPUT);
-  digitalWrite(LED_BUILTIN2, LED_INVERT);
+  if(YO_LED_BUILTIN!=255) pinMode(YO_LED_BUILTIN, OUTPUT);
+#if defined (YO_LED_BUILTIN2)
+  pinMode(YO_LED_BUILTIN2, OUTPUT);
+  digitalWrite(YO_LED_BUILTIN2, LED_INVERT);
 #endif
-#if defined (LED_BUILTIN3)
-  pinMode(LED_BUILTIN3, OUTPUT);
-  digitalWrite(LED_BUILTIN3, LED_INVERT);
+#if defined (YO_LED_BUILTIN3)
+  pinMode(YO_LED_BUILTIN3, OUTPUT);
+  digitalWrite(YO_LED_BUILTIN3, LED_INVERT);
 #endif
   if (yoradio_on_setup) yoradio_on_setup();
   config.init();

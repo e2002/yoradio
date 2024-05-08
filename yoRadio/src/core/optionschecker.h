@@ -1,12 +1,12 @@
 #ifndef optionschecker_h
 #define optionschecker_h
 
-#if LED_BUILTIN==TFT_RST
-#  error LED_BUILTIN IS THE SAME AS TFT_RST. Check it in myoptions.h
+#if YO_LED_BUILTIN==TFT_RST
+#  error YO_LED_BUILTIN IS THE SAME AS TFT_RST. Check it in myoptions.h
 #endif
 
-#if LED_BUILTIN==VS1053_RST
-#  error LED_BUILTIN IS THE SAME AS VS1053_RST. Check it in myoptions.h
+#if YO_LED_BUILTIN==VS1053_RST
+#  error YO_LED_BUILTIN IS THE SAME AS VS1053_RST. Check it in myoptions.h
 #endif
 
 #if (I2S_DOUT!=255) && (VS1053_CS!=255)

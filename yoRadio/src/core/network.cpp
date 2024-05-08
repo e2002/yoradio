@@ -122,7 +122,7 @@ bool Network::wifiBegin(bool silent){
     while (WiFi.status() != WL_CONNECTED) {
       if(!silent) Serial.print(".");
       delay(500);
-      if(LED_BUILTIN!=255 && !silent) digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      if(YO_LED_BUILTIN!=255 && !silent) digitalWrite(YO_LED_BUILTIN, !digitalRead(YO_LED_BUILTIN));
       errcnt++;
       if (errcnt > WIFI_ATTEMPTS) {
         errcnt = 0;
@@ -183,7 +183,7 @@ void Network::begin() {
   }
   
   Serial.println("##[BOOT]#\tdone");
-  if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
+  if(YO_LED_BUILTIN!=255) digitalWrite(YO_LED_BUILTIN, LOW);
   
 #if RTCSUPPORTED
 	rtc.getTime(&network.timeinfo);

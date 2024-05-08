@@ -7,7 +7,7 @@
 
 #include "yoEncoder.h"
 
-void IRAM_ATTR yoEncoder::readEncoder_ISR()
+void yoEncoder::readEncoder_ISR()
 {
 
 	unsigned long now = millis();

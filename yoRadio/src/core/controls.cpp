@@ -204,10 +204,10 @@ void encoder2Loop() {
 
 #if IR_PIN!=255
 void irBlink() {
-  if(LED_BUILTIN==255) return;
+  if(YO_LED_BUILTIN==255) return;
   if (player.status() == STOPPED) {
     for (byte i = 0; i < 7; i++) {
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      digitalWrite(YO_LED_BUILTIN, !digitalRead(LED_BUILTIN));
       delay(100);
     }
   }
