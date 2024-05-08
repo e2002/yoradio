@@ -647,7 +647,7 @@ char* OPUSgetStreamTitle(){
     }
     return NULL;
 }
-vector<uint32_t> OPUSgetMetadataBlockPicture(){
+std::vector<uint32_t> OPUSgetMetadataBlockPicture(){
     if(s_f_opusNewMetadataBlockPicture){
         s_f_opusNewMetadataBlockPicture = false;
         return s_opusBlockPicItem;

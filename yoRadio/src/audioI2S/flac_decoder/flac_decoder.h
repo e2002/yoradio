@@ -18,7 +18,6 @@
 
 #include "Arduino.h"
 #include <vector>
-using namespace std;
 
 #define MAX_CHANNELS 2
 #define MAX_BLOCKSIZE 8192
@@ -148,7 +147,7 @@ int              FLACFindSyncWord(unsigned char* buf, int nBytes);
 boolean          FLACFindMagicWord(unsigned char* buf, int nBytes);
 char*            FLACgetStreamTitle();
 int              FLACparseOGG(uint8_t* inbuf, int* bytesLeft);
-vector<uint32_t> FLACgetMetadataBlockPicture();
+std::vector<uint32_t> FLACgetMetadataBlockPicture();
 int              parseFlacFirstPacket(uint8_t* inbuf, int16_t nBytes);
 int              parseMetaDataBlockHeader(uint8_t* inbuf, int16_t nBytes);
 bool             FLACDecoder_AllocateBuffers(void);

@@ -11,14 +11,13 @@
  */
 #include "flac_decoder.h"
 #include "vector"
-using namespace std;
 
 FLACFrameHeader_t*   FLACFrameHeader;
 FLACMetadataBlock_t* FLACMetadataBlock;
 
-vector<uint16_t> s_flacSegmTableVec;
-vector<int32_t>  coefs;
-vector<uint32_t> s_flacBlockPicItem;
+std::vector<uint16_t> s_flacSegmTableVec;
+std::vector<int32_t>  coefs;
+std::vector<uint32_t> s_flacBlockPicItem;
 uint64_t         s_flac_bitBuffer = 0;
 uint32_t         s_flacBitrate = 0;
 uint32_t         s_flacBlockPicLenUntilFrameEnd = 0;
@@ -317,7 +316,7 @@ int FLACparseOGG(uint8_t *inbuf, int *bytesLeft){  // reference https://www.xiph
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-vector<uint32_t> FLACgetMetadataBlockPicture(){
+std::vector<uint32_t> FLACgetMetadataBlockPicture(){
     if(s_f_flacNewMetadataBlockPicture){
         s_f_flacNewMetadataBlockPicture = false;
         return s_flacBlockPicItem;

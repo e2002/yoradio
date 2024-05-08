@@ -28,7 +28,6 @@
 
 #include "Arduino.h"
 #include <vector>
-using namespace std;
 #define VI_FLOORB       2
 #define VIF_POSIT      63
 
@@ -230,7 +229,7 @@ uint8_t               VORBISGetBitsPerSample();
 uint32_t              VORBISGetBitRate();
 uint16_t              VORBISGetOutputSamps();
 char*                 VORBISgetStreamTitle();
-vector<uint32_t>      VORBISgetMetadataBlockPicture();
+std::vector<uint32_t>      VORBISgetMetadataBlockPicture();
 int                   VORBISFindSyncWord(unsigned char* buf, int nBytes);
 int                   VORBISparseOGG(uint8_t* inbuf, int* bytesLeft);
 int                   vorbisDecodePage1(uint8_t* inbuf, int* bytesLeft, uint32_t segmentLength);

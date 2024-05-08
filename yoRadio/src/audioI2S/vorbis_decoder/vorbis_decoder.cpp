@@ -24,7 +24,6 @@
 #include "lookup.h"
 #include "alloca.h"
 #include <vector>
-using namespace std;
 
 #define __malloc_heap_psram(size) \
     heap_caps_malloc_prefer(size, 2, MALLOC_CAP_DEFAULT | MALLOC_CAP_SPIRAM, MALLOC_CAP_DEFAULT | MALLOC_CAP_INTERNAL)
@@ -88,7 +87,7 @@ vorbis_info_mapping_t *s_map_param = NULL;
 vorbis_info_mode_t    *s_mode_param = NULL;
 vorbis_dsp_state_t    *s_dsp_state = NULL;
 
-vector<uint32_t>s_vorbisBlockPicItem;
+std::vector<uint32_t>s_vorbisBlockPicItem;
 
 
 bool VORBISDecoder_AllocateBuffers(){
@@ -448,7 +447,7 @@ char* VORBISgetStreamTitle(){
     }
     return NULL;
 }
-vector<uint32_t> VORBISgetMetadataBlockPicture(){
+std::vector<uint32_t> VORBISgetMetadataBlockPicture(){
     if(s_f_vorbisNewMetadataBlockPicture){
         s_f_vorbisNewMetadataBlockPicture = false;
         return s_vorbisBlockPicItem;

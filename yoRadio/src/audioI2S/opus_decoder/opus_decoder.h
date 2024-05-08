@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
-using namespace std;
 
 enum : int8_t  {OPUS_CONTINUE = 110,
                 OPUS_PARSE_OGG_DONE = 100,
@@ -50,7 +49,7 @@ uint32_t         OPUSGetBitRate();
 uint16_t         OPUSGetOutputSamps();
 uint32_t         OPUSGetAudioDataStart();
 char*            OPUSgetStreamTitle();
-vector<uint32_t> OPUSgetMetadataBlockPicture();
+std::vector<uint32_t> OPUSgetMetadataBlockPicture();
 int              OPUSFindSyncWord(unsigned char* buf, int nBytes);
 int              OPUSparseOGG(uint8_t* inbuf, int* bytesLeft);
 int              parseOpusHead(uint8_t* inbuf, int nBytes);
