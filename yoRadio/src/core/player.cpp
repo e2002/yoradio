@@ -57,7 +57,9 @@ void Player::init() {
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
+#if VS1053_CS==255
   setVolumeSteps(254);
+#endif
   _status = STOPPED;
   //setOutputPins(false);
   _volTimer=false;
