@@ -51,7 +51,7 @@ void DspCore::printPLitem(uint8_t pos, const char* item, ScrollWidget& current){
     setTextColor(config.theme.playlist[plColor], config.theme.background);
     setCursor(TFT_FRAMEWDT, plYStart + pos * plItemHeight);
     fillRect(0, plYStart + pos * plItemHeight - 1, width(), plItemHeight - 2, config.theme.background);
-    print(utf8Rus(item, true));
+    print(utf8Rus(item, false));
   }
 }
 
