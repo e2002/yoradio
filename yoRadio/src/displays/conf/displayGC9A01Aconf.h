@@ -9,7 +9,7 @@
 #define displayGC9A01Aconf_h
 
 #define DSP_WIDTH       240
-#define DSP_WIDTH       240
+#define DSP_HEIGHT      240
 #define TFT_FRAMEWDT    8
 #define MAX_WIDTH       DSP_WIDTH-TFT_FRAMEWDT*2
 #define RSSI_DIGIT			true
