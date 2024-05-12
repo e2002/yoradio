@@ -919,7 +919,7 @@ void Config::bootInfo() {
 	  chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
 	}
   BOOTLOG("chip:\t\tmodel: %s | rev: %d | id: %d | cores: %d | psram: %d", ESP.getChipModel(), ESP.getChipRevision(), chipId, ESP.getChipCores(), ESP.getPsramSize());
-  BOOTLOG("display:\t%d", DSP_MODEL);
+  BOOTLOG("display:\tmodel=%d cs=%d dc=%d rst=%d", DSP_MODEL, TFT_CS, TFT_DC, TFT_RST);
   if(VS1053_CS==255) {
     if(I2S_INTERNAL==true) {
       BOOTLOG("audio:\t\t%s %s", "I2S_INTERNAL_DAC", PLAYER_FORCE_MONO?"mono":"stereo");
