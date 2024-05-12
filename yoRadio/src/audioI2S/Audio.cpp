@@ -186,6 +186,7 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
     m_i2s_chan_cfg.auto_clear    = true;                   // i2s will always send zero automatically if no data to send
     i2s_new_channel(&m_i2s_chan_cfg, &m_i2s_tx_handle, NULL);
 
+#if !defined(I2S_PDM)
     m_i2s_std_cfg.slot_cfg.data_bit_width = I2S_DATA_BIT_WIDTH_16BIT;  // Bits per sample
     m_i2s_std_cfg.slot_cfg.slot_bit_width = I2S_SLOT_BIT_WIDTH_AUTO;   // I2S channel slot bit-width equals to data bit-width
     m_i2s_std_cfg.slot_cfg.slot_mode      = I2S_SLOT_MODE_STEREO;      // I2S_SLOT_MODE_MONO, I2S_SLOT_MODE_STEREO,
@@ -205,6 +206,58 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
     m_i2s_std_cfg.clk_cfg.clk_src        = I2S_CLK_SRC_DEFAULT;        // Select PLL_F160M as the default source clock
     m_i2s_std_cfg.clk_cfg.mclk_multiple  = I2S_MCLK_MULTIPLE_128;      // mclk = sample_rate * 256
     i2s_channel_init_std_mode(m_i2s_tx_handle, &m_i2s_std_cfg);
+#else
+    // adapted from:
+    // https://github.com/espressif/esp-idf/tree/master/examples/peripherals/i2s/i2s_basic/i2s_pdm
+    // source:
+    // https://github.com/espressif/esp-idf/blob/master/examples/peripherals/i2s/i2s_basic/i2s_pdm/main/i2s_pdm_tx.c
+    // could https://github.com/espressif/esp-idf/tree/master/examples/peripherals/dac/dac_continuous/dac_audio
+    // be the right start to bring esp32 internal dac support to IDF version 5?
+
+    //only in newer idf?
+    //m_i2s_pdm_tx_cfg.slot_cfg = I2S_PDM_TX_SLOT_DAC_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
+    m_i2s_pdm_tx_cfg.slot_cfg.data_bit_width = I2S_DATA_BIT_WIDTH_16BIT;
+    m_i2s_pdm_tx_cfg.slot_cfg.slot_bit_width = I2S_SLOT_BIT_WIDTH_AUTO;
+    m_i2s_pdm_tx_cfg.slot_cfg.slot_mode = I2S_SLOT_MODE_MONO; // or I2S_SLOT_MODE_STEREO
+#if SOC_I2S_HW_VERSION_1
+    // one of I2S_PDM_SLOT_RIGHT, I2S_PDM_SLOT_LEFT, I2S_PDM_SLOT_BOTH
+    m_i2s_pdm_tx_cfg.slot_cfg.slot_mask = I2S_PDM_SLOT_RIGHT;
+#warning "SOC_I2S_HW_VERSION_1"
+#endif
+    m_i2s_pdm_tx_cfg.slot_cfg.sd_prescale = 0;
+    // possible filter settings
+    // I2S_PDM_SIG_SCALING_DIV_2 = 0,   /*!< I2S TX PDM signal scaling: /2 */
+    // I2S_PDM_SIG_SCALING_MUL_1 = 1,   /*!< I2S TX PDM signal scaling: x1 */
+    // I2S_PDM_SIG_SCALING_MUL_2 = 2,   /*!< I2S TX PDM signal scaling: x2 */
+    // I2S_PDM_SIG_SCALING_MUL_4 = 3,   /*!< I2S TX PDM signal scaling: x4 */
+    m_i2s_pdm_tx_cfg.slot_cfg.sd_scale = I2S_PDM_SIG_SCALING_MUL_1;
+    m_i2s_pdm_tx_cfg.slot_cfg.hp_scale = I2S_PDM_SIG_SCALING_MUL_1;
+    m_i2s_pdm_tx_cfg.slot_cfg.lp_scale = I2S_PDM_SIG_SCALING_MUL_1;
+    m_i2s_pdm_tx_cfg.slot_cfg.sinc_scale = I2S_PDM_SIG_SCALING_MUL_1;
+#if SOC_I2S_HW_VERSION_2
+    //SOC_I2S_HW_VERSION_2 esp32-s3 onwards? (idf > 5.1beta ?)
+    m_i2s_pdm_tx_cfg.slot_cfg.line_mode = I2S_PDM_TX_ONE_LINE_DAC; // or I2S_PDM_TX_TWO_LINE_DAC for stereo
+    m_i2s_pdm_tx_cfg.slot_cfg.hp_en = true;
+    m_i2s_pdm_tx_cfg.slot_cfg.hp_cut_off_freq_hz = 35.5;
+    m_i2s_pdm_tx_cfg.slot_cfg.sd_dither = 0;
+    m_i2s_pdm_tx_cfg.slot_cfg.sd_dither2 = 1;
+#warning "SOC_I2S_HW_VERSION_2"
+#endif
+    m_i2s_pdm_tx_cfg.gpio_cfg.clk = I2S_GPIO_UNUSED;
+    m_i2s_pdm_tx_cfg.gpio_cfg.dout = (gpio_num_t)26; // try unsing same as dac pins (ch1 25, ch2 26)
+    m_i2s_pdm_tx_cfg.gpio_cfg.invert_flags.clk_inv = false;
+    //only in newer idf?
+    //m_i2s_pdm_tx_cfg.clk_cfg = I2S_PDM_TX_CLK_DAC_DEFAULT_CONFIG(44100);
+    m_i2s_pdm_tx_cfg.clk_cfg.sample_rate_hz = 44100;
+    m_i2s_pdm_tx_cfg.clk_cfg.clk_src = I2S_CLK_SRC_DEFAULT; //I2S_CLK_SRC_APLL
+    m_i2s_pdm_tx_cfg.clk_cfg.mclk_multiple = I2S_MCLK_MULTIPLE_128;//I2S_MCLK_MULTIPLE_256;
+    m_i2s_pdm_tx_cfg.clk_cfg.up_sample_fp = 960;
+    m_i2s_pdm_tx_cfg.clk_cfg.up_sample_fs = (44100) / 100;
+    // SOC_I2S_HW_VERSION_2 esp32-s3 onwards? (idf > 5.1beta ?)
+    //m_i2s_pdm_tx_cfg.clk_cfg.bclk_div = 13;
+    ESP_ERROR_CHECK(i2s_channel_init_pdm_tx_mode(m_i2s_tx_handle, &m_i2s_pdm_tx_cfg));
+#endif
+
     I2Sstart(0);
     m_sampleRate = 44100;
 #else

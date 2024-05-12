@@ -25,6 +25,7 @@
 
 #if ESP_IDF_VERSION_MAJOR == 5
 #include <driver/i2s_std.h>
+#include <driver/i2s_pdm.h>
 #else
 #include <driver/i2s.h>
 #endif
@@ -474,7 +475,8 @@ private:
 #if ESP_IDF_VERSION_MAJOR == 5
     i2s_chan_handle_t     m_i2s_tx_handle = {};
     i2s_chan_config_t     m_i2s_chan_cfg = {}; // stores I2S channel values
-    i2s_std_config_t      m_i2s_std_cfg = {};  // stores I2S driver values
+    i2s_std_config_t      m_i2s_std_cfg = {};  // stores I2S driver values in std mode
+    i2s_pdm_tx_config_t   m_i2s_pdm_tx_cfg = {}; //stores I2S driver values in pdm mode
 #else
     i2s_config_t          m_i2s_config = {};
     i2s_pin_config_t      m_pin_config = {};
