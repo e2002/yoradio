@@ -256,7 +256,11 @@ void ILI9486_SPI::setSpiKludge(bool rpi_spi16_mode)
 void ILI9486_SPI::init(void)
 {
   digitalWrite(_cs, HIGH);
+#if defined(TFT_SCK) && defined(TFT_MOSI) && defined(TFT_MISO) && defined(TFT_RST)
+  _spi->begin(TFT_SCK, TFT_MISO, TFT_MOSI, TFT_RST);
+#else
   _spi->begin();
+#endif
   _spi->beginTransaction( { SPI_SPEED, MSBFIRST, SPI_MODE0 } );
   _spi->endTransaction();
   if (_rst >= 0)

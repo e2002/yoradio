@@ -31,10 +31,20 @@ extern __attribute__((weak)) void yoradio_on_setup();
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Time to wake up neo!");
   if(YO_LED_BUILTIN!=255) pinMode(YO_LED_BUILTIN, OUTPUT);
 #if defined (YO_LED_BUILTIN2)
   pinMode(YO_LED_BUILTIN2, OUTPUT);
   digitalWrite(YO_LED_BUILTIN2, LED_INVERT);
+
+  //ledcAttachPin(YO_LED_BUILTIN2, 0); // assign a led pins to a channel
+  /*
+     Initialize channels
+     channels 0-15, resolution 1-16 bits, freq limits depend on resolution
+     ledcSetup(uint8_t channel, uint32_t freq, uint8_t resolution_bits);
+  */
+  //ledcSetup(0, 8000, 7); // 12 kHz PWM, 8-bit resolution
+
 #endif
 #if defined (YO_LED_BUILTIN3)
   pinMode(YO_LED_BUILTIN3, OUTPUT);
@@ -70,6 +80,11 @@ void setup() {
   if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.store.lastStation});
 }
 
+int loop_cnt;
+
+uint32_t loop_ts;
+uint32_t delta;
+
 void loop() {
   telnet.loop();
   if (network.status == CONNECTED || network.status==SDREADY) {
@@ -78,6 +93,27 @@ void loop() {
   }
   loopControls();
   netserver.loop();
+
+  delta = millis() - loop_ts;
+  if (delta>30)
+    Serial.printf("loop delta %d ms\n", delta);
+  loop_ts = millis();
+
+#if 0
+  loop_cnt++;
+  if (loop_cnt == 10000) {
+    loop_cnt = 0;
+    //Serial.println("yoRadio on esp32-s3");
+
+    /*
+    static char __stats_buffer[1024];
+    vTaskGetRunTimeStats(__stats_buffer);
+    Serial.printf("%s\n", __stats_buffer);
+    vTaskList(__stats_buffer);
+    Serial.printf( "%s\n", __stats_buffer);
+    */
+  }
+#endif
 }
 
 #include "src/core/audiohandlers.h"

@@ -70,6 +70,16 @@ void Config::init() {
     return;
   }
   BOOTLOG("SPIFFS mounted");
+
+#if 0
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  while(file){
+      Serial.print("file: ");
+      Serial.println(file.name());
+      file = root.openNextFile();
+  }
+#endif
   //emptyFS = !SPIFFS.exists("/www/index.html");
   emptyFS = _isFSempty();
   if(emptyFS) BOOTLOG("SPIFFS is empty!");

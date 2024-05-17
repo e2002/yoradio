@@ -300,6 +300,9 @@ void VuWidget::_draw(){
   uint8_t L = map(player.vuLeft, 0, 127, 0, dimension);
   uint8_t R = map(player.vuRight, 0,127, 0, dimension);
   bool played = player.isRunning();
+  //ledcWrite(0, 4096 - 2*L);
+  //ledcWrite(0, 4096);
+  //Serial.printf("vu %d\n", L);
   if(played){
     measL=(L>=measL)?measL + _bands.fadespeed:L;
     measR=(R>=measR)?measR + _bands.fadespeed:R;
@@ -309,6 +312,8 @@ void VuWidget::_draw(){
   }
   if(measL>dimension) measL=dimension;
   if(measR>dimension) measR=dimension;
+  //ledcWrite(0, measL);
+  //Serial.printf("vu %d\n", measL);
   uint8_t h=(dimension/_bands.perheight)-_bands.vspace;
   _canvas->fillRect(0,0,_bands.width * 2 + _bands.space,_bands.height, _bgcolor);
   for(int i=0; i<dimension; i++){
