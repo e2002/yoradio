@@ -218,7 +218,7 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
     //m_i2s_pdm_tx_cfg.slot_cfg = I2S_PDM_TX_SLOT_DAC_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
     m_i2s_pdm_tx_cfg.slot_cfg.data_bit_width = I2S_DATA_BIT_WIDTH_16BIT;
     m_i2s_pdm_tx_cfg.slot_cfg.slot_bit_width = I2S_SLOT_BIT_WIDTH_AUTO;
-    m_i2s_pdm_tx_cfg.slot_cfg.slot_mode = I2S_SLOT_MODE_MONO; // or I2S_SLOT_MODE_STEREO
+    m_i2s_pdm_tx_cfg.slot_cfg.slot_mode = I2S_SLOT_MODE_STEREO;// or I2S_SLOT_MODE_MONO;
 #if SOC_I2S_HW_VERSION_1
     // one of I2S_PDM_SLOT_RIGHT, I2S_PDM_SLOT_LEFT, I2S_PDM_SLOT_BOTH
     m_i2s_pdm_tx_cfg.slot_cfg.slot_mask = I2S_PDM_SLOT_RIGHT;
@@ -232,11 +232,11 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
     // I2S_PDM_SIG_SCALING_MUL_4 = 3,   /*!< I2S TX PDM signal scaling: x4 */
     m_i2s_pdm_tx_cfg.slot_cfg.sd_scale = I2S_PDM_SIG_SCALING_MUL_1;
     m_i2s_pdm_tx_cfg.slot_cfg.hp_scale = I2S_PDM_SIG_SCALING_MUL_1;
-    m_i2s_pdm_tx_cfg.slot_cfg.lp_scale = I2S_PDM_SIG_SCALING_MUL_1;
-    m_i2s_pdm_tx_cfg.slot_cfg.sinc_scale = I2S_PDM_SIG_SCALING_MUL_1;
+    m_i2s_pdm_tx_cfg.slot_cfg.lp_scale = I2S_PDM_SIG_SCALING_MUL_4;
+    m_i2s_pdm_tx_cfg.slot_cfg.sinc_scale = I2S_PDM_SIG_SCALING_MUL_4;
 #if SOC_I2S_HW_VERSION_2
     //SOC_I2S_HW_VERSION_2 esp32-s3 onwards? (idf > 5.1beta ?)
-    m_i2s_pdm_tx_cfg.slot_cfg.line_mode = I2S_PDM_TX_ONE_LINE_DAC; // or I2S_PDM_TX_TWO_LINE_DAC for stereo
+    m_i2s_pdm_tx_cfg.slot_cfg.line_mode = I2S_PDM_TX_TWO_LINE_DAC; // or I2S_PDM_TX_ONE_LINE_DAC; for mono
     m_i2s_pdm_tx_cfg.slot_cfg.hp_en = true;
     m_i2s_pdm_tx_cfg.slot_cfg.hp_cut_off_freq_hz = 35.5;
     m_i2s_pdm_tx_cfg.slot_cfg.sd_dither = 0;
@@ -244,7 +244,7 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
 #warning "SOC_I2S_HW_VERSION_2"
 #endif
     m_i2s_pdm_tx_cfg.gpio_cfg.clk = I2S_GPIO_UNUSED;
-    m_i2s_pdm_tx_cfg.gpio_cfg.dout = (gpio_num_t)26; // try unsing same as dac pins (ch1 25, ch2 26)
+    m_i2s_pdm_tx_cfg.gpio_cfg.dout = I2S_GPIO_UNUSED;// Assignment in setPinout()
     m_i2s_pdm_tx_cfg.gpio_cfg.invert_flags.clk_inv = false;
     //only in newer idf?
     //m_i2s_pdm_tx_cfg.clk_cfg = I2S_PDM_TX_CLK_DAC_DEFAULT_CONFIG(44100);
@@ -4816,6 +4816,7 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK) {
 #endif
 
 #if(ESP_IDF_VERSION_MAJOR == 5)
+#if !defined(I2S_PDM)
     i2s_std_gpio_config_t gpio_cfg = {};
     gpio_cfg.bclk = (gpio_num_t)BCLK;
     gpio_cfg.din = (gpio_num_t)I2S_GPIO_UNUSED;
@@ -4825,6 +4826,17 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK) {
     I2Sstop(0);
     result = i2s_channel_reconfig_std_gpio(m_i2s_tx_handle, &gpio_cfg);
     I2Sstart(0);
+#else
+    i2s_pdm_tx_gpio_config_t gpio_cfg = {};
+    gpio_cfg.clk = I2S_GPIO_UNUSED;
+    gpio_cfg.dout = (gpio_num_t)DOUT;
+    gpio_cfg.dout2 = (gpio_num_t)LRC;
+    gpio_cfg.invert_flags.clk_inv = false;
+    I2Sstop(0);
+    result = i2s_channel_reconfig_pdm_tx_gpio(m_i2s_tx_handle, &gpio_cfg);
+    I2Sstart(0);
+    Serial.printf("setPinout DOUT %d",DOUT);
+#endif // !defined(I2S_PDM)
 #else
     m_pin_config.bck_io_num = BCLK;
     m_pin_config.ws_io_num = LRC; //  wclk = lrc
@@ -4934,8 +4946,13 @@ bool Audio::audioFileSeek(const float speed) {
     uint32_t srate = getSampleRate() * speed;
 #if ESP_IDF_VERSION_MAJOR == 5
     I2Sstop(0);
+#if !defined(I2S_PDM)
     m_i2s_std_cfg.clk_cfg.sample_rate_hz = srate;
     i2s_channel_reconfig_std_clock(m_i2s_tx_handle, &m_i2s_std_cfg.clk_cfg);
+#else
+    m_i2s_pdm_tx_cfg.clk_cfg.sample_rate_hz = srate;
+    i2s_channel_reconfig_pdm_tx_clock(m_i2s_tx_handle, &m_i2s_pdm_tx_cfg.clk_cfg);
+#endif
     I2Sstart(0);
 #else
     i2s_set_sample_rates((i2s_port_t)m_i2s_num, srate);
@@ -4949,8 +4966,13 @@ bool Audio::setSampleRate(uint32_t sampRate) {
     m_sampleRate = sampRate;
 #if ESP_IDF_VERSION_MAJOR == 5
     I2Sstop(0);
+#if !defined(I2S_PDM)
     m_i2s_std_cfg.clk_cfg.sample_rate_hz = sampRate;
     i2s_channel_reconfig_std_clock(m_i2s_tx_handle, &m_i2s_std_cfg.clk_cfg);
+#else
+    m_i2s_pdm_tx_cfg.clk_cfg.sample_rate_hz = sampRate;
+    i2s_channel_reconfig_pdm_tx_clock(m_i2s_tx_handle, &m_i2s_pdm_tx_cfg.clk_cfg);
+#endif
     I2Sstart(0);
 #else
     i2s_set_sample_rates((i2s_port_t)m_i2s_num, sampRate);
