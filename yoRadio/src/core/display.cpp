@@ -37,6 +37,8 @@ QueueHandle_t displayQueue;
 
 void returnPlayer(){
   display.putRequest(NEWMODE, PLAYER);
+  if (config.store.lastStation !=display.currentPlItem)
+    player.sendCommand({PR_PLAY, display.currentPlItem});
 }
 
 void Display::_createDspTask(){
@@ -307,11 +309,11 @@ void Display::resetQueue(){
 
 void Display::_drawPlaylist() {
   dsp.drawPlaylist(currentPlItem);
-  _setReturnTicker(30);
+  _setReturnTicker(3);
 }
 
 void Display::_drawNextStationNum(uint16_t num) {
-  _setReturnTicker(30);
+  _setReturnTicker(10);
   _meta.setText(config.stationByNum(num));
   _nums.setText(num, "%d");
 }
