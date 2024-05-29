@@ -15,14 +15,14 @@ enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 
 class YoNetwork {
   public:
-    n_Status_e status;
-    struct tm timeinfo;
-    bool firstRun, forceTimeSync, forceWeather;
+    n_Status_e status = {};
+    struct tm timeinfo = {};
+    bool firstRun = false, forceTimeSync = false, forceWeather = false;
     bool lostPlaying = false, beginReconnect = false;
     //uint8_t tsFailCnt, wsFailCnt;
     Ticker ctimer;
-    char *weatherBuf;
-    bool trueWeather;
+    char *weatherBuf = nullptr;
+    bool trueWeather = false;
   public:
     YoNetwork() {};
     void begin();

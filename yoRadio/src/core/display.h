@@ -29,9 +29,9 @@ struct requestParams_t
 
 class Display {
   public:
-    uint16_t currentPlItem;
-    uint16_t numOfNextStation;
-    displayMode_e _mode;
+    uint16_t currentPlItem = 0;
+    uint16_t numOfNextStation = 0;
+    displayMode_e _mode = {};
   public:
     Display() {};
     displayMode_e mode() { return _mode; }
@@ -86,9 +86,9 @@ class Display {
 
 class Display {
   public:
-    uint16_t currentPlItem;
-    uint16_t numOfNextStation;
-    displayMode_e _mode;
+    uint16_t currentPlItem = 0;
+    uint16_t numOfNextStation = 0;
+    displayMode_e _mode = {};
   public:
     Display() {};
     displayMode_e mode() { return _mode; }

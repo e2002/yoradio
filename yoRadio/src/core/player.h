@@ -30,11 +30,11 @@ enum plStatus_e : uint8_t{ PLAYING = 1, STOPPED = 2 };
 
 class Player: public Audio {
   private:
-    uint32_t    _volTicks;   /* delayed volume save  */
-    bool        _volTimer;   /* delayed volume save  */
-    uint32_t    _resumeFilePos;
-    plStatus_e  _status;
-    char        _plError[PLERR_LN];
+    uint32_t    _volTicks = 0;   /* delayed volume save  */
+    bool        _volTimer = false;   /* delayed volume save  */
+    uint32_t    _resumeFilePos = 0;
+    plStatus_e  _status = {};
+    char        _plError[PLERR_LN] = {};
   private:
     void _stop(bool alreadyStopped = false);
     void _play(uint16_t stationId);
@@ -43,7 +43,7 @@ class Player: public Audio {
     SemaphoreHandle_t playmutex=NULL;
     bool lockOutput = true;
     bool resumeAfterUrl = false;
-    uint32_t sd_min, sd_max;
+    uint32_t sd_min = 0, sd_max = 0;
     #ifdef MQTT_ROOT_TOPIC
     char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
     #endif

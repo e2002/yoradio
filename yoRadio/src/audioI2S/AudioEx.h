@@ -175,8 +175,8 @@ public:
     /* VU METER */
     void     setVUmeter() {};
     void     getVUlevel() {};
-    uint8_t  vuLeft, vuRight;
-    bool     eofHeader;
+    uint8_t  vuLeft = 0, vuRight = 0;
+    bool     eofHeader = false;
     esp_err_t i2s_mclk_pin_select(const uint8_t pin);
     uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
     uint32_t inBufferFree();   // returns the number of free bytes in the inputbuffer
@@ -527,7 +527,7 @@ private:
     uint8_t         m_codec = CODEC_NONE;           //
     uint8_t         m_expectedCodec = CODEC_NONE;   // set in connecttohost (e.g. http://url.mp3 -> CODEC_MP3)
     uint8_t         m_expectedPlsFmt = FORMAT_NONE; // set in connecttohost (e.g. streaming01.m3u) -> FORMAT_M3U)
-    uint8_t         m_filterType[2];                // lowpass, highpass
+    uint8_t         m_filterType[2]= {0};           // lowpass, highpass
     uint8_t         m_streamType = ST_NONE;
     uint8_t         m_ID3Size = 0;                  // lengt of ID3frame - ID3header
     uint8_t         m_vuLeft = 0;                   // average value of samples, left channel
@@ -587,18 +587,18 @@ private:
     float           m_audioCurrentTime = 0;
     uint32_t        m_audioDataStart = 0;           // in bytes
     size_t          m_audioDataSize = 0;            //
-    float           m_filterBuff[3][2][2][2];       // IIR filters memory for Audio DSP
+    float           m_filterBuff[3][2][2][2] = {0}; // IIR filters memory for Audio DSP
     float           m_corr = 1.0;					// correction factor for level adjustment
     size_t          m_i2s_bytesWritten = 0;         // set in i2s_write() but not used
     size_t          m_fileSize = 0;                // size of the file
-    uint16_t        m_filterFrequency[2];
+    uint16_t        m_filterFrequency[2] = {0};
     int8_t          m_gain0 = 0;                    // cut or boost filters (EQ)
     int8_t          m_gain1 = 0;
     int8_t          m_gain2 = 0;
 
-    pid_array       m_pidsOfPMT;
-    int16_t         m_pidOfAAC;
-    uint8_t         m_packetBuff[m_tsPacketSize];
+    pid_array       m_pidsOfPMT = {};
+    int16_t         m_pidOfAAC = 0;
+    uint8_t         m_packetBuff[m_tsPacketSize] = {0};
     int16_t         m_pesDataLength = 0;
 };
 
