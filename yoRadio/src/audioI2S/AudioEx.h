@@ -3,8 +3,8 @@
  *
  *  Created on: Oct 28,2018
  *
- *  Version 3.0.9h
- *  Updated on: Apr 22.2024
+ *  Version 3.0.10e
+ *  Updated on: May 29.2024
  *      Author: Wolle (schreibfaul1)
  */
 
@@ -170,11 +170,12 @@ public:
     uint32_t getAudioFileDuration();
     uint32_t getAudioCurrentTime();
     uint32_t getTotalPlayingTime();
+    uint16_t getVUlevel();
 
     void setDefaults();
     /* VU METER */
-    void     setVUmeter() {};
-    void     getVUlevel() {};
+    //void     setVUmeter() {};
+    //void     getVUlevel() {};
     uint8_t  vuLeft = 0, vuRight = 0;
     bool     eofHeader = false;
     esp_err_t i2s_mclk_pin_select(const uint8_t pin);
@@ -198,7 +199,7 @@ private:
   enum : int8_t { AUDIOLOG_PATH_IS_NULL = -1, AUDIOLOG_FILE_NOT_FOUND = -2, AUDIOLOG_OUT_OF_MEMORY = -3, AUDIOLOG_FILE_READ_ERR = -4, AUDIOLOG_ERR_UNKNOWN = -127 };
 
   void            UTF8toASCII(char* str);
-  bool            latinToUTF8(char* buff, size_t bufflen);
+  bool            latinToUTF8(char* buff, size_t bufflen, bool UTF8check = true);
   void            initInBuff();
   bool            httpPrint(const char* host);
   void            processLocalFile();
@@ -212,7 +213,7 @@ private:
   const char*     parsePlaylist_PLS();
   const char*     parsePlaylist_ASX();
   const char*     parsePlaylist_M3U8();
-  const char*     m3u8redirection();
+  const char*     m3u8redirection(uint8_t* codec);
   uint64_t        m3u8_findMediaSeqInURL();
   bool            STfromEXTINF(char* str);
   void            showCodecParams();
