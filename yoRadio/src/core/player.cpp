@@ -50,7 +50,6 @@ void Player::init() {
       setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
     #endif
   #else
-    SPI.begin();
     if(VS1053_RST>0) ResetChip();
     begin();
   #endif
