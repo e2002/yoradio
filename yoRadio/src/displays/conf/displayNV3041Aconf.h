@@ -42,13 +42,13 @@ const WidgetConfig bitrateConf    PROGMEM = { 6, 62, 2, WA_RIGHT };
 const WidgetConfig voltxtConf     PROGMEM = { 0, DSP_HEIGHT-38, 2, WA_CENTER };
 const WidgetConfig  iptxtConf     PROGMEM = { TFT_FRAMEWDT, DSP_HEIGHT-38, 2, WA_LEFT };
 const WidgetConfig   rssiConf     PROGMEM = { TFT_FRAMEWDT, DSP_HEIGHT-38-6, 3, WA_RIGHT };
-const WidgetConfig numConf        PROGMEM = { 0, 200, 70, WA_CENTER };
+const WidgetConfig numConf        PROGMEM = { 0, 170, 70, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { TFT_FRAMEWDT, 88, 3, WA_CENTER };
 const WidgetConfig apName2Conf    PROGMEM = { TFT_FRAMEWDT, 120, 3, WA_CENTER };
 const WidgetConfig apPassConf     PROGMEM = { TFT_FRAMEWDT, 173, 3, WA_CENTER };
 const WidgetConfig apPass2Conf    PROGMEM = { TFT_FRAMEWDT, 205, 3, WA_CENTER };
 //const WidgetConfig  clockConf     PROGMEM = { 16, 224, 70, WA_RIGHT };  /* 52 is a fixed font size. do not change */
-const WidgetConfig  clockConf     PROGMEM = { 16, 190, 90, WA_RIGHT };  /* 52 is a fixed font size. do not change */
+const WidgetConfig  clockConf     PROGMEM = { 48, 190, 90, WA_RIGHT };  /* 52 is a fixed font size. do not change */
 //const WidgetConfig vuConf         PROGMEM = { TFT_FRAMEWDT, 136, 1, WA_LEFT };
 const WidgetConfig vuConf         PROGMEM = { TFT_FRAMEWDT + 20, 110, 1, WA_LEFT };
 
@@ -57,7 +57,7 @@ const ProgressConfig bootPrgConf  PROGMEM = { 90, 14, 4 };
 const BitrateConfig fullbitrateConf PROGMEM = {{DSP_WIDTH-TFT_FRAMEWDT-38, 59, 2, WA_LEFT}, 42 };
 
 /* BANDS  */                             /* { onebandwidth, onebandheight, bandsHspace, bandsVspace, numofbands, fadespeed } */
-const VUBandsConfig bandsConf     PROGMEM = { 40, 110, 6, 2, 10, 20 };
+const VUBandsConfig bandsConf     PROGMEM = { 40, 110, 6, 2, 10, 2 };
 
 /* STRINGS  */
 const char         numtxtFmt[]    PROGMEM = "%d";
