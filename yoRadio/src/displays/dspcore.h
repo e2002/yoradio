@@ -51,6 +51,8 @@
   #include "displaySSD1322.h"
 #elif DSP_MODEL==DSP_ST7920
   #include "displayST7920.h"
+#elif DSP_MODEL==DSP_NV3041A
+  #include "displayNV3041A.h"
 #endif
 
 //extern DspCore dsp;
