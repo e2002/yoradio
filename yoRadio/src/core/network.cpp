@@ -270,7 +270,7 @@ void doSync( void * pvParameters ) {
       }
     }
   }
-  if(network.weatherBuf && (strlen(config.store.weatherkey)!=0 && config.store.showweather) && network.forceWeather){
+  if(network.weatherBuf && config.store.showweather && network.forceWeather){
     network.forceWeather = false;
     network.trueWeather=getWeather(network.weatherBuf);
   }
