@@ -55,7 +55,7 @@ void TouchScreen::init(){
 #if TS_MODEL==TS_MODEL_GT911
   ts.begin();
 #if DSP_MODEL==DSP_NV3041A
-  ts.setRotation(config.store.fliptouch?3:1);
+  ts.setRotation(config.store.fliptouch?1:3);
 #else
   ts.setRotation(config.store.fliptouch?0:2);
 #endif
@@ -94,7 +94,11 @@ void TouchScreen::flip(){
   ts.setRotation(config.store.fliptouch?3:1);
 #endif
 #if TS_MODEL==TS_MODEL_GT911
+#if DSP_MODEL==DSP_NV3041A
+  ts.setRotation(config.store.fliptouch?1:3);
+#else
   ts.setRotation(config.store.fliptouch?0:2);
+#endif
 #endif
 }
 

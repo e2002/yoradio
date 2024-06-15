@@ -21,6 +21,7 @@ DspCore::DspCore(): Arduino_NV3041A(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotatio
 void DspCore::initDisplay() {
   begin();
   init();
+  flip();
   setTextWrap(false);
   setTextSize(1);
   fillScreen(0x0000);
@@ -44,7 +45,7 @@ void DspCore::printPLitem(uint8_t pos, const char* item, ScrollWidget& current){
     setTextColor(config.theme.playlist[plColor], config.theme.background);
     setCursor(TFT_FRAMEWDT, plYStart + pos * plItemHeight);
     fillRect(0, plYStart + pos * plItemHeight - 1, width(), plItemHeight - 2, config.theme.background);
-    print(utf8Rus(item, true));
+    print(utf8Rus(item, false));
   }
 }
 
@@ -172,7 +173,9 @@ void DspCore::setTextSize(uint8_t s){
 }
 
 void DspCore::flip(){
-  setRotation(config.store.flipscreen?3:1);
+  TAKE_MUTEX();
+  setRotation(config.store.flipscreen?0:2);
+  GIVE_MUTEX();
 }
 
 void DspCore::invert(){
