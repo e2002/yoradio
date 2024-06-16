@@ -235,6 +235,7 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
 #endif
     m_i2s_pdm_tx_cfg.gpio_cfg.clk = I2S_GPIO_UNUSED;
     m_i2s_pdm_tx_cfg.gpio_cfg.dout = I2S_GPIO_UNUSED;// Assignment in setPinout()
+    m_i2s_pdm_tx_cfg.gpio_cfg.dout2 = I2S_GPIO_UNUSED;// Assignment in setPinout()
     m_i2s_pdm_tx_cfg.gpio_cfg.invert_flags.clk_inv = false;
     //only in newer idf?
     //m_i2s_pdm_tx_cfg.clk_cfg = I2S_PDM_TX_CLK_DAC_DEFAULT_CONFIG(44100);
