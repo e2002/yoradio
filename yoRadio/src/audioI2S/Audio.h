@@ -3,8 +3,8 @@
  *
  *  Created on: Oct 28,2018
  *
- *  Version 3.0.10e
- *  Updated on: May 29.2024
+ *  Version 3.0.11c
+ *  Updated on: Jun 13.2024
  *      Author: Wolle (schreibfaul1)
  */
 
@@ -54,8 +54,7 @@ extern __attribute__((weak)) void audio_icydescription(const char*);
 extern __attribute__((weak)) void audio_lasthost(const char*);
 extern __attribute__((weak)) void audio_eof_speech(const char*);
 extern __attribute__((weak)) void audio_eof_stream(const char*); // The webstream comes to an end
-extern __attribute__((weak)) void audio_process_extern(int16_t* buff, uint16_t len, bool *continueI2S); // record audiodata or send via BT
-extern __attribute__((weak)) void audio_process_i2s(uint32_t* sample, bool *continueI2S); // record audiodata or send via BT
+extern __attribute__((weak)) void audio_process_i2s(int16_t* outBuff, uint16_t validSamples, uint8_t bitsPerSample, uint8_t channels, bool *continueI2S); // record audiodata or send via BT
 extern __attribute__((weak)) void audio_log(uint8_t logLevel, const char* msg, const char* arg);
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -233,12 +232,12 @@ private:
   bool            setSampleRate(uint32_t hz);
   bool            setBitsPerSample(int bits);
   bool            setChannels(int channels);
+  void            reconfigI2S();
   bool            setBitrate(int br);
-  void            playChunk();
-  bool            playSample(int16_t sample[2]);
+  void            playChunk(bool i2s_only = false);
   void            computeVUlevel(int16_t sample[2]);
   void            computeLimit();
-  int32_t         Gain(int16_t s[2]);
+  void            Gain(int16_t* sample);
   void            showstreamtitle(const char* ml);
   bool            parseContentType(char* ct);
   bool            parseHttpResponseHeader();
@@ -246,9 +245,9 @@ private:
   esp_err_t       I2Sstart(uint8_t i2s_num);
   esp_err_t       I2Sstop(uint8_t i2s_num);
   void            urlencode(char* buff, uint16_t buffLen, bool spacesOnly = false);
-  int16_t*        IIR_filterChain0(int16_t iir_in[2], bool clear = false);
-  int16_t*        IIR_filterChain1(int16_t iir_in[2], bool clear = false);
-  int16_t*        IIR_filterChain2(int16_t iir_in[2], bool clear = false);
+  void            IIR_filterChain0(int16_t iir_in[2], bool clear = false);
+  void            IIR_filterChain1(int16_t iir_in[2], bool clear = false);
+  void            IIR_filterChain2(int16_t iir_in[2], bool clear = false);
   inline void     setDatamode(uint8_t dm) { m_datamode = dm; }
   inline uint8_t  getDatamode() { return m_datamode; }
   inline uint32_t streamavail() { return _client ? _client->available() : 0; }

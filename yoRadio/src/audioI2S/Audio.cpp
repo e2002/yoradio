@@ -9,7 +9,7 @@
  *      Author: Wolle (schreibfaul1)
  *
  */
-#include "AudioEx.h"
+#include "Audio.h"
 #include "aac_decoder/aac_decoder.h"
 #include "flac_decoder/flac_decoder.h"
 #include "mp3_decoder/mp3_decoder.h"
