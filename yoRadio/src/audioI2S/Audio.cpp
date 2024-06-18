@@ -232,11 +232,11 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_SLO
     m_i2s_pdm_tx_cfg.slot_cfg.hp_cut_off_freq_hz = 35.5;
     m_i2s_pdm_tx_cfg.slot_cfg.sd_dither = 0;
     m_i2s_pdm_tx_cfg.slot_cfg.sd_dither2 = 1;
+    m_i2s_pdm_tx_cfg.gpio_cfg.dout2 = I2S_GPIO_UNUSED;// Assignment in setPinout()
 #warning "SOC_I2S_HW_VERSION_2"
 #endif
     m_i2s_pdm_tx_cfg.gpio_cfg.clk = I2S_GPIO_UNUSED;
     m_i2s_pdm_tx_cfg.gpio_cfg.dout = I2S_GPIO_UNUSED;// Assignment in setPinout()
-    m_i2s_pdm_tx_cfg.gpio_cfg.dout2 = I2S_GPIO_UNUSED;// Assignment in setPinout()
     m_i2s_pdm_tx_cfg.gpio_cfg.invert_flags.clk_inv = false;
     //only in newer idf?
     //m_i2s_pdm_tx_cfg.clk_cfg = I2S_PDM_TX_CLK_DAC_DEFAULT_CONFIG(44100);
@@ -4946,7 +4946,9 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK) {
     i2s_pdm_tx_gpio_config_t gpio_cfg = {};
     gpio_cfg.clk = I2S_GPIO_UNUSED;
     gpio_cfg.dout = (gpio_num_t)DOUT;
+    #if SOC_I2S_HW_VERSION_2
     gpio_cfg.dout2 = (gpio_num_t)LRC;
+    #endif
     gpio_cfg.invert_flags.clk_inv = false;
     I2Sstop(0);
     result = i2s_channel_reconfig_pdm_tx_gpio(m_i2s_tx_handle, &gpio_cfg);
