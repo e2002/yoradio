@@ -80,10 +80,14 @@ void setup() {
   if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.store.lastStation});
 }
 
+#if 0
 int loop_cnt;
+#endif
 
+#if 0
 uint32_t loop_ts;
 uint32_t delta;
+#endif
 
 void loop() {
   telnet.loop();
@@ -94,10 +98,12 @@ void loop() {
   loopControls();
   netserver.loop();
 
+#if 0
   delta = millis() - loop_ts;
   if (delta>30)
     Serial.printf("loop delta %d ms\n", delta);
   loop_ts = millis();
+#endif
 
 #if 0
   loop_cnt++;
