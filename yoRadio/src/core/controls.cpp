@@ -142,7 +142,7 @@ void loopControls() {
 #if ISPUSHBUTTONS
   for (unsigned i = 0; i < nrOfButtons; i++)
   {
-    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255)) continue;
+    if ((i == 0 && BTN_LEFT == 255) || (i == 1 && BTN_CENTER == 255) || (i == 2 && BTN_RIGHT == 255) || (i == 3 && ENC_BTNB == 255) || (i == 4 && BTN_UP == 255) || (i == 5 && BTN_DOWN == 255) || (i == 6 && ENC2_BTNB == 255) || (i == 7 && BTN_MODE == 255)) continue;
     button[i].tick();
     if (lpId >= 0) {
       if (DSP_MODEL == DSP_DUMMY && (lpId == 4 || lpId == 5)) continue;

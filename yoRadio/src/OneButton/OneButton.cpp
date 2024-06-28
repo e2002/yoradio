@@ -39,6 +39,10 @@ OneButton::OneButton(const int pin, const boolean activeLow, const bool pullupAc
   // OneButton();
   _pin = pin;
 
+  if (pin == 255)
+    // 255 is an invalid pin number. stop the initializing of the class.
+    return;
+
   if (activeLow) {
     // the button connects the input pin to GND when pressed.
     _buttonPressed = LOW;
