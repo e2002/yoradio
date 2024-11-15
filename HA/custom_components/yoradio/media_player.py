@@ -1,59 +1,49 @@
-import asyncio
 import logging
 import voluptuous as vol
 import json
 import urllib.request
 
-from homeassistant.components import media_source
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.components import mqtt, media_source
+from homeassistant.components.media_player.browse_media import async_process_play_media_url
+from homeassistant.const import CONF_NAME
+from homeassistant.helpers import config_validation as cv
+
+from homeassistant.components.media_player import (
+    PLATFORM_SCHEMA as MEDIA_PLAYER_PLATFORM_SCHEMA,
+    BrowseMedia,
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+    MediaPlayerState,
+    MediaPlayerEnqueue,
+    MediaType,
+    RepeatMode,
+)
+
+VERSION = '0.9.407'
 
 _LOGGER      = logging.getLogger(__name__)
 
-VERSION = '0.9.260'
-
-DOMAIN = "yoradio"
-
-from homeassistant.helpers import config_validation as cv
-
-from homeassistant.components.media_player.browse_media import (
-    async_process_play_media_url,
+SUPPORT_YORADIO = (
+    MediaPlayerEntityFeature.PAUSE
+    | MediaPlayerEntityFeature.PLAY
+    | MediaPlayerEntityFeature.STOP
+    | MediaPlayerEntityFeature.VOLUME_SET
+    | MediaPlayerEntityFeature.VOLUME_STEP
+    | MediaPlayerEntityFeature.TURN_OFF
+    | MediaPlayerEntityFeature.TURN_ON
+    
+    | MediaPlayerEntityFeature.PREVIOUS_TRACK
+    | MediaPlayerEntityFeature.NEXT_TRACK
+    | MediaPlayerEntityFeature.SELECT_SOURCE
+    | MediaPlayerEntityFeature.BROWSE_MEDIA
+    | MediaPlayerEntityFeature.PLAY_MEDIA
 )
-from homeassistant.components.media_player import (
-  MediaPlayerEntity,
-  MediaPlayerEnqueue,
-  BrowseMedia,
-  PLATFORM_SCHEMA
-)
-
-from homeassistant.components.media_player.const import (
-  MEDIA_TYPE_MUSIC,
-  MEDIA_TYPE_URL,
-  SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
-  SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET,
-  SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_STOP,
-  SUPPORT_PREVIOUS_TRACK, SUPPORT_NEXT_TRACK,
-  SUPPORT_SELECT_SOURCE, SUPPORT_BROWSE_MEDIA, SUPPORT_PLAY_MEDIA
-)
-
-from homeassistant.const import (
-  CONF_NAME,
-  STATE_IDLE,
-  STATE_PLAYING,
-  STATE_OFF,
-  STATE_ON,
-)
-
-SUPPORT_YORADIO = SUPPORT_PAUSE | SUPPORT_PLAY | SUPPORT_STOP |\
-                  SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | \
-                  SUPPORT_TURN_ON | SUPPORT_TURN_OFF | \
-                  SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | \
-                  SUPPORT_SELECT_SOURCE | SUPPORT_BROWSE_MEDIA | SUPPORT_PLAY_MEDIA
 
 DEFAULT_NAME = 'yoRadio'
 CONF_MAX_VOLUME = 'max_volume'
 CONF_ROOT_TOPIC = 'root_topic'
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+MEDIA_PLAYER_PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend({
   vol.Required(CONF_ROOT_TOPIC, default="yoradio"): cv.string,
   vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
   vol.Optional(CONF_MAX_VOLUME, default='254'): cv.string
@@ -62,17 +52,15 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 def setup_platform(hass, config, add_devices, discovery_info=None):
   root_topic = config.get(CONF_ROOT_TOPIC)
   name = config.get(CONF_NAME)
-  max_volume = int(config.get(CONF_MAX_VOLUME))
-  session = async_get_clientsession(hass)
+  max_volume = int(config.get(CONF_MAX_VOLUME, 254))
   playlist = []
-  api = yoradioApi(root_topic, session, hass, playlist)
+  api = yoradioApi(root_topic, hass, playlist)
   add_devices([yoradioDevice(name, max_volume, api)], True)
 
 class yoradioApi():
-  def __init__(self, root_topic, session, hass, playlist):
-    self.session = session
+  def __init__(self, root_topic, hass, playlist):
     self.hass = hass
-    self.mqtt = hass.components.mqtt
+    self.mqtt = mqtt
     self.root_topic = root_topic
     self.playlist = playlist
     self.playlisturl = ""
@@ -95,7 +83,7 @@ class yoradioApi():
       html = urllib.request.urlopen(self.playlisturl).read().decode("utf-8")
       return str(html)
     except Exception as e:
-      _LOGGER.error("Unable to fetch data: " + str(e))
+      _LOGGER.error(f"Unable to fetch playlist from {self.playlisturl}: " + str(e))
       return ""
         
   async def set_source(self, source):
@@ -117,7 +105,7 @@ class yoradioApi():
       self.playlisturl = msg.payload
       file = await self.hass.async_add_executor_job(self.fetch_data)
     except uException as e:
-      _LOGGER.error('Error downloading ' + msg.payload)
+      _LOGGER.error(f"Error load_playlist from {self.playlisturl}")
     else:
       file = file.split('\n')
       counter = 1
@@ -133,26 +121,27 @@ class yoradioDevice(MediaPlayerEntity):
   def __init__(self, name, max_volume, api):
     self._name = name
     self.api = api
-    self._state = STATE_OFF
+    self._state = MediaPlayerState.OFF
     self._current_source = None
     self._media_title = ''
     self._track_artist = ''
     self._track_album_name = ''
     self._volume = 0
-    self._muted = False
     self._max_volume = max_volume
-    self.api.mqtt.subscribe(self.api.root_topic+'/status', self.status_listener, 0, "utf-8")
-    self.api.mqtt.subscribe(self.api.root_topic+'/playlist', self.playlist_listener, 0, "utf-8")
-    self.api.mqtt.subscribe(self.api.root_topic+'/volume', self.volume_listener, 0, "utf-8")
 
+  async def async_added_to_hass(self):
+    await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/status', self.status_listener, 0, "utf-8")
+    await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/playlist', self.playlist_listener, 0, "utf-8")
+    await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/volume', self.volume_listener, 0, "utf-8")
+    
   async def status_listener(self, msg):
     js = json.loads(msg.payload)
     self._media_title = js['title']
     self._track_artist = js['name']
     if js['on']==1:
-      self._state = STATE_PLAYING if js['status']==1 else STATE_IDLE
+      self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.IDLE
     else:
-      self._state = STATE_PLAYING if js['status']==1 else STATE_OFF
+      self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.OFF
     self._current_source = str(js['station']) + '. ' + js['name']
     try:
       self.async_schedule_update_ha_state()
@@ -215,13 +204,11 @@ class yoradioDevice(MediaPlayerEntity):
   async def async_browse_media(
     self, media_content_type: str | None = None, media_content_id: str | None = None
   ) -> BrowseMedia:
-    #await self.api.set_browse_media(media_content_id)
-    """Implement the websocket media browsing helper."""
     return await media_source.async_browse_media(
       self.hass,
       media_content_id,
     )
-    
+
   async def async_play_media(
     self,
     media_type: str,
@@ -229,13 +216,10 @@ class yoradioDevice(MediaPlayerEntity):
     enqueue: MediaPlayerEnqueue | None = None,
     announce: bool | None = None, **kwargs
   ) -> None:
-    """Play a piece of media."""
     if media_source.is_media_source_id(media_id):
-      media_type = MEDIA_TYPE_URL
+      media_type = MediaType.URL
       play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
       media_id = async_process_play_media_url(self.hass, play_item.url)
-    #if media_type in (MEDIA_TYPE_URL):
-    #  media_id = async_process_play_media_url(self.hass, media_id)
     await self.api.set_browse_media(media_id)
     
   async def async_select_source(self, source):
@@ -260,25 +244,21 @@ class yoradioDevice(MediaPlayerEntity):
 
   async def async_media_stop(self):
       await self.api.set_command("stop")
-      self._state = STATE_IDLE
-
-  async def async_turn_on(self):
-      await self.api.set_command("start")
-      self._state = STATE_PLAYING
+      self._state = MediaPlayerState.IDLE
 
   async def async_media_play(self):
       await self.api.set_command("start")
-      self._state = STATE_PLAYING
+      self._state = MediaPlayerState.PLAYING
 
   async def async_media_pause(self):
       await self.api.set_command("stop")
-      self._state = STATE_IDLE
+      self._state = MediaPlayerState.IDLE
   
   async def async_turn_off(self):
       await self.api.set_command("turnoff")
-      self._state = STATE_OFF
+      self._state = MediaPlayerState.OFF
 
   async def async_turn_on(self, **kwargs):
       await self.api.set_command("turnon")
-      self._state = STATE_ON
+      self._state = MediaPlayerState.ON
       

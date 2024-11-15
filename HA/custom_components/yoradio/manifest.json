@@ -5,5 +5,5 @@
     "dependencies": ["http", "mqtt"],
     "codeowners": ["@e2002"],
     "requirements": [],
-    "version": "0.5.010"
+    "version": "0.9.407"
   }
