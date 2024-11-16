@@ -25,7 +25,7 @@ void encoder1Loop();
 void encoder2Loop();
 void irLoop();
 //void touchLoop();
-void irNum(byte num);
+void irNumber(uint8_t num);
 void irBlink();
 void controlsEvent(bool toRight, int8_t volDelta = 0);
 

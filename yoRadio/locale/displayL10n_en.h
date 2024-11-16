@@ -31,9 +31,9 @@ const char jun[] PROGMEM = "june";
 const char jul[] PROGMEM = "july";
 const char aug[] PROGMEM = "august";
 const char sep[] PROGMEM = "september";
-const char oct[] PROGMEM = "october";
+const char octt[] PROGMEM = "october";
 const char nov[] PROGMEM = "november";
-const char dec[] PROGMEM = "december";
+const char decc[] PROGMEM = "december";
 
 const char wn_N[]      PROGMEM = "NORTH";
 const char wn_NNE[]    PROGMEM = "NNE";
@@ -54,7 +54,7 @@ const char wn_NNW[]    PROGMEM = "NNW";
 
 const char* const dow[]     PROGMEM = { sun, mon, tue, wed, thu, fri, sat };
 const char* const dowf[]    PROGMEM = { sunf, monf, tuef, wedf, thuf, frif, satf };
-const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
+const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, octt, nov, decc };
 const char* const wind[]    PROGMEM = { wn_N, wn_NNE, wn_NE, wn_ENE, wn_E, wn_ESE, wn_SE, wn_SSE, wn_S, wn_SSW, wn_SW, wn_WSW, wn_W, wn_WNW, wn_NW, wn_NNW, wn_N };
 
 const char    const_PlReady[]    PROGMEM = "[ready]";

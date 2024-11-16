@@ -213,7 +213,7 @@ void irBlink() {
   }
 }
 
-void irNum(byte num) {
+void irNumber(uint8_t num) {
   uint16_t s;
   if (display.numOfNextStation == 0 && num == 0) return;
   display.putRequest(NEWMODE, NUMBERS);
@@ -292,43 +292,43 @@ void irLoop() {
                 break;
               }
             case IR_0: {
-                irNum(0);
+                irNumber(0);
                 break;
               }
             case IR_1: {
-                irNum(1);
+                irNumber(1);
                 break;
               }
             case IR_2: {
-                irNum(2);
+                irNumber(2);
                 break;
               }
             case IR_3: {
-                irNum(3);
+                irNumber(3);
                 break;
               }
             case IR_4: {
-                irNum(4);
+                irNumber(4);
                 break;
               }
             case IR_5: {
-                irNum(5);
+                irNumber(5);
                 break;
               }
             case IR_6: {
-                irNum(6);
+                irNumber(6);
                 break;
               }
             case IR_7: {
-                irNum(7);
+                irNumber(7);
                 break;
               }
             case IR_8: {
-                irNum(8);
+                irNumber(8);
                 break;
               }
             case IR_9: {
-                irNum(9);
+                irNumber(9);
                 break;
               }
             case IR_AST: {

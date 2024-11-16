@@ -27,7 +27,8 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 /******************************************/
 
 /*  VSPI PINS. SCL(SCK, CLK) must be connected to pin 18
-               SDA(MOSI, DIN, SDI) must be connected to pin 23  */
+               SDA(MOSI, DIN, SDI) must be connected to pin 23  
+               for ESP32-S3 see ESP32-S3 Pin Reference http://wiki.fluidnc.com/en/hardware/ESP32-S3_Pin_Reference*/
 //#define TFT_CS            5                 /*  SPI CS pin  */
 //#define TFT_RST           15                /*  SPI RST pin.  set to -1 and connect to Esp EN pin */
 //#define TFT_DC            4                 /*  SPI DC/RS pin  */

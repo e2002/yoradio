@@ -11,7 +11,7 @@
 	#define WIFI_ATTEMPTS	16
 #endif
 
-Network network;
+MyNetwork network;
 
 TaskHandle_t syncTaskHandle;
 //TaskHandle_t reconnectTaskHandle;
@@ -73,7 +73,7 @@ void ticks() {
   }
 }
 
-void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
+void MyNetwork::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   network.beginReconnect = false;
   player.lockOutput = false;
   delay(100);
@@ -90,7 +90,7 @@ void Network::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   #endif
 }
 
-void Network::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
+void MyNetwork::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   if(!network.beginReconnect){
     Serial.printf("Lost connection, reconnecting to %s...\n", config.ssids[config.store.lastSSID-1].ssid);
     if(config.getMode()==PM_SDCARD) {
@@ -106,7 +106,7 @@ void Network::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   WiFi.reconnect();
 }
 
-bool Network::wifiBegin(bool silent){
+bool MyNetwork::wifiBegin(bool silent){
   uint8_t ls = (config.store.lastSSID == 0 || config.store.lastSSID > config.ssidsCount) ? 0 : config.store.lastSSID - 1;
   uint8_t startedls = ls;
   uint8_t errcnt = 0;
@@ -158,7 +158,7 @@ void searchWiFi(void * pvParameters){
 
 #define DBGAP false
 
-void Network::begin() {
+void MyNetwork::begin() {
   BOOTLOG("network.begin");
   config.initNetwork();
   ctimer.detach();
@@ -193,7 +193,7 @@ void Network::begin() {
   if (network_on_connect) network_on_connect();
 }
 
-void Network::setWifiParams(){
+void MyNetwork::setWifiParams(){
   WiFi.setSleep(false);
   WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.onEvent(WiFiLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -210,7 +210,7 @@ void Network::setWifiParams(){
   }
 }
 
-void Network::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
+void MyNetwork::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
   if (withTelnetOutput) {
     char timeStringBuff[50];
     strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
@@ -226,7 +226,7 @@ void rebootTime() {
   ESP.restart();
 }
 
-void Network::raiseSoftAP() {
+void MyNetwork::raiseSoftAP() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP(apSsid, apPassword);
   Serial.println("##[BOOT]#");
@@ -240,7 +240,7 @@ void Network::raiseSoftAP() {
     rtimer.once(config.store.softapdelay*60, rebootTime);
 }
 
-void Network::requestWeatherSync(){
+void MyNetwork::requestWeatherSync(){
   display.putRequest(NEWWEATHER);
 }
 

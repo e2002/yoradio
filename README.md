@@ -145,6 +145,7 @@ Rotation of the display:
 
 - <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">Arduino IDE version 2.x.x is not supported. Use Arduino IDE 1.8.19</span>
 - <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 2.0.0 or higher is [required](https://github.com/espressif/arduino-esp32)!</span>
+- <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 3.x.x or higher is not supported (yet)!</span>
 1. Generate a myoptions.h file for your hardware configuration using [this tool](https://e2002.github.io/docs/myoptions-generator.html).
 2. Put myoptions.h file next to yoRadio.ino.
 3. Replace file Arduino/libraries/Adafruit_GFX_Library/glcdfont.c with file [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
@@ -229,6 +230,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.313b
+- added support for ESP32-S3 boards (ESP32 S3 Dev Module) (esp32 cores version 3.x.x is not supported yet)
+- fixes in displaying sliders in the web interface
 
 #### v0.9.300 (homeassistant component)
 - HA component >> bug fixes in the component for newer versions of Home Assistant
