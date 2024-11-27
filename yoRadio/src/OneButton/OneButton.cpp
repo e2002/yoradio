@@ -195,7 +195,7 @@ int OneButton::getNumberClicks(void)
  */
 void OneButton::tick(void)
 {
-  if (_pin >= 0) {
+  if (_pin >= 0 && _pin < 255) {
     tick(digitalRead(_pin) == _buttonPressed);
   }
 }

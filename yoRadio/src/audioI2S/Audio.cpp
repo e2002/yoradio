@@ -1,5 +1,4 @@
 #include "../core/options.h"
-#include "../core/spidog.h"
 #if VS1053_CS==255
 /*
  * Audio.cpp
@@ -25,6 +24,9 @@ fs::SDFATFS SD_SDFAT;
 #endif
 #ifndef DMA_BUFLEN
   #define DMA_BUFLEN  512   //  (512)
+#endif
+#if defined(ESP_ARDUINO_3)
+#include "soc/io_mux_reg.h"
 #endif
 //---------------------------------------------------------------------------------------------------------------------
 AudioBuffer::AudioBuffer(size_t maxBlockSize) {
@@ -688,7 +690,6 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
 
     AUDIO_INFO("Reading file: \"%s\"", audioName); vTaskDelay(2);
     if(audio_beginSDread) audio_beginSDread();
-    cardLock(true);
     if(fs.exists(audioName)) {
         audiofile = fs.open(audioName); // #86
     }
@@ -698,24 +699,19 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
             audiofile = fs.open(audioName);
         }
     }
-    cardLock(false);
     if(!audiofile) {
         if(audio_info) {vTaskDelay(2); audio_info("Failed to open file for reading");}
         return false;
     }
-    cardLock(true);
     setDatamode(AUDIO_LOCALFILE);
     m_file_size = audiofile.size();//TEST loop
-    cardLock(false);
     char* afn = NULL;  // audioFileName
-cardLock(true);
 #ifdef SDFATFS_USED
     audiofile.getName(chbuf, sizeof(chbuf));
     afn = strdup(chbuf);
 #else
     afn = strdup(audiofile.name());
 #endif
-cardLock(false);
     uint8_t dotPos = lastIndexOf(afn, ".");
     for(uint8_t i = dotPos + 1; i < strlen(afn); i++){
         afn[i] = toLowerCase(afn[i]);
@@ -751,7 +747,7 @@ cardLock(false);
     bool ret = initializeDecoder();
     if(ret) m_f_running = true;
     else {
-    cardLock(true);audiofile.close();cardLock(false);
+      audiofile.close();
     }
     return ret;
 }
@@ -1769,11 +1765,9 @@ int Audio::read_ID3_Header(uint8_t *data, size_t len) {
             AUDIO_INFO("Audio-Length: %u", m_audioDataSize);
             if(audio_progress) audio_progress(m_audioDataStart, m_audioDataSize);
             if(APIC_seen && audio_id3image){
-                cardLock(true);
                 size_t pos = audiofile.position();
                 audio_id3image(audiofile, APIC_pos, APIC_size);
                 audiofile.seek(pos); // the filepointer could have been changed by the user, set it back
-                cardLock(false);
             }
             return 0;
         }
@@ -2297,13 +2291,13 @@ uint32_t Audio::stopSong() {
         if(getDatamode() == AUDIO_LOCALFILE){
             m_streamType = ST_NONE;
             pos = getFilePos() - inBufferFilled();
-            cardLock(true);audiofile.close();cardLock(false);
+            audiofile.close();
             AUDIO_INFO("Closing audio file");
         }
     }
     if(audiofile){
         // added this before putting 'm_f_localfile = false' in stopSong(); shoulf never occur....
-        cardLock(true);audiofile.close();cardLock(false);
+        audiofile.close();
         AUDIO_INFO("Closing audio file");
         log_w("Closing audio file");  // for debug
     }
@@ -2451,16 +2445,6 @@ bool Audio::playChunk() {
     return false;
 }
 //---------------------------------------------------------------------------------------------------------------------
-
-void Audio::cardLock(bool lock){
-#if (TFT_CS!=255) || (SDC_CS!=255)
-  if(lock){
-    sdog.takeMutex();
-  }else{
-    sdog.giveMutex();
-  }
-#endif
-}
 
 void Audio::loop() {
 
@@ -2961,7 +2945,7 @@ void Audio::processLocalFile() {
         if(m_resumeFilePos){
             if(m_resumeFilePos < m_audioDataStart) m_resumeFilePos = m_audioDataStart;
             if(m_avr_bitrate) m_audioCurrentTime = ((m_resumeFilePos - m_audioDataStart) / m_avr_bitrate) * 8;
-            cardLock(true);audiofile.seek(m_resumeFilePos);cardLock(false);
+            audiofile.seek(m_resumeFilePos);
             InBuff.resetBuffer();
             if(m_f_Log) log_i("m_resumeFilePos %i", m_resumeFilePos);
         }
@@ -2979,7 +2963,7 @@ void Audio::processLocalFile() {
     }
     //----------------------------------------------------------------------------------------------------
 
-    cardLock(true); bytesAddedToBuffer = audiofile.read(InBuff.getWritePtr(), bytesCanBeWritten); cardLock(false);
+    bytesAddedToBuffer = audiofile.read(InBuff.getWritePtr(), bytesCanBeWritten);
     if(bytesAddedToBuffer > 0) {
         InBuff.bytesWritten(bytesAddedToBuffer);
     }
@@ -3032,14 +3016,12 @@ void Audio::processLocalFile() {
         } //TEST loop
         f_stream = false;
         m_streamType = ST_NONE;
-cardLock(true);
 #ifdef SDFATFS_USED
         audiofile.getName(chbuf, sizeof(chbuf));
         char *afn =strdup(chbuf);
 #else
         char *afn =strdup(audiofile.name()); // store temporary the name
 #endif
-cardLock(false);
         stopSong();
         if(m_codec == CODEC_MP3)   MP3Decoder_FreeBuffers();
         if(m_codec == CODEC_AAC)   AACDecoder_FreeBuffers();
@@ -4382,12 +4364,11 @@ void Audio::printDecodeError(int r) {
 }
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN, int8_t MCK) {
-
     m_pin_config.bck_io_num   = BCLK;
     m_pin_config.ws_io_num    = LRC; //  wclk
     m_pin_config.data_out_num = DOUT;
     m_pin_config.data_in_num  = DIN;
-#if(ESP_IDF_VERSION_MAJOR >= 4 && ESP_IDF_VERSION_MINOR >= 4)
+#if(ESP_IDF_VERSION_MAJOR >= 4 && ESP_IDF_VERSION_MINOR >= 4) || defined(ESP_ARDUINO_3)
     m_pin_config.mck_io_num   = MCK;
 #endif
     const esp_err_t result = i2s_set_pin((i2s_port_t) m_i2s_num, &m_pin_config);
@@ -4396,17 +4377,13 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN, int8_
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize() {
     if(!audiofile) return 0;
-    cardLock(true);
     uint32_t s = audiofile.size();
-    cardLock(false);
     return s;
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFilePos() {
     if(!audiofile) return 0;
-    cardLock(true);
     uint32_t p = audiofile.position();
-    cardLock(false);
     return p;
 }
 //---------------------------------------------------------------------------------------------------------------------
@@ -4482,9 +4459,7 @@ bool Audio::setFilePos(uint32_t pos) {
     InBuff.resetBuffer();
     if(pos < m_audioDataStart) pos = m_audioDataStart; // issue #96
     if(m_avr_bitrate) m_audioCurrentTime = ((pos-m_audioDataStart) / m_avr_bitrate) * 8; // #96
-    cardLock(true);
     uint32_t sk = audiofile.seek(pos);
-    cardLock(false);
     return sk;
 }
 //---------------------------------------------------------------------------------------------------------------------

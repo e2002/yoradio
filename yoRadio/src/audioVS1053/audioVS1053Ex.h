@@ -31,6 +31,9 @@
 
 #include "vs1053b-patches-flac.h"
 
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+#include "hal/gpio_ll.h"
+#endif
 extern __attribute__((weak)) void audio_info(const char*);
 extern __attribute__((weak)) void audio_showstreamtitle(const char*);
 extern __attribute__((weak)) void audio_showstation(const char*);
@@ -283,7 +286,8 @@ protected:
 public:
     // Constructor.  Only sets pin values.  Doesn't touch the chip.  Be sure to call begin()!
     //Audio(uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi, uint8_t mosi, uint8_t miso, uint8_t sclk);
-    Audio ( uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi = VSPI, uint8_t mosi = 23, uint8_t miso = 19, uint8_t sclk = 18);
+    //Audio ( uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi = VSPI, uint8_t mosi = 23, uint8_t miso = 19, uint8_t sclk = 18);
+    Audio ( uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, SPIClass *spi=&SPI);
     ~Audio();
 
     void     begin() ;                                  // Begin operation.  Sets pins correctly and prepares SPI bus.
@@ -322,7 +326,6 @@ public:
     void     setVUmeter();
     void     getVUlevel();
     uint8_t  vuLeft, vuRight;
-    void     cardLock(bool lock);
     bool     eofHeader;
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}

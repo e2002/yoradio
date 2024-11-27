@@ -4,16 +4,12 @@
 #include "displayILI9488.h"
 //#include <SPI.h>
 #include "fonts/bootlogo.h"
-#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
 #endif
-
-#define TAKE_MUTEX() sdog.takeMutex()
-#define GIVE_MUTEX() sdog.giveMutex()
 
 #if DSP_HSPI
   DspCore::DspCore(): ILI9486_SPI(&SPI2, TFT_CS, TFT_DC, TFT_RST) {}
@@ -161,13 +157,11 @@ void DspCore::clearClock(){
 }
 
 void DspCore::startWrite(void) {
-  TAKE_MUTEX();
   ILI9486_SPI::startWrite();
 }
 
 void DspCore::endWrite(void) { 
   ILI9486_SPI::endWrite();
-  GIVE_MUTEX();
 }
   
 void DspCore::loop(bool force) {
@@ -188,9 +182,7 @@ void DspCore::flip(){
 }
 
 void DspCore::invert(){
-  TAKE_MUTEX();
   invertDisplay(config.store.invertdisplay);
-  GIVE_MUTEX();
 }
 
 void DspCore::sleep(void) { 

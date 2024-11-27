@@ -49,13 +49,13 @@ constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 
 #if IR_PIN!=255
 #include <assert.h>
-#include <IRrecv.h>
-#include <IRremoteESP8266.h>
-#include <IRac.h>
-#include <IRtext.h>
-#include <IRutils.h>
 
-byte irVolRepeat = 0;
+#include "../IRremoteESP8266/IRrecv.h"
+#include "../IRremoteESP8266/IRremoteESP8266.h"
+#include "../IRremoteESP8266/IRac.h"
+#include "../IRremoteESP8266/IRtext.h"
+#include "../IRremoteESP8266/IRutils.h"
+uint8_t irVolRepeat = 0;
 const uint16_t kCaptureBufferSize = 1024;
 const uint8_t kTimeout = IR_TIMEOUT;
 const uint16_t kMinUnknownSize = 12;
@@ -206,7 +206,7 @@ void encoder2Loop() {
 void irBlink() {
   if(LED_BUILTIN==255) return;
   if (player.status() == STOPPED) {
-    for (byte i = 0; i < 7; i++) {
+    for (uint8_t i = 0; i < 7; i++) {
       digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       delay(100);
     }

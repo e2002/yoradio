@@ -1,5 +1,4 @@
 #include "../core/options.h"
-#include "../core/spidog.h"
 #if I2S_DOUT==255
 /*
  *  vs1053_ext.cpp
@@ -143,12 +142,11 @@ uint32_t AudioBuffer::getReadPos() {
 //---------------------------------------------------------------------------------------------------------------------
 // **** VS1053 Impl ****
 //---------------------------------------------------------------------------------------------------------------------
-Audio::Audio(uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, uint8_t spi, uint8_t mosi, uint8_t miso, uint8_t sclk) :
+Audio::Audio(uint8_t _cs_pin, uint8_t _dcs_pin, uint8_t _dreq_pin, SPIClass *spi) :
         cs_pin(_cs_pin), dcs_pin(_dcs_pin), dreq_pin(_dreq_pin)
 {
-    spi_VS1053 = new SPIClass(spi);
-    spi_VS1053->begin(sclk, miso, mosi, -1);
-
+    spi_VS1053 = spi;
+    spi_VS1053->begin();
     clientsecure.setInsecure();                 // update to ESP32 Arduino version 1.0.5-rc05 or higher
     m_endFillByte=0;
     curvol=50;
@@ -425,9 +423,9 @@ void Audio::stopSong()
 {
     uint16_t modereg;                                       // Read from mode register
     int i;                                                  // Loop control
-		if(audiofile){
-			cardLock(true);audiofile.close();cardLock(false);
-		}
+    if(audiofile){
+      audiofile.close();
+    }
     m_f_localfile = false;
     m_f_webfile = false;
     m_f_webstream = false;
@@ -570,16 +568,7 @@ void Audio::showstreamtitle(const char* ml) {
         }
     }
 }
-//---------------------------------------------------------------------------------------------------------------------
-void Audio::cardLock(bool lock){
-#if (SDC_CS!=255)
-  if(lock){
-    sdog.takeMutex();
-  }else{
-    sdog.giveMutex();
-  }
-#endif
-}
+
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::loop(){
     // - localfile - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -647,7 +636,7 @@ void Audio::processLocalFile() {
            }
     }
     //----------------------------------------------------------------------------------------------------
-    cardLock(true); bytesAddedToBuffer = audiofile.read(InBuff.getWritePtr(), bytesCanBeWritten); cardLock(false);
+    bytesAddedToBuffer = audiofile.read(InBuff.getWritePtr(), bytesCanBeWritten);
     if(bytesAddedToBuffer > 0) {
         InBuff.bytesWritten(bytesAddedToBuffer);
     }
@@ -744,9 +733,7 @@ void Audio::processLocalFile() {
 
         f_stream = false;
         m_f_localfile = false;
-        cardLock(true);
         char *afn =strdup(audiofile.name()); // store temporary the name
-        cardLock(false);
         stopSong();
         sprintf(chbuf, "End of file \"%s\"", afn);
         if(audio_info) audio_info(chbuf);
@@ -1592,7 +1579,7 @@ uint32_t Audio::stop_mp3client(){
     uint32_t pos = 0;
     if(m_f_localfile){
         pos = getFilePos() - InBuff.bufferFilled();
-        cardLock(true); audiofile.close(); cardLock(false);
+        audiofile.close();
         m_f_localfile=false;
     }
     int v=read_register(SCI_VOL);
@@ -1934,7 +1921,6 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     sprintf(chbuf, "Reading file: \"%s\"", audioName);
     if(audio_info) {vTaskDelay(2); audio_info(chbuf);}
     if(audio_beginSDread) audio_beginSDread();
-    cardLock(true); 
     audiofile.close();
     if(fs.exists(audioName)) {
         audiofile = fs.open(audioName);
@@ -1947,7 +1933,6 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
 
     if(!audiofile) {
         if(audio_info) {vTaskDelay(2); audio_info("Failed to open file for reading");}
-        cardLock(false);
         return false;
     }
 
@@ -1955,7 +1940,6 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     m_file_size = audiofile.size();//TEST loop
     
     char* afn = strdup(audiofile.name());                   // audioFileName
-    cardLock(false);
     uint8_t dotPos = lastIndexOf(afn, ".");
     for(uint8_t i = dotPos + 1; i < strlen(afn); i++){
         afn[i] = toLowerCase(afn[i]);
@@ -2006,7 +1990,7 @@ bool Audio::connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos) {
     sprintf(chbuf, "The %s format is not supported", afn + dotPos);
     if(audio_info) audio_info(chbuf);
     if(audio_error) audio_error(chbuf);
-    cardLock(true); audiofile.close(); cardLock(false);
+    audiofile.close();
     if(afn) free(afn);
     return false;
 }
@@ -2481,25 +2465,19 @@ void Audio::showID3Tag(const char* tag, const char* value){
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFileSize(){
     if (!audiofile) return 0;
-    cardLock(true);
     uint32_t s = audiofile.size();
-    cardLock(false);
     return s;
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint32_t Audio::getFilePos(){
     if (!audiofile) return 0;
-    cardLock(true);
     uint32_t p = audiofile.position();
-    cardLock(false);
     return p;
 }
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::setFilePos(uint32_t pos){
     if (!audiofile) return false;
-    cardLock(true);
     bool s = audiofile.seek(pos);
-    cardLock(false);
     return s;
 }
 uint32_t Audio::getAudioFileDuration(){

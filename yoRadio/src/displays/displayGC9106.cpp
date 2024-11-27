@@ -3,16 +3,12 @@
 
 #include "displayGC9106.h"
 #include "fonts/bootlogo40.h"
-#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        24000000      /*  set it to 0 for system default */
 #endif
-
-#define TAKE_MUTEX() sdog.takeMutex()
-#define GIVE_MUTEX() sdog.giveMutex()
 
 #if DSP_HSPI
 DspCore::DspCore(): Adafruit_GC9106Ex(&SPI2, TFT_DC, TFT_CS, TFT_RST) {}
@@ -134,13 +130,11 @@ void DspCore::clearClock(){
 }
 
 void DspCore::startWrite(void) {
-  TAKE_MUTEX();
   Adafruit_GC9106Ex::startWrite();
 }
 
 void DspCore::endWrite(void) {
   Adafruit_GC9106Ex::endWrite();
-  GIVE_MUTEX();
 }
 
 void DspCore::loop(bool force) { }

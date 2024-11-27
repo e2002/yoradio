@@ -6,13 +6,9 @@
 #include "fonts/bootlogo.h"
 #include "../core/config.h"
 #include "../core/network.h"
-#include "../core/spidog.h"
 
 extern unsigned char yofont5x7[];
 extern unsigned char yofont10x14[];
-
-#define TAKE_MUTEX() sdog.takeMutex()
-#define GIVE_MUTEX() sdog.giveMutex()
 
 DspCore::DspCore(): TFT_22_ILI9225(TFT_RST, TFT_DC, TFT_CS, 0) {}
 
@@ -40,13 +36,10 @@ void DspCore::setCursor(int16_t x, int16_t y){
 uint16_t DspCore::print(const char* s){
   
   if(_gFont){
-    TAKE_MUTEX();
     drawGFXText(_cursorx, _cursory, s, _fgcolor);
-    GIVE_MUTEX();
     return 0;
   }else{
     _cursorx=drawText(_cursorx, _cursory, s, _fgcolor);
-    //GIVE_MUTEX();
     return _cursorx;
   }
 }
@@ -70,31 +63,22 @@ void DspCore::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t colo
     h=h+y;
     y=0;
   }
-  TAKE_MUTEX();
   fillRectangle(x, y, x+w, y+h, color);
-  GIVE_MUTEX();
 }
 
 void DspCore::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color){
-  TAKE_MUTEX();
   drawRectangle(x, y, x+w, y+h, color); 
-  GIVE_MUTEX();
 }
 
 void DspCore::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color){
-  TAKE_MUTEX();
   drawLine(x, y, x, y+h, color);
-  GIVE_MUTEX();
 }
 
 void DspCore::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color){
-  TAKE_MUTEX();
   drawLine(x, y, x+w, y, color);
-  GIVE_MUTEX();
 }
       
 void DspCore::initDisplay() {
-//  TAKE_MUTEX();
 #if DSP_HSPI
   begin(SPI2);
 #else
@@ -103,7 +87,6 @@ void DspCore::initDisplay() {
   invert();
   flip();
   setTextSize(1);
-//  GIVE_MUTEX();
   plItemHeight = playlistConf.widget.textsize*(CHARHEIGHT-1)+playlistConf.widget.textsize*4;
   plTtemsCount = round((float)height()/plItemHeight);
   if(plTtemsCount%2==0) plTtemsCount++;
@@ -112,9 +95,7 @@ void DspCore::initDisplay() {
 }
 
 void DspCore::drawLogo(uint16_t top) {
-  TAKE_MUTEX();
   drawBitmap((width() - 99) / 2, top, bootlogo2, 99, 64);
-  GIVE_MUTEX();
 }
 
 void DspCore::printPLitem(uint8_t pos, const char* item, ScrollWidget& current){
@@ -138,9 +119,7 @@ void DspCore::drawPlaylist(uint16_t currentItem) {
 }
 
 void DspCore::clearDsp(bool black) {
-  TAKE_MUTEX();
   clear(black?0x0000:config.theme.background);
-  GIVE_MUTEX();
 }
 
 GFXglyph *pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c) {
@@ -232,13 +211,11 @@ void DspCore::clearClock(){
 }
 
 void DspCore::startWrite(void) {
-  //TAKE_MUTEX();
   TFT_22_ILI9225::startWrite();
 }
 
 void DspCore::endWrite(void) {
   TFT_22_ILI9225::endWrite();
-  //GIVE_MUTEX();
 }
 
 void DspCore::loop(bool force) { 
@@ -251,24 +228,18 @@ void DspCore::charSize(uint8_t textsize, uint8_t& width, uint16_t& height){
 }
 
 void DspCore::drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h) {
-  TAKE_MUTEX();
   drawBitmap(x, y, bitmap, w, h);
-  GIVE_MUTEX();
 }
 
 void DspCore::flip(){
-  TAKE_MUTEX();
   setOrientation(config.store.flipscreen?3:1);
-  GIVE_MUTEX();
 }
 void DspCore::invert(){
-  TAKE_MUTEX();
   invertDisplay(config.store.invertdisplay);
-  GIVE_MUTEX();
 }
 
-void DspCore::sleep(void) { TAKE_MUTEX(); setDisplay(false); GIVE_MUTEX(); }
-void DspCore::wake(void) { TAKE_MUTEX(); setDisplay(true); GIVE_MUTEX(); }
+void DspCore::sleep(void) { setDisplay(false); }
+void DspCore::wake(void) { setDisplay(true); }
 
 void DspCore::writePixel(int16_t x, int16_t y, uint16_t color) { }
 
@@ -280,9 +251,7 @@ uint16_t DspCore::drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color) 
       return cfont.width;
     }
   }
-  TAKE_MUTEX();
   uint16_t ret=TFT_22_ILI9225::drawChar(x, y, ch, color);
-  GIVE_MUTEX();
   return ret;
 }
 

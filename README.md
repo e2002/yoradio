@@ -230,6 +230,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.337b
+- added support for Arduino ESP32 v3.0.0 and later
+- disabled SD indexing on startup; now the card is indexed only if the `data/index.dat` file is missing from the card
+- IRremoteESP8266 library integrated into the project (`yoRadio/src/IRremoteESP8266`)
+
 #### v0.9.313b
 - added support for ESP32-S3 boards (ESP32 S3 Dev Module) (esp32 cores version 3.x.x is not supported yet)
 - fixes in displaying sliders in the web interface

@@ -3279,7 +3279,8 @@ void UnpackZeros(int nVals, int *coef)
  **********************************************************************************************************************/
 void UnpackQuads(int cb, int nVals, int *coef)
 {
-    int w, x, y, z, maxBits, nCodeBits, nSignBits, val;
+    int w, x, y, z, maxBits, nCodeBits, nSignBits;
+    int32_t val;
     uint32_t bitBuf;
 
     maxBits = huffTabSpecInfo[cb - HUFFTAB_SPEC_OFFSET].maxBits + 4;
@@ -3326,9 +3327,9 @@ void UnpackQuads(int cb, int nVals, int *coef)
  **********************************************************************************************************************/
 void UnpackPairsNoEsc(int cb, int nVals, int *coef)
 {
-    int y, z, maxBits, nCodeBits, nSignBits, val;
+    int y, z, maxBits, nCodeBits, nSignBits;
     uint32_t bitBuf;
-
+    int32_t val;
     maxBits = huffTabSpecInfo[cb - HUFFTAB_SPEC_OFFSET].maxBits + 2;
     while (nVals > 0) {
         /* decode pair */
@@ -3368,9 +3369,9 @@ void UnpackPairsNoEsc(int cb, int nVals, int *coef)
  **********************************************************************************************************************/
 void UnpackPairsEsc(int cb, int nVals, int *coef)
 {
-    int y, z, maxBits, nCodeBits, nSignBits, n, val;
+    int y, z, maxBits, nCodeBits, nSignBits, n;
     uint32_t bitBuf;
-
+    int32_t val;
     maxBits = huffTabSpecInfo[cb - HUFFTAB_SPEC_OFFSET].maxBits + 2;
     while (nVals > 0) {
         /* decode pair with escape value */
@@ -4171,9 +4172,9 @@ void DecodeSectionData(int winSequence, int numWinGrp, int maxSFB, uint8_t *sfbC
  **********************************************************************************************************************/
 int DecodeOneScaleFactor()
 {
-    int nBits, val;
+    int nBits;
     uint32_t bitBuf;
-
+    int32_t val;
     /* decode next scalefactor from bitstream */
     bitBuf = GetBitsNoAdvance(huffTabScaleFactInfo.maxBits) << (32 - huffTabScaleFactInfo.maxBits);
     nBits = DecodeHuffmanScalar(huffTabScaleFact, &huffTabScaleFactInfo, bitBuf, &val);
@@ -5143,7 +5144,7 @@ int DeinterleaveShortBlocks(int ch)
  *
  * Notes:       uses simple linear congruential generator
  **********************************************************************************************************************/
-unsigned int Get32BitVal(unsigned int *last)
+unsigned int Get32BitVal(uint32_t *last)
 {
     uint32_t r = *last;
 
@@ -8539,10 +8540,10 @@ int DecodeHuffmanScalar(const signed int *huffTab, const HuffInfo_t *huffTabInfo
  **********************************************************************************************************************/
 int DecodeOneSymbol(int huffTabIndex) {
 
-    int nBits, val;
+    int nBits;
     unsigned int bitBuf;
     const HuffInfo_t *hi;
-
+    int32_t val;
     hi = &(huffTabSBRInfo[huffTabIndex]);
 
     bitBuf = GetBitsNoAdvance(hi->maxBits) << (32 - hi->maxBits);

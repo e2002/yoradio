@@ -119,7 +119,7 @@ void Telnet::print(const char *buf) {
   Serial.print(buf);
 }
 
-void Telnet::print(byte id, const char *buf) {
+void Telnet::print(uint8_t id, const char *buf) {
   if (clients[id] && clients[id].connected()) {
     clients[id].print(buf);
   }
@@ -143,7 +143,7 @@ void Telnet::printf(const char *format, ...) {
   Serial.print(buf);
 }
 
-void Telnet::printf(byte id, const char *format, ...) {
+void Telnet::printf(uint8_t id, const char *format, ...) {
   char buf[MAX_PRINTF_LEN];
   va_list argptr;
   va_start(argptr, format);
@@ -158,7 +158,7 @@ void Telnet::printf(byte id, const char *format, ...) {
   }
 }
 
-void Telnet::on_connect(const char* str, byte clientId) {
+void Telnet::on_connect(const char* str, uint8_t clientId) {
   Serial.printf("Telnet: [%d] %s connected\n", clientId, str);
   print(clientId, "\nWelcome to ёRadio!\n(Use ^] + q  to disconnect.)\n> ");
 }
@@ -181,7 +181,7 @@ void Telnet::info() {
   telnet.printf("> ");
 }
 
-void Telnet::on_input(const char* str, byte clientId) {
+void Telnet::on_input(const char* str, uint8_t clientId) {
   if (strlen(str) == 0) return;
   if(network.status == CONNECTED){
     if (strcmp(str, "cli.prev") == 0 || strcmp(str, "prev") == 0) {
@@ -245,7 +245,7 @@ void Telnet::on_input(const char* str, byte clientId) {
     }
     int sstart;
     if (sscanf(str, "smartstart(%d)", &sstart) == 1 || sscanf(str, "cli.smartstart(\"%d\")", &sstart) == 1 || sscanf(str, "smartstart %d", &sstart) == 1) {
-      config.store.smartstart = (byte)sstart;
+      config.store.smartstart = (uint8_t)sstart;
       printf(clientId, "new smartstart value is: %d\n> ", config.store.smartstart);
       config.save();
       return;
@@ -258,7 +258,7 @@ void Telnet::on_input(const char* str, byte clientId) {
       }
       char sName[BUFLEN], sUrl[BUFLEN];
       int sOvol;
-      byte c = 1;
+      uint8_t c = 1;
       while (file.available()) {
         if (config.parseCSV(file.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
           printf(clientId, "#CLI.LISTNUM#: %*d: %s, %s\n", 3, c, sName, sUrl);
@@ -394,7 +394,7 @@ void Telnet::on_input(const char* str, byte clientId) {
     File file = SPIFFS.open(SSIDS_PATH, "r");
     if (file && !file.isDirectory()) {
       char sSid[BUFLEN], sPas[BUFLEN];
-      byte c = 1;
+      uint8_t c = 1;
       while (file.available()) {
         if (config.parseSsid(file.readStringUntil('\n').c_str(), sSid, sPas)) {
           printf(clientId, "%d: %s, %s\n", c, sSid, sPas);
@@ -410,7 +410,7 @@ void Telnet::on_input(const char* str, byte clientId) {
     File file = SPIFFS.open(SSIDS_PATH, "r");
     if (file && !file.isDirectory()) {
       char sSid[BUFLEN], sPas[BUFLEN];
-      byte c = 1;
+      uint8_t c = 1;
       while (file.available()) {
         if (config.parseSsid(file.readStringUntil('\n').c_str(), sSid, sPas)) {
           if(c==config.store.lastSSID) printf(clientId, "%d: %s, %s\n", c, sSid, sPas);

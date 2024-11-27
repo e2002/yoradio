@@ -19,6 +19,9 @@
 */
 #include "Arduino.h"
 #include "AsyncEventSource.h"
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+#include "rom/ets_sys.h"
+#endif
 
 static String generateEventMessage(const char *message, const char *event, uint32_t id, uint32_t reconnect){
   String ev = "";

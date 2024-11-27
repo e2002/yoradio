@@ -4,16 +4,12 @@
 #include "displayST7789.h"
 //#include <SPI.h>
 #include "fonts/bootlogo.h"
-#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
 #endif
-
-#define TAKE_MUTEX() sdog.takeMutex()
-#define GIVE_MUTEX() sdog.giveMutex()
 
 #if DSP_HSPI
 DspCore::DspCore(): Adafruit_ST7789(&SPI2, TFT_CS, TFT_DC, TFT_RST) {}
@@ -160,13 +156,11 @@ void DspCore::clearClock(){
 }
 
 void DspCore::startWrite(void) {
-  TAKE_MUTEX();
   Adafruit_ST7789::startWrite();
 }
 
 void DspCore::endWrite(void) {
   Adafruit_ST7789::endWrite();
-  GIVE_MUTEX();
 }
 
 void DspCore::loop(bool force) {

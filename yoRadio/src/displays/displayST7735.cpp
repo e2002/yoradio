@@ -3,16 +3,12 @@
 
 #include "displayST7735.h"
 #include "fonts/bootlogo40.h"
-#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
 #ifndef DEF_SPI_FREQ
 #define DEF_SPI_FREQ        26000000UL      /*  set it to 0 for system default */
 #endif
-
-#define TAKE_MUTEX() sdog.takeMutex()
-#define GIVE_MUTEX() sdog.giveMutex()
 
 #if DSP_HSPI
 DspCore::DspCore(): Adafruit_ST7735(&SPI2, TFT_CS, TFT_DC, TFT_RST) {}
@@ -140,13 +136,11 @@ void DspCore::clearClock(){
 }
 
 void DspCore::startWrite(void) {
-  TAKE_MUTEX();
   Adafruit_ST7735::startWrite();
 }
 
 void DspCore::endWrite(void) {
   Adafruit_ST7735::endWrite();
-  GIVE_MUTEX();
 }
 
 void DspCore::loop(bool force) { }

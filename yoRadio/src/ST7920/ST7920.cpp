@@ -1,5 +1,4 @@
 #include "../core/options.h"
-#include "../core/spidog.h"
 #if DSP_MODEL==DSP_ST7920
 
 #include "Adafruit_GFX.h"
@@ -10,8 +9,6 @@
 //This display is split into two halfs. Pages are 16bit long and pages are arranged in that way that are lied horizontaly instead of verticaly, unlike SSD1306 OLED, Nokia 5110 LCD, etc.
 //After 8 horizonral page is written, it jumps to half of the screen (Y = 32) and continues until 16 lines of page have been written. After that, we have set cursor in new line.
 
-#define TAKE_MUTEX() sdog.takeMutex()
-#define GIVE_MUTEX() sdog.giveMutex()
 #define st7920_swap(a, b) (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b)))
 
 void ST7920::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -119,7 +116,6 @@ void ST7920::invertDisplay(bool flag) {
 }
 
 void ST7920::ST7920Data(uint8_t data) { //RS = 1 RW = 0
-  TAKE_MUTEX();
   spi->beginTransaction(spiSettings);
   digitalWrite(csPin, HIGH);
   spi->transfer(B11111010);
@@ -127,12 +123,10 @@ void ST7920::ST7920Data(uint8_t data) { //RS = 1 RW = 0
   spi->transfer((data & B00001111) << 4);
   digitalWrite(csPin, LOW);
   spi->endTransaction();
-  GIVE_MUTEX();
   delayMicroseconds(38);
 }
 
 void ST7920::ST7920Command(uint8_t data) { //RS = 0 RW = 0
-  TAKE_MUTEX();
   spi->beginTransaction(spiSettings);
   digitalWrite(csPin, HIGH);
   spi->transfer(B11111000);
@@ -140,7 +134,6 @@ void ST7920::ST7920Command(uint8_t data) { //RS = 0 RW = 0
   spi->transfer((data & B00001111) << 4);
   digitalWrite(csPin, LOW);
   spi->endTransaction();
-  GIVE_MUTEX();
   delayMicroseconds(38);
 }
 

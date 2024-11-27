@@ -99,8 +99,8 @@ class Display {
     void loop(){}
     bool ready() { return true; }
     void resetQueue(){}
-    void centerText(const char* text, byte y, uint16_t fg, uint16_t bg){}
-    void rightText(const char* text, byte y, uint16_t fg, uint16_t bg){}
+    void centerText(const char* text, uint8_t y, uint16_t fg, uint16_t bg){}
+    void rightText(const char* text, uint8_t y, uint16_t fg, uint16_t bg){}
     void flip(){}
     void invert(){}
     void setContrast(){}

@@ -2,7 +2,6 @@
 #if DSP_MODEL==DSP_SSD1305 || DSP_MODEL==DSP_SSD1305I2C
 
 #include "displaySSD1305.h"
-#include "../core/spidog.h"
 #include "../core/config.h"
 #include "../core/network.h"
 
@@ -12,9 +11,6 @@
 
 #define LOGO_WIDTH 21
 #define LOGO_HEIGHT 32
-
-#define TAKE_MUTEX() sdog.takeMutex(); digitalWrite(TFT_CS, LOW)
-#define GIVE_MUTEX() digitalWrite(TFT_CS, HIGH); sdog.giveMutex()
 
 #ifndef DEF_SPI_FREQ
   #define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
@@ -166,13 +162,7 @@ void DspCore::startWrite(void) { }
 void DspCore::endWrite(void) { }
 
 void DspCore::loop(bool force) {
-#if DSP_MODEL==DSP_SSD1305
-  TAKE_MUTEX();
-#endif
   display();
-#if DSP_MODEL==DSP_SSD1305
-  GIVE_MUTEX();
-#endif
   delay(5);
 }
 
@@ -186,42 +176,18 @@ void DspCore::setTextSize(uint8_t s){
 }
 
 void DspCore::flip(){
-#if DSP_MODEL==DSP_SSD1305
-  TAKE_MUTEX();
-#endif
   setRotation(config.store.flipscreen?2:0);
-#if DSP_MODEL==DSP_SSD1305
-  GIVE_MUTEX();
-#endif
 }
 
 void DspCore::invert(){
-#if DSP_MODEL==DSP_SSD1305
-  TAKE_MUTEX();
-#endif
   invertDisplay(config.store.invertdisplay);
-#if DSP_MODEL==DSP_SSD1305
-  GIVE_MUTEX();
-#endif
 }
 
 void DspCore::sleep(void) { 
-#if DSP_MODEL==DSP_SSD1305
-  TAKE_MUTEX();
-#endif
   oled_command(SSD1305_DISPLAYOFF); 
-#if DSP_MODEL==DSP_SSD1305
-  GIVE_MUTEX();
-#endif
 }
 void DspCore::wake(void) {
-#if DSP_MODEL==DSP_SSD1305
-  TAKE_MUTEX();
-#endif
   oled_command(SSD1305_DISPLAYON);
-#if DSP_MODEL==DSP_SSD1305
-  GIVE_MUTEX();
-#endif
 }
 
 void DspCore::writePixel(int16_t x, int16_t y, uint16_t color) {

@@ -10,8 +10,9 @@
 #include "mqtt.h"
 #include "controls.h"
 #include <Update.h>
-#include "spidog.h"
-
+#ifdef USE_SD
+#include "sdmanager.h"
+#endif
 #ifndef MIN_MALLOC
 #define MIN_MALLOC 24112
 #endif
@@ -19,13 +20,6 @@
 	#define NSQ_SEND_DELAY 			(TickType_t)100	//portMAX_DELAY?
 #endif
 
-#ifdef USE_SD
-	#define CARDLOCK() sdog.tm()
-	#define CARDUNLOCK() sdog.gm()
-#else
-	#define CARDLOCK() {}
-	#define CARDUNLOCK() {}
-#endif
 //#define CORS_DEBUG
 
 NetServer netserver;
@@ -167,30 +161,24 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
   File requiredfile;
   bool sdpl = strcmp(netserver.chunkedPathBuffer, PLAYLIST_SD_PATH) == 0;
   if(sdpl){
-  	CARDLOCK();
   	requiredfile = config.SDPLFS()->open(netserver.chunkedPathBuffer, "r");
-  	CARDUNLOCK();
   }else{
   	requiredfile = SPIFFS.open(netserver.chunkedPathBuffer, "r");
   }
   if (!requiredfile) return 0;
-  if(sdpl) CARDLOCK();
   size_t filesize = requiredfile.size();
-  if(sdpl) CARDUNLOCK();
   size_t needread = filesize - index;
   if (!needread) {
-		if(sdpl) { CARDLOCK(); requiredfile.close(); CARDUNLOCK(); }
+		requiredfile.close();
   	return 0;
   }
   size_t canread = (needread > maxLen) ? maxLen : needread;
   DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, netserver.chunkedPathBuffer, canread, maxLen);
-  if(sdpl) CARDLOCK();
   requiredfile.seek(index, SeekSet);
   //vTaskDelay(1);
   requiredfile.read(buffer, canread);
   index += canread;
   if (requiredfile) requiredfile.close();
-  if(sdpl) CARDUNLOCK();
   return canread;
 }
 
@@ -202,9 +190,7 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
   	response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback, processor);
   else
   	response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback);
-  //xSemaphoreTake(player.playmutex, portMAX_DELAY);
   request->send(response);
-  //xSemaphoreGive(player.playmutex);
 }
 
 #ifndef DSP_NOT_FLIPPED
@@ -360,61 +346,61 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       if (strcmp(cmd, "getactive") == 0   ) { requestOnChange(GETACTIVE, clientId);   return; }
       if (strcmp(cmd, "newmode") == 0     ) { newConfigMode = atoi(val); requestOnChange(CHANGEMODE, 0); return; }
       if (strcmp(cmd, "smartstart") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.smartstart = valb == 1 ? 1 : 2;
         if (!player.isRunning() && config.store.smartstart == 1) config.store.smartstart = 0;
         config.save();
         return;
       }
       if (strcmp(cmd, "audioinfo") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.audioinfo = valb;
         config.save();
         display.putRequest(AUDIOINFO);
         return;
       }
       if (strcmp(cmd, "vumeter") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.vumeter = valb;
         config.save();
         display.putRequest(SHOWVUMETER);
         return;
       }
       if (strcmp(cmd, "softap") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.softapdelay = valb;
         config.save();
         return;
       }
       if (strcmp(cmd, "invertdisplay") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.invertdisplay = valb;
         config.save();
         display.invert();
         return;
       }
       if (strcmp(cmd, "numplaylist") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.numplaylist = valb;
         config.save();
         display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
         return;
       }
       if (strcmp(cmd, "fliptouch") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.fliptouch = valb == 1;
         config.save();
         flipTS();
         return;
       }
       if (strcmp(cmd, "dbgtouch") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.dbgtouch = valb == 1;
         config.save();
         return;
       }
       if (strcmp(cmd, "flipscreen") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.flipscreen = valb;
         config.save();
         display.flip();
@@ -422,19 +408,19 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(cmd, "brightness") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         if (!config.store.dspon) requestOnChange(DSPON, 0);
         config.store.brightness = valb;
         config.setBrightness(true);
         return;
       }
       if (strcmp(cmd, "screenon") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.setDspOn(valb == 1);
         return;
       }
       if (strcmp(cmd, "contrast") == 0) {
-        byte valb = atoi(val);
+        uint8_t valb = atoi(val);
         config.store.contrast = valb;
         config.save();
         display.setContrast();
@@ -574,7 +560,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         }
       } /*  EOF RESETS  */
       if (strcmp(cmd, "volume") == 0) {
-        byte v = atoi(val);
+        uint8_t v = atoi(val);
         player.setVol(v);
       }
       if (strcmp(cmd, "sdpos") == 0) {
@@ -623,7 +609,6 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(cmd, "submitplaylist") == 0) {
-        //        xSemaphoreTake(player.playmutex, portMAX_DELAY);
         return;
       }
       if (strcmp(cmd, "submitplaylistdone") == 0) {
@@ -631,7 +616,6 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         //mqttPublishPlaylist();
         mqttplaylistticker.attach(5, mqttplaylistSend);
 #endif
-        //        xSemaphoreGive(player.playmutex);
         if (player.isRunning()) {
           player.sendCommand({PR_PLAY, -config.store.lastStation});
         }
@@ -649,7 +633,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         config.irchck = atoi(val);
       }
       if (strcmp(cmd, "irclr") == 0) {
-        byte cl = atoi(val);
+        uint8_t cl = atoi(val);
         config.ircodes.irVals[config.irindex][cl] = 0;
       }
 #endif
@@ -737,7 +721,9 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 		  if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
 		  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
 		  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
-		  config.clearCardStatus();
+		  #ifdef USE_SD
+		  sdman.clearCardStatus();
+		  #endif
     }
     freeSpace = (float)SPIFFS.totalBytes()/100*68-SPIFFS.usedBytes();
     request->_tempFile = SPIFFS.open(TMP_PATH , "w");

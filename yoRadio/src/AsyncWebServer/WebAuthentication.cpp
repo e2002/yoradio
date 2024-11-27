@@ -22,6 +22,9 @@
 #include <libb64/cencode.h>
 #ifdef ESP32
 #include "mbedtls/md5.h"
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+#include "mbedtls/compat-2.x.h"
+#endif
 #else
 #include "md5.h"
 #endif

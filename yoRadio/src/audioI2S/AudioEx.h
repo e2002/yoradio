@@ -35,7 +35,9 @@
 #ifndef AUDIOBUFFER_MULTIPLIER2
 #define AUDIOBUFFER_MULTIPLIER2    8
 #endif
-
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+#include "hal/gpio_ll.h"
+#endif
 #ifdef SDFATFS_USED
 //typedef File32 File;
 typedef FsFile File;
@@ -218,7 +220,6 @@ public:
     void setI2SCommFMT_LSB(bool commFMT);
     int getCodec() {return m_codec;}
     const char *getCodecname() {return codecname[m_codec];}
-    void cardLock(bool lock);
 private:
 
     #ifndef ESP_ARDUINO_VERSION_VAL

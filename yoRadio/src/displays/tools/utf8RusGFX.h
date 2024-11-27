@@ -14,14 +14,14 @@ char* DspCore::utf8Rus(const char* str, bool uppercase) {
         E = false;
         continue;
       }
-      byte rus = (byte) * iter;
-      if (rus == 208 && (byte) * (iter + 1) == 129) { // ёКостыли
+      uint8_t rus = (uint8_t) * iter;
+      if (rus == 208 && (uint8_t) * (iter + 1) == 129) { // ёКостыли
         *iter = (char)209;
         *(iter + 1) = (char)145;
         E = true;
         continue;
       }
-      if (rus == 209 && (byte) * (iter + 1) == 145) {
+      if (rus == 209 && (uint8_t) * (iter + 1) == 145) {
         *iter = (char)209;
         *(iter + 1) = (char)145;
         E = true;
