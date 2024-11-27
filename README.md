@@ -230,6 +230,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.342b
+- fixed compilation error for OLED displays
+
 #### v0.9.340b
 - fixed compilation error audioVS1053Ex.cpp:181:5: error: 'sdog' was not declared in this scope
 
