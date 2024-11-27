@@ -178,18 +178,15 @@ void Audio::control_mode_off()
 {
     CS_HIGH();                                     // End control mode
     spi_VS1053->endTransaction();                  // Allow other SPI users
-    sdog.giveMutex();
 }
 void Audio::control_mode_on()
 {
-    sdog.takeMutex();
     spi_VS1053->beginTransaction(VS1053_SPI_CTL);   // Prevent other SPI users
     DCS_HIGH();                                     // Bring slave in control mode
     CS_LOW();
 }
 void Audio::data_mode_on()
 {
-    sdog.takeMutex();
     spi_VS1053->beginTransaction(VS1053_SPI_DATA);  // Prevent other SPI users
     CS_HIGH();                                      // Bring slave in data mode
     DCS_LOW();
@@ -199,7 +196,6 @@ void Audio::data_mode_off()
     //digitalWrite(dcs_pin, HIGH);              // End data mode
     DCS_HIGH();
     spi_VS1053->endTransaction();                       // Allow other SPI users
-    sdog.giveMutex();
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint16_t Audio::read_register(uint8_t _reg)
