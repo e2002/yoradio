@@ -230,6 +230,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.337b (homeassistant component)
+- fixed the error of subscribing to mqtt topic on some systems
+
 #### v0.9.337b
 - added support for Arduino ESP32 v3.0.0 and later
 - disabled SD indexing on startup; now the card is indexed only if the `data/index.dat` file is missing from the card

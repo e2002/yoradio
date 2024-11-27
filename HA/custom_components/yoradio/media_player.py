@@ -2,6 +2,7 @@ import logging
 import voluptuous as vol
 import json
 import urllib.request
+import asyncio
 
 from homeassistant.components import mqtt, media_source
 from homeassistant.components.media_player.browse_media import async_process_play_media_url
@@ -19,7 +20,7 @@ from homeassistant.components.media_player import (
     RepeatMode,
 )
 
-VERSION = '0.9.407'
+VERSION = '0.9.410'
 
 _LOGGER      = logging.getLogger(__name__)
 
@@ -130,6 +131,7 @@ class yoradioDevice(MediaPlayerEntity):
     self._max_volume = max_volume
 
   async def async_added_to_hass(self):
+    await asyncio.sleep(5)
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/status', self.status_listener, 0, "utf-8")
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/playlist', self.playlist_listener, 0, "utf-8")
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/volume', self.volume_listener, 0, "utf-8")
