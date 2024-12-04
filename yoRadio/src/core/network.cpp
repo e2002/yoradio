@@ -21,7 +21,7 @@ void doSync(void * pvParameters);
 
 void ticks() {
   if(!display.ready()) return; //waiting for SD is ready
-  
+  pm.on_ticker();
   static const uint16_t weatherSyncInterval=1800;
   //static const uint16_t weatherSyncIntervalFail=10;
 #if RTCSUPPORTED
@@ -121,7 +121,7 @@ bool MyNetwork::wifiBegin(bool silent){
     while (WiFi.status() != WL_CONNECTED) {
       if(!silent) Serial.print(".");
       delay(500);
-      if(LED_BUILTIN!=255 && !silent) digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      if(REAL_LEDBUILTIN!=255 && !silent) digitalWrite(REAL_LEDBUILTIN, !digitalRead(REAL_LEDBUILTIN));
       errcnt++;
       if (errcnt > WIFI_ATTEMPTS) {
         errcnt = 0;
@@ -182,7 +182,7 @@ void MyNetwork::begin() {
   }
   
   Serial.println("##[BOOT]#\tdone");
-  if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LOW);
+  if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, LOW);
   
 #if RTCSUPPORTED
 	rtc.getTime(&network.timeinfo);
@@ -191,6 +191,7 @@ void MyNetwork::begin() {
 #endif
   ctimer.attach(1, ticks);
   if (network_on_connect) network_on_connect();
+  pm.on_connect();
 }
 
 void MyNetwork::setWifiParams(){

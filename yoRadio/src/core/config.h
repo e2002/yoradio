@@ -7,6 +7,7 @@
 //#include "SD.h"
 #include "options.h"
 #include "rtcsupport.h"
+#include "../pluginsManager/pluginsManager.h"
 
 #define EEPROM_SIZE       768
 #define EEPROM_START      500

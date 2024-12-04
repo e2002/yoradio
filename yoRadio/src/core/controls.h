@@ -1,12 +1,11 @@
 #ifndef controls_h
 #define controls_h
 #include "options.h"
+#include "common.h"
 
 #if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
   #include "../yoEncoder/yoEncoder.h"
 #endif
-
-enum controlEvt_e { EVT_BTNLEFT, EVT_BTNCENTER, EVT_BTNRIGHT, EVT_ENCBTNB, EVT_BTNUP, EVT_BTNDOWN, EVT_ENC2BTNB, EVT_BTNMODE };
 
 //enum tsDirection_e { TSD_STAY, TSD_LEFT, TSD_RIGHT, TSD_UP, TSD_DOWN, TDS_REQUEST };
 

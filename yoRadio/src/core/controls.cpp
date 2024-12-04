@@ -204,10 +204,10 @@ void encoder2Loop() {
 
 #if IR_PIN!=255
 void irBlink() {
-  if(LED_BUILTIN==255) return;
+  if(REAL_LEDBUILTIN==255) return;
   if (player.status() == STOPPED) {
     for (uint8_t i = 0; i < 7; i++) {
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      digitalWrite(REAL_LEDBUILTIN, !digitalRead(REAL_LEDBUILTIN));
       delay(100);
     }
   }
@@ -465,8 +465,10 @@ void controlsEvent(bool toRight, int8_t volDelta) {
 
 void onBtnClick(int id) {
   bool passBnCenter = (controlEvt_e)id==EVT_BTNCENTER || (controlEvt_e)id==EVT_ENCBTNB || (controlEvt_e)id==EVT_ENC2BTNB;
+  controlEvt_e btnid = static_cast<controlEvt_e>(id);
+  pm.on_btn_click(btnid);
   if (network.status != CONNECTED && network.status!=SDREADY && (controlEvt_e)id!=EVT_BTNMODE && !passBnCenter) return;
-  switch ((controlEvt_e)id) {
+  switch (btnid) {
     case EVT_BTNLEFT: {
         controlsEvent(false);
         break;

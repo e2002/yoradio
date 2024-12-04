@@ -833,11 +833,7 @@ void AsyncWebSocketClient::binary(AsyncWebSocketMessageBuffer * buffer)
 
 IPAddress AsyncWebSocketClient::remoteIP() {
     if(!_client) {
-#if ESP_IDF_VERSION_MAJOR < 5
-        return IPAddress(0U);
-#else
-        return IPAddress(0ul);
-#endif
+      return IPAddress((uint32_t)0);
     }
     return _client->remoteIP();
 }

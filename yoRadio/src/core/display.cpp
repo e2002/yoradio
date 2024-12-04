@@ -19,7 +19,7 @@ DspCore dsp;
 Page *pages[] = { new Page(), new Page(), new Page() };
 
 #ifndef DSQ_SEND_DELAY
-	#define DSQ_SEND_DELAY portMAX_DELAY
+  #define DSQ_SEND_DELAY portMAX_DELAY
 #endif
 
 #ifndef CORE_STACK_SIZE
@@ -93,7 +93,7 @@ void Display::_buildPager(){
     _plcurrent.init("*", playlistConf, config.theme.plcurrent, config.theme.plcurrentbg);
   #endif
   #if !defined(DSP_LCD)
-  	_plcurrent.moveTo({TFT_FRAMEWDT, (uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight), (int16_t)playlistConf.width});
+    _plcurrent.moveTo({TFT_FRAMEWDT, (uint16_t)(dsp.plYStart+dsp.plCurrentPos*dsp.plItemHeight), (int16_t)playlistConf.width});
   #endif
   #ifndef HIDE_TITLE2
     _title2 = new ScrollWidget("*", title2Conf, config.theme.title2, config.theme.background);
@@ -240,6 +240,7 @@ void Display::_start() {
   _station();
   _time(false);
   _bootStep = 2;
+  pm.on_display_player();
 }
 
 void Display::_showDialog(const char *title){
@@ -266,9 +267,9 @@ void Display::_swichMode(displayMode_e newmode) {
   _mode = newmode;
   dsp.setScrollId(NULL);
   if (newmode == PLAYER) {
-  	#ifdef DSP_LCD
-  		dsp.clearDsp();
-  	#endif
+    #ifdef DSP_LCD
+      dsp.clearDsp();
+    #endif
     numOfNextStation = 0;
     _returnTicker.detach();
     #ifdef META_MOVE
@@ -278,6 +279,7 @@ void Display::_swichMode(displayMode_e newmode) {
     _meta.setText(config.station.name);
     _nums.setText("");
     _pager.setPage( pages[PG_PLAYER]);
+    pm.on_display_player();
   }
   if (newmode == VOL) {
     #ifndef HIDE_IP
@@ -299,6 +301,7 @@ void Display::_swichMode(displayMode_e newmode) {
     currentPlItem = config.store.lastStation;
     _drawPlaylist();
   }
+  
 }
 
 void Display::resetQueue(){
@@ -368,82 +371,85 @@ void Display::loop() {
 #endif
   requestParams_t request;
   if(xQueueReceive(displayQueue, &request, DSP_QUEUE_TICKS)){
-    switch (request.type){
-      case NEWMODE: _swichMode((displayMode_e)request.payload); break;
-      case CLOCK: 
-        if(_mode==PLAYER) _time(); 
-        /*#ifdef USE_NEXTION
-          if(_mode==TIMEZONE) nextion.localTime(network.timeinfo);
-          if(_mode==INFO)     nextion.rssi();
-        #endif*/
-        break;
-      case NEWTITLE: _title(); break;
-      case NEWSTATION: _station(); break;
-      case NEXTSTATION: _drawNextStationNum(request.payload); break;
-      case DRAWPLAYLIST: _drawPlaylist(); break;
-      case DRAWVOL: _volume(); break;
-      case DBITRATE: {
-          char buf[20]; 
-          snprintf(buf, 20, bitrateFmt, config.station.bitrate); 
-          if(_bitrate) { _bitrate->setText(config.station.bitrate==0?"":buf); } 
-          if(_fullbitrate) { 
-            _fullbitrate->setBitrate(config.station.bitrate); 
-            _fullbitrate->setFormat(config.configFmt); 
-          } 
+    bool pm_result;
+    pm.on_display_queue(request, pm_result);
+    if(pm_result)
+      switch (request.type){
+        case NEWMODE: _swichMode((displayMode_e)request.payload); break;
+        case CLOCK: 
+          if(_mode==PLAYER) _time(); 
+          /*#ifdef USE_NEXTION
+            if(_mode==TIMEZONE) nextion.localTime(network.timeinfo);
+            if(_mode==INFO)     nextion.rssi();
+          #endif*/
+          break;
+        case NEWTITLE: _title(); break;
+        case NEWSTATION: _station(); break;
+        case NEXTSTATION: _drawNextStationNum(request.payload); break;
+        case DRAWPLAYLIST: _drawPlaylist(); break;
+        case DRAWVOL: _volume(); break;
+        case DBITRATE: {
+            char buf[20]; 
+            snprintf(buf, 20, bitrateFmt, config.station.bitrate); 
+            if(_bitrate) { _bitrate->setText(config.station.bitrate==0?"":buf); } 
+            if(_fullbitrate) { 
+              _fullbitrate->setBitrate(config.station.bitrate); 
+              _fullbitrate->setFormat(config.configFmt); 
+            } 
+          }
+          break;
+        case AUDIOINFO: if(_heapbar)  { _heapbar->lock(!config.store.audioinfo); _heapbar->setValue(player.inBufferFilled()); } break;
+        case SHOWVUMETER: {
+          if(_vuwidget){
+            _vuwidget->lock(!config.store.vumeter); 
+            _layoutChange(player.isRunning());
+          }
+          break;
         }
-        break;
-      case AUDIOINFO: if(_heapbar)  { _heapbar->lock(!config.store.audioinfo); _heapbar->setValue(player.inBufferFilled()); } break;
-      case SHOWVUMETER: {
-        if(_vuwidget){
-          _vuwidget->lock(!config.store.vumeter); 
-          _layoutChange(player.isRunning());
+        case SHOWWEATHER: {
+          if(_weather) _weather->lock(!config.store.showweather);
+          if(!config.store.showweather){
+            #ifndef HIDE_IP
+            if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
+            #endif
+          }else{
+            if(_weather) _weather->setText(const_getWeather);
+          }
+          break;
         }
-        break;
-      }
-      case SHOWWEATHER: {
-        if(_weather) _weather->lock(!config.store.showweather);
-        if(!config.store.showweather){
+        case NEWWEATHER: {
+          if(_weather && network.weatherBuf) _weather->setText(network.weatherBuf);
+          break;
+        }
+        case BOOTSTRING: {
+          if(_bootstring) _bootstring->setText(config.ssids[request.payload].ssid, bootstrFmt);
+          /*#ifdef USE_NEXTION
+            char buf[50];
+            snprintf(buf, 50, bootstrFmt, config.ssids[request.payload].ssid);
+            nextion.bootString(buf);
+          #endif*/
+          break;
+        }
+        case WAITFORSD: {
+          if(_bootstring) _bootstring->setText(const_waitForSD);
+          break;
+        }
+        case SDFILEINDEX: {
+          if(_mode == SDCHANGE) _nums.setText(request.payload, "%d");
+          break;
+        }
+        case DSPRSSI: if(_rssi){ _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.isRunning()?player.inBufferFilled():0); break;
+        case PSTART: _layoutChange(true);   break;
+        case PSTOP:  _layoutChange(false);  break;
+        case DSP_START: _start();  break;
+        case NEWIP: {
           #ifndef HIDE_IP
-          if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
+            if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
           #endif
-        }else{
-          if(_weather) _weather->setText(const_getWeather);
+          break;
         }
-        break;
+        default: break;
       }
-      case NEWWEATHER: {
-        if(_weather && network.weatherBuf) _weather->setText(network.weatherBuf);
-        break;
-      }
-      case BOOTSTRING: {
-        if(_bootstring) _bootstring->setText(config.ssids[request.payload].ssid, bootstrFmt);
-        /*#ifdef USE_NEXTION
-          char buf[50];
-          snprintf(buf, 50, bootstrFmt, config.ssids[request.payload].ssid);
-          nextion.bootString(buf);
-        #endif*/
-        break;
-      }
-      case WAITFORSD: {
-        if(_bootstring) _bootstring->setText(const_waitForSD);
-        break;
-      }
-      case SDFILEINDEX: {
-      	if(_mode == SDCHANGE) _nums.setText(request.payload, "%d");
-      	break;
-      }
-      case DSPRSSI: if(_rssi){ _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.isRunning()?player.inBufferFilled():0); break;
-      case PSTART: _layoutChange(true);   break;
-      case PSTOP:  _layoutChange(false);  break;
-      case DSP_START: _start();  break;
-      case NEWIP: {
-				#ifndef HIDE_IP
-					if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
-				#endif
-      	break;
-      }
-      default: break;
-    }
   }
   dsp.loop();
 }
@@ -502,6 +508,7 @@ void Display::_title() {
     if(_title2) _title2->setText("");
   }
   if (player_on_track_change) player_on_track_change();
+  pm.on_track_change();
 }
 
 void Display::_time(bool redraw) {

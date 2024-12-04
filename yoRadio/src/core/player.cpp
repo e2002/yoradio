@@ -109,6 +109,7 @@ void Player::_stop(bool alreadyStopped){
   if(!alreadyStopped) stopSong();
   if(!lockOutput) stopInfo();
   if (player_on_stop_play) player_on_stop_play();
+  pm.on_stop_play();
 }
 
 void Player::initHeaders(const char *file) {
@@ -136,6 +137,7 @@ void Player::loop() {
         }
         _play((uint16_t)abs(requestP.payload)); 
         if (player_on_station_change) player_on_station_change(); 
+        pm.on_station_change();
         break;
       }
       case PR_VOL: {
@@ -168,7 +170,7 @@ void Player::loop() {
 }
 
 void Player::setOutputPins(bool isPlaying) {
-  if(LED_BUILTIN!=255) digitalWrite(LED_BUILTIN, LED_INVERT?!isPlaying:isPlaying);
+  if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, LED_INVERT?!isPlaying:isPlaying);
   bool _ml = MUTE_LOCK?!MUTE_VAL:(isPlaying?!MUTE_VAL:MUTE_VAL);
   if(MUTE_PIN!=255) digitalWrite(MUTE_PIN, _ml);
 }
@@ -215,6 +217,7 @@ void Player::_play(uint16_t stationId) {
     setOutputPins(true);
     display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
+    pm.on_start_play();
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", config.station.url);
     SET_PLAY_ERROR("Error connecting to %s", config.station.url);
@@ -239,6 +242,7 @@ void Player::browseUrl(){
     setOutputPins(true);
     display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
+    pm.on_start_play();
   }else{
     telnet.printf("##ERROR#:\tError connecting to %s\n", burl);
     SET_PLAY_ERROR("Error connecting to %s", burl);

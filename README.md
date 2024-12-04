@@ -225,11 +225,28 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
 ---
 ## Plugins
-There is no documentation yet, you will have to deal with the examples, which is in directory [examples/plugins/](https://github.com/e2002/yoradio/tree/main/examples/plugins).\
+The `Plugin` class serves as a base class for creating plugins that hook into various system events.  
+To use it, inherit from `Plugin` and override the necessary virtual methods.  
+Place your new class in the `src/plugins/<MyPlugin>` directory
+More details can be found in the comments within the `yoRadio/src/pluginsManager/pluginsManager.h` file and at [here](https://github.com/e2002/yoradio/blob/main/yoRadio/src/pluginsManager/README.md).  
+Additional examples are provided in the `examples/plugins` folder.
 Work is in progress...
 
 ---
 ## Version history
+#### v0.9.350
+- **Added parameters for configuring `LED_BUILTIN` on ESP32S3 modules:**
+  - `USE_BUILTIN_LED`: Determines whether to use the built-in `LED_BUILTIN` (default is `true`).
+  - `LED_BUILTIN_S3`: Specifies a custom pin for the built-in `LED_BUILTIN`. Used in combination with `USE_BUILTIN_LED = false` (default is `255`).
+
+  **Note:** For ESP32S3 boards, no changes are required by default; the onboard LED will work as expected.  
+  These settings were added to allow disabling the built-in LED or reassigning it to a custom pin.
+
+- **New class for plugin management**, enabling multiple plugins to be assigned to each function.  
+  More details can be found in the comments within the `yoRadio/src/pluginsManager/pluginsManager.h` file and at [here](https://github.com/e2002/yoradio/blob/main/yoRadio/src/pluginsManager/README.md).  
+  Additional examples are provided in the `examples/plugins` folder.
+  **Backward compatibility:** The old method of adding plugins will remain functional for some time in future versions but will eventually be deprecated and removed.
+  
 #### v0.9.342b
 - fixed compilation error for OLED displays
 

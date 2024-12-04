@@ -31,8 +31,9 @@ extern __attribute__((weak)) void yoradio_on_setup();
 
 void setup() {
   Serial.begin(115200);
-  if(LED_BUILTIN!=255) pinMode(LED_BUILTIN, OUTPUT);
+  if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
   if (yoradio_on_setup) yoradio_on_setup();
+  pm.on_setup();
   config.init();
   display.init();
   player.init();
@@ -60,6 +61,7 @@ void setup() {
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
   if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.store.lastStation});
+  pm.on_end_setup();
 }
 
 void loop() {
