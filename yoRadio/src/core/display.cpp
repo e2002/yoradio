@@ -371,7 +371,7 @@ void Display::loop() {
 #endif
   requestParams_t request;
   if(xQueueReceive(displayQueue, &request, DSP_QUEUE_TICKS)){
-    bool pm_result;
+    bool pm_result = true;
     pm.on_display_queue(request, pm_result);
     if(pm_result)
       switch (request.type){

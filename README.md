@@ -234,6 +234,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.351
+- fixed freezing when loading without plugins in some configurations "running dots"
+
 #### v0.9.350
 - **Added parameters for configuring `LED_BUILTIN` on ESP32S3 modules:**
   - `USE_BUILTIN_LED`: Determines whether to use the built-in `LED_BUILTIN` (default is `true`).
