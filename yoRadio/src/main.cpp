@@ -10,6 +10,10 @@
 #include "core/mqtt.h"
 #include "core/optionschecker.h"
 
+#if DSP_HSPI || TS_HSPI || VS_HSPI
+SPIClass  SPI2(HSPI);
+#endif
+
 extern __attribute__((weak)) void yoradio_on_setup();
 
 void setup() {

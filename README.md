@@ -234,6 +234,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.369
+- fixed the issue with the non-functional HSPI bus
+
 #### v0.9.368
 - SD Card - optimization and bug fixes
 - Config - improvements and bug fixes
