@@ -234,6 +234,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.370
+- fixed the issue with saving settings on fresh ESP modules.
+
 #### v0.9.369
 - fixed the issue with the non-functional HSPI bus
 

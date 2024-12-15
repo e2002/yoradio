@@ -57,8 +57,10 @@ void Config::init() {
 #endif
   eepromRead(EEPROM_START, store);
   
-  if (store.config_set != 4262) setDefaults();
-  
+  if (store.config_set != 4262) {
+    setDefaults();
+    eepromWrite(EEPROM_START, store);
+  }
   if(store.version>CONFIG_VERSION) store.version=1;
   while(store.version!=CONFIG_VERSION) _setupVersion();
   BOOTLOG("CONFIG_VERSION\t%d", store.version);
