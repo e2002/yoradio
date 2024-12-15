@@ -13,22 +13,22 @@ bool Telnet::_isIPSet(IPAddress ip) {
 }
 
 bool Telnet::begin(bool quiet) {
-	if(network.status==SDREADY) {
-		BOOTLOG("Ready in SD Mode!");
+  if(network.status==SDREADY) {
+    BOOTLOG("Ready in SD Mode!");
     BOOTLOG("------------------------------------------------");
     Serial.println("##[BOOT]#");
-		return true;
-	}
+    return true;
+  }
   if(!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
   if (WiFi.status() == WL_CONNECTED || _isIPSet(WiFi.softAPIP())) {
     server.begin();
     server.setNoDelay(true);
     if(!quiet){
-		  Serial.println("done");
-		  Serial.println("##[BOOT]#");
-		  BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
-		  BOOTLOG("------------------------------------------------");
-		  Serial.println("##[BOOT]#");
+      Serial.println("done");
+      Serial.println("##[BOOT]#");
+      BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
+      BOOTLOG("------------------------------------------------");
+      Serial.println("##[BOOT]#");
     }
     return true;
   } else {
@@ -68,9 +68,9 @@ void Telnet::handleSerial(){
 
 void Telnet::loop() {
   if(network.status==SDREADY || network.status!=CONNECTED) {
-		handleSerial();
-		return;
-	}
+    handleSerial();
+    return;
+  }
   uint8_t i;
   if (WiFi.status() == WL_CONNECTED) {
     if (server.hasClient()) {
@@ -168,7 +168,7 @@ void Telnet::info() {
   char timeStringBuff[50];
   strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S+03:00", &network.timeinfo);
   telnet.printf("##SYS.DATE#: %s\n", timeStringBuff); //TODO timezone offset
-  telnet.printf("##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
+  telnet.printf("##CLI.NAMESET#: %d %s\n", config.lastStation(), config.station.name);
   if (player.status() == PLAYING) {
     telnet.printf("##CLI.META#: %s\n",  config.station.title);
   }
@@ -202,7 +202,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       return;
     }
     if (strcmp(str, "cli.start") == 0 || strcmp(str, "start") == 0 || strcmp(str, "cli.play") == 0 || strcmp(str, "play") == 0) {
-      player.sendCommand({PR_PLAY, config.store.lastStation});
+      player.sendCommand({PR_PLAY, config.lastStation()});
       return;
     }
     if (strcmp(str, "cli.vol") == 0 || strcmp(str, "vol") == 0) {
@@ -234,9 +234,8 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     }
     int ainfo;
     if (sscanf(str, "audioinfo(%d)", &ainfo) == 1 || sscanf(str, "cli.audioinfo(\"%d\")", &ainfo) == 1 || sscanf(str, "audioinfo %d", &ainfo) == 1) {
-      config.store.audioinfo = ainfo > 0;
+      config.saveValue(&config.store.audioinfo, ainfo > 0);
       printf(clientId, "new audioinfo value is: %d\n> ", config.store.audioinfo);
-      config.save();
       return;
     }
     if (strcmp(str, "cli.smartstart") == 0 || strcmp(str, "smartstart") == 0) {
@@ -245,9 +244,8 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     }
     int sstart;
     if (sscanf(str, "smartstart(%d)", &sstart) == 1 || sscanf(str, "cli.smartstart(\"%d\")", &sstart) == 1 || sscanf(str, "smartstart %d", &sstart) == 1) {
-      config.store.smartstart = (uint8_t)sstart;
+      config.saveValue(&config.store.smartstart, static_cast<uint8_t>(sstart));
       printf(clientId, "new smartstart value is: %d\n> ", config.store.smartstart);
-      config.save();
       return;
     }
     if (strcmp(str, "cli.list") == 0 || strcmp(str, "list") == 0) {
@@ -278,7 +276,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       } else {
         printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n", timeStringBuff, config.store.tzHour, config.store.tzMin);
       }
-      printf(clientId, "##CLI.NAMESET#: %d %s\n", config.store.lastStation, config.station.name);
+      printf(clientId, "##CLI.NAMESET#: %d %s\n", config.lastStation(), config.station.name);
       if (player.status() == PLAYING) {
         printf(clientId, "##CLI.META#: %s\n", config.station.title);
       }
@@ -366,6 +364,10 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
   }
   if (strcmp(str, "sys.boot") == 0 || strcmp(str, "boot") == 0 || strcmp(str, "reboot") == 0) {
     ESP.restart();
+    return;
+  }
+  if (strcmp(str, "sys.reset") == 0 || strcmp(str, "reset") == 0) {
+    config.reset();
     return;
   }
   if (strcmp(str, "wifi.list") == 0 || strcmp(str, "wifi") == 0) {

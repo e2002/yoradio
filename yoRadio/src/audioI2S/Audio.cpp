@@ -2447,9 +2447,10 @@ bool Audio::playChunk() {
 //---------------------------------------------------------------------------------------------------------------------
 
 void Audio::loop() {
-
-    if(!m_f_running) return;
-
+    if(!m_f_running) {
+      vTaskDelay(2);
+      return;
+    }
     if(m_playlistFormat != FORMAT_M3U8){ // normal process
         switch(getDatamode()){
             case AUDIO_LOCALFILE:

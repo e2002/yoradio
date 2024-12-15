@@ -4,6 +4,7 @@
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
+#include <EEPROM.h>
 //#include "SD.h"
 #include "options.h"
 #include "rtcsupport.h"
@@ -37,13 +38,15 @@
 #define REAL_INDEX   getMode()==PM_WEB?INDEX_PATH:INDEX_SD_PATH
 
 #define MAX_PLAY_MODE   1
-
+#define WEATHERKEY_LENGTH 58
 #if SDC_CS!=255
   #define USE_SD
 #endif
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
+#define CONFIG_VERSION  1
+
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
 
@@ -81,21 +84,21 @@ struct theme_t {
 };
 struct config_t
 {
-  unsigned int config_set; //must be 4262
-  uint8_t volume;
-  int8_t balance;
-  int8_t trebble;
-  int8_t middle;
-  int8_t bass;
-  uint16_t lastStation;
-  uint16_t countStation;
-  uint8_t lastSSID;
-  bool audioinfo;
-  uint8_t smartstart;
-  int8_t tzHour;
-  int8_t tzMin;
-  uint16_t timezoneOffset;
-
+  uint16_t  config_set; //must be 4262
+  uint16_t  version;
+  uint8_t   volume;
+  int8_t    balance;
+  int8_t    trebble;
+  int8_t    middle;
+  int8_t    bass;
+  uint16_t  lastStation;
+  uint16_t  countStation;
+  uint8_t   lastSSID;
+  bool      audioinfo;
+  uint8_t   smartstart;
+  int8_t    tzHour;
+  int8_t    tzMin;
+  uint16_t  timezoneOffset;
   bool      vumeter;
   uint8_t   softapdelay;
   bool      flipscreen;
@@ -111,7 +114,10 @@ struct config_t
   bool      showweather;
   char      weatherlat[10];
   char      weatherlon[10];
-  char      weatherkey[64];
+  char      weatherkey[WEATHERKEY_LENGTH];
+  uint16_t  _reserved;
+  uint16_t  lastSdStation;
+  bool      sdsnuffle;
   uint8_t   volsteps;
   uint16_t  encacc;
   uint8_t   play_mode;  //0 WEB, 1 SD
@@ -167,14 +173,10 @@ class Config {
     uint8_t ssidsCount;
     uint16_t sleepfor;
     uint32_t sdResumePos;
-    uint16_t backupLastStation;
-    uint16_t backupSDStation;
-    bool     sdSnuffle;
     bool     emptyFS;
-    bool     SDinit;
   public:
     Config() {};
-    void save();
+    //void save();
 #if IR_PIN!=255
     void saveIR();
 #endif
@@ -202,10 +204,16 @@ class Config {
     void initPlaylist();
     void indexPlaylist();
     #ifdef USE_SD
-      void initSDPlaylist(bool doIndex = true);
-      
+      void initSDPlaylist();
       void changeMode(int newmode=-1);
     #endif
+    uint16_t lastStation(){
+      return getMode()==PM_WEB?store.lastStation:store.lastSdStation;
+    }
+    void lastStation(uint16_t newstation){
+      if(getMode()==PM_WEB) saveValue(&store.lastStation, newstation);
+      else saveValue(&store.lastSdStation, newstation);
+    }
     uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
     void setTimezone(int8_t tzh, int8_t tzm);
@@ -217,18 +225,38 @@ class Config {
     void bootInfo();
     void doSleepW();
     void setSnuffle(bool sn);
-    uint8_t getMode() { return store.play_mode & 0b11; }
+    uint8_t getMode() { return store.play_mode/* & 0b11*/; }
     void initPlaylistMode();
-    
+    void reset();
     bool spiffsCleanup();
     FS* SDPLFS(){ return _SDplaylistFS; }
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
     #endif
+    template <typename T>
+    size_t getAddr(const T *field) const {
+      return (size_t)((const uint8_t *)field - (const uint8_t *)&store) + EEPROM_START;
+    }
+    template <typename T>
+    void saveValue(T *field, const T &value, bool commit=true, bool force=false){
+      if(*field == value && !force) return;
+      *field = value;
+      size_t address = getAddr(field);
+      EEPROM.put(address, value);
+      if(commit)
+        EEPROM.commit();
+    }
+    void saveValue(char *field, const char *value, size_t N, bool commit=true, bool force=false) {
+      if (strcmp(field, value) == 0 && !force) return;
+      strlcpy(field, value, N);
+      size_t address = getAddr(field);
+      for (size_t i = 0; i < strlen(field); i++) EEPROM.write(address + i, field[i]);
+      if(commit)
+        EEPROM.commit();
+    }
   private:
     template <class T> int eepromWrite(int ee, const T& value);
     template <class T> int eepromRead(int ee, T& value);
-    
     bool _bootDone;
     #if RTCSUPPORTED
       bool _rtcFound;
@@ -238,10 +266,14 @@ class Config {
     Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
-
+    void _setupVersion();
     void _initHW();
     bool _isFSempty();
-    
+    uint16_t _randomStation(){
+      randomSeed(esp_random() ^ millis());
+      uint16_t station = random(1, store.countStation);
+      return station;
+    }
     char _stationBuf[BUFLEN/2];
 };
 
@@ -249,6 +281,5 @@ extern Config config;
 #if DSP_HSPI || TS_HSPI || VS_HSPI
 extern SPIClass  SPI2;
 #endif
-
 
 #endif

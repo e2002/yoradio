@@ -298,7 +298,7 @@ void Display::_swichMode(displayMode_e newmode) {
   if (newmode == STATIONS) {
     _pager.setPage( pages[PG_PLAYLIST]);
     _plcurrent.setText("");
-    currentPlItem = config.store.lastStation;
+    currentPlItem = config.lastStation();
     _drawPlaylist();
   }
   

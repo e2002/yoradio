@@ -6,65 +6,41 @@
 
 #if defined(SD_SPIPINS) || SD_HSPI
 SPIClass  SDSPI(HSPI);
+#define SDREALSPI SDSPI
+#else
+  #define SDREALSPI SPI
+#endif
+
+#ifndef SDSPISPEED
+  #define SDSPISPEED 4000000
 #endif
 
 SDManager sdman(FSImplPtr(new VFSImpl()));
 
-bool SDManager::init(){
-  ready = false;
-  #if defined(SD_SPIPINS) || SD_HSPI
-    ready = begin(SDC_CS, SDSPI);
-  #else
-    ready = begin(SDC_CS);
-  #endif
+bool SDManager::start(){
+  ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
+  vTaskDelay(10);
+  if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
+  vTaskDelay(10);
+  if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   return ready;
 }
 
+void SDManager::stop(){
+  end();
+  ready = false;
+}
+#include "diskio_impl.h"
 bool SDManager::cardPresent() {
+
+  if(!ready) return false;
   if(sectorSize()<1) {
-  	return false;
+    return false;
   }
   uint8_t buff[sectorSize()] = { 0 };
   bool bread = readRAW(buff, 1);
-  if(sectorSize()>0 && !bread) end();
+  if(sectorSize()>0 && !bread) return false;
   return bread;
-}
-
-void SDManager::mount(){
-  if(display.mode()==SDCHANGE) return;
-  uint16_t ssz = sectorSize();
-  if(ssz<1) init();
-  if(!cardPresent()) {
-    if(config.getMode()==PM_SDCARD){
-      ready = false;
-    }
-  }else{
-    if(!ready){
-      if(!init()){
-        Serial.println("##[ERROR]#\tCard Mount Failed");
-      }else{
-        ready = true;
-      }
-    }
-  }
-}
-
-void SDManager::checkSD(){
-  cardStatus_e prevCardStatus = _cardStatus;
-  if(cardPresent()){
-    if(_cardStatus==CS_NONE || _cardStatus==CS_PRESENT || _cardStatus==CS_EJECTED) {
-      _cardStatus=CS_PRESENT;
-    }else{
-      _cardStatus=CS_MOUNTED;
-    }
-    if(_cardStatus==CS_PRESENT && config.getMode()==PM_WEB && SD_AUTOPLAY && prevCardStatus==CS_EJECTED) config.changeMode(PM_SDCARD);
-  }else{
-    if(_cardStatus==CS_MOUNTED || _cardStatus==CS_PRESENT || _cardStatus==CS_EJECTED){
-      if(_cardStatus!=CS_EJECTED && config.getMode()==PM_SDCARD && SD_AUTOPLAY) config.changeMode(PM_WEB);
-      _cardStatus=CS_EJECTED;
-    }
-    config.backupSDStation = 0;
-  }
 }
 
 bool SDManager::_checkNoMedia(const char* path){

@@ -555,15 +555,13 @@ void onBtnDoubleClick(int id) {
   }
 }
 void setIRTolerance(uint8_t tl){
-  config.store.irtlp=tl;
-  config.save();
+  config.saveValue(&config.store.irtlp, tl);
 #if IR_PIN!=255
   irrecv.setTolerance(config.store.irtlp);
 #endif
 }
 void setEncAcceleration(uint16_t acc){
-  config.store.encacc=acc;
-  config.save();
+  config.saveValue(&config.store.encacc, acc);
 #if ENC_BTNL!=255
   encoder.setAcceleration(config.store.encacc);
 #endif

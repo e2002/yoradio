@@ -39,7 +39,7 @@ void mqttPublishStatus() {
     memset(topic, 0, 140);
     memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
-    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.status()==PLAYING?1:0, config.store.lastStation, config.station.name, config.station.title, config.store.dspon);
+    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.status()==PLAYING?1:0, config.lastStation(), config.station.name, config.station.title, config.store.dspon);
     mqttClient.publish(topic, 0, true, status);
   }
 }
@@ -92,7 +92,7 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     return;
   }
   if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) {
-    player.sendCommand({PR_PLAY, config.store.lastStation});
+    player.sendCommand({PR_PLAY, config.lastStation()});
     return;
   }
   if (strcmp(buf, "boot") == 0 || strcmp(buf, "reboot") == 0) {
@@ -113,13 +113,12 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     player.sendCommand({PR_STOP, 0});
     //telnet.info();
     delay(100);
-    config.store.smartstart = sst;
-    config.save();
+    config.saveValue(&config.store.smartstart, sst);
     return;
   }
   if (strcmp(buf, "turnon") == 0) {
     config.setDspOn(1);
-    if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.store.lastStation});
+    if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.lastStation()});
     return;
   }
   int volume;

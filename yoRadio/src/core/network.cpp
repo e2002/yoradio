@@ -8,7 +8,7 @@
 #include "mqtt.h"
 
 #ifndef WIFI_ATTEMPTS
-	#define WIFI_ATTEMPTS	16
+  #define WIFI_ATTEMPTS  16
 #endif
 
 MyNetwork network;
@@ -28,8 +28,8 @@ void ticks() {
   static const uint32_t timeSyncInterval=86400;
   static uint32_t timeSyncTicks = 0;
 #else
-	static const uint16_t timeSyncInterval=3600;
-	static uint16_t timeSyncTicks = 0;
+  static const uint16_t timeSyncInterval=3600;
+  static uint16_t timeSyncTicks = 0;
 #endif
   static uint16_t weatherSyncTicks = 0;
   static bool divrssi;
@@ -50,8 +50,8 @@ void ticks() {
     }
   }
 #if RTCSUPPORTED
-	rtc.getTime(&network.timeinfo);
-	mktime(&network.timeinfo);
+  rtc.getTime(&network.timeinfo);
+  mktime(&network.timeinfo);
   display.putRequest(CLOCK);
 #else
   if(network.timeinfo.tm_year>100 || network.status == SDREADY) {
@@ -79,11 +79,11 @@ void MyNetwork::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   delay(100);
   display.putRequest(NEWMODE, PLAYER);
   if(config.getMode()==PM_SDCARD) {
-  	network.status=CONNECTED;
-  	display.putRequest(NEWIP, 0);
+    network.status=CONNECTED;
+    display.putRequest(NEWIP, 0);
   }else{
-		display.putRequest(NEWMODE, PLAYER);
-		if (network.lostPlaying) player.sendCommand({PR_PLAY, config.store.lastStation});
+    display.putRequest(NEWMODE, PLAYER);
+    if (network.lostPlaying) player.sendCommand({PR_PLAY, config.lastStation()});
   }
   #ifdef MQTT_ROOT_TOPIC
     connectToMqtt();
@@ -94,12 +94,12 @@ void MyNetwork::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   if(!network.beginReconnect){
     Serial.printf("Lost connection, reconnecting to %s...\n", config.ssids[config.store.lastSSID-1].ssid);
     if(config.getMode()==PM_SDCARD) {
-			network.status=SDREADY;
-			display.putRequest(NEWIP, 0);
-		}else{
-		  network.lostPlaying = player.isRunning();
-		  if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
-		  display.putRequest(NEWMODE, LOST);
+      network.status=SDREADY;
+      display.putRequest(NEWIP, 0);
+    }else{
+      network.lostPlaying = player.isRunning();
+      if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
+      display.putRequest(NEWMODE, LOST);
     }
   }
   network.beginReconnect = true;
@@ -143,8 +143,8 @@ bool MyNetwork::wifiBegin(bool silent){
 }
 
 void searchWiFi(void * pvParameters){
-	if(!network.wifiBegin(true)){
-  	delay(10000);
+  if(!network.wifiBegin(true)){
+    delay(10000);
     xTaskCreatePinnedToCore(searchWiFi, "searchWiFi", 1024 * 4, NULL, 0, NULL, 0);
   }else{
     network.status = CONNECTED;
@@ -153,7 +153,7 @@ void searchWiFi(void * pvParameters){
     network.setWifiParams();
     display.putRequest(NEWIP, 0);
   }
-	vTaskDelete( NULL );
+  vTaskDelete( NULL );
 }
 
 #define DBGAP false
@@ -177,16 +177,16 @@ void MyNetwork::begin() {
     status = CONNECTED;
     setWifiParams();
   }else{
-  	status = SDREADY;
-  	xTaskCreatePinnedToCore(searchWiFi, "searchWiFi", 1024 * 4, NULL, 0, NULL, 0);
+    status = SDREADY;
+    xTaskCreatePinnedToCore(searchWiFi, "searchWiFi", 1024 * 4, NULL, 0, NULL, 0);
   }
   
   Serial.println("##[BOOT]#\tdone");
   if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, LOW);
   
 #if RTCSUPPORTED
-	rtc.getTime(&network.timeinfo);
-	mktime(&network.timeinfo);
+  rtc.getTime(&network.timeinfo);
+  mktime(&network.timeinfo);
   display.putRequest(CLOCK);
 #endif
   ctimer.attach(1, ticks);
@@ -258,7 +258,7 @@ void doSync( void * pvParameters ) {
       display.putRequest(CLOCK);
       network.requestTimeSync(true);
       #if RTCSUPPORTED
-      	if (config.isRTCFound()) rtc.setTime(&network.timeinfo);
+        if (config.isRTCFound()) rtc.setTime(&network.timeinfo);
       #endif
     }else{
       if(tsFailCnt<4){

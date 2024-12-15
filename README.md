@@ -141,11 +141,11 @@ Rotation of the display:
 
 ---
 ## Quick start
-<img src="images/board3.jpg" width="830" height="400"><br />
+<img src="images/board4.jpg" width="830" height="473"><br />
 
 - <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">Arduino IDE version 2.x.x is not supported. Use Arduino IDE 1.8.19</span>
 - <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 2.0.0 or higher is [required](https://github.com/espressif/arduino-esp32)!</span>
-- <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 3.x.x or higher is not supported (yet)!</span>
+
 1. Generate a myoptions.h file for your hardware configuration using [this tool](https://e2002.github.io/docs/myoptions-generator.html).
 2. Put myoptions.h file next to yoRadio.ino.
 3. Replace file Arduino/libraries/Adafruit_GFX_Library/glcdfont.c with file [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
@@ -234,6 +234,15 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.368
+- SD Card - optimization and bug fixes
+- Config - improvements and bug fixes
+- Added stream format display in the web interface **!!! A full update is required, including SPIFFS Data !!!**  
+  *(Alternatively, upload the new `style.css.gz` and `script.js.gz` files via the web interface.)*
+- The content of `yoRadio.ino` has been moved to `src/main.cpp`
+- [www|uart|telnet] new command: `reset` - resets settings to default values. [More details](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST))
+- Fixed compilation error: `'ets_printf' was not declared in this scope`
+
 #### v0.9.351
 - fixed freezing when loading without plugins in some configurations "running dots"
 
@@ -249,7 +258,7 @@ Work is in progress...
   More details can be found in the comments within the `yoRadio/src/pluginsManager/pluginsManager.h` file and at [here](https://github.com/e2002/yoradio/blob/main/yoRadio/src/pluginsManager/README.md).  
   Additional examples are provided in the `examples/plugins` folder.
   **Backward compatibility:** The old method of adding plugins will remain functional for some time in future versions but will eventually be deprecated and removed.
-  
+
 #### v0.9.342b
 - fixed compilation error for OLED displays
 

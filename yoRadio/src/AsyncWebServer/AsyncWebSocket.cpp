@@ -31,6 +31,7 @@
 //https://github.com/me-no-dev/ESPAsyncWebServer/issues/1410
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include "mbedtls/compat-2.x.h"
+#include "rom/ets_sys.h"
 #endif
 
 #define MAX_PRINTF_LEN 64
