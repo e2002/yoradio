@@ -11,6 +11,10 @@
     This file must be in the root directory of the sketch.
 
 *******************************************************************************************************************/
+#include <Ticker.h>
+#include "src/core/options.h"
+#include "src/core/display.h"
+
 #define SLEEP_DELAY     60        /* 1 min        deep sleep delay                                                */
 #define WAKEUP_PIN      ENC_BTNB  /*              wakeup pin (one of: BTN_XXXX, ENC_BTNB, ENC2_BTNB)              */
                                   /*              must be one of: 0,2,4,12,13,14,15,25,26,27,32,33,34,35,36,39    */
