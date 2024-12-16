@@ -236,7 +236,8 @@ Work is in progress...
 ## Version history
 ### v0.9.373
 - fixed the issue with displaying the settings page on fresh ESP modules after saving the weather key
-
+ (a [reset](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST)) may be required)
+ 
 #### v0.9.370
 - fixed the issue with saving settings on fresh ESP modules.
 
