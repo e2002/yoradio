@@ -840,7 +840,7 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
     if (request->hasArg("next")) { player.next(); commandFound=true; }
     if (request->hasArg("volm")) { player.stepVol(false); commandFound=true; }
     if (request->hasArg("volp")) { player.stepVol(true); commandFound=true; }
-    if (request->hasArg("reset")) { config.reset(); commandFound=true; }
+    if (request->hasArg("reset")) { request->redirect("/"); request->send(200); config.reset(); return; }
     if (request->hasArg("trebble") && request->hasArg("middle") && request->hasArg("bass")) {
       AsyncWebParameter* pt = request->getParam("trebble", request->method() == HTTP_POST);
       AsyncWebParameter* pm = request->getParam("middle", request->method() == HTTP_POST);

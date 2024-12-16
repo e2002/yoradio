@@ -286,7 +286,7 @@ template <class T> int Config::eepromRead(int ee, T& value) {
 void Config::reset(){
   setDefaults();
   eepromWrite(EEPROM_START, store);
-  delay(100);
+  delay(500);
   ESP.restart();
 }
 

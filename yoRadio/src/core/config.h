@@ -250,7 +250,7 @@ class Config {
       if (strcmp(field, value) == 0 && !force) return;
       strlcpy(field, value, N);
       size_t address = getAddr(field);
-      for (size_t i = 0; i < strlen(field); i++) EEPROM.write(address + i, field[i]);
+      for (size_t i = 0; i <= strlen(field); i++) EEPROM.write(address + i, field[i]);
       if(commit)
         EEPROM.commit();
     }

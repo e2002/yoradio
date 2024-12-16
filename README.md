@@ -234,6 +234,9 @@ Work is in progress...
 
 ---
 ## Version history
+### v0.9.373
+- fixed the issue with displaying the settings page on fresh ESP modules after saving the weather key
+
 #### v0.9.370
 - fixed the issue with saving settings on fresh ESP modules.
 
