@@ -475,13 +475,13 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(cmd, "tzh") == 0) {
-        int vali = atoi(val);
-        config.store.tzHour = vali;
+        int8_t vali = atoi(val);
+        config.saveValue(&config.store.tzHour, vali);
         return;
       }
       if (strcmp(cmd, "tzm") == 0) {
-        int vali = atoi(val);
-        config.store.tzMin = vali;
+        int8_t vali = atoi(val);
+        config.saveValue(&config.store.tzMin, vali);
         return;
       }
       if (strcmp(cmd, "sntp2") == 0) {
