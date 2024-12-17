@@ -234,6 +234,12 @@ Work is in progress...
 
 ---
 ## Version history
+### v0.9.380
+- fixed compilation error for ESP32 cores >= 3.1.0
+- fixed freezing error with incorrectly configured RTC module
+- [www|uart|telnet] new command `mode` - change SD/WEB mode. (0 - WEB, 1 - SD, 2 - Toggle)
+  example: http://<ipaddr>/?mode=2
+
 #### v0.9.375
 - fixed the issue with saving settings for TIMEZONE.
 

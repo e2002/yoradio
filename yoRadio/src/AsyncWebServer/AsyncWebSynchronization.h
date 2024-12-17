@@ -7,6 +7,10 @@
 
 #ifdef ESP32
 
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 1, 0)
+  #define pxCurrentTCB pxCurrentTCBs
+#endif
+
 // This is the ESP32 version of the Sync Lock, using the FreeRTOS Semaphore
 class AsyncWebLock
 {

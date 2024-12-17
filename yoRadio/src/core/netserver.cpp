@@ -840,6 +840,18 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
     if (request->hasArg("next")) { player.next(); commandFound=true; }
     if (request->hasArg("volm")) { player.stepVol(false); commandFound=true; }
     if (request->hasArg("volp")) { player.stepVol(true); commandFound=true; }
+    #ifdef USE_SD
+    if (request->hasArg("mode")) {
+      AsyncWebParameter* p = request->getParam("mode");
+      int mm = atoi(p->value().c_str());
+      if(mm>2) mm=0;
+      if(mm==2)
+        config.changeMode();
+      else
+        config.changeMode(mm);
+      commandFound=true;
+    }
+    #endif
     if (request->hasArg("reset")) { request->redirect("/"); request->send(200); config.reset(); return; }
     if (request->hasArg("trebble") && request->hasArg("middle") && request->hasArg("bass")) {
       AsyncWebParameter* pt = request->getParam("trebble", request->method() == HTTP_POST);

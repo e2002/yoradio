@@ -59,7 +59,6 @@ void Config::init() {
   
   if (store.config_set != 4262) {
     setDefaults();
-    eepromWrite(EEPROM_START, store);
   }
   if(store.version>CONFIG_VERSION) store.version=1;
   while(store.version!=CONFIG_VERSION) _setupVersion();
@@ -285,7 +284,6 @@ template <class T> int Config::eepromRead(int ee, T& value) {
 
 void Config::reset(){
   setDefaults();
-  eepromWrite(EEPROM_START, store);
   delay(500);
   ESP.restart();
 }
@@ -341,6 +339,7 @@ void Config::setDefaults() {
   store.forcemono = false;
   store.i2sinternal = false;
   store.rotate90 = false;
+  eepromWrite(EEPROM_START, store);
 }
 
 void Config::setTimezone(int8_t tzh, int8_t tzm) {

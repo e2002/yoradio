@@ -50,9 +50,11 @@ void ticks() {
     }
   }
 #if RTCSUPPORTED
-  rtc.getTime(&network.timeinfo);
-  mktime(&network.timeinfo);
-  display.putRequest(CLOCK);
+  if(config.isRTCFound()){
+    rtc.getTime(&network.timeinfo);
+    mktime(&network.timeinfo);
+    display.putRequest(CLOCK);
+  }
 #else
   if(network.timeinfo.tm_year>100 || network.status == SDREADY) {
     network.timeinfo.tm_sec++;
@@ -185,9 +187,11 @@ void MyNetwork::begin() {
   if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, LOW);
   
 #if RTCSUPPORTED
-  rtc.getTime(&network.timeinfo);
-  mktime(&network.timeinfo);
-  display.putRequest(CLOCK);
+  if(config.isRTCFound()){
+    rtc.getTime(&network.timeinfo);
+    mktime(&network.timeinfo);
+    display.putRequest(CLOCK);
+  }
 #endif
   ctimer.attach(1, ticks);
   if (network_on_connect) network_on_connect();
