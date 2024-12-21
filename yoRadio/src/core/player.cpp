@@ -157,6 +157,8 @@ void Player::loop() {
         break;
       }
       #endif
+      case PR_VUTONUS:
+        if(config.vuThreshold>10) config.vuThreshold -=10;
       default: break;
     }
   }
@@ -186,6 +188,7 @@ void Player::_play(uint16_t stationId) {
   setError("");
   remoteStationName = false;
   config.setDspOn(1);
+  config.vuThreshold = 0;
   //display.putRequest(PSTOP);
   if(config.getMode()!=PM_SDCARD) {
   	display.putRequest(PSTOP);

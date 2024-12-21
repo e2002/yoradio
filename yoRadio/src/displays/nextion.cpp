@@ -294,9 +294,15 @@ void Nextion::drawVU(){
   //if(mode!=PLAYER) return;
   if(mode!=PLAYER && mode!=VOL) return;
   static uint8_t measL, measR;
-  player.getVUlevel();
-  uint8_t L = map(player.vuLeft, 0, 255, 0, 100);
-  uint8_t R = map(player.vuRight, 0, 255, 0, 100);
+  //player.getVUlevel();
+  
+  uint16_t vulevel = player.get_VUlevel((uint16_t)100);
+  
+  uint8_t L = (vulevel >> 8) & 0xFF;
+  uint8_t R = vulevel & 0xFF;
+  
+  //uint8_t L = map(player.vuLeft, 0, 255, 0, 100);
+  //uint8_t R = map(player.vuRight, 0, 255, 0, 100);
   if(player.isRunning()){
     measL=(L<=measL)?measL-5:L;
     measR=(R<=measR)?measR-5:R;

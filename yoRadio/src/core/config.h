@@ -174,6 +174,7 @@ class Config {
     uint16_t sleepfor;
     uint32_t sdResumePos;
     bool     emptyFS;
+    uint16_t vuThreshold;
   public:
     Config() {};
     //void save();

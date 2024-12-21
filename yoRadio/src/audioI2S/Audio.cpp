@@ -2335,11 +2335,6 @@ bool Audio::pauseResume() {
 bool Audio::playChunk() {
     // If we've got data, try and pump it out..
     int16_t sample[2];
-    /* VU Meter ************************************************************************************************************/
-    /* По мотивам https://github.com/schreibfaul1/ESP32-audioI2S/pull/170/commits/6cce84217e5bc8f2f8925936affc84576932a29b */
-    uint8_t maxl = 0, maxr = 0; 
-    uint8_t minl = 0xFF, minr = 0xFF;
-    /************************************************************************************************************ VU Meter */
     if(getBitsPerSample() == 8) {
         if(getChannels() == 1) {
             while(m_validSamples) {
@@ -2347,19 +2342,11 @@ bool Audio::playChunk() {
                 uint8_t y = (m_outBuff[m_curSample] & 0xFF00) >> 8;
                 sample[LEFTCHANNEL]  = x;
                 sample[RIGHTCHANNEL] = x;
-                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
-                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 while(1) {
                     if(playSample(sample)) break;
                 } // Can't send?
                 sample[LEFTCHANNEL]  = y;
                 sample[RIGHTCHANNEL] = y;
-                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
-                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 while(1) {
                     if(playSample(sample)) break;
                 } // Can't send?
@@ -2380,10 +2367,6 @@ bool Audio::playChunk() {
                     sample[LEFTCHANNEL]  = xy;
                     sample[RIGHTCHANNEL] = xy;
                 }
-                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
-                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 while(1) {
                     if(playSample(sample)) break;
                 } // Can't send?
@@ -2391,8 +2374,6 @@ bool Audio::playChunk() {
                 m_curSample++;
             }
         }
-        vuLeft = maxl - minl;
-        vuRight = maxr - minr;
         m_curSample = 0;
         return true;
     }
@@ -2401,10 +2382,6 @@ bool Audio::playChunk() {
             while(m_validSamples) {
                 sample[LEFTCHANNEL]  = m_outBuff[m_curSample];
                 sample[RIGHTCHANNEL] = m_outBuff[m_curSample];
-                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
-                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 if(!playSample(sample)) {
                     log_e("can't send");
                     return false;
@@ -2425,17 +2402,11 @@ bool Audio::playChunk() {
                     sample[LEFTCHANNEL] = xy;
                     sample[RIGHTCHANNEL] = xy;
                 }
-                if(sample[LEFTCHANNEL] > maxl ) maxl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] > maxr ) maxr = sample[RIGHTCHANNEL];
-                if(sample[LEFTCHANNEL] < minl ) minl = sample[LEFTCHANNEL];
-                if(sample[RIGHTCHANNEL] < minr ) minr = sample[RIGHTCHANNEL];
                 playSample(sample);
                 m_validSamples--;
                 m_curSample++;
             }
         }
-        vuLeft = maxl - minl;
-        vuRight = maxr - minr;
         m_curSample = 0;
         return true;
     }
@@ -2444,10 +2415,86 @@ bool Audio::playChunk() {
     stopSong();
     return false;
 }
+
+/*
+ * Shamelessly borrowed from @schreibfaul1 https://github.com/schreibfaul1/ESP32-audioI2S/blob/1296374fc513a6d6bfaa3b1ca08f6ba938b18d99/src/Audio.cpp#L5030
+ */
+void Audio::_computeVUlevel(int16_t sample[2]) {
+  if(!config.store.vumeter) return;
+  static uint8_t sampleArray[2][4][8] = {0};
+  static uint8_t cnt0 = 0, cnt1 = 0, cnt2 = 0, cnt3 = 0, cnt4 = 0;
+  static bool    f_vu = false;
+
+  auto avg = [&](uint8_t* sampArr) { // lambda, inner function, compute the average of 8 samples
+    uint16_t av = 0;
+    for(int i = 0; i < 8; i++) { av += sampArr[i]; }
+    return av >> 3;
+  };
+
+  auto largest = [&](uint8_t* sampArr) { // lambda, inner function, compute the largest of 8 samples
+    uint16_t maxValue = 0;
+    for(int i = 0; i < 8; i++) {
+      if(maxValue < sampArr[i]) maxValue = sampArr[i];
+    }
+    return maxValue;
+  };
+
+  if(cnt0 == 64) {
+    cnt0 = 0;
+    cnt1++;
+  }
+  if(cnt1 == 8) {
+    cnt1 = 0;
+    cnt2++;
+  }
+  if(cnt2 == 8) {
+    cnt2 = 0;
+    cnt3++;
+  }
+  if(cnt3 == 8) {
+    cnt3 = 0;
+    cnt4++;
+    f_vu = true;
+  }
+  if(cnt4 == 8) { cnt4 = 0; }
+
+  if(!cnt0) { // store every 64th sample in the array[0]
+    sampleArray[LEFTCHANNEL][0][cnt1] = abs(sample[LEFTCHANNEL] >> 7);
+    sampleArray[RIGHTCHANNEL][0][cnt1] = abs(sample[RIGHTCHANNEL] >> 7);
+  }
+  if(!cnt1) { // store argest from 64 * 8 samples in the array[1]
+    sampleArray[LEFTCHANNEL][1][cnt2] = largest(sampleArray[LEFTCHANNEL][0]);
+    sampleArray[RIGHTCHANNEL][1][cnt2] = largest(sampleArray[RIGHTCHANNEL][0]);
+  }
+  if(!cnt2) { // store avg from 64 * 8 * 8 samples in the array[2]
+    sampleArray[LEFTCHANNEL][2][cnt3] = largest(sampleArray[LEFTCHANNEL][1]);
+    sampleArray[RIGHTCHANNEL][2][cnt3] = largest(sampleArray[RIGHTCHANNEL][1]);
+  }
+  if(!cnt3) { // store avg from 64 * 8 * 8 * 8 samples in the array[3]
+    sampleArray[LEFTCHANNEL][3][cnt4] = avg(sampleArray[LEFTCHANNEL][2]);
+    sampleArray[RIGHTCHANNEL][3][cnt4] = avg(sampleArray[RIGHTCHANNEL][2]);
+  }
+  if(f_vu) {
+    f_vu = false;
+    vuLeft = avg(sampleArray[LEFTCHANNEL][3]);
+    if(vuLeft>config.vuThreshold)  config.vuThreshold = vuLeft;
+    vuRight = avg(sampleArray[RIGHTCHANNEL][3]);
+    if(vuRight>config.vuThreshold) config.vuThreshold = vuRight;
+  }
+  cnt1++;
+}
+
+uint16_t Audio::get_VUlevel(uint16_t dimension){
+  if(!config.store.vumeter || config.vuThreshold==0) return 0;
+  uint8_t L = map(vuLeft, config.vuThreshold, 0, 0, dimension);
+  uint8_t R = map(vuRight, config.vuThreshold, 0, 0, dimension);
+  return (L << 8) | R;
+}
 //---------------------------------------------------------------------------------------------------------------------
 
 void Audio::loop() {
     if(!m_f_running) {
+      vuLeft=0; vuRight=0;
       vTaskDelay(2);
       return;
     }
@@ -4563,7 +4610,7 @@ bool Audio::playSample(int16_t sample[2]) {
     sample = IIR_filterChain1(sample);
     sample = IIR_filterChain2(sample);
     //-------------------------------------------
-
+    _computeVUlevel(sample);
     uint32_t s32 = Gain(sample); // vosample2lume;
 
     if(m_f_internalDAC) {

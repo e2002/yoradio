@@ -452,6 +452,9 @@ void Display::loop() {
       }
   }
   dsp.loop();
+  #if I2S_DOUT==255
+  player.computeVUlevel();
+  #endif
 }
 
 void Display::_setRSSI(int rssi) {

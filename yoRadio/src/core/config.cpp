@@ -407,6 +407,7 @@ uint8_t Config::setLastSSID(uint8_t val) {
 }
 
 void Config::setTitle(const char* title) {
+  vuThreshold = 0;
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
   u8fix(config.station.title);

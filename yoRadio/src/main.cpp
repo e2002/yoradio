@@ -11,7 +11,7 @@
 #include "core/optionschecker.h"
 
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-SPIClass  SPI2(HSPI);
+SPIClass  SPI2(HOOPSENb);
 #endif
 
 extern __attribute__((weak)) void yoradio_on_setup();

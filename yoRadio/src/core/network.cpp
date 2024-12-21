@@ -72,6 +72,7 @@ void ticks() {
 #ifdef USE_SD
     if(display.mode()!=SDCHANGE) player.sendCommand({PR_CHECKSD, 0});
 #endif
+    player.sendCommand({PR_VUTONUS, 0});
   }
 }
 

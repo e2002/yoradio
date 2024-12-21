@@ -236,6 +236,7 @@ private:
     
     const char volumetable[22]={   0,50,60,65,70,75,80,82,84,86,
                                   88,90,91,92,93,94,95,96,97,98,99,100}; //22 elements
+    uint8_t  vuLeft, vuRight;
 protected:
     inline void DCS_HIGH() {(dcs_pin&0x20) ? GPIO.out1_w1ts.data = 1 << (dcs_pin - 32) : GPIO.out_w1ts = 1 << dcs_pin;}
     inline void DCS_LOW()  {(dcs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << (dcs_pin - 32) : GPIO.out_w1tc = 1 << dcs_pin;}
@@ -324,8 +325,8 @@ public:
     void     forceMono(bool m) {}                        // TODO
     /* VU METER */
     void     setVUmeter();
-    void     getVUlevel();
-    uint8_t  vuLeft, vuRight;
+    uint16_t get_VUlevel(uint16_t dimension);
+    void     computeVUlevel();
     bool     eofHeader;
     // implement several function with respect to the index of string
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}

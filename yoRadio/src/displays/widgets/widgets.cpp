@@ -284,21 +284,25 @@ void VuWidget::init(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor
   _canvas = new Canvas(_bands.width * 2 + _bands.space, _bands.height);
 }
 
+
 void VuWidget::_draw(){
   if(!_active || _locked) return;
 #if !defined(USE_NEXTION) && I2S_DOUT==255
-  static uint8_t cc = 0;
+/*  static uint8_t cc = 0;
   cc++;
   if(cc>0){
     player.getVUlevel();
     cc=0;
-  }
+  }*/
 #endif
   static uint16_t measL, measR;
   uint16_t bandColor;
   uint16_t dimension = _config.align?_bands.width:_bands.height;
-  uint8_t L = map(player.vuLeft, 255, 0, 0, dimension);
-  uint8_t R = map(player.vuRight, 255, 0, 0, dimension);
+  uint16_t vulevel = player.get_VUlevel(dimension);
+  
+  uint8_t L = (vulevel >> 8) & 0xFF;
+  uint8_t R = vulevel & 0xFF;
+  
   bool played = player.isRunning();
   if(played){
     measL=(L>=measL)?measL + _bands.fadespeed:L;

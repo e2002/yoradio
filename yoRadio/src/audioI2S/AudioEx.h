@@ -35,6 +35,7 @@
 #ifndef AUDIOBUFFER_MULTIPLIER2
 #define AUDIOBUFFER_MULTIPLIER2    8
 #endif
+
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include "hal/gpio_ll.h"
 #endif
@@ -211,7 +212,8 @@ public:
     /* VU METER */
     void     setVUmeter() {};
     void     getVUlevel() {};
-    uint8_t  vuLeft, vuRight;
+    uint16_t get_VUlevel(uint16_t dimension);
+    
     bool     eofHeader;
     esp_err_t i2s_mclk_pin_select(const uint8_t pin);
     uint32_t inBufferFilled(); // returns the number of stored bytes in the inputbuffer
@@ -284,7 +286,7 @@ private:
     inline uint32_t streamavail(){ return _client ? _client->available() : 0;}
     void IIR_calculateCoefficients(int8_t G1, int8_t G2, int8_t G3);
     bool ts_parsePacket(uint8_t* packet, uint8_t* packetStart, uint8_t* packetLength);
-
+    void _computeVUlevel(int16_t sample[2]);
     // implement several function with respect to the index of string
     void trim(char *s) {
     //fb   trim in place
@@ -561,6 +563,7 @@ private:
     int16_t         m_pidOfAAC;
     uint8_t         m_packetBuff[m_tsPacketSize];
     int16_t         m_pesDataLength = 0;
+    uint16_t  vuLeft, vuRight;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

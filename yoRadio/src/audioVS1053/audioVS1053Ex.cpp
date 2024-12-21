@@ -1658,16 +1658,26 @@ void Audio::setVUmeter() {
  *
  * \warning This feature is only available with patches that support VU meter.
  */
-void Audio::getVUlevel() {
+const uint8_t everyn = 4;
+void Audio::computeVUlevel() {
   if(!VS_PATCH_ENABLE) return;
-  if(!_vuInitalized) return;
+  static uint8_t cc = 0;
+  cc++;
+  if(!_vuInitalized || !config.store.vumeter || cc!=everyn) return;
+  if(cc==everyn) cc=0;
   int16_t reg = read_register(SCI_AICTRL3);
-  uint8_t rl = map((uint8_t)reg, 85, 92, 0, 255);
-  uint8_t rr = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
-  //if(rl>30 || !isRunning()) vuLeft = rl;
-  //if(rr>30 || !isRunning()) vuRight = rr;
-  vuLeft = rl;
-  vuRight = rr;
+  vuLeft = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
+  vuRight = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+  if(vuLeft>config.vuThreshold) config.vuThreshold = vuLeft;
+  if(vuRight>config.vuThreshold) config.vuThreshold=vuRight;
+}
+
+uint16_t Audio::get_VUlevel(uint16_t dimension){
+  if(!VS_PATCH_ENABLE) return 0;
+  if(!_vuInitalized || !config.store.vumeter || config.vuThreshold==0) return 0;
+  uint8_t L = map(vuLeft, config.vuThreshold, 0, 0, dimension);
+  uint8_t R = map(vuRight, config.vuThreshold, 0, 0, dimension);
+  return (L << 8) | R;
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::setConnectionTimeout(uint16_t timeout_ms, uint16_t timeout_ms_ssl){
