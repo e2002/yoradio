@@ -105,8 +105,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define BTN_DOWN              255           /*  Next, Move Down */
 //#define BTN_INTERNALPULLUP    true          /*  Enable the weak pull up resistors */
 //#define BTN_LONGPRESS_LOOP_DELAY    200     /*  Delay between calling DuringLongPress event */
-//#define BTN_CLICK_TICKS    300              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
-//#define BTN_PRESS_TICKS    500              /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
+//#define BTN_CLICK_TICKS       300           /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
+//#define BTN_PRESS_TICKS       500           /*  Event Timing https://github.com/mathertel/OneButton#event-timing */
+//#define BTN_NO_MENU           true          /* Instead of showing the menu, makes Prev, Next happen immediately */
 
 //#define BTN_MODE              255           /*  MODE switcher  */
 /******************************************/
