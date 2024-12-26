@@ -513,7 +513,7 @@ void onBtnClick(int id) {
       }
     case EVT_BTNUP:
     case EVT_BTNDOWN: {
-        if (DSP_MODEL == DSP_DUMMY) {
+        if (DSP_MODEL == DSP_DUMMY || BTN_NO_MENU) {
           if (id == EVT_BTNUP) {
             player.next();
           } else {
