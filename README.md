@@ -235,7 +235,7 @@ Work is in progress...
 ---
 ## Version history
 ### v0.9.399
-**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - added a screensaver mode, configurable via the web interface.
 - changes to the tone control algorithm for the VS1053.
 
