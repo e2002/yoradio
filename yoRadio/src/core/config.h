@@ -45,7 +45,7 @@
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  1
+#define CONFIG_VERSION  2
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
@@ -133,6 +133,8 @@ struct config_t
   bool      forcemono;
   bool      i2sinternal;
   bool      rotate90;
+  bool      screensaverEnabled;
+  uint16_t  screensaverTimeout;
 };
 
 #if IR_PIN!=255
@@ -175,6 +177,8 @@ class Config {
     uint32_t sdResumePos;
     bool     emptyFS;
     uint16_t vuThreshold;
+    uint16_t screensaverTicks;
+    bool     isScreensaver;
   public:
     Config() {};
     //void save();

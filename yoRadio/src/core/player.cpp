@@ -190,6 +190,7 @@ void Player::_play(uint16_t stationId) {
   config.setDspOn(1);
   config.vuThreshold = 0;
   //display.putRequest(PSTOP);
+  config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
   if(config.getMode()!=PM_SDCARD) {
   	display.putRequest(PSTOP);
   }
@@ -224,6 +225,7 @@ void Player::_play(uint16_t stationId) {
     config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
+    display.putRequest(NEWMODE, PLAYER);
     display.putRequest(PSTART);
     if (player_on_start_play) player_on_start_play();
     pm.on_start_play();

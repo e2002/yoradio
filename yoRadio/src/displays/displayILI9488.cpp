@@ -88,7 +88,7 @@ void DspCore::_clockSeconds(){
   setTextColor(config.theme.seconds, config.theme.background);
   setCursor(width() - 8 - clockRightSpace - CHARWIDTH*4*2, clockTop-clockTimeHeight+1);
   sprintf(_bufforseconds, "%02d", network.timeinfo.tm_sec);
-  print(_bufforseconds);                                      /* print seconds */
+  if(!config.isScreensaver) print(_bufforseconds);                                      /* print seconds */
   setTextSize(1);
   setFont(&DS_DIGI56pt7b);
   setTextColor((network.timeinfo.tm_sec % 2 == 0) ? config.theme.clock : (CLOCKFONT_MONO?config.theme.clockbg:config.theme.background), config.theme.background);
@@ -103,7 +103,7 @@ void DspCore::_clockDate(){
   setTextColor(config.theme.date, config.theme.background);
   setCursor(_dateleft, clockTop+15);
   setTextSize(2);
-  print(_dateBuf);                                            /* print date */
+  if(!config.isScreensaver) print(_dateBuf);                                            /* print date */
   strlcpy(_oldDateBuf, _dateBuf, sizeof(_dateBuf));
   _olddatewidth = _datewidth;
   _olddateleft = _dateleft;
@@ -131,8 +131,8 @@ void DspCore::_clockTime(){
   strlcpy(_oldTimeBuf, _timeBuf, sizeof(_timeBuf));
   _oldtimewidth = _timewidth;
   _oldtimeleft = _timeleft;
-  drawFastVLine(width()-clockRightSpace-CHARWIDTH*4*2-18, clockTop-clockTimeHeight, clockTimeHeight+4, config.theme.div);  /*divider vert*/
-  drawFastHLine(width()-clockRightSpace-CHARWIDTH*4*2-18, clockTop-clockTimeHeight+37, 59, config.theme.div);              /*divider hor*/
+  if(!config.isScreensaver) drawFastVLine(width()-clockRightSpace-CHARWIDTH*4*2-18, clockTop-clockTimeHeight, clockTimeHeight+4, config.theme.div);  /*divider vert*/
+  if(!config.isScreensaver) drawFastHLine(width()-clockRightSpace-CHARWIDTH*4*2-18, clockTop-clockTimeHeight+37, 59, config.theme.div);              /*divider hor*/
   sprintf(_buffordate, "%2d %s %d", network.timeinfo.tm_mday,mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
   strlcpy(_dateBuf, utf8Rus(_buffordate, true), sizeof(_dateBuf));
   _datewidth = strlen(_dateBuf) * CHARWIDTH*2;
@@ -147,7 +147,8 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
   if(strcmp(_oldTimeBuf, _timeBuf)!=0 || redraw){
     _getTimeBounds();
     _clockTime();
-    if(strcmp(_oldDateBuf, _dateBuf)!=0 || redraw) _clockDate();
+    if(!config.isScreensaver)
+      if(strcmp(_oldDateBuf, _dateBuf)!=0 || redraw) _clockDate();
   }
   _clockSeconds();
 }

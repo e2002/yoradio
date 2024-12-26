@@ -16,7 +16,7 @@ Nextion nextion;
 //============================================================================================================================
 DspCore dsp;
 
-Page *pages[] = { new Page(), new Page(), new Page() };
+Page *pages[] = { new Page(), new Page(), new Page(), new Page() };
 
 #ifndef DSQ_SEND_DELAY
   #define DSQ_SEND_DELAY portMAX_DELAY
@@ -153,6 +153,7 @@ void Display::_buildPager(){
   #endif
   if(_vuwidget) pages[PG_PLAYER]->addWidget( _vuwidget);
   pages[PG_PLAYER]->addWidget(&_clock);
+  pages[PG_SCREENSAVER]->addWidget(&_clock);
   pages[PG_PLAYER]->addPage(&_footer);
 
   if(_metabackground) pages[PG_DIALOG]->addWidget( _metabackground);
@@ -267,6 +268,7 @@ void Display::_swichMode(displayMode_e newmode) {
   _mode = newmode;
   dsp.setScrollId(NULL);
   if (newmode == PLAYER) {
+    _clock.moveBack();
     #ifdef DSP_LCD
       dsp.clearDsp();
     #endif
@@ -278,8 +280,16 @@ void Display::_swichMode(displayMode_e newmode) {
     _meta.setAlign(metaConf.widget.align);
     _meta.setText(config.station.name);
     _nums.setText("");
+    config.isScreensaver = false;
     _pager.setPage( pages[PG_PLAYER]);
     pm.on_display_player();
+  }
+  if (newmode == SCREENSAVER) {
+    config.isScreensaver = true;
+    _pager.setPage( pages[PG_SCREENSAVER]);
+  }else{
+    config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
+    config.isScreensaver = false;
   }
   if (newmode == VOL) {
     #ifndef HIDE_IP
@@ -377,7 +387,7 @@ void Display::loop() {
       switch (request.type){
         case NEWMODE: _swichMode((displayMode_e)request.payload); break;
         case CLOCK: 
-          if(_mode==PLAYER) _time(); 
+          if(_mode==PLAYER || _mode==SCREENSAVER) _time(); 
           /*#ifdef USE_NEXTION
             if(_mode==TIMEZONE) nextion.localTime(network.timeinfo);
             if(_mode==INFO)     nextion.rssi();
@@ -522,6 +532,8 @@ void Display::_time(bool redraw) {
     config.setBrightness();
   }
 #endif
+  if(config.isScreensaver && network.timeinfo.tm_sec % 60 == 0)
+    _clock.moveTo({clockConf.left, random(TFT_FRAMEWDT+clockConf.textsize, (dsp.height()-TFT_FRAMEWDT*2)), 0});
   _clock.draw();
   /*#ifdef USE_NEXTION
     nextion.printClock(network.timeinfo);

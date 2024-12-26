@@ -340,26 +340,26 @@ void Audio::setVolume(uint8_t vol){
     // Input value is 0..21.  21 is the loudest.
     // Clicking reduced by using 0xf8 to 0x00 as limits.
     uint16_t value;                                         // Value to send to SCI_VOL
-		uint8_t valueL, valueR;
-		int16_t balance_map = map(m_balance, -16, 16, -100, 100);
-		
-		valueL = vol;
+    uint8_t valueL, valueR;
+    int16_t balance_map = map(m_balance, -16, 16, -100, 100);
+    
+    valueL = vol;
     valueR = vol;
     if (balance_map < 0) {
         valueR = (float)valueR-(float)valueR * abs((float)balance_map)/100;
     } else if (balance_map > 0) {
-    		valueL = (float)valueL-(float)valueL * abs((float)balance_map)/100;
+        valueL = (float)valueL-(float)valueL * abs((float)balance_map)/100;
     }
     curvol = vol;
 
-		uint8_t lgvolL = VS1053VOL(valueL);
-		uint8_t lgvolR = VS1053VOL(valueR);
-		if(lgvolL==VS1053VOLM) lgvolL=0;
-		if(lgvolR==VS1053VOLM) lgvolR=0;
-		valueL=map(lgvolL, 0, 254, 0xF8, 0x00);
-		valueR=map(lgvolR, 0, 254, 0xF8, 0x00);
-		value=(valueL << 8) | valueR;
-		write_register(SCI_VOL, value);
+    uint8_t lgvolL = VS1053VOL(valueL);
+    uint8_t lgvolR = VS1053VOL(valueR);
+    if(lgvolL==VS1053VOLM) lgvolL=0;
+    if(lgvolR==VS1053VOLM) lgvolR=0;
+    valueL=map(lgvolL, 0, 254, 0xF8, 0x00);
+    valueR=map(lgvolR, 0, 254, 0xF8, 0x00);
+    value=(valueL << 8) | valueR;
+    write_register(SCI_VOL, value);
 /*    uint16_t value;                                         // Value to send to SCI_VOL
 
     if(vol > 21) vol=21;
@@ -386,23 +386,39 @@ void Audio::setTone(int8_t *rtone){                       // Set bass/treble (4 
     write_register(SCI_BASS, value);                        // Volume left and right
 }
 /*
-Name						Bits			Description
-ST AMPLITUDE		15:12			Treble Control in 1.5 dB steps (-8..7, 0 = off)
-ST FREQLIMIT		11:8			Lower limit frequency in 1000 Hz steps (1..15) 			// 1000..15000
-SB AMPLITUDE		7:4				Bass Enhancement in 1 dB steps (0..15, 0 = off)
-SB FREQLIMIT		3:0				Lower limit frequency in 10 Hz steps (2..15)				// 20..150
+Name            Bits      Description
+ST AMPLITUDE    15:12      Treble Control in 1.5 dB steps (-8..7, 0 = off)
+ST FREQLIMIT    11:8      Lower limit frequency in 1000 Hz steps (1..15)       // 1000..15000
+SB AMPLITUDE    7:4        Bass Enhancement in 1 dB steps (0..15, 0 = off)
+SB FREQLIMIT    3:0        Lower limit frequency in 10 Hz steps (2..15)        // 20..150
+*/
+/*
+void Audio::setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass){ 
+  if(gainLowPass<0) gainLowPass=0;
+  if(gainLowPass>15) gainLowPass=15;
+  if(gainBandPass<0) gainBandPass=0;
+  if(gainBandPass>13) gainBandPass=13;
+  int8_t rtone[] = {(int8_t)map(gainHighPass, -16, 16, -8, 7), (int8_t)(2+gainBandPass), gainLowPass, (int8_t)(15-gainBandPass)};
+  setTone(rtone);
+}
 */
 void Audio::setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass){ 
-	if(gainLowPass<0) gainLowPass=0;
-	if(gainLowPass>15) gainLowPass=15;
-	if(gainBandPass<0) gainBandPass=0;
-	if(gainBandPass>13) gainBandPass=13;
-	int8_t rtone[] = {(int8_t)map(gainHighPass, -16, 16, -8, 7), (int8_t)(2+gainBandPass), gainLowPass, (int8_t)(15-gainBandPass)};
-	setTone(rtone);
+  gainHighPass = constrain(gainHighPass, -16, 16);
+  gainBandPass = constrain(gainBandPass, -16, 16);
+  gainLowPass = constrain(gainLowPass, -16, 16);
+
+  uint8_t trebleFreqLimit = map(-gainBandPass, -16, 16, 1, 15);
+  uint8_t bassFreqLimit = map(gainBandPass, -16, 16, 2, 15);
+  uint8_t st_amplitude = map(gainHighPass, -16, 16, -8, 7);
+  uint8_t sb_amplitude = map(gainLowPass, -16, 16, 0, 15);
+  uint16_t sci_bass = (st_amplitude << 12) | (trebleFreqLimit << 8) |
+                      (sb_amplitude << 4) | bassFreqLimit;
+  write_register(SCI_BASS, sci_bass);
 }
+
 void Audio::setBalance(int8_t bal){ 
-	m_balance = bal;
-	setVolume(curvol);
+  m_balance = bal;
+  setVolume(curvol);
 }
 //---------------------------------------------------------------------------------------------------------------------
 uint8_t Audio::getVolume()                                 // Get the currenet volume setting.

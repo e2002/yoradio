@@ -234,6 +234,11 @@ Work is in progress...
 
 ---
 ## Version history
+### v0.9.399
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!** \
+- added a screensaver mode, configurable via the web interface.
+- changes to the tone control algorithm for the VS1053.
+
 ### v0.9.390
 - updated the VU meter algorithms - shamelessly borrowed from @schreibfaul1, ([thanks a lot!](https://github.com/schreibfaul1/ESP32-audioI2S/blob/1296374fc513a6d6bfaa3b1ca08f6ba938b18d99/src/Audio.cpp#L5030))
 - fixed the magic error "HSPI" redefined.

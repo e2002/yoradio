@@ -33,6 +33,8 @@ bool Config::_isFSempty() {
 void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
   sdResumePos = 0;
+  screensaverTicks = 0;
+  isScreensaver = false;
   bootInfo();
 #if RTCSUPPORTED
   _rtcFound = false;
@@ -86,6 +88,10 @@ void Config::_setupVersion(){
   uint16_t currentVersion = store.version;
   switch(currentVersion){
     case 1:
+      saveValue(&store.screensaverEnabled, false);
+      saveValue(&store.screensaverTimeout, (uint16_t)20);
+      break;
+    case 2:
       break;
     default:
       break;
@@ -339,6 +345,8 @@ void Config::setDefaults() {
   store.forcemono = false;
   store.i2sinternal = false;
   store.rotate90 = false;
+  store.screensaverEnabled = false;
+  store.screensaverTimeout = 20;
   eepromWrite(EEPROM_START, store);
 }
 

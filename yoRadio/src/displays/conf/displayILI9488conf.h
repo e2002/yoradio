@@ -55,7 +55,7 @@ const ProgressConfig bootPrgConf  PROGMEM = { 90, 14, 4 };
 const BitrateConfig fullbitrateConf PROGMEM = {{DSP_WIDTH-TFT_FRAMEWDT-38, 59, 2, WA_LEFT}, 42 };
 
 /* BANDS  */                             /* { onebandwidth, onebandheight, bandsHspace, bandsVspace, numofbands, fadespeed } */
-const VUBandsConfig bandsConf     PROGMEM = { 32, 130, 4, 2, 10, 10 };
+const VUBandsConfig bandsConf     PROGMEM = { 32, 130, 4, 2, 10, 3 };
 
 /* STRINGS  */
 const char         numtxtFmt[]    PROGMEM = "%d";

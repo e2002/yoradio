@@ -294,7 +294,7 @@ void NetServer::processQueue(){
                                   config.store.softapdelay,
                                   config.vuThreshold); 
                                   break;
-      case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d}", 
+      case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d}", 
                                   config.store.flipscreen, 
                                   config.store.invertdisplay, 
                                   config.store.numplaylist, 
@@ -302,7 +302,9 @@ void NetServer::processQueue(){
                                   config.store.dbgtouch, 
                                   config.store.dspon, 
                                   config.store.brightness, 
-                                  config.store.contrast); 
+                                  config.store.contrast,
+                                  config.store.screensaverEnabled,
+                                  config.store.screensaverTimeout); 
                                   break;
       case GETTIMEZONE:   sprintf (wsbuf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", 
                                   config.store.tzHour, 
@@ -473,6 +475,23 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         uint8_t valb = atoi(val);
         config.saveValue(&config.store.contrast, valb);
         display.setContrast();
+        return;
+      }
+      if (strcmp(cmd, "screensaverenabled") == 0) {
+        bool valb = static_cast<bool>(atoi(val));
+        config.saveValue(&config.store.screensaverEnabled, valb);
+        #ifndef DSP_LCD
+        display.putRequest(NEWMODE, PLAYER);
+        #endif
+        return;
+      }
+      if (strcmp(cmd, "screensavertimeout") == 0) {
+        uint16_t valb = atoi(val);
+        valb = constrain(valb,0,65520);
+        config.saveValue(&config.store.screensaverTimeout, valb);
+        #ifndef DSP_LCD
+        display.putRequest(NEWMODE, PLAYER);
+        #endif
         return;
       }
       if (strcmp(cmd, "tzh") == 0) {

@@ -5,7 +5,7 @@
 #include "display.h"
 
 #if defined(SD_SPIPINS) || SD_HSPI
-SPIClass  SDSPI(HSPI);
+SPIClass  SDSPI(HOOPSENb);
 #define SDREALSPI SDSPI
 #else
   #define SDREALSPI SPI

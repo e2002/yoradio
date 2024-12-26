@@ -252,6 +252,10 @@ void irLoop() {
         if(config.ircodes.irVals[target][j]==irResults.value){
           if (network.status != CONNECTED && network.status!=SDREADY && target!=IR_AST) return;
           if(target!=IR_AST && display.mode()==LOST) return;
+          if (display.mode() == SCREENSAVER) {
+            display.putRequest(NEWMODE, PLAYER);
+            return;
+          }
           switch (target){
             case IR_PLAY: {
                 irBlink();
@@ -483,6 +487,12 @@ void onBtnClick(int id) {
         if (display.mode() == PLAYER) {
           player.toggle();
         }
+        if (display.mode() == SCREENSAVER) {
+          display.putRequest(NEWMODE, PLAYER);
+          #ifdef DSP_LCD
+            delay(200);
+          #endif
+        }
         if (display.mode() == STATIONS) {
           display.putRequest(NEWMODE, PLAYER);
           #ifdef DSP_LCD
@@ -530,6 +540,10 @@ void onBtnClick(int id) {
 }
 
 void onBtnDoubleClick(int id) {
+  if (display.mode() == SCREENSAVER) {
+    display.putRequest(NEWMODE, PLAYER);
+    return;
+  }
   switch ((controlEvt_e)id) {
     case EVT_BTNLEFT: {
         if (display.mode() != PLAYER) return;

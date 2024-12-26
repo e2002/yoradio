@@ -68,6 +68,14 @@
               <input type="range" id="slcontrast" class="slider" data-slaveid="slcontrastinfo" name="contrast" min="0" max="100" value="55">
             </div>
           </div>
+          <div class="row-title"><span>screensaver</span></div>
+          <div class="flex-row group group_tft group_oled group_nextion hidden" style="margin-top:20px;">
+            <div class="checkbox off nous" id="screensaverenabled">screensaver enabled</div>
+            <div class="inputwrap">
+              <span class="inputtitle">screensaver timeout (sec)</span>
+              <input type="number" id="screensavertimeout" class="textinput inputchange" name="screensavertimeout" value="" maxlength="3" min="0" max="65520" />
+            </div>
+          </div>
         </section>
         <section class="group group_controls hidden" id="group_controls">
           <div class="title"><span>Controls</span></div><div class="reset" data-name="controls"></div>

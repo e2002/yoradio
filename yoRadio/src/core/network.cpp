@@ -49,6 +49,11 @@ void ticks() {
       network.forceWeather = true;
     }
   }
+#ifndef DSP_LCD
+  if(config.store.screensaverEnabled && display.mode()==PLAYER && !player.isRunning()){
+    if(config.screensaverTicks++ > config.store.screensaverTimeout+SCREENSAVERSTARTUPDELAY) display.putRequest(NEWMODE, SCREENSAVER);
+  }
+#endif
 #if RTCSUPPORTED
   if(config.isRTCFound()){
     rtc.getTime(&network.timeinfo);
