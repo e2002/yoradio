@@ -163,6 +163,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 //#define LIGHT_SENSOR      255               /*  Light sensor  */
 //#define AUTOBACKLIGHT(x)  *function*        /*  Autobacklight function. See options.h for example  */
 //#define DSP_INVERT_TITLE  true              /* Invert title colors for OLED displays ?  */
+//#define MDNS_NAME         yoradio           /* Make the yoradio available at yoradio.local - omitting disables mDNS */
 /******************************************/
 
 /*  IR control  */

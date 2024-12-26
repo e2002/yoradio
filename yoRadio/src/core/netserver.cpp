@@ -13,6 +13,13 @@
 #ifdef USE_SD
 #include "sdmanager.h"
 #endif
+
+#ifdef MDNS_NAME
+  #include <ESPmDNS.h>  // For multicast DNS
+  #define STRINGIFY(x) #x // trick to convert unquoted macro to a string
+  #define TOSTRING(x) STRINGIFY(x)
+#endif
+
 #ifndef MIN_MALLOC
 #define MIN_MALLOC 24112
 #endif
@@ -97,6 +104,11 @@ bool NetServer::begin(bool quiet) {
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
 #endif
   webserver.begin();
+    #ifdef MDNS_NAME
+      if (!MDNS.begin(TOSTRING(MDNS_NAME))) {
+        Serial.println("Error starting mDNS");
+      }
+    #endif
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
 
