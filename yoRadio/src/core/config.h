@@ -39,13 +39,14 @@
 
 #define MAX_PLAY_MODE   1
 #define WEATHERKEY_LENGTH 58
+#define MDNS_LENGTH 24
 #if SDC_CS!=255
   #define USE_SD
 #endif
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  2
+#define CONFIG_VERSION  3
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
@@ -135,6 +136,8 @@ struct config_t
   bool      rotate90;
   bool      screensaverEnabled;
   uint16_t  screensaverTimeout;
+  char      mdnsname[24];
+  bool      skipPlaylistUpDown;
 };
 
 #if IR_PIN!=255
@@ -259,6 +262,13 @@ class Config {
       for (size_t i = 0; i <=fieldlen ; i++) EEPROM.write(address + i, field[i]);
       if(commit)
         EEPROM.commit();
+    }
+    uint32_t getChipId(){
+      uint32_t chipId = 0;
+      for(int i=0; i<17; i=i+8) {
+        chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+      }
+      return chipId;
     }
   private:
     template <class T> int eepromWrite(int ee, const T& value);

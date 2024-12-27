@@ -234,6 +234,11 @@ Work is in progress...
 
 ---
 ## Version history
+### v0.9.412
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
+- added mDNS support, configurable via the web interface, pull[#125](https://github.com/e2002/yoradio/pull/125)
+- added a setting that allows you to switch stations with the UP and DOWN buttons immediately, bypassing the playlist, configurable via the web interface, pull[#125](https://github.com/e2002/yoradio/pull/125)
+
 ### v0.9.399
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - added a screensaver mode, configurable via the web interface.

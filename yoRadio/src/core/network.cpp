@@ -119,6 +119,16 @@ bool MyNetwork::wifiBegin(bool silent){
   uint8_t startedls = ls;
   uint8_t errcnt = 0;
   WiFi.mode(WIFI_STA);
+  /*
+  char buf[MDNS_LENGTH];
+  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+  if(strlen(config.store.mdnsname)>0){
+    WiFi.setHostname(config.store.mdnsname);
+  }else{
+    snprintf(buf, MDNS_LENGTH, "yoradio-%x", config.getChipId());
+    WiFi.setHostname(buf);
+  }
+  */
   while (true) {
     if(!silent){
       Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);

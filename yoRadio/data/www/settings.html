@@ -37,7 +37,14 @@
               <span class="inputinfo" id="slsoftapinfo">0</span>
               <input type="range" id="slsoftap" class="slider" data-slaveid="slsoftapinfo" name="softap" min="0" max="20" value="0">
             </div>
-          </div> 
+          </div>
+          <div class="flex-row" id="mdnsnamerow">
+            <div class="inputwrap">
+              <span class="inputtitle">mDNS name</span>
+              <input type="text" id="mdnsname" class="textinput inputchange" name="mdnsname" value="" maxlength="24" />
+            </div>
+            <div class="button apply hlbutton" data-name="rebootmdns" style=" margin-top: 24px; height: 37px;">save</div>
+          </div>
           <div class="row-title"><span>update</span></div>
           <div class="flex-row last">
             <div class="button apply" data-name="fwupdate" id="fwupdate">Firmware</div>
@@ -70,7 +77,10 @@
           </div>
           <div class="row-title"><span>screensaver</span></div>
           <div class="flex-row group group_tft group_oled group_nextion hidden" style="margin-top:20px;">
-            <div class="checkbox off nous" id="screensaverenabled">screensaver enabled</div>
+            <div class="inputwrap">
+              <span class="inputtitle">screensaver enabled</span>
+              <div class="checkbox off nous" id="screensaverenabled" style="padding-top:16px;"></div>
+            </div>
             <div class="inputwrap">
               <span class="inputtitle">screensaver timeout (sec)</span>
               <input type="number" id="screensavertimeout" class="textinput inputchange" name="screensavertimeout" value="" maxlength="3" min="0" max="65520" />
@@ -95,6 +105,12 @@
               <span class="inputtitle">encoder acceleration</span>
               <span class="inputinfo" id="slencaccelerationinfo">0</span>
               <input type="range" id="slencacceleration" class="slider" data-slaveid="slencaccelerationinfo" name="encacceleration" min="0" max="700" value="200">
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle">one-click station switching</span>
+              <div class="checkbox off nous" id="oneclickswitching"></div>
             </div>
           </div>
           <div class="flex-row group group_ir hidden">

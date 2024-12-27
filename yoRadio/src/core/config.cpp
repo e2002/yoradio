@@ -92,6 +92,10 @@ void Config::_setupVersion(){
       saveValue(&store.screensaverTimeout, (uint16_t)20);
       break;
     case 2:
+      char buf[MDNS_LENGTH];
+      snprintf(buf, MDNS_LENGTH, "yoradio-%x", getChipId());
+      saveValue(store.mdnsname, buf, MDNS_LENGTH);
+      saveValue(&store.skipPlaylistUpDown, false);
       break;
     default:
       break;
@@ -347,6 +351,8 @@ void Config::setDefaults() {
   store.rotate90 = false;
   store.screensaverEnabled = false;
   store.screensaverTimeout = 20;
+  snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
+  store.skipPlaylistUpDown = false;
   eepromWrite(EEPROM_START, store);
 }
 
@@ -626,7 +632,7 @@ bool Config::parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSiz
   if (tmpe == NULL) return false;
   memset(cmd, 0, cSize);
   strlcpy(cmd, line, tmpe - line + 1);
-  if (strlen(tmpe + 1) == 0) return false;
+  //if (strlen(tmpe + 1) == 0) return false;
   memset(val, 0, cSize);
   strlcpy(val, tmpe + 1, strlen(line) - strlen(cmd) + 1);
   return true;

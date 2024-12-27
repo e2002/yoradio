@@ -180,6 +180,10 @@ void encodersLoop(yoEncoder *enc, bool first){
       controlsEvent(encoderDelta > 0, encoderDelta);
     }else{
       if (encBtnState == HIGH && display.mode() == PLAYER) {
+        if(config.store.skipPlaylistUpDown){
+          if(encoderDelta > 0) player.next(); else player.prev();
+          return;
+        }
         display.putRequest(NEWMODE, STATIONS);
         while(display.mode() != STATIONS) {delay(10);}
       }
@@ -521,7 +525,15 @@ void onBtnClick(int id) {
           }
         } else {
           if (display.mode() == PLAYER) {
-            display.putRequest(NEWMODE, STATIONS);
+            if(config.store.skipPlaylistUpDown){
+              if (id == EVT_BTNUP) {
+                player.prev();
+              } else {
+                player.next();
+              }
+            }else{
+              display.putRequest(NEWMODE, STATIONS);
+            }
           }
           if (display.mode() == STATIONS) {
             controlsEvent(id == EVT_BTNDOWN);

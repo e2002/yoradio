@@ -10,6 +10,7 @@
 #include "mqtt.h"
 #include "controls.h"
 #include <Update.h>
+#include <ESPmDNS.h>
 #ifdef USE_SD
 #include "sdmanager.h"
 #endif
@@ -97,6 +98,8 @@ bool NetServer::begin(bool quiet) {
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
 #endif
   webserver.begin();
+  if(strlen(config.store.mdnsname)>0)
+    MDNS.begin(config.store.mdnsname);
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
 
@@ -287,12 +290,13 @@ void NetServer::processQueue(){
           return; 
           break;
         }
-      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d,\"vut\":%d}", 
+      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
                                   config.store.smartstart != 2, 
                                   config.store.audioinfo, 
                                   config.store.vumeter, 
                                   config.store.softapdelay,
-                                  config.vuThreshold); 
+                                  config.vuThreshold,
+                                  config.store.mdnsname); 
                                   break;
       case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d}", 
                                   config.store.flipscreen, 
@@ -318,10 +322,11 @@ void NetServer::processQueue(){
                                   config.store.weatherlon, 
                                   config.store.weatherkey); 
                                   break;
-      case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d}", 
+      case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d,\"skipup\":%d}", 
                                   config.store.volsteps, 
                                   config.store.encacc, 
-                                  config.store.irtlp); 
+                                  config.store.irtlp,
+                                  config.store.skipPlaylistUpDown); 
                                   break;
       case DSPON:         sprintf (wsbuf, "{\"dspontrue\":%d}", 1); break;
       case STATION:       requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
@@ -427,6 +432,21 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       if (strcmp(cmd, "softap") == 0) {
         uint8_t valb = atoi(val);
         config.saveValue(&config.store.softapdelay, valb);
+        return;
+      }
+      if (strcmp(cmd, "mdnsname") == 0) {
+        config.saveValue(config.store.mdnsname, val, MDNS_LENGTH);
+        return;
+      }
+      if (strcmp(cmd, "rebootmdns") == 0) {
+        char buf[MDNS_LENGTH*2];
+        if(strlen(config.store.mdnsname)>0)
+          snprintf(buf, MDNS_LENGTH*2, "{\"redirect\": \"http://%s.local\"}", config.store.mdnsname);
+        else
+          snprintf(buf, MDNS_LENGTH*2, "{\"redirect\": \"http://%s/\"}", WiFi.localIP().toString().c_str());
+        websocket.text(clientId, buf);
+        delay(500);
+        ESP.restart();
         return;
       }
       if (strcmp(cmd, "invertdisplay") == 0) {
@@ -540,6 +560,11 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         setIRTolerance(valb);
         return;
       }
+      if (strcmp(cmd, "oneclickswitching") == 0) {
+        bool valb = static_cast<bool>(atoi(val));
+        config.saveValue(&config.store.skipPlaylistUpDown, valb);
+        return;
+      }
       if (strcmp(cmd, "showweather") == 0) {
         bool valb = static_cast<bool>(atoi(val));
         config.saveValue(&config.store.showweather, valb);
@@ -568,7 +593,9 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           config.saveValue(&config.store.smartstart, (uint8_t)2, false);
           config.saveValue(&config.store.audioinfo, false, false);
           config.saveValue(&config.store.vumeter, false, false);
-          config.saveValue(&config.store.softapdelay, (uint8_t)0);
+          config.saveValue(&config.store.softapdelay, (uint8_t)0, false);
+          snprintf(config.store.mdnsname, MDNS_LENGTH, "yoradio-%x", config.getChipId());
+          config.saveValue(config.store.mdnsname, config.store.mdnsname, MDNS_LENGTH, true, true);
           display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETSYSTEM, clientId);
           return;
@@ -584,13 +611,15 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           config.saveValue(&config.store.contrast, (uint8_t)55, false);
           display.setContrast();
           config.saveValue(&config.store.numplaylist, false);
+          config.saveValue(&config.store.screensaverEnabled, false);
+          config.saveValue(&config.store.screensaverTimeout, (uint16_t)20);
           display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETSCREEN, clientId);
           return;
         }
         if (strcmp(val, "timezone") == 0) {
-          config.store.tzHour = 3;
-          config.store.tzMin = 0;
+          config.saveValue(&config.store.tzHour, (int8_t)3, false);
+          config.saveValue(&config.store.tzMin, (int8_t)0, false);
           config.saveValue(config.store.sntp1, "pool.ntp.org", 35, false);
           config.saveValue(config.store.sntp2, "0.ru.pool.ntp.org", 35);
           configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
@@ -599,7 +628,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           return;
         }
         if (strcmp(val, "weather") == 0) {
-          config.store.showweather = 0;
+          config.saveValue(&config.store.showweather, false, false);
           config.saveValue(config.store.weatherlat, "55.7512", 10, false);
           config.saveValue(config.store.weatherlon, "37.6184", 10, false);
           config.saveValue(config.store.weatherkey, "", WEATHERKEY_LENGTH);
@@ -609,9 +638,11 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           return;
         }
         if (strcmp(val, "controls") == 0) {
-          config.store.volsteps = 1;
-          config.store.fliptouch = false;
-          config.store.dbgtouch = false;
+          config.saveValue(&config.store.volsteps, (uint8_t)1, false);
+          config.saveValue(&config.store.fliptouch, false, false);
+          config.saveValue(&config.store.dbgtouch, false, false);
+          config.saveValue(&config.store.skipPlaylistUpDown, false);
+          
           setEncAcceleration(200);
           setIRTolerance(40);
           requestOnChange(GETCONTROLS, clientId);
