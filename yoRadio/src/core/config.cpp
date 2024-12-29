@@ -34,6 +34,7 @@ void Config::init() {
   EEPROM.begin(EEPROM_SIZE);
   sdResumePos = 0;
   screensaverTicks = 0;
+  screensaverPlayingTicks = 0;
   isScreensaver = false;
   bootInfo();
 #if RTCSUPPORTED
@@ -96,6 +97,10 @@ void Config::_setupVersion(){
       snprintf(buf, MDNS_LENGTH, "yoradio-%x", getChipId());
       saveValue(store.mdnsname, buf, MDNS_LENGTH);
       saveValue(&store.skipPlaylistUpDown, false);
+      break;
+    case 3:
+      saveValue(&store.screensaverPlayingEnabled, false);
+      saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
       break;
     default:
       break;
@@ -353,6 +358,8 @@ void Config::setDefaults() {
   store.screensaverTimeout = 20;
   snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
   store.skipPlaylistUpDown = false;
+  store.screensaverPlayingEnabled = false;
+  store.screensaverPlayingTimeout = 5;
   eepromWrite(EEPROM_START, store);
 }
 

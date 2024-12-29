@@ -53,6 +53,9 @@ void ticks() {
   if(config.store.screensaverEnabled && display.mode()==PLAYER && !player.isRunning()){
     if(config.screensaverTicks++ > config.store.screensaverTimeout+SCREENSAVERSTARTUPDELAY) display.putRequest(NEWMODE, SCREENSAVER);
   }
+  if(config.store.screensaverPlayingEnabled && display.mode()==PLAYER && player.isRunning()){
+    if(config.screensaverPlayingTicks++ > config.store.screensaverPlayingTimeout*60+SCREENSAVERSTARTUPDELAY) display.putRequest(NEWMODE, SCREENSAVER);
+  }
 #endif
 #if RTCSUPPORTED
   if(config.isRTCFound()){

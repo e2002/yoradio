@@ -298,7 +298,7 @@ void NetServer::processQueue(){
                                   config.vuThreshold,
                                   config.store.mdnsname); 
                                   break;
-      case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d}", 
+      case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d,\"scrpe\":%d,\"scrpt\":%d}", 
                                   config.store.flipscreen, 
                                   config.store.invertdisplay, 
                                   config.store.numplaylist, 
@@ -308,7 +308,9 @@ void NetServer::processQueue(){
                                   config.store.brightness, 
                                   config.store.contrast,
                                   config.store.screensaverEnabled,
-                                  config.store.screensaverTimeout); 
+                                  config.store.screensaverTimeout,
+                                  config.store.screensaverPlayingEnabled,
+                                  config.store.screensaverPlayingTimeout);
                                   break;
       case GETTIMEZONE:   sprintf (wsbuf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", 
                                   config.store.tzHour, 
@@ -507,8 +509,25 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       }
       if (strcmp(cmd, "screensavertimeout") == 0) {
         uint16_t valb = atoi(val);
-        valb = constrain(valb,0,65520);
+        valb = constrain(valb,5,65520);
         config.saveValue(&config.store.screensaverTimeout, valb);
+        #ifndef DSP_LCD
+        display.putRequest(NEWMODE, PLAYER);
+        #endif
+        return;
+      }
+      if (strcmp(cmd, "screensaverplayingenabled") == 0) {
+        bool valb = static_cast<bool>(atoi(val));
+        config.saveValue(&config.store.screensaverPlayingEnabled, valb);
+        #ifndef DSP_LCD
+        display.putRequest(NEWMODE, PLAYER);
+        #endif
+        return;
+      }
+      if (strcmp(cmd, "screensaverplayingtimeout") == 0) {
+        uint16_t valb = atoi(val);
+        valb = constrain(valb,1,1080);
+        config.saveValue(&config.store.screensaverPlayingTimeout, valb);
         #ifndef DSP_LCD
         display.putRequest(NEWMODE, PLAYER);
         #endif
@@ -613,6 +632,8 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           config.saveValue(&config.store.numplaylist, false);
           config.saveValue(&config.store.screensaverEnabled, false);
           config.saveValue(&config.store.screensaverTimeout, (uint16_t)20);
+          config.saveValue(&config.store.screensaverPlayingEnabled, false);
+          config.saveValue(&config.store.screensaverPlayingTimeout, (uint16_t)5);
           display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETSCREEN, clientId);
           return;
