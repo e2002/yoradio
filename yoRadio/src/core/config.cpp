@@ -99,8 +99,10 @@ void Config::_setupVersion(){
       saveValue(&store.skipPlaylistUpDown, false);
       break;
     case 3:
+      saveValue(&store.screensaverBlank, false);
       saveValue(&store.screensaverPlayingEnabled, false);
       saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
+      saveValue(&store.screensaverPlayingBlank, false);
       break;
     default:
       break;

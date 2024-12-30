@@ -284,9 +284,10 @@ void Display::_swichMode(displayMode_e newmode) {
     _pager.setPage( pages[PG_PLAYER]);
     pm.on_display_player();
   }
-  if (newmode == SCREENSAVER) {
+  if (newmode == SCREENSAVER || newmode == SCREENBLANK) {
     config.isScreensaver = true;
     _pager.setPage( pages[PG_SCREENSAVER]);
+    if (newmode == SCREENBLANK) dsp.clearClock();
   }else{
     config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
     config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;

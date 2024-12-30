@@ -136,8 +136,10 @@ struct config_t
   bool      rotate90;
   bool      screensaverEnabled;
   uint16_t  screensaverTimeout;
+  bool      screensaverBlank;
   bool      screensaverPlayingEnabled;
   uint16_t  screensaverPlayingTimeout;
+  bool      screensaverPlayingBlank;
   char      mdnsname[24];
   bool      skipPlaylistUpDown;
 };
