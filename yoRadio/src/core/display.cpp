@@ -534,8 +534,14 @@ void Display::_time(bool redraw) {
     config.setBrightness();
   }
 #endif
-  if(config.isScreensaver && network.timeinfo.tm_sec % 60 == 0)
-    _clock.moveTo({clockConf.left, static_cast<uint16_t>(random(TFT_FRAMEWDT+clockConf.textsize, (dsp.height()-dsp.plItemHeight-TFT_FRAMEWDT*2))), 0});
+  if(config.isScreensaver && network.timeinfo.tm_sec % 60 == 0){
+    #ifdef GXCLOCKFONT
+      uint16_t ft=static_cast<uint16_t>(random(TFT_FRAMEWDT, (dsp.height()-dsp.plItemHeight-TFT_FRAMEWDT*2-clockConf.textsize)));
+    #else
+      uint16_t ft=static_cast<uint16_t>(random(TFT_FRAMEWDT+clockConf.textsize, (dsp.height()-dsp.plItemHeight-TFT_FRAMEWDT*2)));
+    #endif
+    _clock.moveTo({clockConf.left, ft, 0});
+  }
   _clock.draw();
   /*#ifdef USE_NEXTION
     nextion.printClock(network.timeinfo);

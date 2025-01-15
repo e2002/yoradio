@@ -60,41 +60,50 @@ bool SDManager::_endsWith (const char* base, const char* str) {
   return (strncmp(p, str, slen) == 0);
 }
 
-void SDManager::listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels){
-  File root = sdman.open(dirname);
-  if(!root){
-    Serial.println("##[ERROR]#\tFailed to open directory");
-    return;
-  }
-  if(!root.isDirectory()){
-    Serial.println("##[ERROR]#\tNot a directory");
-    return;
-  }
-  File file = root.openNextFile();
-  uint32_t pos = 0;
-  while(file){
-  	vTaskDelay(2);
-    bool fid = file.isDirectory();
-    const char * fp = file.path();
-    const char * fn = file.name();
-    if(fid){
-      if(levels && !_checkNoMedia(fp)){
-        listSD(plSDfile, plSDindex, fp, levels -1);
-      }
-    } else {
-      if(_endsWith(strlwr((char*)fn), ".mp3") || _endsWith(fn, ".m4a") || _endsWith(fn, ".aac") || _endsWith(fn, ".wav") || _endsWith(fn, ".flac")){
-        pos = plSDfile.position();
-        plSDfile.print(fn); plSDfile.print("\t"); plSDfile.print(fp); plSDfile.print("\t"); plSDfile.println(0);
-        plSDindex.write((uint8_t *) &pos, 4);
-        Serial.print(".");
-        if(display.mode()==SDCHANGE) display.putRequest(SDFILEINDEX, _sdFCount+1);
-        _sdFCount++;
-        if(_sdFCount%64==0) Serial.println();
-      }
+void SDManager::listSD(File &plSDfile, File &plSDindex, const char* dirname, uint8_t levels) {
+    File root = sdman.open(dirname);
+    if (!root) {
+        Serial.println("##[ERROR]#\tFailed to open directory");
+        return;
     }
-    if(file) file.close(); file = root.openNextFile();
-  }
-  if(root) root.close();
+    if (!root.isDirectory()) {
+        Serial.println("##[ERROR]#\tNot a directory");
+        return;
+    }
+
+    uint32_t pos = 0;
+    char* filePath;
+    while (true) {
+        vTaskDelay(2);
+        bool isDir;
+        String fileName = root.getNextFileName(&isDir);
+        if (fileName.isEmpty()) break;
+        filePath = (char*)malloc(fileName.length() + 1);
+        if (filePath == NULL) {
+            Serial.println("Memory allocation failed");
+            break;
+        }
+        strcpy(filePath, fileName.c_str());
+        const char* fn = strrchr(filePath, '/') + 1;
+        if (isDir) {
+            if (levels && !_checkNoMedia(filePath)) {
+                listSD(plSDfile, plSDindex, filePath, levels - 1);
+            }
+        } else {
+            if (_endsWith(strlwr((char*)fn), ".mp3") || _endsWith(fn, ".m4a") || _endsWith(fn, ".aac") ||
+                _endsWith(fn, ".wav") || _endsWith(fn, ".flac")) {
+                pos = plSDfile.position();
+                plSDfile.printf("%s\t%s\t0\n", fn, filePath);
+                plSDindex.write((uint8_t*)&pos, 4);
+                Serial.print(".");
+                if(display.mode()==SDCHANGE) display.putRequest(SDFILEINDEX, _sdFCount+1);
+                _sdFCount++;
+                if (_sdFCount % 64 == 0) Serial.println();
+            }
+        }
+        free(filePath);
+    }
+    root.close();
 }
 
 void SDManager::indexSDPlaylist() {

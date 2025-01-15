@@ -32,7 +32,7 @@ extern "C" {
 
 //If core is not defined, then we are running in Arduino or PIO
 #ifndef CONFIG_ASYNC_TCP_RUNNING_CORE
-  #define CONFIG_ASYNC_TCP_RUNNING_CORE 1 //any available core (-1)
+  #define CONFIG_ASYNC_TCP_RUNNING_CORE 0 //any available core (-1)
 #endif
 
 #ifndef CONFIG_ASYNC_TCP_USE_WDT
@@ -43,7 +43,7 @@ extern "C" {
   #define XTASK_MEM_SIZE  6144 // 8192 / 2
 #endif
 #ifndef XTASK_PRIOTITY
-  #define XTASK_PRIOTITY  3 //3
+  #define XTASK_PRIOTITY  5 //3
 #endif
 #ifndef ATCP_TASK_DELAY
   #define ATCP_TASK_DELAY  2

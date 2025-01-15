@@ -65,7 +65,7 @@ void DspCore::drawPlaylist(uint16_t currentItem) {
 	clear();
   config.fillPlMenu(currentItem - plCurrentPos, plTtemsCount);
   setCursor(0,1);
-  write(byte(126));
+  write(uint8_t(126));
 }
 
 void DspCore::clearDsp(bool black) {

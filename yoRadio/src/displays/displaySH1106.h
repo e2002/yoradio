@@ -11,6 +11,7 @@
 #define CHARHEIGHT  8
 
 #define DSP_OLED
+#define GXCLOCKFONT
 
 typedef GFXcanvas1 Canvas;
 #include "widgets/widgets.h"

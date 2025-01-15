@@ -234,6 +234,16 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.420
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
+- added screensaver mode during playback, configurable via the web interface, pull request[#129](https://github.com/e2002/yoradio/pull/129)
+- added blank screen mode to screensaver, configurable via the web interface, pull request[#129](https://github.com/e2002/yoradio/pull/129)
+  Thanks to @trip5 for the amazing code!
+- speeding up indexing of SD cards (advice - don't put all files in one folder)
+- i don't remember (honestly) why the AsyncTCP server worked on the same core with the player, now it works on the same core with the display
+  `#define CONFIG_ASYNC_TCP_RUNNING_CORE 0`
+- bug fixes
+
 ### v0.9.412
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - added mDNS support, configurable via the web interface, pull[#125](https://github.com/e2002/yoradio/pull/125)
