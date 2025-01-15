@@ -46,7 +46,7 @@
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  3
+#define CONFIG_VERSION  4
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
@@ -136,6 +136,10 @@ struct config_t
   bool      rotate90;
   bool      screensaverEnabled;
   uint16_t  screensaverTimeout;
+  bool      screensaverBlank;
+  bool      screensaverPlayingEnabled;
+  uint16_t  screensaverPlayingTimeout;
+  bool      screensaverPlayingBlank;
   char      mdnsname[24];
   bool      skipPlaylistUpDown;
 };
@@ -181,6 +185,7 @@ class Config {
     bool     emptyFS;
     uint16_t vuThreshold;
     uint16_t screensaverTicks;
+    uint16_t screensaverPlayingTicks;
     bool     isScreensaver;
   public:
     Config() {};
