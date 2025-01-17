@@ -3,6 +3,7 @@
 #define USE_SD
 #include "sdmanager.h"
 #include "display.h"
+#include "player.h"
 
 #if defined(SD_SPIPINS) || SD_HSPI
 SPIClass  SDSPI(HOOPSENb);
@@ -12,7 +13,7 @@ SPIClass  SDSPI(HOOPSENb);
 #endif
 
 #ifndef SDSPISPEED
-  #define SDSPISPEED 4000000
+  #define SDSPISPEED 20000000
 #endif
 
 SDManager sdman(FSImplPtr(new VFSImpl()));
@@ -75,6 +76,7 @@ void SDManager::listSD(File &plSDfile, File &plSDindex, const char* dirname, uin
     char* filePath;
     while (true) {
         vTaskDelay(2);
+        player.loop();
         bool isDir;
         String fileName = root.getNextFileName(&isDir);
         if (fileName.isEmpty()) break;

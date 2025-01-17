@@ -268,7 +268,10 @@ void Display::_swichMode(displayMode_e newmode) {
   _mode = newmode;
   dsp.setScrollId(NULL);
   if (newmode == PLAYER) {
-    _clock.moveBack();
+    if(player.isRunning())
+      _clock.moveTo(clockMove);
+    else
+      _clock.moveBack();
     #ifdef DSP_LCD
       dsp.clearDsp();
     #endif

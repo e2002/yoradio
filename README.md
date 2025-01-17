@@ -234,6 +234,12 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.428
+- fixed freezing after SD scanning during playback
+- AsyncWebSocket queue increased to 128
+- fixed VU meter  overlapping the clock on displays
+- fixed Guru Meditation error when loading in SD mode with SD card removed
+
 ### 0.9.420
 **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
 - added screensaver mode during playback, configurable via the web interface, pull request[#129](https://github.com/e2002/yoradio/pull/129)

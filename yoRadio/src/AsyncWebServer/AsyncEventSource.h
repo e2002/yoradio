@@ -19,11 +19,13 @@
 */
 #ifndef ASYNCEVENTSOURCE_H_
 #define ASYNCEVENTSOURCE_H_
-
+#include "../core/options.h"
 #include <Arduino.h>
 #ifdef ESP32
 #include "AsyncTCP.h"
-#define SSE_MAX_QUEUED_MESSAGES 32
+#ifndef SSE_MAX_QUEUED_MESSAGES
+  #define SSE_MAX_QUEUED_MESSAGES 32
+#endif
 #else
 #include <ESPAsyncTCP.h>
 #define SSE_MAX_QUEUED_MESSAGES 8

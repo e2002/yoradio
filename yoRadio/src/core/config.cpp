@@ -114,6 +114,7 @@ void Config::_setupVersion(){
 #ifdef USE_SD
 
 void Config::changeMode(int newmode){
+  bool pir = player.isRunning();
   if(SDC_CS==255) return;
   if(getMode()==PM_SDCARD) {
     sdResumePos = player.getFilePos();
@@ -140,6 +141,7 @@ void Config::changeMode(int newmode){
   saveValue(&store.play_mode, store.play_mode, true, true);
   _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
   if(getMode()==PM_SDCARD){
+    if(pir) player.sendCommand({PR_STOP, 0});
     display.putRequest(NEWMODE, SDCHANGE);
     while(display.mode()!=SDCHANGE)
       delay(10);
@@ -149,8 +151,9 @@ void Config::changeMode(int newmode){
     if(network.status==SDREADY) ESP.restart();
     sdman.stop();
   }
+  if(!_bootDone) return;
   initPlaylistMode();
-  if (store.smartstart == 1) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
+  if (pir) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
   netserver.resetQueue();
   netserver.requestOnChange(GETPLAYERMODE, 0);
   netserver.requestOnChange(GETMODE, 0);

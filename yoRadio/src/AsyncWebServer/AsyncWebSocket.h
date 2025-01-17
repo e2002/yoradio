@@ -20,11 +20,13 @@
 */
 #ifndef ASYNCWEBSOCKET_H_
 #define ASYNCWEBSOCKET_H_
-
+#include "../core/options.h"
 #include <Arduino.h>
 #ifdef ESP32
 #include "AsyncTCP.h"
-#define WS_MAX_QUEUED_MESSAGES 32
+#ifndef WS_MAX_QUEUED_MESSAGES
+  #define WS_MAX_QUEUED_MESSAGES 128 //32
+#endif
 #else
 #include <ESPAsyncTCP.h>
 #define WS_MAX_QUEUED_MESSAGES 8
