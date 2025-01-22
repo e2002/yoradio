@@ -233,7 +233,7 @@ class Config {
     void setTimezoneOffset(uint16_t tzo);
     uint16_t getTimezoneOffset();
     void setBrightness(bool dosave=false);
-    void setDspOn(bool dspon);
+    void setDspOn(bool dspon, bool saveval = true);
     void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
     void bootInfo();
     void doSleepW();

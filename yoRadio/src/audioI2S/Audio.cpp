@@ -4733,7 +4733,7 @@ void Audio::IIR_calculateCoefficients(int8_t G0, int8_t G1, int8_t G2){  // Infi
     if(G2 < -40) G2 = -40;
     if(G2 > 6) G2 = 6;
 
-    const float FcLS   =  500;  // Frequency LowShelf[Hz]
+    const float FcLS   =   80;  // Frequency LowShelf[Hz] //500
     const float FcPKEQ = 3000;  // Frequency PeakEQ[Hz]
     const float FcHS   = 6000;  // Frequency HighShelf[Hz]
 

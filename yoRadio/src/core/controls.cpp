@@ -256,7 +256,7 @@ void irLoop() {
         if(config.ircodes.irVals[target][j]==irResults.value){
           if (network.status != CONNECTED && network.status!=SDREADY && target!=IR_AST) return;
           if(target!=IR_AST && display.mode()==LOST) return;
-          if (display.mode() == SCREENSAVER) {
+          if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
             display.putRequest(NEWMODE, PLAYER);
             return;
           }
@@ -491,7 +491,7 @@ void onBtnClick(int id) {
         if (display.mode() == PLAYER) {
           player.toggle();
         }
-        if (display.mode() == SCREENSAVER) {
+        if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
           display.putRequest(NEWMODE, PLAYER);
           #ifdef DSP_LCD
             delay(200);
@@ -525,7 +525,7 @@ void onBtnClick(int id) {
           }
         } else {
           if (display.mode() == PLAYER) {
-            if(config.store.skipPlaylistUpDown){
+            if(config.store.skipPlaylistUpDown || ENC2_BTNL!=255){
               if (id == EVT_BTNUP) {
                 player.prev();
               } else {
@@ -552,7 +552,7 @@ void onBtnClick(int id) {
 }
 
 void onBtnDoubleClick(int id) {
-  if (display.mode() == SCREENSAVER) {
+  if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
     display.putRequest(NEWMODE, PLAYER);
     return;
   }

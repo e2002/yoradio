@@ -234,6 +234,14 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.434
+- fixed the issue with exiting Screensaver Blank Screen mode via button presses and IR commands.
+- reduced the minimum frequency for tone control on I2S modules to 80Hz.
+- increased the display update task delay to 10 TICKS.
+  to revert to the previous setting, add `#define DSP_TASK_DELAY 2` to `myoptions.h`.
+- when ENCODER2 is connected, the UP and DOWN buttons now work as PREV and NEXT (single click).
+- implemented backlight off in Screensaver Blank Screen mode.
+
 ### 0.9.428
 - fixed freezing after SD scanning during playback
 - AsyncWebSocket queue increased to 128

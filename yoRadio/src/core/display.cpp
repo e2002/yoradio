@@ -26,7 +26,7 @@ Page *pages[] = { new Page(), new Page(), new Page(), new Page() };
   #define CORE_STACK_SIZE  1024*3
 #endif
 #ifndef DSP_TASK_DELAY
-  #define DSP_TASK_DELAY  2
+  #define DSP_TASK_DELAY  pdMS_TO_TICKS(10)
 #endif
 #if !((DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB) || DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7796 || DSP_MODEL==DSP_ILI9488 || DSP_MODEL==DSP_ILI9486 || DSP_MODEL==DSP_ILI9341 || DSP_MODEL==DSP_ILI9225)
   #undef  BITRATE_FULL
@@ -285,12 +285,16 @@ void Display::_swichMode(displayMode_e newmode) {
     _nums.setText("");
     config.isScreensaver = false;
     _pager.setPage( pages[PG_PLAYER]);
+    config.setDspOn(config.store.dspon, false);
     pm.on_display_player();
   }
   if (newmode == SCREENSAVER || newmode == SCREENBLANK) {
     config.isScreensaver = true;
     _pager.setPage( pages[PG_SCREENSAVER]);
-    if (newmode == SCREENBLANK) dsp.clearClock();
+    if (newmode == SCREENBLANK) {
+      dsp.clearClock();
+      config.setDspOn(false, false);
+    }
   }else{
     config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
     config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;

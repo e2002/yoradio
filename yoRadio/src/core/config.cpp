@@ -727,9 +727,11 @@ void Config::setBrightness(bool dosave){
 #endif
 }
 
-void Config::setDspOn(bool dspon){
-  store.dspon = dspon;
-  saveValue(&store.dspon, store.dspon, true, true);
+void Config::setDspOn(bool dspon, bool saveval){
+  if(saveval){
+    store.dspon = dspon;
+    saveValue(&store.dspon, store.dspon, true, true);
+  }
 #ifdef USE_NEXTION
   if(!dspon) nextion.sleep();
   else nextion.wake();
