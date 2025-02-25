@@ -36,7 +36,6 @@ void Config::init() {
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
   isScreensaver = false;
-  bootInfo();
 #if RTCSUPPORTED
   _rtcFound = false;
   BOOTLOG("RTC begin(SDA=%d,SCL=%d)", RTC_SDA, RTC_SCL);
@@ -59,6 +58,7 @@ void Config::init() {
   #endif
 #endif
   eepromRead(EEPROM_START, store);
+  bootInfo();
   
   if (store.config_set != 4262) {
     setDefaults();
