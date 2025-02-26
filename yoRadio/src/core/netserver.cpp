@@ -589,7 +589,6 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       if (strcmp(cmd, "encacceleration") == 0) {
         uint16_t valb = atoi(val);
         setEncAcceleration(valb);
-        config.saveValue(&config.store.encacc, valb);
         return;
       }
       if (strcmp(cmd, "irtlp") == 0) {
