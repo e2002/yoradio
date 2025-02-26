@@ -576,7 +576,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         }
         if (tzdone) {
           network.forceTimeSync = true;
-          if (strlen(val) > 0
+          if (strlen(val) > 0)
           config.saveValue(config.store.sntp1, val, 35, true, true);
         }
         return;
