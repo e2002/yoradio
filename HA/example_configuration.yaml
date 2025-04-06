@@ -16,3 +16,4 @@ media_player:
   - platform: yoradio
     name: YoRadio (kitchen)
     root_topic: yoradio/100
+    unique_id: "cc4eadf8-d46b-4f5a-b285-abb63826f9ac"  # generate yours at https://www.uuidgenerator.net/

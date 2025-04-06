@@ -482,4 +482,13 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #ifndef SCREENSAVERSTARTUPDELAY
 #define SCREENSAVERSTARTUPDELAY 5
 #endif
+
+#ifndef MQTT_RETAIN
+  #define MQTT_RETAIN  true
+#endif
+
+#ifndef MQTT_RETAIN_ONLINE
+  #define MQTT_RETAIN_ONLINE  true
+#endif
+
 #endif

@@ -6,7 +6,7 @@ import asyncio
 
 from homeassistant.components import mqtt, media_source
 from homeassistant.components.media_player.browse_media import async_process_play_media_url
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
 from homeassistant.helpers import config_validation as cv
 
 from homeassistant.components.media_player import (
@@ -46,6 +46,7 @@ CONF_ROOT_TOPIC = 'root_topic'
 
 MEDIA_PLAYER_PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend({
   vol.Required(CONF_ROOT_TOPIC, default="yoradio"): cv.string,
+  vol.Optional(CONF_UNIQUE_ID, default="yoradio123"): cv.string,
   vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
   vol.Optional(CONF_MAX_VOLUME, default='254'): cv.string
 })
@@ -53,10 +54,11 @@ MEDIA_PLAYER_PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend({
 def setup_platform(hass, config, add_devices, discovery_info=None):
   root_topic = config.get(CONF_ROOT_TOPIC)
   name = config.get(CONF_NAME)
+  unique_id = config.get(CONF_UNIQUE_ID)
   max_volume = int(config.get(CONF_MAX_VOLUME, 254))
   playlist = []
   api = yoradioApi(root_topic, hass, playlist)
-  add_devices([yoradioDevice(name, max_volume, api)], True)
+  add_devices([yoradioDevice(name, unique_id, max_volume, api)], True)
 
 class yoradioApi():
   def __init__(self, root_topic, hass, playlist):
@@ -119,7 +121,7 @@ class yoradioApi():
           counter=counter+1
 
 class yoradioDevice(MediaPlayerEntity):
-  def __init__(self, name, max_volume, api):
+  def __init__(self, name, unique_id, max_volume, api):
     self._name = name
     self.api = api
     self._state = MediaPlayerState.OFF
@@ -129,12 +131,15 @@ class yoradioDevice(MediaPlayerEntity):
     self._track_album_name = ''
     self._volume = 0
     self._max_volume = max_volume
+    self._connection = False
+    self._unique_id = unique_id
 
   async def async_added_to_hass(self):
     await asyncio.sleep(5)
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/status', self.status_listener, 0, "utf-8")
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/playlist', self.playlist_listener, 0, "utf-8")
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/volume', self.volume_listener, 0, "utf-8")
+    await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/connection', self.connection_listener, 0, "utf-8")
     
   async def status_listener(self, msg):
     js = json.loads(msg.payload)
@@ -163,6 +168,34 @@ class yoradioDevice(MediaPlayerEntity):
       self.async_schedule_update_ha_state()
     except:
       pass
+
+  async def connection_listener(self, msg):
+    if msg.payload == 'online':
+      self._connection = True
+      self._state = MediaPlayerState.IDLE
+    else:
+      self._connection = False
+      self._state = MediaPlayerState.OFF
+    # _LOGGER.warning(f"Connection: {self._connection}")
+    try:
+      self.async_schedule_update_ha_state()
+    except:
+      pass
+
+
+  # Send the Device / Entity properties: https://developers.home-assistant.io/docs/core/entity#generic-properties
+
+  @property
+  def should_poll(self):
+    return False
+
+  @property
+  def unique_id(self):
+    return self._unique_id
+
+  @property
+  def available(self):
+    return self._connection
 
   @property
   def supported_features(self):
