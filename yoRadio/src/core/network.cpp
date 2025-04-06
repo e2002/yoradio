@@ -152,6 +152,8 @@ bool MyNetwork::wifiBegin(bool silent){
       Serial.print("##[BOOT]#\t");
       display.putRequest(BOOTSTRING, ls);
     }
+    WiFi.disconnect(true, true); //disconnect & erase internal credentials
+    delay(100);
     WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
     while (WiFi.status() != WL_CONNECTED) {
       if(!silent) Serial.print(".");

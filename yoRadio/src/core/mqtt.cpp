@@ -22,6 +22,9 @@ void mqttInit() {
   mqttClient.onMessage(onMqttMessage);
   if(strlen(MQTT_USER)>0) mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  memset(topic, 0, 140);
+  sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "connection");
+  mqttClient.setWill(topic, 0, MQTT_RETAIN_ONLINE, "offline");
   connectToMqtt();
 }
 
@@ -29,9 +32,20 @@ void onMqttConnect(bool sessionPresent) {
   memset(topic, 0, 140);
   sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "command");
   mqttClient.subscribe(topic, 2);
+  mqttPublishOnline();
   mqttPublishStatus();
   mqttPublishVolume();
   mqttPublishPlaylist();
+}
+
+void mqttPublishOnline() {
+  if(mqttClient.connected()){
+    memset(topic, 0, 140);
+    memset(status, 0, BUFLEN*3);
+    sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "connection");
+    sprintf(status, "%s", "online");
+    mqttClient.publish(topic, 0, MQTT_RETAIN_ONLINE, status);
+  }
 }
 
 void mqttPublishStatus() {
@@ -40,7 +54,7 @@ void mqttPublishStatus() {
     memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
     sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.status()==PLAYING?1:0, config.lastStation(), config.station.name, config.station.title, config.store.dspon);
-    mqttClient.publish(topic, 0, true, status);
+    mqttClient.publish(topic, 0, MQTT_RETAIN, status);
   }
 }
 
@@ -50,7 +64,7 @@ void mqttPublishPlaylist() {
     memset(status, 0, BUFLEN*3);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "playlist");
     sprintf(status, "http://%s%s", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
-    mqttClient.publish(topic, 0, true, status);
+    mqttClient.publish(topic, 0, MQTT_RETAIN, status);
   }
 }
 
@@ -60,7 +74,7 @@ void mqttPublishVolume(){
     memset(vol, 0, 5);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "volume");
     sprintf(vol, "%d", config.store.volume);
-    mqttClient.publish(topic, 0, true, vol);
+    mqttClient.publish(topic, 0, MQTT_RETAIN, vol);
   }
 }
 
