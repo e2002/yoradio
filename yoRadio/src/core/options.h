@@ -63,7 +63,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define LED_INVERT   false      // invert onboard LED?
 #endif
 
-/*        TFT DISPLAY             */
+/*          TFT DISPLAY            */
 #ifndef TFT_CS
   #define TFT_CS        5
 #endif
@@ -74,7 +74,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define TFT_DC        4
 #endif
 
-/*        NEXTION                 */
+/*            NEXTION             */
 #ifndef NEXTION_RX
   #define NEXTION_RX    255
 #endif
@@ -93,7 +93,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define I2C_RST -1
 #endif
 
-/*        VS1053                  */
+/*             VS1053             */
 #ifndef VS1053_CS
   #define VS1053_CS     255 // 27
 #endif
@@ -113,7 +113,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define VS_SSPI   false      // ESP32-S3: use SubSPI for VS1053 (miso=37, mosi=35, clk=36) instead of FSPI (by default)
 #endif
 
-/*        I2S DAC                 */
+/*            I2S DAC             */
 #ifndef I2S_DOUT
   #define I2S_DOUT      27  // DIN connection
 #endif
@@ -124,7 +124,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define I2S_LRC       25  // WSEL Left Right Clock
 #endif
 
-/*        SDCARD                  */
+/*             SDCARD             */
 #ifndef SDC_CS
   #define SDC_CS        255  // SDCARD CS pin
 #endif
@@ -132,7 +132,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define SD_HSPI       false  // use HSPI for SD (miso=12, mosi=13, clk=14) instead of VSPI (by default)
 #endif
 
-/*        ENCODER                 */
+/*            ENCODER             */
 #ifndef ENC_BTNL
   #define ENC_BTNL              255
 #endif
@@ -165,7 +165,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define ENC2_HALFQUARD         false
 #endif
 
-/*        BUTTONS                 */
+/*            BUTTONS             */
 #ifndef BTN_LEFT
   #define BTN_LEFT              255
 #endif
@@ -197,7 +197,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define BTN_PRESS_TICKS    500
 #endif
 
-/*        TOUCH SCREEN            */
+/*          TOUCH SCREEN          */
 #define TS_MODEL_UNDEFINED      0
 #define TS_MODEL_XPT2046        1
 #define TS_MODEL_GT911          2
@@ -226,7 +226,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define TS_HSPI   false      // use HSPI for touchscreen (miso=12, mosi=13, clk=14) instead of VSPI (by default)
 #endif
 
-/*        LCD DISPLAY            */
+/*          LCD DISPLAY           */
 #ifndef LCD_RS
   #define LCD_RS                255
 #endif
@@ -246,7 +246,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define LCD_D7                255
 #endif
 
-/*        RTC                     */
+/*              RTC               */
 #define RTC_MODULE_UNDEFINED    0
 #define DS3231                  1
 #define DS1307                  2
@@ -359,7 +359,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define DTYPE INITR_BLACKTAB
 #endif
 
-/*        IR                      */
+/*               IR               */
 #ifndef IR_PIN
   #define IR_PIN                255
 #endif
@@ -466,25 +466,40 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define COLOR_BITRATE           231, 211,  90
 #endif
 
+/*      Language Default EN       */
 #define EN  1
 #define RU  2
 #ifndef L10N_LANGUAGE
   #define L10N_LANGUAGE EN
 #endif
 
-#ifdef VSPI
-#define VOOPSENb VSPI
-#else
-#define VOOPSENb 3
-#endif
-
-#ifdef HSPI
-#define HOOPSENb HSPI
-#else
-#define HOOPSENb 2
-#endif
-
+/*        SYSTEM DEFAULTS         */
 #ifndef SCREENSAVERSTARTUPDELAY
-#define SCREENSAVERSTARTUPDELAY 5
+  #define SCREENSAVERSTARTUPDELAY 5
 #endif
+
+/*        REGION DEFAULTS         */
+/*      Still editable in UI      */
+#ifndef TIMEZONES_JSON_GZ_URL
+#define TIMEZONES_JSON_GZ_URL "https://raw.githubusercontent.com/trip5/timezones.json/master/timezones.json.gz"
 #endif
+#ifndef TIMEZONE_NAME
+#define TIMEZONE_NAME "Europe/Moscow"
+#endif
+#ifndef TIMEZONE_POSIX
+#define TIMEZONE_POSIX "MSK-3"
+#endif
+#ifndef SNTP1
+#define SNTP1 "pool.ntp.org"
+#endif
+#ifndef SNTP2
+#define SNTP2 "0.ru.pool.ntp.org"
+#endif
+#ifndef WEATHERLAT
+#define WEATHERLAT "55.7512"
+#endif
+#ifndef WEATHERLON
+#define WEATHERLON "37.6184"
+#endif
+
+#endif // options_h

@@ -60,10 +60,12 @@ void Config::init() {
 #endif
   eepromRead(EEPROM_START, store);
   
-  if (store.config_set != 4262) {
+  // checks for signature number and breaking version changes to store
+  // last breaking change was between version 4 and 5 (which added timezones)
+  if ((store.config_set != 4262) || (store.version < 5 )) {
     setDefaults();
   }
-  if(store.version>CONFIG_VERSION) store.version=1;
+  if(store.version>CONFIG_VERSION) store.version=5;
   while(store.version!=CONFIG_VERSION) _setupVersion();
   BOOTLOG("CONFIG_VERSION\t%d", store.version);
 //  if(store.play_mode==80) store.play_mode=0b100;			//**********************************
@@ -86,6 +88,9 @@ void Config::init() {
   _bootDone=false;
 }
 
+// add non-breaking new variables to store version here
+// case 5 should be able to update store to version 6, case 6 to version 7, etc.
+// cases 1-3 are preserved here but will never be used
 void Config::_setupVersion(){
   uint16_t currentVersion = store.version;
   switch(currentVersion){
@@ -104,6 +109,9 @@ void Config::_setupVersion(){
       saveValue(&store.screensaverPlayingEnabled, false);
       saveValue(&store.screensaverPlayingTimeout, (uint16_t)20);
       saveValue(&store.screensaverPlayingBlank, false);
+      break;
+    case 5:
+      // new values for version 6 get added here
       break;
     default:
       break;
@@ -311,6 +319,10 @@ void Config::reset(){
 }
 
 void Config::setDefaults() {
+Serial.println("SetDefaultsA");
+Serial.printf("TZPOSIX: '%s'\n", config.store.tzposix);
+Serial.printf("TZ_NAME: '%s'\n", config.store.tz_name);
+
   store.config_set = 4262;
   store.version = CONFIG_VERSION;
   store.volume = 12;
@@ -323,10 +335,6 @@ void Config::setDefaults() {
   store.lastSSID = 0;
   store.audioinfo = false;
   store.smartstart = 2;
-  store.tzHour = 3;
-  store.tzMin = 0;
-  store.timezoneOffset = 0;
-
   store.vumeter=false;
   store.softapdelay=0;
   store.flipscreen=false;
@@ -337,11 +345,13 @@ void Config::setDefaults() {
   store.dspon=true;
   store.brightness=100;
   store.contrast=55;
-  strlcpy(store.sntp1,"2.ru.pool.ntp.org", 35);
-  strlcpy(store.sntp2,"1.ru.pool.ntp.org", 35);
+  strlcpy(store.tz_name,TIMEZONE_NAME, sizeof(config.store.tz_name));
+  strlcpy(store.tzposix,TIMEZONE_POSIX, sizeof(config.store.tzposix));
+  strlcpy(store.sntp1,SNTP1, sizeof(config.store.sntp1));
+  strlcpy(store.sntp2,SNTP2, sizeof(config.store.sntp2));
   store.showweather=false;
-  strlcpy(store.weatherlat,"55.7512", 10);
-  strlcpy(store.weatherlon,"37.6184", 10);
+  strlcpy(store.weatherlat,WEATHERLAT, sizeof(config.store.weatherlat));
+  strlcpy(store.weatherlon,WEATHERLON, sizeof(config.store.weatherlon));
   strlcpy(store.weatherkey,"", WEATHERKEY_LENGTH);
   store._reserved = 0;
   store.lastSdStation = 0;
@@ -368,18 +378,6 @@ void Config::setDefaults() {
   store.screensaverPlayingEnabled = false;
   store.screensaverPlayingTimeout = 5;
   eepromWrite(EEPROM_START, store);
-}
-void Config::setTimezone(int8_t tzh, int8_t tzm) {
-  saveValue(&store.tzHour, tzh, false);
-  saveValue(&store.tzMin, tzm);
-}
-
-void Config::setTimezoneOffset(uint16_t tzo) {
-  saveValue(&store.timezoneOffset, tzo);
-}
-
-uint16_t Config::getTimezoneOffset() {
-  return 0; // TODO
 }
 
 void Config::setSnuffle(bool sn){
