@@ -46,7 +46,7 @@
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  4
+#define CONFIG_VERSION  5 // store version 5
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
@@ -97,9 +97,9 @@ struct config_t
   uint8_t   lastSSID;
   bool      audioinfo;
   uint8_t   smartstart;
-  int8_t    tzHour;
-  int8_t    tzMin;
-  uint16_t  timezoneOffset;
+  int8_t    tzHour; // testing
+  int8_t    tzMin; //testing
+  uint16_t  timezoneOffset; //testing
   bool      vumeter;
   uint8_t   softapdelay;
   bool      flipscreen;
@@ -110,6 +110,8 @@ struct config_t
   bool      dspon;
   uint8_t   brightness;
   uint8_t   contrast;
+  char      tz_name[70];
+  char      tzposix[70];
   char      sntp1[35];
   char      sntp2[35];
   bool      showweather;
@@ -229,9 +231,6 @@ class Config {
     }
     uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
-    void setTimezone(int8_t tzh, int8_t tzm);
-    void setTimezoneOffset(uint16_t tzo);
-    uint16_t getTimezoneOffset();
     void setBrightness(bool dosave=false);
     void setDspOn(bool dspon, bool saveval = true);
     void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
@@ -259,12 +258,11 @@ class Config {
       if(commit)
         EEPROM.commit();
     }
-    void saveValue(char *field, const char *value, size_t N, bool commit=true, bool force=false) {
-      if (strcmp(field, value) == 0 && !force) return;
+    void saveValue(char *field, const char *value, size_t N, bool commit = true, bool force = false) {
+      if (strncmp(field, value, N) == 0 && !force) return;
       strlcpy(field, value, N);
       size_t address = getAddr(field);
-      size_t fieldlen = strlen(field);
-      for (size_t i = 0; i <=fieldlen ; i++) EEPROM.write(address + i, field[i]);
+      for (size_t i = 0; i < N; i++) EEPROM.write(address + i, field[i]);
       if(commit)
         EEPROM.commit();
     }
