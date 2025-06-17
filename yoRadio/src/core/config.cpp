@@ -66,6 +66,7 @@ void Config::init() {
   if(store.version>CONFIG_VERSION) store.version=1;
   while(store.version!=CONFIG_VERSION) _setupVersion();
   BOOTLOG("CONFIG_VERSION\t%d", store.version);
+//  if(store.play_mode==80) store.play_mode=0b100;			//**********************************
   store.play_mode = store.play_mode & 0b11;
   if(store.play_mode>1) store.play_mode=PM_WEB;
   _initHW();
@@ -101,7 +102,7 @@ void Config::_setupVersion(){
     case 3:
       saveValue(&store.screensaverBlank, false);
       saveValue(&store.screensaverPlayingEnabled, false);
-      saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
+      saveValue(&store.screensaverPlayingTimeout, (uint16_t)20);
       saveValue(&store.screensaverPlayingBlank, false);
       break;
     default:
@@ -153,6 +154,7 @@ void Config::changeMode(int newmode){
   }
   if(!_bootDone) return;
   initPlaylistMode();
+//  if ((pir) && (store.smartstart == 1)) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
   if (pir) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
   netserver.resetQueue();
   netserver.requestOnChange(GETPLAYERMODE, 0);
@@ -335,7 +337,7 @@ void Config::setDefaults() {
   store.dspon=true;
   store.brightness=100;
   store.contrast=55;
-  strlcpy(store.sntp1,"pool.ntp.org", 35);
+  strlcpy(store.sntp1,"2.ru.pool.ntp.org", 35);
   strlcpy(store.sntp2,"1.ru.pool.ntp.org", 35);
   store.showweather=false;
   strlcpy(store.weatherlat,"55.7512", 10);
@@ -367,7 +369,6 @@ void Config::setDefaults() {
   store.screensaverPlayingTimeout = 5;
   eepromWrite(EEPROM_START, store);
 }
-
 void Config::setTimezone(int8_t tzh, int8_t tzm) {
   saveValue(&store.tzHour, tzh, false);
   saveValue(&store.tzMin, tzm);
@@ -782,7 +783,7 @@ void Config::sleepForAfter(uint16_t sf, uint16_t sa){
 
 void Config::bootInfo() {
   BOOTLOG("************************************************");
-  BOOTLOG("*               ёPadio v%s                *", YOVERSION);
+  BOOTLOG("*               ёRadio v%s             *", YOVERSION);
   BOOTLOG("************************************************");
   BOOTLOG("------------------------------------------------");
   BOOTLOG("arduino:\t%d", ARDUINO);
@@ -793,11 +794,18 @@ void Config::bootInfo() {
     chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
   }
   BOOTLOG("chip:\t\tmodel: %s | rev: %d | id: %d | cores: %d | psram: %d", ESP.getChipModel(), ESP.getChipRevision(), chipId, ESP.getChipCores(), ESP.getPsramSize());
-  BOOTLOG("display:\t%d", DSP_MODEL);
+  BOOTLOG("display:\tmodel: %d (CS-%d, DC-%d, RST-%d, SPI-%s)", DSP_MODEL, TFT_CS, TFT_DC, TFT_RST, DSP_HSPI?"HSPI":"VSPI");
+//  BOOTLOG("display:\tmodel: %d, (CS-%d, DC-%d, RST-%d, SPI-%s, MOSI-%d, SCLK-%d)", DSP_MODEL, TFT_CS, TFT_DC, TFT_RST, DSP_HSPI?"HSPI":"VSPI", mosi_pin, sck_pin);
   if(VS1053_CS==255) {
-    BOOTLOG("audio:\t\t%s (%d, %d, %d)", "I2S", I2S_DOUT, I2S_BCLK, I2S_LRC);
+    BOOTLOG("audio:\t\t%s (DOUT-%d, BCLK-%d, LRC-%d)", "I2S", I2S_DOUT, I2S_BCLK, I2S_LRC);
   }else{
-    BOOTLOG("audio:\t\t%s (%d, %d, %d, %d, %s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"true":"false");
+    #ifdef ARDUINO_ESP32S3_DEV
+        BOOTLOG("audio:\t\t%s (CS-%d, DCS-%d, DREQ-%d, RST-%d, SPI-%s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_SSPI?"SubSPI":"FSPI");
+//        BOOTLOG("audio:\t\t%s (CS-%d, DCS-%d, DREQ-%d, RST-%d, SPI-%s, MOSI-%d, MISO-%d, SCK-%d)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_SSPI?"SubSPI":"FSPI", mosi_pin, miso_pin, sclk_pin);
+    #else
+        BOOTLOG("audio:\t\t%s (CS-%d, DCS-%d, DREQ-%d, RST-%d, SPI-%s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"HSPI":"VSPI");
+//        BOOTLOG("audio:\t\t%s (CS-%d, DCS-%d, DREQ-%d, RST-%d, SPI-%s, MOSI-%d, MISO-%d, SCK-%d)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"HSPI":"VSPI", mosi_pin, miso_pin, sclk_pin);
+    #endif
   }
   BOOTLOG("audioinfo:\t%s", store.audioinfo?"true":"false");
   BOOTLOG("smartstart:\t%d", store.smartstart);
@@ -806,12 +814,14 @@ void Config::bootInfo() {
   BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
   BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
   BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
-  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, mode=%d, pullup=%s", 
-          BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_MODE, BTN_INTERNALPULLUP?"true":"false");
-  BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", 
-          ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"true":"false", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"true":"false");
-  BOOTLOG("ir:\t\t%d", IR_PIN);
-  if(SDC_CS!=255) BOOTLOG("SD:\t\t%d", SDC_CS);
+  BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, mode=%d, pullup=%s", BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_MODE, BTN_INTERNALPULLUP?"ON":"OFF");
+  BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"ON":"OFF", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"ON":"OFF");
+  if(IR_PIN!=255) {BOOTLOG("ir:\t\t%d", IR_PIN);}else{BOOTLOG("ir:\t\tNONE");}
+  if(SDC_CS!=255) {BOOTLOG("SD:\t\tCS-%d", SDC_CS);}else{BOOTLOG("SD:\t\tNONE");}
+    #ifdef BATTERY_OFF
+  BOOTLOG("battery:\t%s", "battery OFF");
+    #else
+  BOOTLOG("battery:\t%s", "battery ON");
+    #endif
   BOOTLOG("------------------------------------------------");
 }
-

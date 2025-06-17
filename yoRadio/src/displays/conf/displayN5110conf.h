@@ -22,13 +22,20 @@
 
 #define bootLogoTop     0
 
+#ifndef BATTERY_OFF
+  #define BatX      TFT_FRAMEWDT		// X coordinate for batt. (Координата X для батарейки)
+  #define BatY      TFT_FRAMEWDT		// Y coordinate for batt. (Координата Y для батарейки)
+  #define ProcX     TFT_FRAMEWDT		// X coordinate for percent (Координата X для процентов заряда)
+  #define ProcY     TFT_FRAMEWDT		// Y coordinate for percent (Координата Y для процентов заряда)
+#endif
+
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
 const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 1, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 5, SCROLLDELAY };
 const ScrollConfig title1Conf     PROGMEM = {{ TFT_FRAMEWDT, 8, 1, WA_LEFT }, 140, true, MAX_WIDTH-24, 5000, 5, SCROLLDELAY };
 const ScrollConfig playlistConf   PROGMEM = {{ 2, 22, 1, WA_LEFT }, 140, true, MAX_WIDTH-4, 1000, 5, SCROLLDELAY };
 const ScrollConfig apTitleConf    PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 1, WA_CENTER }, 140, false, MAX_WIDTH, 0, 5, SCROLLDELAY };
 const ScrollConfig apSettConf     PROGMEM = {{ TFT_FRAMEWDT, 48-7, 1, WA_LEFT }, 140, false, MAX_WIDTH, 0, 5, SCROLLDELAY };
-const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 48-11, 1, WA_LEFT }, 140, true, MAX_WIDTH-6*3-2, 1000, 5, SCROLLDELAY };
+const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 48-11, 1, WA_LEFT }, 140, true, MAX_WIDTH-6*3-2, 1000, 5, SCROLLDELAY };	// Weather (погода)
 
 /* BACKGROUNDS  */                       /* {{ left, top, fontsize, align }, width, height, outlined } */
 const FillConfig  playlBGConf     PROGMEM = {{ 0, 20, 0, WA_LEFT }, DSP_WIDTH, 11, false };

@@ -21,6 +21,7 @@
 
 #ifndef ASYNCTCP_H_
 #define ASYNCTCP_H_
+
 #include "../core/options.h"
 #include "IPAddress.h"
 #include "sdkconfig.h"
@@ -40,7 +41,11 @@ extern "C" {
 #endif
 
 #ifndef XTASK_MEM_SIZE
-  #define XTASK_MEM_SIZE  6144 // 8192 / 2
+  #ifdef WROOM_USED
+    #define XTASK_MEM_SIZE  6144 // (8192 / 2)
+  #else
+    #define XTASK_MEM_SIZE  8192 * 2
+  #endif
 #endif
 #ifndef XTASK_PRIOTITY
   #define XTASK_PRIOTITY  5 //3

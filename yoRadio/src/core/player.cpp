@@ -1,5 +1,7 @@
 #include "options.h"
+
 #include "player.h"
+
 #include "config.h"
 #include "telnet.h"
 #include "display.h"
@@ -10,11 +12,23 @@ Player player;
 QueueHandle_t playerQueue;
 
 #if VS1053_CS!=255 && !I2S_INTERNAL
-  #if VS_HSPI
-    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI2) {}
+
+#ifdef ARDUINO_ESP32S3_DEV
+  #if VS_SSPI
+//    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI2, VS1053_MOSI, VS1053_MISO, VS1053_SCK) {}
+    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI3_HOST, 35, 37, 36) {}	// SubSPI- SPI3, MOSI-35, MISO-37, SCK-36
   #else
-    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI) {}
+//    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, FSPI, 11, 13, 12) {}	// FSPI - SPI2, MOSI-11, MISO-12, SCK-12
+    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI) {}	// FSPI - SPI2, MOSI-11, MISO-12, SCK-12
   #endif
+
+#else
+  #if VS_HSPI
+    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI2) {}			// HSPI, MOSI-13, MISO-12, SCK-14
+  #else
+    Player::Player(): Audio(VS1053_CS, VS1053_DCS, VS1053_DREQ, &SPI) {}			// VSPI, MOSI-23, MISO-19, SCK-18
+  #endif
+#endif
   void ResetChip(){
     pinMode(VS1053_RST, OUTPUT);
     digitalWrite(VS1053_RST, LOW);
@@ -77,7 +91,10 @@ void Player::resetQueue(){
 }
 
 void Player::stopInfo() {
-  config.setSmartStart(0);
+//  config.setSmartStart(0);
+  if (config.store.smartstart < 2) config.setSmartStart(0);			// ************************
+
+
   //telnet.info();
   netserver.requestOnChange(MODE, 0);
 }
@@ -165,7 +182,7 @@ void Player::loop() {
   Audio::loop();
   if(!isRunning() && _status==PLAYING) _stop(true);
   if(_volTimer){
-    if((millis()-_volTicks)>3000){
+    if((millis()-_volTicks)>1500){
       config.saveVolume();
       _volTimer=false;
     }
@@ -196,8 +213,8 @@ void Player::_play(uint16_t stationId) {
   	display.putRequest(PSTOP);
   }
   setOutputPins(false);
-  //config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
-  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"[next track]");
+  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
+//  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"[next track]");
   config.station.bitrate=0;
   config.setBitrateFormat(BF_UNCNOWN);
   config.loadStation(stationId);
@@ -207,7 +224,8 @@ void Player::_play(uint16_t stationId) {
   netserver.requestOnChange(STATION, 0);
   netserver.loop();
   netserver.loop();
-  config.setSmartStart(0);
+//  config.setSmartStart(0);
+  if (config.store.smartstart < 2) config.setSmartStart(0);			//*******************************
   bool isConnected = false;
   if(config.getMode()==PM_SDCARD && SDC_CS!=255){
     isConnected=connecttoFS(sdman,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min);
@@ -223,7 +241,8 @@ void Player::_play(uint16_t stationId) {
       config.saveValue(&config.store.lastSdStation, stationId);
     }
     //config.setTitle("");
-    config.setSmartStart(1);
+//    config.setSmartStart(1);
+    if (config.store.smartstart < 2) config.setSmartStart(1);			//*********************************
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
     display.putRequest(NEWMODE, PLAYER);
