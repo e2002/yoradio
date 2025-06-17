@@ -260,8 +260,15 @@ String ESPFileUpdater::calculateFileHash(File& file) {
 
   uint8_t buffer[512];
   int len;
-  while ((len = file.read(buffer, sizeof(buffer))) > 0) {
-    mbedtls_sha256_update_ret(&ctx, buffer, len);
+  size_t total = 0;
+  while (total < ESPFILEUPDATER_MAXSIZE && (len = file.read(buffer, sizeof(buffer))) > 0) {
+    size_t toHash = len;
+    if (total + len > ESPFILEUPDATER_MAXSIZE) {
+      toHash = ESPFILEUPDATER_MAXSIZE - total;
+    }
+    mbedtls_sha256_update_ret(&ctx, buffer, toHash);
+    total += toHash;
+    if (total >= ESPFILEUPDATER_MAXSIZE) break;
   }
 
   uint8_t hash[32];
