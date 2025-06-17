@@ -121,7 +121,7 @@ void ScrollWidget::_setTextParams() {
   if (_config.textsize == 0) return;
   dsp.setTextSize(_config.textsize);
   dsp.setTextColor(_fgcolor, _bgcolor);
-//  dsp.setTextColor(_bgcolor, _fgcolor);			// Замена фона
+//  dsp.setTextColor(_bgcolor, _fgcolor);			// Р—Р°РјРµРЅР° С„РѕРЅР°
 }
 
 bool ScrollWidget::_checkIsScrollNeeded() {
