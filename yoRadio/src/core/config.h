@@ -10,7 +10,7 @@
 #include "rtcsupport.h"
 #include "../pluginsManager/pluginsManager.h"
 
-#define EEPROM_SIZE       768
+#define EEPROM_SIZE       1000
 #define EEPROM_START      500
 #define EEPROM_START_IR   0
 #define EEPROM_START_2    10
@@ -152,7 +152,12 @@ struct config_t
   uint16_t  screensaverPlayingTimeout;
   bool      screensaverPlayingBlank;
   char      mdnsname[24];
-  bool      skipPlaylistUpDown;
+  bool      skipPlaylistUpDown; // total: 380 bytes
+
+  // Store / EEPROM Note: ESP32 uses emulated EEPROM in flash, limited to 4096 bytes
+  // If the most recent store variable is not persisting after reboot,
+  // try expanding EEPROM Size (top of config.h) and double-check using telnet command STORE
+  // Note: 500 bytes is the starting point of the store so add minimum 500 to the telnet STORE result
 };
 
 #if IR_PIN!=255
