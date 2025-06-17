@@ -282,6 +282,18 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
     #define REAL_LEDBUILTIN LED_BUILTIN
 #endif
 
+#ifdef VSPI
+  #define VOOPSENb VSPI
+#else
+  #define VOOPSENb 3
+#endif
+
+#ifdef HSPI
+  #define HOOPSENb HSPI
+#else
+  #define HOOPSENb 2
+#endif
+
 /*        Other settings. You can overwrite them in the myoptions.h file        */
 #ifndef MUTE_PIN
   #define MUTE_PIN      255   // MUTE Pin
