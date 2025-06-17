@@ -78,7 +78,7 @@ class NetServer {
     static void beginUpload(AsyncWebServerRequest *request);
     static void beginUpdate(AsyncWebServerRequest *request);
     void processQueue();
-    uint8_t _readPlaylistLine(File &file, char * line, size_t size);
+    int _readPlaylistLine(File &file, char * line, size_t size);
 };
 
 extern NetServer netserver;
