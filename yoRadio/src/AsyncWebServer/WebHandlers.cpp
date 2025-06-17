@@ -67,7 +67,7 @@ AsyncStaticWebHandler& AsyncStaticWebHandler::setLastModified(struct tm* last_mo
   strftime (result,30,"%a, %d %b %Y %H:%M:%S %Z", last_modified);
   return setLastModified((const char *)result);
 }
-
+/*
 #ifdef ESP8266
 AsyncStaticWebHandler& AsyncStaticWebHandler::setLastModified(time_t last_modified){
   return setLastModified((struct tm *)gmtime(&last_modified));
@@ -80,6 +80,7 @@ AsyncStaticWebHandler& AsyncStaticWebHandler::setLastModified(){
   return setLastModified(last_modified);
 }
 #endif
+*/
 bool AsyncStaticWebHandler::canHandle(AsyncWebServerRequest *request){
   if(request->method() != HTTP_GET 
     || !request->url().startsWith(_uri) 
@@ -128,11 +129,11 @@ bool AsyncStaticWebHandler::_getFile(AsyncWebServerRequest *request)
   return _fileExists(request, path);
 }
 
-#ifdef ESP32
+//#ifdef ESP32
 #define FILE_IS_REAL(f) (f == true && !f.isDirectory())
-#else
-#define FILE_IS_REAL(f) (f == true)
-#endif
+//#else
+//#define FILE_IS_REAL(f) (f == true)
+//#endif
 
 bool AsyncStaticWebHandler::_fileExists(AsyncWebServerRequest *request, const String& path)
 {

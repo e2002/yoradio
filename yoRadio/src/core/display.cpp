@@ -28,7 +28,7 @@ Page *pages[] = { new Page(), new Page(), new Page(), new Page() };
 #ifndef DSP_TASK_DELAY
   #define DSP_TASK_DELAY  pdMS_TO_TICKS(10)
 #endif
-#if !((DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB) || DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7796 || DSP_MODEL==DSP_ILI9488 || DSP_MODEL==DSP_ILI9486 || DSP_MODEL==DSP_ILI9341 || DSP_MODEL==DSP_ILI9225)
+#if !((DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB) || DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_170 || DSP_MODEL==DSP_ST7796 || DSP_MODEL==DSP_ILI9488 || DSP_MODEL==DSP_ILI9486 || DSP_MODEL==DSP_ILI9341 || DSP_MODEL==DSP_ILI9225)
   #undef  BITRATE_FULL
   #define BITRATE_FULL     false
 #endif
@@ -305,10 +305,12 @@ void Display::_swichMode(displayMode_e newmode) {
     config.isScreensaver = false;
   }
   if (newmode == VOL) {
-    #ifndef HIDE_IP
-      _showDialog(const_DlgVolume);
-    #else
-      _showDialog(WiFi.localIP().toString().c_str());
+    #ifndef HIDE_VOLPAGE
+      #ifndef HIDE_IP
+        _showDialog(const_DlgVolume);
+      #else
+        _showDialog(WiFi.localIP().toString().c_str());
+      #endif
     #endif
     _nums.setText(config.store.volume, numtxtFmt);
   }
@@ -333,11 +335,11 @@ void Display::resetQueue(){
 
 void Display::_drawPlaylist() {
   dsp.drawPlaylist(currentPlItem);
-  _setReturnTicker(30);
+  _setReturnTicker(10);
 }
 
 void Display::_drawNextStationNum(uint16_t num) {
-  _setReturnTicker(30);
+  _setReturnTicker(10);
   _meta.setText(config.stationByNum(num));
   _nums.setText(num, "%d");
 }
@@ -545,7 +547,7 @@ void Display::_time(bool redraw) {
     config.setBrightness();
   }
 #endif
-  if(config.isScreensaver && network.timeinfo.tm_sec % 60 == 0){
+  if(config.isScreensaver && network.timeinfo.tm_sec % 20 == 0){
     #ifdef GXCLOCKFONT
       uint16_t ft=static_cast<uint16_t>(random(TFT_FRAMEWDT, (dsp.height()-dsp.plItemHeight-TFT_FRAMEWDT*2-clockConf.textsize)));
     #else
