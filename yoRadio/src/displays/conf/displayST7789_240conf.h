@@ -17,27 +17,14 @@
 
 #define bootLogoTop     68
 
-#ifndef BATTERY_OFF
-  #define BatX      TFT_FRAMEWDT		// X coordinate for batt. (Координата X для батарейки)
-  #define BatY      TFT_FRAMEWDT		// Y coordinate for batt. (Координата Y для батарейки)
-  #define BatFS     1			// FontSize for batt. (Размер шрифта для батарейки)
-  #define ProcX     TFT_FRAMEWDT		// X coordinate for percent (Координата X для процентов заряда)
-  #define ProcY     TFT_FRAMEWDT		// Y coordinate for percent (Координата Y для процентов заряда)
-  #define ProcFS    1			// FontSize for percent (Размер шрифта для процентов заряда)
-  #define VoltX      TFT_FRAMEWDT		// X coordinate for voltage (Координата X для напряжения)
-  #define VoltY      TFT_FRAMEWDT		// Y coordinate for voltage (Координата Y для напряжения)
-  #define VoltFS     1			// FontSize for voltage (Размер шрифта для напряжения)
-#endif
-
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
 const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 3, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 5, 30 };
 const ScrollConfig title1Conf     PROGMEM = {{ TFT_FRAMEWDT, 50, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 4, 30 };
 const ScrollConfig title2Conf     PROGMEM = {{ TFT_FRAMEWDT, 70, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 4, 30 };
-const ScrollConfig playlistConf   PROGMEM = {{ TFT_FRAMEWDT, 112, 2, WA_LEFT }, 140, false, MAX_WIDTH, 0, 2, 30 };
+const ScrollConfig playlistConf   PROGMEM = {{ TFT_FRAMEWDT, 112, 2, WA_LEFT }, 140, true, MAX_WIDTH, 0, 2, 30 };
 const ScrollConfig apTitleConf    PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 3, WA_CENTER }, 140, false, MAX_WIDTH, 0, 4, 20 };
 const ScrollConfig apSettConf     PROGMEM = {{ TFT_FRAMEWDT, 240-TFT_FRAMEWDT-16, 2, WA_LEFT }, 140, false, MAX_WIDTH, 0, 4, 30 };
-const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 198, 1, WA_LEFT }, 140, true, MAX_WIDTH, 0, 3, 30 };	// Weather (погода)
-
+const ScrollConfig weatherConf    PROGMEM = {{ TFT_FRAMEWDT, 198, 1, WA_LEFT }, 140, true, MAX_WIDTH, 0, 3, 30 };
 /* BACKGROUNDS  */                       /* {{ left, top, fontsize, align }, width, height, outlined } */
 const FillConfig   metaBGConf     PROGMEM = {{ 0, 0, 0, WA_LEFT }, DSP_WIDTH, 38, false };
 const FillConfig   metaBGConfInv  PROGMEM = {{ 0, 38, 0, WA_LEFT }, DSP_WIDTH, 1, false };
@@ -69,12 +56,10 @@ const VUBandsConfig bandsConf     PROGMEM = { 100, 20, 10, 2, 10, 5 };
 const char         numtxtFmt[]    PROGMEM = "%d";
 const char           rssiFmt[]    PROGMEM = "WiFi %d";
 const char          iptxtFmt[]    PROGMEM = "%s";
-//const char         voltxtFmt[]    PROGMEM = "%d";
-//const char         voltxtFmt[]    PROGMEM = "\023\025%d";
-const char         voltxtFmt[]    PROGMEM = "";
+const char         voltxtFmt[]    PROGMEM = "%d";
 const char        bitrateFmt[]    PROGMEM = "%d kBs";
 
-/* MOVES  */                             /* { left, top, width (0 - auto, -1 - lock )} */
+/* MOVES  */                             /* { left, top, width } */
 const MoveConfig    clockMove     PROGMEM = { 0, 176, 0 };
 const MoveConfig   weatherMove    PROGMEM = { TFT_FRAMEWDT, 202, MAX_WIDTH };
 const MoveConfig   weatherMoveVU  PROGMEM = { TFT_FRAMEWDT, 202, MAX_WIDTH };

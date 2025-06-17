@@ -39,54 +39,6 @@ DspCore::DspCore(): Adafruit_SSD1306(128, ((DSP_MODEL==DSP_SSD1306)?64:32), &I2C
 
 #include "tools/utf8RusGFX.h"
 
-////////////////////////////////////////////////////////////////////////////
-#ifndef BATTERY_OFF
-
-  #include "driver/adc.h"			// Подключение необходимого драйвера
-  #include "esp_adc_cal.h"			// Подключение необходимой библиотеки
-
-  #ifndef ADC_PIN
-    #define ADC_PIN 1
-  #endif
-  #if (ADC_PIN == 1 || ADC_PIN == 36)
-    #define USER_ADC_CHAN 	ADC1_CHANNEL_0
-  #endif
-  #if (ADC_PIN == 2)
-    #define USER_ADC_CHAN 	ADC1_CHANNEL_1
-  #endif
-  #if (ADC_PIN == 39)
-    #define USER_ADC_CHAN 	ADC1_CHANNEL_3
-  #endif
-
-  #ifndef R1
-    #define R1 50		// Номинал резистора на плюс (+)
-  #endif
-  #ifndef R2
-    #define R2 100		// Номинал резистора на плюс (-)
-  #endif
-  #ifndef DELTA_BAT
-    #define DELTA_BAT 0	// Величина коррекции напряжения батареи
-  #endif
-
-  float ADC_R1 = R1;		// Номинал резистора на плюс (+)
-  float ADC_R2 = R2;		// Номинал резистора на минус (-)
-  float DELTA = DELTA_BAT;	// Величина коррекции напряжения батареи
-
-  uint8_t g, d, e, t = 1;	// Счётчики для мигалок и осреднений
-  bool Charging;			// Признак, что подключено зарядное устройство
-
-  uint8_t reads = 100;    	// Количество замеров в одном измерении
-  float Volt = 0; 			// Напряжение на батарее
-  float Volt1, Volt2, Volt3, Volt4, Volt5 = 0;	 // Предыдущие замеры напряжения на батарее
-  static esp_adc_cal_characteristics_t adc1_chars;
-
-  uint8_t ChargeLevel;
-// ==================== Массив напряжений на батарее, соответствующий проценту оставшегося заряда: 
-  float vs[22] = {2.60, 3.10, 3.20, 3.26, 3.29, 3.33, 3.37, 3.41, 3.46, 3.51, 3.56, 3.61, 3.65, 3.69, 3.72, 3.75, 3.78, 3.82, 3.88, 3.95, 4.03, 4.25};
-
-  #endif	//#ifndef BATTERY_OFF
-/////////////////////////////////////////////////////////////////////////////////
-
 void DspCore::initDisplay() {
   I2CSSD1306.begin(I2C_SDA, I2C_SCL);
   if (!begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -113,7 +65,7 @@ void DspCore::drawLogo(uint16_t top) {
   setTextSize(1);
   setCursor((width() - 6*CHARWIDTH) / 2, 0);
   setTextColor(TFT_FG, TFT_BG);
-  print(utf8Rus("ёRadio", false));
+  print(utf8Rus("С‘Radio", false));
   setTextSize(1);
 #endif
   display();
@@ -177,142 +129,6 @@ void DspCore::_clockSeconds(){
     print(_bufforseconds); 
   #endif
   //setFont();
-
-/////////////////////////////////////////////////////////////////////////////
-  #ifndef BATTERY_OFF
-  if(!config.isScreensaver) {
-// ===================== Отрисовка мигалок ========================================
-    setTextSize(1);
-
-  if (Charging)		// Если идёт зарядка (подключено зарядное устр-во) - бегающие квадратики
-    {
-//	setTextColor(config.theme.clock, config.theme.background);				// Светлый
-	if (network.timeinfo.tm_sec % 1 == 0)
-	{
-           setCursor(BatX, BatY);
-	   if (g == 1) {print("\xA0\xA2\x9E\x9F");} 			// 2 квад. в конце
-	   if (g == 2) {print("\xA0\x9E\x9E\xA3");} 			// 2 квад. по краям
-	   if (g == 3) {print("\x9D\x9E\xA2\xA3");} 			// 2 квад. в начале
-	   if (g >= 4) {g = 0; print("\x9D\xA2\xA2\x9F");} 		// 2 квад. в середине
-           g++;
-	}
-    }
-
-// ============= Отрисовка предупреждающей мигалки ==================================
-    if (Volt < 2.8 )                 //мигающие квадратики
-    {
-     if (network.timeinfo.tm_sec % 1 == 0)
-      {
-//	 setTextColor(config.theme.clock, config.theme.background);				// Светлый
-         setCursor(BatX, BatY);
-         if (d == 1) {print("\xA0\xA2\xA2\xA3");} 			// полная - 6 кв.
-         if (d >= 2) {d = 0; print("\x9D\x9E\x9E\x9F");} 		// пустая - 0 кв.
-         d++;
-      }
-     }
-
-// ================= Вывод цифровых значений заряда и напряжения =======================
-   if (network.timeinfo.tm_min % 1 == 0)
-      {
-//         setTextColor(config.theme.clock, config.theme.background);
-         setCursor(ProcX, ProcY); 			// Установка координат для вывода процентов заряда
-         if (e == 1) {printf("%4i%%", ChargeLevel);}  // Вывод процентов заряда батареи с форматом
-         if (e >= 3) {
-            #ifndef HIDE_VOLT  			// Если напряжение выводится
-//              if (_mode()!=PLAYER) {		// и если не режим "Play"
-//              if (plStatus_e()!=PLAYING) {		// и если не режим "Play"
-//              if (Display.displayMode!=PLAYER) {		// и если не режим "Play"
-//                 setCursor(ProcX, ProcY);		// Установка координат для вывода напряжения
-                 printf("%.2fv", Volt);     /* } */			// Вывод напряжения
-            #endif 				// Конец вывода напряжения
-                         }
-         if (e >= 4) {e = 0;}
-         e++;
-       }
-// ========================== Расчёт напряжений и заряда ==========================
-   if (network.timeinfo.tm_sec % 5 == 0)
-  {
-
-          //  Читаем АЦП "reads"= раз и складываем результат в милливольтах
-  float tempmVolt = 0;
-
-         //  Настройка и инициализация АЦП
-  adc1_config_width(ADC_WIDTH_BIT_12); 
-  adc1_config_channel_atten(USER_ADC_CHAN, ADC_ATTEN_DB_12);
-
-          //  Расчет характеристик АЦП т.е. коэффициенты усиления и смещения
-  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 0, &adc1_chars);
-
-  for(uint8_t i = 0; i < reads; i++){
-    tempmVolt += esp_adc_cal_raw_to_voltage(adc1_get_raw(USER_ADC_CHAN), &adc1_chars);
-//    vTaskDelay(5);
-                                           }
-
-  float mVolt = (tempmVolt / reads) / 1000;		       //  Получаем средний результат в Вольтах
-
-          //  Коррекция результата и получение напряжения батареи в Вольтах
-  Volt = (mVolt + 0.0028 * mVolt * mVolt + 0.0096 * mVolt - 0.051) / (ADC_R2 / (ADC_R1 + ADC_R2)) + DELTA;
-  if (Volt < 0) Volt = 0;
-
-          // подготовка к контролю подключения зарядного устройства	- - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  if (Volt3 > 0) {Volt = (Volt + Volt1 + Volt2 + Volt3) / 4;}
-  Volt4 += Volt;
-  Volt3 = Volt2; Volt2 = Volt1; Volt1 = Volt;
-  t++;
-          //	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-// ============ Рассчитываем остаток заряда в процентах ====================================
-// Поиск индекса, соответствующего вольтажу. Индекс соответствует проценту оставшегося заряда
-
-  uint8_t idx = 0;
-  while (true) {
-//================= Получение % оставшегося заряда ============================
-    if (Volt < vs[idx]) {ChargeLevel =0; break;}
-    if (Volt < vs[idx+1]) {mVolt = Volt - vs[idx]; ChargeLevel = idx * 5 + round(mVolt /((vs[idx+1] - vs[idx]) / 5 )); break;}
-    else {idx++;}
-                 }
-    if (ChargeLevel < 0) ChargeLevel = 0; if (ChargeLevel > 100) ChargeLevel = 100;
-// ===================== Отрисовка статической батарейки =================================
-  if (!Charging)		// Если не идёт зарядка
-  {
-//  setTextColor(config.theme.clock, config.theme.background); 
-  setCursor(BatX, BatY);
-
-  if (                         Volt >= 3.82) {print("\xA0\xA2\xA2\xA3");} 	//больше 85 % (6 квад.)
-  if ((Volt < 3.82) && (Volt >= 3.72)) {print("\x9D\xA2\xA2\xA3");} 	//от70 до 85% (5 квад.)
-  if ((Volt < 3.72) && (Volt >= 3.61)) {print("\x9D\xA1\xA2\xA3");} 	//от 55 до 70% (4 квад.)
-  if ((Volt < 3.61) && (Volt >= 3.46)) {print("\x9D\x9E\xA2\xA3");} 	//от 40 до 55% (3 квад.)
-  if ((Volt < 3.46) && (Volt >= 3.33)) {print("\x9D\x9E\xA1\xA3");} 	//от 25 до 40% (2 квад.)
-  if ((Volt < 3.33) && (Volt >= 3.20)) {print("\x9D\x9E\x9E\xA3");} 	//от 10 до 25% (1 квад.)
-  if ((Volt < 3.20) && (Volt >= 2.8)) {print("\x9D\x9E\x9E\x9F");} 	//от 0 до 10% (0 квад.)
-  }
-
-//  if (Volt < 2.8) {setTextColor(config.theme.background, config.theme.clock);}	// (0%) установка инверсного цвета
-
-//Serial.printf("#BATT#: ADC: %i reads, V-batt: %.3f v, Capacity: %i\n", reads, Volt, ChargeLevel);	// Вывод значений в COM-порт для контроля
-
-  #ifndef HIDE_ClockDiv
-//    drawFastVLine(_timeleft-2, clockTop, 8, config.theme.clock); 			/*divider vert*/
-    drawFastVLine(_timeleft-2, clockTop, clockTimeHeight, config.theme.clock); 		/*divider vert*/
-  #endif
-  }
-
-// ===================  Контроль подключения зарядного устройства ============================
-   if (network.timeinfo.tm_sec % 60 == 0)
-  {
-    t -= 1;
-    Volt4 = Volt4 / t;
-    if ((Volt5 > 0) && ((Volt4 - Volt5) > 0.001)) {
-      Charging = true;						// установка признака, что подключено зарядное устройство
-     setTextColor(config.theme.clock, config.theme.background);			// Светлый
-								}
-    else {Charging = false;}					// установка признака, что зарядное устройство не подключено
-    Volt5 = Volt4; Volt4 = 0; t = 1;
-  }
-          //	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  }
-  #endif	//#ifndef BATTERY_OFF
-/////////////////////////////////////////////////////////////////////////////////
 }
 
 void DspCore::_clockDate(){ }

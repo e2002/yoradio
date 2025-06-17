@@ -121,7 +121,6 @@ void ScrollWidget::_setTextParams() {
   if (_config.textsize == 0) return;
   dsp.setTextSize(_config.textsize);
   dsp.setTextColor(_fgcolor, _bgcolor);
-//  dsp.setTextColor(_bgcolor, _fgcolor);			// Замена фона
 }
 
 bool ScrollWidget::_checkIsScrollNeeded() {
@@ -141,16 +140,16 @@ void ScrollWidget::setText(const char* txt) {
     if (_doscroll) {
         dsp.fillRect(_config.left,  _config.top, _width, _textheight, _bgcolor);
         dsp.setCursor(_config.left, _config.top);
-        snprintf(_window, _width / _charWidth + 1, "%s", _text);               //TODO
+        snprintf(_window, _width / _charWidth + 1, "%s", _text); //TODO
         dsp.setClipping({_config.left, _config.top, _width, _textheight});
         dsp.print(_window);
         dsp.clearClipping();
     } else {
       dsp.fillRect(_config.left, _config.top, _width, _textheight, _bgcolor);
       dsp.setCursor(_realLeft(), _config.top);
-      dsp.setClipping({_config.left, _config.top, _width, _textheight});
+      //dsp.setClipping({_config.left, _config.top, _width, _textheight});
       dsp.print(_text);
-      dsp.clearClipping();
+      //dsp.clearClipping();
     }
     strlcpy(_oldtext, _text, _buffsize);
   }
@@ -191,9 +190,9 @@ void ScrollWidget::_draw() {
     dsp.setCursor(_x + hiddenChars * _charWidth, _config.top);
     dsp.setClipping({_config.left, _config.top, _width, _textheight});
     dsp.print(_window);
-//    #ifndef DSP_LCD
-//      dsp.print(" ");
-//    #endif
+    #ifndef DSP_LCD
+      dsp.print(" ");
+    #endif
     dsp.clearClipping();
   } else {
     dsp.fillRect(_config.left, _config.top, _width, _textheight, _bgcolor);
@@ -285,6 +284,7 @@ void VuWidget::init(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor
   _canvas = new Canvas(_bands.width * 2 + _bands.space, _bands.height);
 }
 
+
 void VuWidget::_draw(){
   if(!_active || _locked) return;
 #if !defined(USE_NEXTION) && I2S_DOUT==255
@@ -299,10 +299,10 @@ void VuWidget::_draw(){
   uint16_t bandColor;
   uint16_t dimension = _config.align?_bands.width:_bands.height;
   uint16_t vulevel = player.get_VUlevel(dimension);
-
+  
   uint8_t L = (vulevel >> 8) & 0xFF;
   uint8_t R = vulevel & 0xFF;
-
+  
   bool played = player.isRunning();
   if(played){
     measL=(L>=measL)?measL + _bands.fadespeed:L;
@@ -460,9 +460,6 @@ void ClockWidget::_clear(){
   dsp.clearClock();
 }
 
-/**************************
-      BITRATE WIDGET
- **************************/
 void BitrateWidget::init(BitrateConfig bconf, uint16_t fgcolor, uint16_t bgcolor){
   Widget::init(bconf.widget, fgcolor, bgcolor);
   _dimension = bconf.dimension;
@@ -474,7 +471,7 @@ void BitrateWidget::init(BitrateConfig bconf, uint16_t fgcolor, uint16_t bgcolor
 
 void BitrateWidget::setBitrate(uint16_t bitrate){
   _bitrate = bitrate;
-//  if(_bitrate>999) _bitrate = 999;
+  if(_bitrate>999) _bitrate=999;
   _draw();
 }
 
@@ -485,45 +482,29 @@ void BitrateWidget::setFormat(BitrateFormat format){
 
 void BitrateWidget::_draw(){
   _clear();
-//  if(!_active || _format == BF_UNCNOWN || _bitrate==0) return;
-  if(!_active || _format == BF_UNCNOWN) return;
-
+  if(!_active || _format == BF_UNCNOWN || _bitrate==0) return;
   dsp.drawRect(_config.left, _config.top, _dimension, _dimension, _fgcolor);
-
-//  dsp.fillRect(_config.left, _config.top + _dimension/2, _dimension, _dimension/2, _fgcolor);
-  dsp.fillRect(_config.left, _config.top + _dimension/2+1, _dimension, _dimension/2-1, _fgcolor);
-
+  dsp.fillRect(_config.left, _config.top + _dimension/2, _dimension, _dimension/2, _fgcolor);
   dsp.setFont();
   dsp.setTextSize(_config.textsize);
   dsp.setTextColor(_fgcolor, _bgcolor);
-  if(_bitrate < 999)  snprintf(_buf, 6, "%d", _bitrate);
-  else {
-    float _br = (float)_bitrate / 1000;
-    snprintf(_buf, 6, "%.1f", _br);
-  }
-
-//  dsp.setCursor(_config.left + _dimension/2 - _charWidth*strlen(_buf)/2 + 1, _config.top + _dimension/4 - _textheight/2+1);
-  dsp.setCursor(_config.left + _dimension/2 - _charWidth*strlen(_buf)/2 + 1, _config.top + _dimension/4 - _textheight/2 + 2);
-
+  snprintf(_buf, 6, "%d", _bitrate);
+  dsp.setCursor(_config.left + _dimension/2 - _charWidth*strlen(_buf)/2 + 1, _config.top + _dimension/4 - _textheight/2+1);
   dsp.print(_buf);
   dsp.setTextColor(_bgcolor, _fgcolor);
-
   dsp.setCursor(_config.left + _dimension/2 - _charWidth*3/2 + 1, _config.top + _dimension - _dimension/4 - _textheight/2);
-
   switch(_format){
-    case BF_MP3:  dsp.print("mp3"); break;
-    case BF_AAC:  dsp.print("aac"); break;
-    case BF_FLAC: dsp.print("flc"); break;
-    case BF_WAV:  dsp.print("wav"); break;
-    case BF_OGG:  dsp.print("ogg"); break;
-    case BF_VOR:  dsp.print("vor"); break;
-    case BF_OPU:  dsp.print("opu"); break;
+    case BF_MP3:  dsp.print("MP3"); break;
+    case BF_AAC:  dsp.print("AAC"); break;
+    case BF_FLAC: dsp.print("FLC"); break;
+    case BF_OGG:  dsp.print("OGG"); break;
+    case BF_WAV:  dsp.print("WAV"); break;
     default:                        break;
   }
 }
 
 void BitrateWidget::_clear() {
-  dsp.fillRect(_config.left, _config.top, _dimension*1.08, _dimension, _bgcolor);
+  dsp.fillRect(_config.left, _config.top, _dimension, _dimension, _bgcolor);
 }
 
 #endif // #if DSP_MODEL!=DSP_DUMMY

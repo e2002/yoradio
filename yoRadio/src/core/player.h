@@ -3,7 +3,7 @@
 #include "options.h"
 
 #if I2S_DOUT!=255 || I2S_INTERNAL
-  #include "../audioI2S/Audio.h"
+  #include "../audioI2S/AudioEx.h"
 #else
   #include "../audioVS1053/audioVS1053Ex.h"
 #endif
@@ -32,7 +32,7 @@ class Player: public Audio {
   private:
     uint32_t    _volTicks;   /* delayed volume save  */
     bool        _volTimer;   /* delayed volume save  */
-    int32_t    _resumeFilePos;
+    uint32_t    _resumeFilePos;
     plStatus_e  _status;
     char        _plError[PLERR_LN];
   private:
@@ -68,7 +68,7 @@ class Player: public Audio {
     uint8_t volToI2S(uint8_t volume);
     void stopInfo();
     void setOutputPins(bool isPlaying);
-    void setResumeFilePos(int32_t pos) { _resumeFilePos = pos; }
+    void setResumeFilePos(uint32_t pos) { _resumeFilePos = pos; }
 };
 
 extern Player player;
