@@ -258,6 +258,8 @@ void irLoop() {
           if(target!=IR_AST && display.mode()==LOST) return;
           if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
             display.putRequest(NEWMODE, PLAYER);
+            config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
+            config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;
             return;
           }
           switch (target){
@@ -493,6 +495,8 @@ void onBtnClick(int id) {
         }
         if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
           display.putRequest(NEWMODE, PLAYER);
+          config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
+          config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;
           #ifdef DSP_LCD
             delay(200);
           #endif
@@ -554,6 +558,8 @@ void onBtnClick(int id) {
 void onBtnDoubleClick(int id) {
   if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
     display.putRequest(NEWMODE, PLAYER);
+    config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
+    config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;
     return;
   }
   switch ((controlEvt_e)id) {

@@ -27,7 +27,7 @@ const ScrollConfig      metaConf   PROGMEM = {{ 0, 0, 1, WA_LEFT }, 140, true, M
 const ScrollConfig    title1Conf   PROGMEM = {{ 0, 1, 1, WA_LEFT }, 140, true, MAX_WIDTH-4, 2000, SDELTA, STIME };
 const ScrollConfig    title2Conf   PROGMEM = {{ 0, 2, 1, WA_LEFT }, 140, true, MAX_WIDTH,   2000, SDELTA, STIME };
 const ScrollConfig  playlistConf   PROGMEM = {{ 1, 1, 1, WA_LEFT }, 140, true, MAX_WIDTH-1, 2000, SDELTA, STIME };
-const ScrollConfig   weatherConf   PROGMEM = {{ 0, 3, 1, WA_LEFT }, 140, false, MAX_WIDTH-4, 2000, SDELTA, STIME };
+const ScrollConfig   weatherConf   PROGMEM = {{ 0, 3, 1, WA_LEFT }, 140, false, MAX_WIDTH-4, 2000, SDELTA, STIME };	// Weather (погода)
 
 /* WIDGETS  */                           /* { left, top, fontsize, align } */
 const WidgetConfig     voltxtConf  PROGMEM = { 0, 3, 1, WA_RIGHT };
