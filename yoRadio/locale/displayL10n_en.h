@@ -62,7 +62,7 @@ const char  const_waitForSD[]    PROGMEM = "INDEX SD";
 
 const char        apNameTxt[]    PROGMEM = "AP NAME";
 const char        apPassTxt[]    PROGMEM = "W/O PASSWORD";
-const char       bootstrFmt[]    PROGMEM = "Trying to %s";
+const char       bootstrFmt[]    PROGMEM = "Wi-fi: %s";
 const char        apSettFmt[]    PROGMEM = "SETTINGS PAGE ON: HTTP://%s/";
 #if EXT_WEATHER
 const char       weatherFmt[]    PROGMEM = "%s, temp: %+.1f\011C \007 (feels like: %+.0f\011C) \007 pressure: %d mm \007 humidity: %s%% \007 wind: %s %.0f%s m/s (m.st. %s)";

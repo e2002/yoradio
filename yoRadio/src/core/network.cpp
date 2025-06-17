@@ -6,6 +6,7 @@
 #include "netserver.h"
 #include "player.h"
 #include "mqtt.h"
+#include "../ESPFileUpdater/ESPFileUpdater.h"
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -18,6 +19,9 @@ TaskHandle_t syncTaskHandle;
 
 bool getWeather(char *wstr);
 void doSync(void * pvParameters);
+
+bool wasUpdated(ESPFileUpdater::UpdateStatus status) { return status == ESPFileUpdater::UPDATED; }
+ESPFileUpdater updater(SPIFFS);
 
 void ticks() {
   if(!display.ready()) return; //waiting for SD is ready
@@ -39,6 +43,16 @@ void ticks() {
   if(network.status == CONNECTED){
     if(network.forceTimeSync || network.forceWeather){
       xTaskCreatePinnedToCore(doSync, "doSync", 1024 * 4, NULL, 0, &syncTaskHandle, 0);
+    }
+    // check at :01s mark (fix network clock not matching system clock after Daylight Savings Time changes)
+    if (network.timeinfo.tm_sec == 1) {
+      time_t now = time(NULL);
+      struct tm localNow;
+      localtime_r(&now, &localNow);
+      if ((network.timeinfo.tm_min != localNow.tm_min) || (network.timeinfo.tm_hour != localNow.tm_hour)) {
+        timeSyncTicks = 0;
+        network.forceTimeSync = true;
+      }
     }
     if(timeSyncTicks >= timeSyncInterval){
       timeSyncTicks=0;
@@ -242,21 +256,23 @@ void MyNetwork::setWifiParams(){
     memset(weatherBuf, 0, WEATHER_STRING_L);
   #endif
   if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
-    configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+    configTzTime(config.store.tzposix, config.store.sntp1, config.store.sntp2);
   }else if(strlen(config.store.sntp1)>0){
-    configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
+    configTzTime(config.store.tzposix, config.store.sntp1);
   }
 }
 
 void MyNetwork::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
   if (withTelnetOutput) {
+    if (strlen(config.store.sntp1) > 0 && strlen(config.store.sntp2) > 0)
+      configTzTime(config.store.tzposix, config.store.sntp1, config.store.sntp2);
+    else if (strlen(config.store.sntp1) > 0)
+      configTzTime(config.store.tzposix, config.store.sntp1);
     char timeStringBuff[50];
     strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
-    if (config.store.tzHour < 0) {
-      telnet.printf(clientId, "##SYS.DATE#: %s%03d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
-    } else {
-      telnet.printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
-    }
+    telnet.printf(clientId, "##SYS.DATE#: %s (%s)\n> ", timeStringBuff, config.store.tzposix);
+    telnet.printf(clientId, "##SYS.TZNAME#: %s \n> ", config.store.tz_name);
+    telnet.printf(clientId, "##SYS.TZPOSIX#: %s \n> ", config.store.tzposix);
   }
 }
 
@@ -282,6 +298,24 @@ void MyNetwork::requestWeatherSync(){
   display.putRequest(NEWWEATHER);
 }
 
+void updateTZjson(void* param) {
+  Serial.println("[ESPFileUpdater: Timezones.json] Called by TimeSync");
+  ESPFileUpdater* updater = (ESPFileUpdater*)param;
+  ESPFileUpdater::UpdateStatus result = updater->checkAndUpdate(
+      "/www/timezones.json.gz",
+      TIMEZONES_JSON_GZ_URL,
+      "1 week", // update once a week at most
+      false // verbose logging
+  );
+  if (result == ESPFileUpdater::UPDATED) {
+    Serial.println("[ESPFileUpdater: Timezones.json] Update completed.");
+  } else if (result == ESPFileUpdater::NOT_MODIFIED) {
+    Serial.println("[ESPFileUpdater: Timezones.json] No update needed.");
+  } else {
+    Serial.println("[ESPFileUpdater: Timezones.json] Update failed.");
+  }
+  vTaskDelete(NULL);
+}
 
 void doSync( void * pvParameters ) {
   static uint8_t tsFailCnt = 0;
@@ -297,6 +331,7 @@ void doSync( void * pvParameters ) {
       #if RTCSUPPORTED
         if (config.isRTCFound()) rtc.setTime(&network.timeinfo);
       #endif
+        xTaskCreate(updateTZjson, "updateTZjson", 8192, &updater, 1, NULL);
     }else{
       if(tsFailCnt<4){
         network.forceTimeSync = true;

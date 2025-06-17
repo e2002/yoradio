@@ -316,9 +316,9 @@ void NetServer::processQueue(){
                                   config.store.screensaverPlayingTimeout,
                                   config.store.screensaverPlayingBlank);
                                   break;
-      case GETTIMEZONE:   sprintf (wsbuf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\"}", 
-                                  config.store.tzHour, 
-                                  config.store.tzMin, 
+      case GETTIMEZONE:   sprintf (wsbuf, "{\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\"}",
+                                  config.store.tz_name, 
+                                  config.store.tzposix, 
                                   config.store.sntp1, 
                                   config.store.sntp2); 
                                   break;
@@ -553,34 +553,28 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         #endif
         return;
       }
-      if (strcmp(cmd, "tzh") == 0) {
-        int8_t vali = atoi(val);
-        config.saveValue(&config.store.tzHour, vali);
+      if (strcmp(cmd, "tz_name") == 0) {
+        strlcpy(config.store.tz_name, val, sizeof(config.store.tz_name));
+        config.saveValue(config.store.tz_name, config.store.tz_name, sizeof(config.store.tz_name), true, true);
         return;
       }
-      if (strcmp(cmd, "tzm") == 0) {
-        int8_t vali = atoi(val);
-        config.saveValue(&config.store.tzMin, vali);
+      if (strcmp(cmd, "tzposix") == 0) {
+        strlcpy(config.store.tzposix, val, sizeof(config.store.tzposix));
+        config.saveValue(config.store.tzposix, config.store.tzposix, sizeof(config.store.tzposix), true, true);
+        network.forceTimeSync = true;
+        network.requestTimeSync(true);
         return;
       }
       if (strcmp(cmd, "sntp2") == 0) {
-        config.saveValue(config.store.sntp2, val, 35, false);
+        strlcpy(config.store.sntp2, val, sizeof(config.store.sntp2));
+        config.saveValue(config.store.sntp2, config.store.sntp2, sizeof(config.store.sntp2), true, true);
         return;
       }
       if (strcmp(cmd, "sntp1") == 0) {
-        strlcpy(config.store.sntp1, val, 35);
-        bool tzdone = false;
-        if (strlen(config.store.sntp1) > 0 && strlen(config.store.sntp2) > 0) {
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
-          tzdone = true;
-        } else if (strlen(config.store.sntp1) > 0) {
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
-          tzdone = true;
-        }
-        if (tzdone) {
-          network.forceTimeSync = true;
-          config.saveValue(config.store.sntp1, val, 35);
-        }
+        strlcpy(config.store.sntp1, val, sizeof(config.store.sntp1));
+        config.saveValue(config.store.sntp1, config.store.sntp1, sizeof(config.store.sntp1), true, true);
+        network.forceTimeSync = true;
+        network.requestTimeSync(true);
         return;
       }
       if (strcmp(cmd, "volsteps") == 0) {
@@ -613,15 +607,18 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(cmd, "lat") == 0) {
-        config.saveValue(config.store.weatherlat, val, 10, false);
+        strlcpy(config.store.weatherlat, val, sizeof(config.store.weatherlat));
+        config.saveValue(config.store.weatherlat, config.store.weatherlat, sizeof(config.store.weatherlat), true, true);
         return;
       }
       if (strcmp(cmd, "lon") == 0) {
-        config.saveValue(config.store.weatherlon, val, 10, false);
+        strlcpy(config.store.weatherlon, val, sizeof(config.store.weatherlon));
+        config.saveValue(config.store.weatherlon, config.store.weatherlon, sizeof(config.store.weatherlon), true, true);
         return;
       }
       if (strcmp(cmd, "key") == 0) {
-        config.saveValue(config.store.weatherkey, val, WEATHERKEY_LENGTH);
+        strlcpy(config.store.weatherkey, val, sizeof(config.store.weatherkey));
+        config.saveValue(config.store.weatherkey, config.store.weatherkey, sizeof(config.store.weatherkey), true, true);
         network.trueWeather=false;
         display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
         return;
@@ -661,19 +658,19 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           return;
         }
         if (strcmp(val, "timezone") == 0) {
-          config.saveValue(&config.store.tzHour, (int8_t)3, false);
-          config.saveValue(&config.store.tzMin, (int8_t)0, false);
-          config.saveValue(config.store.sntp1, "2.ru.pool.ntp.org", 35, false);
-          config.saveValue(config.store.sntp2, "1.ru.pool.ntp.org", 35);
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+          config.saveValue(config.store.tz_name, TIMEZONE_NAME, sizeof(config.store.tz_name), false);
+          config.saveValue(config.store.tzposix, TIMEZONE_POSIX, sizeof(config.store.tzposix), false);
+          config.saveValue(config.store.sntp1, SNTP1, sizeof(config.store.sntp1), false);
+          config.saveValue(config.store.sntp2, SNTP2, sizeof(config.store.sntp2), false);
           network.forceTimeSync = true;
+          network.requestTimeSync(true);
           requestOnChange(GETTIMEZONE, clientId);
           return;
         }
         if (strcmp(val, "weather") == 0) {
           config.saveValue(&config.store.showweather, false, false);
-          config.saveValue(config.store.weatherlat, "55.7512", 10, false);
-          config.saveValue(config.store.weatherlon, "37.6184", 10, false);
+          config.saveValue(config.store.weatherlat, WEATHERLAT, sizeof(config.store.weatherlat), false);
+          config.saveValue(config.store.weatherlon, WEATHERLON, sizeof(config.store.weatherlon), false);
           config.saveValue(config.store.weatherkey, "", WEATHERKEY_LENGTH);
           network.trueWeather=false;
           display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
