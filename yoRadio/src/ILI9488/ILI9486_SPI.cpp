@@ -243,7 +243,8 @@ void ILI9486_SPI::invertDisplay(bool i)
 {
   /*_bgr = i ? MADCTL_BGR : 0x00;
   setRotation(rotation);*/
-  sendCommand(i ? ILI9488_INVON : ILI9488_INVOFF);
+//  sendCommand(i ? ILI9488_INVON : ILI9488_INVOFF);
+  sendCommand(i ? ILI9488_INVOFF : ILI9488_INVON);
 }
 
 // *** other public methods ***

@@ -218,6 +218,8 @@ const char *getFormat(BitrateFormat _format) {
     case BF_FLAC: return "FLC";
     case BF_OGG:  return "OGG";
     case BF_WAV:  return "WAV";
+    case BF_VOR:  return "VOR";
+    case BF_OPU:  return "OPU";
     default:      return "bitrate";
   }
 }
@@ -536,7 +538,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       }
       if (strcmp(cmd, "screensaverplayingtimeout") == 0) {
         uint16_t valb = atoi(val);
-        valb = constrain(valb,1,1080);
+        valb = constrain(valb,5,65520);
         config.saveValue(&config.store.screensaverPlayingTimeout, valb);
         #ifndef DSP_LCD
         display.putRequest(NEWMODE, PLAYER);
@@ -649,7 +651,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           config.saveValue(&config.store.screensaverTimeout, (uint16_t)20);
           config.saveValue(&config.store.screensaverBlank, false);
           config.saveValue(&config.store.screensaverPlayingEnabled, false);
-          config.saveValue(&config.store.screensaverPlayingTimeout, (uint16_t)5);
+          config.saveValue(&config.store.screensaverPlayingTimeout, (uint16_t)20);
           config.saveValue(&config.store.screensaverPlayingBlank, false);
           display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
           requestOnChange(GETSCREEN, clientId);
@@ -775,7 +777,7 @@ void NetServer::getPlaylist(uint8_t clientId) {
   if (clientId == 0) { websocket.textAll(buf); } else { websocket.text(clientId, buf); }
 }
 
-int NetServer::_readPlaylistLine(File &file, char * line, size_t size){
+uint8_t NetServer::_readPlaylistLine(File &file, char * line, size_t size){
   int bytesRead = file.readBytesUntil('\n', line, size);
   if(bytesRead>0){
     line[bytesRead] = 0;

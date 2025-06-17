@@ -31,31 +31,24 @@ const char jun[] PROGMEM = "июня";
 const char jul[] PROGMEM = "июля";
 const char aug[] PROGMEM = "августа";
 const char sep[] PROGMEM = "сентября";
-const char octt[] PROGMEM = "октября";
+const char ocb[] PROGMEM = "октября";
 const char nov[] PROGMEM = "ноября";
-const char decc[] PROGMEM = "декабря";
+const char dcb[] PROGMEM = "декабря";
 
-const char wn_N[]      PROGMEM = "СЕВ";
-const char wn_NNE[]    PROGMEM = "ССВ";
-const char wn_NE[]     PROGMEM = "СВ";
-const char wn_ENE[]    PROGMEM = "ВСВ";
-const char wn_E[]      PROGMEM = "ВОСТ";
-const char wn_ESE[]    PROGMEM = "ВЮВ";
-const char wn_SE[]     PROGMEM = "ЮВ";
-const char wn_SSE[]    PROGMEM = "ЮЮВ";
-const char wn_S[]      PROGMEM = "ЮЖ";
-const char wn_SSW[]    PROGMEM = "ЮЮЗ";
-const char wn_SW[]     PROGMEM = "ЮЗ";
-const char wn_WSW[]    PROGMEM = "ЗЮЗ";
-const char wn_W[]      PROGMEM = "ЗАП";
-const char wn_WNW[]    PROGMEM = "ЗСЗ";
-const char wn_NW[]     PROGMEM = "СЗ";
-const char wn_NNW[]    PROGMEM = "ССЗ";
+const char wn_N[]      PROGMEM = "Северный";
+const char wn_NE[]     PROGMEM = "Северо-Восточный";
+const char wn_E[]      PROGMEM = "Восточный";
+const char wn_SE[]     PROGMEM = "Юго-Восточный";
+const char wn_S[]      PROGMEM = "Южный";
+const char wn_SW[]     PROGMEM = "Юго-Западный";
+const char wn_W[]      PROGMEM = "Западный";
+const char wn_NW[]     PROGMEM = "Северо-Западный";
+const char prv[]    PROGMEM = ", порывы ";
 
 const char* const dow[]     PROGMEM = { sun, mon, tue, wed, thu, fri, sat };
 const char* const dowf[]    PROGMEM = { sunf, monf, tuef, wedf, thuf, frif, satf };
-const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, octt, nov, decc };
-const char* const wind[]    PROGMEM = { wn_N, wn_NNE, wn_NE, wn_ENE, wn_E, wn_ESE, wn_SE, wn_SSE, wn_S, wn_SSW, wn_SW, wn_WSW, wn_W, wn_WNW, wn_NW, wn_NNW, wn_N };
+const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, ocb, nov, dcb };
+const char* const wind[]    PROGMEM = { wn_N, wn_NE, wn_NE, wn_E, wn_E, wn_SE, wn_SE, wn_S, wn_S, wn_SW, wn_SW, wn_W, wn_W, wn_NW, wn_NW, wn_N, wn_N };
 
 const char    const_PlReady[]    PROGMEM = "[готов]";
 const char  const_PlStopped[]    PROGMEM = "[остановлено]";
@@ -68,11 +61,11 @@ const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "ИНДЕКС SD";
 
 const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
-const char        apPassTxt[]    PROGMEM = "ПАРОЛЬ";
+const char        apPassTxt[]    PROGMEM = "БЕЗ ПАРОЛЯ";
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
 const char        apSettFmt[]    PROGMEM = "НАСТРОЙКИ: HTTP://%s/";
 #if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
+const char       weatherFmt[]    PROGMEM = "%s, темп.: %+.1f\011C (ощущ.как %+.0f\011C) \007 давл.: %d мм \007 влаж.: %s%% \007 ветер %s %.0f%s м/с (м.ст. %s)";
 #else
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 давление: %d mm \007 влажность: %s%%";
 #endif

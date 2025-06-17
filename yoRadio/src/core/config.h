@@ -14,8 +14,15 @@
 #define EEPROM_START      500
 #define EEPROM_START_IR   0
 #define EEPROM_START_2    10
+
+//#ifdef WROOM_USED
+//  #define WROOM            1
+//#else
+//  #define WROOM            0
+//#endif
+
 #ifndef BUFLEN
-  #define BUFLEN            170
+  #define BUFLEN            250
 #endif
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
@@ -40,16 +47,18 @@
 #define MAX_PLAY_MODE   1
 #define WEATHERKEY_LENGTH 58
 #define MDNS_LENGTH 24
+
 #if SDC_CS!=255
   #define USE_SD
 #endif
+
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
 #define CONFIG_VERSION  5 // store version 5
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
-enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
+enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV, BF_VOR, BF_OPU };
 
 void u8fix(char *src);
 
