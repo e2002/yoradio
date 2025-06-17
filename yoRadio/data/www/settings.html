@@ -146,14 +146,17 @@
           <div class="title"><span>timezone</span></div><div class="reset" data-name="timezone"></div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">hours</span>
-              <input type="number" id="tzhour" class="textinput" name="tzhour" value="" maxlength="3" min="-12" max="14" />
+              <span class="inputtitle">select time zone</span>
+              <select id="tz_name" class="textinput" name="tz_name">
+                <option value="">Timezones Load Here</option>
+                </select>
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">minutes</span>
-              <input type="number" id="tzmin" class="textinput" name="tzmin" value="" maxlength="2" min="0" max="45" step="15" />
+              <span class="inputtitle">posix string</span>
+              <input type="text" id="tzposix" class="textinput" name="tzposix" maxlength="69" />
             </div>
           </div>
+
           <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle">ntp server #1</span>
