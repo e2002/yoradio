@@ -31,11 +31,6 @@ bool Config::_isFSempty() {
 }
 
 void Config::init() {
-  // Switching from EEProm to Preferences
-  // EEPROM.begin(EEPROM_SIZE);
-  // New Preferences code
-  prefs.begin("yoradio", false);
-  prefs.getBytes("store", &store, sizeof(store));
   sdResumePos = 0;
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
@@ -62,9 +57,11 @@ void Config::init() {
     SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
   #endif
 #endif
-  // Old EEPROM code
-  // eepromRead(EEPROM_START, store);
-  
+  // Preferences - load variable values
+  for (size_t i = 0; keyMap[i].fieldPtr != nullptr; ++i) {
+    uint8_t* field = reinterpret_cast<uint8_t*>(&store) + (reinterpret_cast<uint8_t*>(keyMap[i].fieldPtr) - reinterpret_cast<uint8_t*>(&(((Config*)0)->store)));
+    prefs.getBytes(keyMap[i].key, field, getFieldSize(keyMap[i].fieldPtr));
+  }
   if (store.config_set != 4262) {
     setDefaults();
   }
@@ -830,3 +827,66 @@ void Config::bootInfo() {
   BOOTLOG("------------------------------------------------");
 }
 
+// Preferences Look-up Table
+#define CONFIG_KEY_ENTRY(field, keyname) { (void*)&(((Config*)0)->store.field), keyname }
+const configKeyMap Config::keyMap[] = {
+  // key names are limited to 15 characters so shorter is better!
+  CONFIG_KEY_ENTRY(config_set, "cfgset"),
+  CONFIG_KEY_ENTRY(version, "ver"),
+  CONFIG_KEY_ENTRY(volume, "vol"),
+  CONFIG_KEY_ENTRY(balance, "bal"),
+  CONFIG_KEY_ENTRY(trebble, "treb"),
+  CONFIG_KEY_ENTRY(middle, "mid"),
+  CONFIG_KEY_ENTRY(bass, "bass"),
+  CONFIG_KEY_ENTRY(lastStation, "laststa"),
+  CONFIG_KEY_ENTRY(countStation, "countsta"),
+  CONFIG_KEY_ENTRY(lastSSID, "lastssid"),
+  CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
+  CONFIG_KEY_ENTRY(smartstart, "smartstart"),
+  CONFIG_KEY_ENTRY(tzHour, "tzh"),
+  CONFIG_KEY_ENTRY(tzMin, "tzm"),
+  CONFIG_KEY_ENTRY(timezoneOffset, "tzoff"),
+  CONFIG_KEY_ENTRY(vumeter, "vumeter"),
+  CONFIG_KEY_ENTRY(softapdelay, "softapdelay"),
+  CONFIG_KEY_ENTRY(flipscreen, "flipscr"),
+  CONFIG_KEY_ENTRY(invertdisplay, "invdisp"),
+  CONFIG_KEY_ENTRY(numplaylist, "numplaylist"),
+  CONFIG_KEY_ENTRY(fliptouch, "fliptouch"),
+  CONFIG_KEY_ENTRY(dbgtouch, "dbgtouch"),
+  CONFIG_KEY_ENTRY(dspon, "dspon"),
+  CONFIG_KEY_ENTRY(brightness, "bright"),
+  CONFIG_KEY_ENTRY(contrast, "contrast"),
+  CONFIG_KEY_ENTRY(sntp1, "sntp1"),
+  CONFIG_KEY_ENTRY(sntp2, "sntp2"),
+  CONFIG_KEY_ENTRY(showweather, "showwthr"),
+  CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
+  CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
+  CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
+  CONFIG_KEY_ENTRY(_reserved, "resv"),
+  CONFIG_KEY_ENTRY(lastSdStation, "lastsdsta"),
+  CONFIG_KEY_ENTRY(sdsnuffle, "sdsnuffle"),
+  CONFIG_KEY_ENTRY(volsteps, "vsteps"),
+  CONFIG_KEY_ENTRY(encacc, "encacc"),
+  CONFIG_KEY_ENTRY(play_mode, "playmode"),
+  CONFIG_KEY_ENTRY(irtlp, "irtlp"),
+  CONFIG_KEY_ENTRY(btnpullup, "btnpullup"),
+  CONFIG_KEY_ENTRY(btnlongpress, "btnlngpress"),
+  CONFIG_KEY_ENTRY(btnclickticks, "btnclkticks"),
+  CONFIG_KEY_ENTRY(btnpressticks, "btnprsticks"),
+  CONFIG_KEY_ENTRY(encpullup, "encpullup"),
+  CONFIG_KEY_ENTRY(enchalf, "enchalf"),
+  CONFIG_KEY_ENTRY(enc2pullup, "enc2pullup"),
+  CONFIG_KEY_ENTRY(enc2half, "enc2half"),
+  CONFIG_KEY_ENTRY(forcemono, "forcemono"),
+  CONFIG_KEY_ENTRY(i2sinternal, "i2sint"),
+  CONFIG_KEY_ENTRY(rotate90, "rotate"),
+  CONFIG_KEY_ENTRY(screensaverEnabled, "scrnsvren"),
+  CONFIG_KEY_ENTRY(screensaverTimeout, "scrnsvrto"),
+  CONFIG_KEY_ENTRY(screensaverBlank, "scrnsvrbl"),
+  CONFIG_KEY_ENTRY(screensaverPlayingEnabled, "scrnsvrplen"),
+  CONFIG_KEY_ENTRY(screensaverPlayingTimeout, "scrnsvrplto"),
+  CONFIG_KEY_ENTRY(screensaverPlayingBlank, "scrnsvrplbl"),
+  CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
+  CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
+  { nullptr, nullptr } // End marker (don't add anything after this)
+};

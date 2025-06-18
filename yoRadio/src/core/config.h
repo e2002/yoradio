@@ -12,11 +12,7 @@
 #include "rtcsupport.h"
 #include "../pluginsManager/pluginsManager.h"
 
-// Old EEPROM code (no longer needed with Preferences)
-// #define EEPROM_SIZE       1000
-// #define EEPROM_START      500
-// #define EEPROM_START_IR   0
-// #define EEPROM_START_2    10
+
 #ifndef BUFLEN
   #define BUFLEN            170
 #endif
@@ -145,6 +141,11 @@ struct config_t
   bool      screensaverPlayingBlank;
   char      mdnsname[24];
   bool      skipPlaylistUpDown;
+  // all variables have a matching entry in getFieldSize (config.h) and in configKeyMap (config.cpp)
+};
+struct configKeyMap {
+    void* fieldPtr;
+    const char* key;
 };
 
 #if IR_PIN!=255
@@ -172,7 +173,6 @@ struct neworkItem
 
 class Config {
   public:
-    Preferences prefs; // For Preferences
     config_t store;
     station_t station;
     theme_t   theme;
@@ -250,34 +250,42 @@ class Config {
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
     #endif
-    // Old EEPROM code
-    // template <typename T>
-    // size_t getAddr(const T *field) const {
-    //   return (size_t)((const uint8_t *)field - (const uint8_t *)&store) + EEPROM_START;
-    // }
+    Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
+    template <typename T>
+    void loadValue(T *field) {
+      const char* key = getKeyForField(field);
+      if (key) prefs.getBytes(key, field, sizeof(T));
+    }
+    static const configKeyMap keyMap[];
+    const char* getKeyForField(const void* field)const {
+        for (size_t i = 0; keyMap[i].fieldPtr != nullptr; ++i) {
+            if (keyMap[i].fieldPtr == field) return keyMap[i].key;
+        }
+        return nullptr; // Not found
+    }
     template <typename T>
     void saveValue(T *field, const T &value, bool commit=true, bool force=false){
       if(*field == value && !force) return;
       *field = value;
-      // Old EEPROM code
-      // size_t address = getAddr(field);
-      // EEPROM.put(address, value);
-      // if(commit)
-      //   EEPROM.commit();
-      // Preferences
-      prefs.putBytes(reinterpret_cast<const char*>(field), field, sizeof(T));
+      const char* key = getKeyForField(field); // consult look-up table
+
+      if (key) {
+        prefs.begin("yoradio", false);
+        prefs.putBytes(key, field, sizeof(T)); // if not found in look-up table, can't be saved
+        prefs.end();
+      }
       // No commit needed for Preferences (kept for compatibility in the rest of the code)
     }
     void saveValue(char *field, const char *value, size_t N, bool commit=true, bool force=false) {
       if (strcmp(field, value) == 0 && !force) return;
       strlcpy(field, value, N);
-      // Old EEPROM code
-      // size_t address = getAddr(field);
-      // for (size_t i = 0; i < N; i++) EEPROM.write(address + i, field[i]);
-      // if(commit)
-      //   EEPROM.commit();
-      // Preferences
-      prefs.putBytes(reinterpret_cast<const char*>(field), field, N);
+      const char* key = getKeyForField(field); // consult look-up table
+
+      if (key) {
+        prefs.begin("yoradio", false);
+        prefs.putBytes(key, field, N); // if not found in look-up table, can't be saved
+        prefs.end();
+      }
       // No commit needed for Preferences (kept for compatibility in the rest of the code)
     }
     uint32_t getChipId(){
@@ -288,9 +296,6 @@ class Config {
       return chipId;
     }
   private:
-    // Old EEPROM code
-    // template <class T> int eepromWrite(int ee, const T& value);
-    // template <class T> int eepromRead(int ee, T& value);
     bool _bootDone;
     #if RTCSUPPORTED
       bool _rtcFound;
@@ -309,6 +314,70 @@ class Config {
       return station;
     }
     char _stationBuf[BUFLEN/2];
+
+  // Preferences: used to load preferences in init()
+  size_t getFieldSize(const void* fieldPtr) const {
+    #define FIELD_SIZE(field) if (fieldPtr == (void*)&(((Config*)0)->store.field)) return sizeof(((Config*)0)->store.field);
+    FIELD_SIZE(config_set)
+    FIELD_SIZE(version)
+    FIELD_SIZE(volume)
+    FIELD_SIZE(balance)
+    FIELD_SIZE(trebble)
+    FIELD_SIZE(middle)
+    FIELD_SIZE(bass)
+    FIELD_SIZE(lastStation)
+    FIELD_SIZE(countStation)
+    FIELD_SIZE(lastSSID)
+    FIELD_SIZE(audioinfo)
+    FIELD_SIZE(smartstart)
+    FIELD_SIZE(tzHour)
+    FIELD_SIZE(tzMin)
+    FIELD_SIZE(timezoneOffset)
+    FIELD_SIZE(vumeter)
+    FIELD_SIZE(softapdelay)
+    FIELD_SIZE(flipscreen)
+    FIELD_SIZE(invertdisplay)
+    FIELD_SIZE(numplaylist)
+    FIELD_SIZE(fliptouch)
+    FIELD_SIZE(dbgtouch)
+    FIELD_SIZE(dspon)
+    FIELD_SIZE(brightness)
+    FIELD_SIZE(contrast)
+    FIELD_SIZE(sntp1)
+    FIELD_SIZE(sntp2)
+    FIELD_SIZE(showweather)
+    FIELD_SIZE(weatherlat)
+    FIELD_SIZE(weatherlon)
+    FIELD_SIZE(weatherkey)
+    FIELD_SIZE(_reserved)
+    FIELD_SIZE(lastSdStation)
+    FIELD_SIZE(sdsnuffle)
+    FIELD_SIZE(volsteps)
+    FIELD_SIZE(encacc)
+    FIELD_SIZE(play_mode)
+    FIELD_SIZE(irtlp)
+    FIELD_SIZE(btnpullup)
+    FIELD_SIZE(btnlongpress)
+    FIELD_SIZE(btnclickticks)
+    FIELD_SIZE(btnpressticks)
+    FIELD_SIZE(encpullup)
+    FIELD_SIZE(enchalf)
+    FIELD_SIZE(enc2pullup)
+    FIELD_SIZE(enc2half)
+    FIELD_SIZE(forcemono)
+    FIELD_SIZE(i2sinternal)
+    FIELD_SIZE(rotate90)
+    FIELD_SIZE(screensaverEnabled)
+    FIELD_SIZE(screensaverTimeout)
+    FIELD_SIZE(screensaverBlank)
+    FIELD_SIZE(screensaverPlayingEnabled)
+    FIELD_SIZE(screensaverPlayingTimeout)
+    FIELD_SIZE(screensaverPlayingBlank)
+    FIELD_SIZE(mdnsname)
+    FIELD_SIZE(skipPlaylistUpDown)
+    #undef FIELD_SIZE // Add new variables above this line
+    return 0; // Not found
+  }
 };
 
 extern Config config;
