@@ -31,7 +31,11 @@ bool Config::_isFSempty() {
 }
 
 void Config::init() {
-  EEPROM.begin(EEPROM_SIZE);
+  // Switching from EEProm to Preferences
+  // EEPROM.begin(EEPROM_SIZE);
+  // New Preferences code
+  prefs.begin("yoradio", false);
+  prefs.getBytes("store", &store, sizeof(store));
   sdResumePos = 0;
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
@@ -58,7 +62,8 @@ void Config::init() {
     SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
   #endif
 #endif
-  eepromRead(EEPROM_START, store);
+  // Old EEPROM code
+  // eepromRead(EEPROM_START, store);
   
   if (store.config_set != 4262) {
     setDefaults();
@@ -232,11 +237,14 @@ void Config::initPlaylistMode(){
 void Config::_initHW(){
   loadTheme();
   #if IR_PIN!=255
-  eepromRead(EEPROM_START_IR, ircodes);
-  if(ircodes.ir_set!=4224){
-    ircodes.ir_set=4224;
-    memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
-  }
+  // Old EEPROM code
+  // eepromRead(EEPROM_START_IR, ircodes);
+  // if(ircodes.ir_set!=4224){
+  //   ircodes.ir_set=4224;
+  //   memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
+  // }
+  // Preferences
+  prefs.getBytes("ircodes", &ircodes, sizeof(ircodes));
   #endif
   #if BRIGHTNESS_PIN!=255
     pinMode(BRIGHTNESS_PIN, OUTPUT);
@@ -285,22 +293,23 @@ void Config::loadTheme(){
   #include "../displays/tools/tftinverttitle.h"
 }
 
-template <class T> int Config::eepromWrite(int ee, const T& value) {
-  const uint8_t* p = (const uint8_t*)(const void*)&value;
-  int i;
-  for (i = 0; i < sizeof(value); i++)
-    EEPROM.write(ee++, *p++);
-  EEPROM.commit();
-  return i;
-}
-
-template <class T> int Config::eepromRead(int ee, T& value) {
-  uint8_t* p = (uint8_t*)(void*)&value;
-  int i;;
-  for (i = 0; i < sizeof(value); i++)
-    *p++ = EEPROM.read(ee++);
-  return i;
-}
+// Old EEPROM functions (not needed by Preferences)
+// template <class T> int Config::eepromWrite(int ee, const T& value) {
+//   const uint8_t* p = (const uint8_t*)(const void*)&value;
+//   int i;
+//   for (i = 0; i < sizeof(value); i++)
+//     EEPROM.write(ee++, *p++);
+//   EEPROM.commit();
+//   return i;
+// }
+//
+// template <class T> int Config::eepromRead(int ee, T& value) {
+//   uint8_t* p = (uint8_t*)(void*)&value;
+//   int i;;
+//   for (i = 0; i < sizeof(value); i++)
+//     *p++ = EEPROM.read(ee++);
+//   return i;
+// }
 
 void Config::reset(){
   setDefaults();
@@ -365,7 +374,10 @@ void Config::setDefaults() {
   store.skipPlaylistUpDown = false;
   store.screensaverPlayingEnabled = false;
   store.screensaverPlayingTimeout = 5;
-  eepromWrite(EEPROM_START, store);
+  // Old EEPROM code
+  // eepromWrite(EEPROM_START, store);
+  // Preferences
+  prefs.putBytes("store", &store, sizeof(store));
 }
 
 void Config::setTimezone(int8_t tzh, int8_t tzm) {
@@ -388,7 +400,10 @@ void Config::setSnuffle(bool sn){
 
 #if IR_PIN!=255
 void Config::saveIR(){
-  eepromWrite(EEPROM_START_IR, ircodes);
+  // Old EEPROM code
+  // eepromWrite(EEPROM_START_IR, ircodes);
+  // Preferences
+  prefs.putBytes("ircodes", &ircodes, sizeof(ircodes));
 }
 #endif
 

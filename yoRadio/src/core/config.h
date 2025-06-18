@@ -4,16 +4,19 @@
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
-#include <EEPROM.h>
+// Switching from EEProm to Preferences
+// #include <EEPROM.h>
+#include <Preferences.h>
 //#include "SD.h"
 #include "options.h"
 #include "rtcsupport.h"
 #include "../pluginsManager/pluginsManager.h"
 
-#define EEPROM_SIZE       768
-#define EEPROM_START      500
-#define EEPROM_START_IR   0
-#define EEPROM_START_2    10
+// Old EEPROM code (no longer needed with Preferences)
+// #define EEPROM_SIZE       1000
+// #define EEPROM_START      500
+// #define EEPROM_START_IR   0
+// #define EEPROM_START_2    10
 #ifndef BUFLEN
   #define BUFLEN            170
 #endif
@@ -169,6 +172,7 @@ struct neworkItem
 
 class Config {
   public:
+    Preferences prefs; // For Preferences
     config_t store;
     station_t station;
     theme_t   theme;
@@ -246,27 +250,35 @@ class Config {
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
     #endif
-    template <typename T>
-    size_t getAddr(const T *field) const {
-      return (size_t)((const uint8_t *)field - (const uint8_t *)&store) + EEPROM_START;
-    }
+    // Old EEPROM code
+    // template <typename T>
+    // size_t getAddr(const T *field) const {
+    //   return (size_t)((const uint8_t *)field - (const uint8_t *)&store) + EEPROM_START;
+    // }
     template <typename T>
     void saveValue(T *field, const T &value, bool commit=true, bool force=false){
       if(*field == value && !force) return;
       *field = value;
-      size_t address = getAddr(field);
-      EEPROM.put(address, value);
-      if(commit)
-        EEPROM.commit();
+      // Old EEPROM code
+      // size_t address = getAddr(field);
+      // EEPROM.put(address, value);
+      // if(commit)
+      //   EEPROM.commit();
+      // Preferences
+      prefs.putBytes(reinterpret_cast<const char*>(field), field, sizeof(T));
+      // No commit needed for Preferences (kept for compatibility in the rest of the code)
     }
     void saveValue(char *field, const char *value, size_t N, bool commit=true, bool force=false) {
       if (strcmp(field, value) == 0 && !force) return;
       strlcpy(field, value, N);
-      size_t address = getAddr(field);
-      size_t fieldlen = strlen(field);
-      for (size_t i = 0; i <=fieldlen ; i++) EEPROM.write(address + i, field[i]);
-      if(commit)
-        EEPROM.commit();
+      // Old EEPROM code
+      // size_t address = getAddr(field);
+      // for (size_t i = 0; i < N; i++) EEPROM.write(address + i, field[i]);
+      // if(commit)
+      //   EEPROM.commit();
+      // Preferences
+      prefs.putBytes(reinterpret_cast<const char*>(field), field, N);
+      // No commit needed for Preferences (kept for compatibility in the rest of the code)
     }
     uint32_t getChipId(){
       uint32_t chipId = 0;
@@ -276,8 +288,9 @@ class Config {
       return chipId;
     }
   private:
-    template <class T> int eepromWrite(int ee, const T& value);
-    template <class T> int eepromRead(int ee, T& value);
+    // Old EEPROM code
+    // template <class T> int eepromWrite(int ee, const T& value);
+    // template <class T> int eepromRead(int ee, T& value);
     bool _bootDone;
     #if RTCSUPPORTED
       bool _rtcFound;
