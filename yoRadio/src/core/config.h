@@ -90,8 +90,6 @@ struct config_t // specify defaults here (defaults are NOT saved to Prefs)
   uint8_t   lastSSID = 0;
   bool      audioinfo = false;
   uint8_t   smartstart = 2;
-  int8_t    tzHour = 3;
-  int8_t    tzMin = 0;
   uint16_t  timezoneOffset = 0;
   bool      vumeter = false;
   uint8_t   softapdelay = 0;
@@ -103,11 +101,13 @@ struct config_t // specify defaults here (defaults are NOT saved to Prefs)
   bool      dspon = true;
   uint8_t   brightness = 100;
   uint8_t   contrast = 55;
-  char      sntp1[35] = "pool.ntp.org";
-  char      sntp2[35] = "1.ru.pool.ntp.org";
+  char      tz_name[70] = TIMEZONE_NAME;
+  char      tzposix[70] = TIMEZONE_POSIX;
+  char      sntp1[35] = SNTP1;
+  char      sntp2[35] = SNTP2;
   bool      showweather = false;
-  char      weatherlat[10] = "55.7512";
-  char      weatherlon[10] = "37.6184";
+  char      weatherlat[10] = WEATHERLAT;
+  char      weatherlon[10] = WEATHERLON;
   char      weatherkey[WEATHERKEY_LENGTH] = "";
   uint16_t  _reserved = 0;
   uint16_t  lastSdStation = 0;
