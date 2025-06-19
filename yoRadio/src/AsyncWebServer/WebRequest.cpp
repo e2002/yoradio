@@ -22,9 +22,7 @@
 #include "WebResponseImpl.h"
 #include "WebAuthentication.h"
 
-#ifndef ESP8266
 #define os_strlen strlen
-#endif
 
 static const String SharedEmptyString = String();
 
