@@ -4,8 +4,6 @@
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
-// Switching from EEProm to Preferences
-// #include <EEPROM.h>
 #include <Preferences.h>
 //#include "SD.h"
 #include "options.h"
@@ -45,7 +43,6 @@
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  4
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
@@ -82,76 +79,80 @@ struct theme_t {
   uint16_t plcurrentfill;
   uint16_t playlist[5];
 };
-struct config_t
+struct config_t // specify defaults here (defaults are NOT saved to Prefs)
 {
-  uint16_t  config_set; //must be 4262
-  uint16_t  version;
-  uint8_t   volume;
-  int8_t    balance;
-  int8_t    trebble;
-  int8_t    middle;
-  int8_t    bass;
-  uint16_t  lastStation;
-  uint16_t  countStation;
-  uint8_t   lastSSID;
-  bool      audioinfo;
-  uint8_t   smartstart;
-  int8_t    tzHour;
-  int8_t    tzMin;
-  uint16_t  timezoneOffset;
-  bool      vumeter;
-  uint8_t   softapdelay;
-  bool      flipscreen;
-  bool      invertdisplay;
-  bool      numplaylist;
-  bool      fliptouch;
-  bool      dbgtouch;
-  bool      dspon;
-  uint8_t   brightness;
-  uint8_t   contrast;
-  char      sntp1[35];
-  char      sntp2[35];
-  bool      showweather;
-  char      weatherlat[10];
-  char      weatherlon[10];
-  char      weatherkey[WEATHERKEY_LENGTH];
-  uint16_t  _reserved;
-  uint16_t  lastSdStation;
-  bool      sdsnuffle;
-  uint8_t   volsteps;
-  uint16_t  encacc;
-  uint8_t   play_mode;  //0 WEB, 1 SD
-  uint8_t   irtlp;
-  bool      btnpullup;
-  uint16_t  btnlongpress;
-  uint16_t  btnclickticks;
-  uint16_t  btnpressticks;
-  bool      encpullup;
-  bool      enchalf;
-  bool      enc2pullup;
-  bool      enc2half;
-  bool      forcemono;
-  bool      i2sinternal;
-  bool      rotate90;
-  bool      screensaverEnabled;
-  uint16_t  screensaverTimeout;
-  bool      screensaverBlank;
-  bool      screensaverPlayingEnabled;
-  uint16_t  screensaverPlayingTimeout;
-  bool      screensaverPlayingBlank;
-  char      mdnsname[24];
-  bool      skipPlaylistUpDown;
-  // all variables have a matching entry in getFieldSize (config.h) and in configKeyMap (config.cpp)
+  uint16_t  config_set = 4262;
+  uint8_t   volume = 12;
+  int8_t    balance = 0;
+  int8_t    trebble = 0;
+  int8_t    middle = 0;
+  int8_t    bass = 0;
+  uint16_t  lastStation = 0;
+  uint16_t  countStation = 0;
+  uint8_t   lastSSID = 0;
+  bool      audioinfo = false;
+  uint8_t   smartstart = 2;
+  int8_t    tzHour = 3;
+  int8_t    tzMin = 0;
+  uint16_t  timezoneOffset = 0;
+  bool      vumeter = false;
+  uint8_t   softapdelay = 0;
+  bool      flipscreen = false;
+  bool      invertdisplay = false;
+  bool      numplaylist = false;
+  bool      fliptouch = false;
+  bool      dbgtouch = false;
+  bool      dspon = true;
+  uint8_t   brightness = 100;
+  uint8_t   contrast = 55;
+  char      sntp1[35] = "pool.ntp.org";
+  char      sntp2[35] = "1.ru.pool.ntp.org";
+  bool      showweather = false;
+  char      weatherlat[10] = "55.7512";
+  char      weatherlon[10] = "37.6184";
+  char      weatherkey[WEATHERKEY_LENGTH] = "";
+  uint16_t  _reserved = 0;
+  uint16_t  lastSdStation = 0;
+  bool      sdsnuffle = false;
+  uint8_t   volsteps = 1;
+  uint16_t  encacc = 200;
+  uint8_t   play_mode = 0;
+  uint8_t   irtlp = 35;
+  bool      btnpullup = true;
+  uint16_t  btnlongpress = 200;
+  uint16_t  btnclickticks = 300;
+  uint16_t  btnpressticks = 500;
+  bool      encpullup = false;
+  bool      enchalf = false;
+  bool      enc2pullup = false;
+  bool      enc2half = false;
+  bool      forcemono = false;
+  bool      i2sinternal = false;
+  bool      rotate90 = false;
+  bool      screensaverEnabled = false;
+  uint16_t  screensaverTimeout = 20;
+  bool      screensaverBlank = false;
+  bool      screensaverPlayingEnabled = false;
+  uint16_t  screensaverPlayingTimeout = 5;
+  bool      screensaverPlayingBlank = false;
+  char      mdnsname[24] = "";
+  bool      skipPlaylistUpDown = false;
+  // if adding a variable, you can do it anywhere, just be sure to add it to configKeyMap() in config.cpp
+  // if removing a variable and key, add to deleteOldKeys()
 };
+
+#define CONFIG_KEY_ENTRY(field, keyname) { offsetof(config_t, field), keyname, sizeof(((config_t*)0)->field) }
+
 struct configKeyMap {
-    void* fieldPtr;
+    size_t fieldOffset;
     const char* key;
+    size_t size;
 };
 
 #if IR_PIN!=255
 struct ircodes_t
 {
-  unsigned int ir_set; //must be 4224
+  unsigned int ir_set = 0; // will be 4224 if written/restored correctly
   uint64_t irVals[20][3];
 };
 #endif
@@ -198,6 +199,8 @@ class Config {
     void saveIR();
 #endif
     void init();
+    void loadPreferences();
+    void deleteOldKeys();
     void loadTheme();
     uint8_t setVolume(uint8_t val);
     void saveVolume();
@@ -251,42 +254,56 @@ class Config {
       bool isRTCFound(){ return _rtcFound; };
     #endif
     Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
+    static const configKeyMap keyMap[];
+
+    // Helper to get key map entry for a field pointer
+    const configKeyMap* getKeyMapEntryForField(const void* field) const {
+        size_t offset = (const uint8_t*)field - (const uint8_t*)&store;
+        for (size_t i = 0; keyMap[i].key != nullptr; ++i) {
+            if (keyMap[i].fieldOffset == offset) return &keyMap[i];
+        }
+        return nullptr;
+    }
     template <typename T>
     void loadValue(T *field) {
-      const char* key = getKeyForField(field);
-      if (key) prefs.getBytes(key, field, sizeof(T));
-    }
-    static const configKeyMap keyMap[];
-    const char* getKeyForField(const void* field)const {
-        for (size_t i = 0; keyMap[i].fieldPtr != nullptr; ++i) {
-            if (keyMap[i].fieldPtr == field) return keyMap[i].key;
-        }
-        return nullptr; // Not found
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) prefs.getBytes(entry->key, field, entry->size);
     }
     template <typename T>
-    void saveValue(T *field, const T &value, bool commit=true, bool force=false){
-      if(*field == value && !force) return;
-      *field = value;
-      const char* key = getKeyForField(field); // consult look-up table
-
-      if (key) {
+    void saveValue(T *field, const T &value, bool commit=true, bool force=false) {
+      // commit ignored (kept for compatibility)
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) {
         prefs.begin("yoradio", false);
-        prefs.putBytes(key, field, sizeof(T)); // if not found in look-up table, can't be saved
+        T oldValue;
+        size_t existingLen = prefs.getBytesLength(entry->key);
+        size_t bytesRead = prefs.getBytes(entry->key, &oldValue, entry->size);
+        bool exists = bytesRead == entry->size;
+        bool needSave = (existingLen != entry->size) || !exists || memcmp(&oldValue, &value, entry->size) != 0;
+        if (needSave) {
+          prefs.putBytes(entry->key, &value, entry->size);
+          *field = value;
+        }
         prefs.end();
       }
-      // No commit needed for Preferences (kept for compatibility in the rest of the code)
     }
-    void saveValue(char *field, const char *value, size_t N, bool commit=true, bool force=false) {
-      if (strcmp(field, value) == 0 && !force) return;
-      strlcpy(field, value, N);
-      const char* key = getKeyForField(field); // consult look-up table
-
-      if (key) {
+    void saveValue(char *field, const char *value, size_t N = 0, bool commit=true, bool force=false) {
+      // commit ignored (kept for compatibility)
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) {
+        size_t sz = entry->size;
         prefs.begin("yoradio", false);
-        prefs.putBytes(key, field, N); // if not found in look-up table, can't be saved
+        char oldValue[sz];
+        memset(oldValue, 0, sz);
+        size_t existingLen = prefs.getBytesLength(entry->key);
+        bool exists = prefs.getBytes(entry->key, oldValue, sz) == sz;
+        bool needSave = (existingLen != sz) || !exists || strncmp(oldValue, value, sz) != 0 || force;
+        if (needSave) {
+          prefs.putBytes(entry->key, value, sz);
+          strlcpy(field, value, sz);
+        }
         prefs.end();
       }
-      // No commit needed for Preferences (kept for compatibility in the rest of the code)
     }
     uint32_t getChipId(){
       uint32_t chipId = 0;
@@ -305,7 +322,6 @@ class Config {
     Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
-    void _setupVersion();
     void _initHW();
     bool _isFSempty();
     uint16_t _randomStation(){
@@ -315,69 +331,6 @@ class Config {
     }
     char _stationBuf[BUFLEN/2];
 
-  // Preferences: used to load preferences in init()
-  size_t getFieldSize(const void* fieldPtr) const {
-    #define FIELD_SIZE(field) if (fieldPtr == (void*)&(((Config*)0)->store.field)) return sizeof(((Config*)0)->store.field);
-    FIELD_SIZE(config_set)
-    FIELD_SIZE(version)
-    FIELD_SIZE(volume)
-    FIELD_SIZE(balance)
-    FIELD_SIZE(trebble)
-    FIELD_SIZE(middle)
-    FIELD_SIZE(bass)
-    FIELD_SIZE(lastStation)
-    FIELD_SIZE(countStation)
-    FIELD_SIZE(lastSSID)
-    FIELD_SIZE(audioinfo)
-    FIELD_SIZE(smartstart)
-    FIELD_SIZE(tzHour)
-    FIELD_SIZE(tzMin)
-    FIELD_SIZE(timezoneOffset)
-    FIELD_SIZE(vumeter)
-    FIELD_SIZE(softapdelay)
-    FIELD_SIZE(flipscreen)
-    FIELD_SIZE(invertdisplay)
-    FIELD_SIZE(numplaylist)
-    FIELD_SIZE(fliptouch)
-    FIELD_SIZE(dbgtouch)
-    FIELD_SIZE(dspon)
-    FIELD_SIZE(brightness)
-    FIELD_SIZE(contrast)
-    FIELD_SIZE(sntp1)
-    FIELD_SIZE(sntp2)
-    FIELD_SIZE(showweather)
-    FIELD_SIZE(weatherlat)
-    FIELD_SIZE(weatherlon)
-    FIELD_SIZE(weatherkey)
-    FIELD_SIZE(_reserved)
-    FIELD_SIZE(lastSdStation)
-    FIELD_SIZE(sdsnuffle)
-    FIELD_SIZE(volsteps)
-    FIELD_SIZE(encacc)
-    FIELD_SIZE(play_mode)
-    FIELD_SIZE(irtlp)
-    FIELD_SIZE(btnpullup)
-    FIELD_SIZE(btnlongpress)
-    FIELD_SIZE(btnclickticks)
-    FIELD_SIZE(btnpressticks)
-    FIELD_SIZE(encpullup)
-    FIELD_SIZE(enchalf)
-    FIELD_SIZE(enc2pullup)
-    FIELD_SIZE(enc2half)
-    FIELD_SIZE(forcemono)
-    FIELD_SIZE(i2sinternal)
-    FIELD_SIZE(rotate90)
-    FIELD_SIZE(screensaverEnabled)
-    FIELD_SIZE(screensaverTimeout)
-    FIELD_SIZE(screensaverBlank)
-    FIELD_SIZE(screensaverPlayingEnabled)
-    FIELD_SIZE(screensaverPlayingTimeout)
-    FIELD_SIZE(screensaverPlayingBlank)
-    FIELD_SIZE(mdnsname)
-    FIELD_SIZE(skipPlaylistUpDown)
-    #undef FIELD_SIZE // Add new variables above this line
-    return 0; // Not found
-  }
 };
 
 extern Config config;
