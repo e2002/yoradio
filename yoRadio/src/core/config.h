@@ -4,16 +4,12 @@
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
-#include <EEPROM.h>
+#include <Preferences.h>
 //#include "SD.h"
 #include "options.h"
 #include "rtcsupport.h"
 #include "../pluginsManager/pluginsManager.h"
 
-#define EEPROM_SIZE       1000
-#define EEPROM_START      500
-#define EEPROM_START_IR   0
-#define EEPROM_START_2    10
 #ifndef BUFLEN
   #define BUFLEN            170
 #endif
@@ -46,8 +42,6 @@
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  5 // store version 5
-
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
 
@@ -83,78 +77,80 @@ struct theme_t {
   uint16_t plcurrentfill;
   uint16_t playlist[5];
 };
-struct config_t
+struct config_t // specify defaults here (defaults are NOT saved to Prefs)
 {
-  uint16_t  config_set; //must be 4262
-  uint16_t  version;
-  uint8_t   volume;
-  int8_t    balance;
-  int8_t    trebble;
-  int8_t    middle;
-  int8_t    bass;
-  uint16_t  lastStation;
-  uint16_t  countStation;
-  uint8_t   lastSSID;
-  bool      audioinfo;
-  uint8_t   smartstart;
-  int8_t    tzHour; // testing
-  int8_t    tzMin; //testing
-  uint16_t  timezoneOffset; //testing
-  bool      vumeter;
-  uint8_t   softapdelay;
-  bool      flipscreen;
-  bool      invertdisplay;
-  bool      numplaylist;
-  bool      fliptouch;
-  bool      dbgtouch;
-  bool      dspon;
-  uint8_t   brightness;
-  uint8_t   contrast;
-  char      tz_name[70];
-  char      tzposix[70];
-  char      sntp1[35];
-  char      sntp2[35];
-  bool      showweather;
-  char      weatherlat[10];
-  char      weatherlon[10];
-  char      weatherkey[WEATHERKEY_LENGTH];
-  uint16_t  _reserved;
-  uint16_t  lastSdStation;
-  bool      sdsnuffle;
-  uint8_t   volsteps;
-  uint16_t  encacc;
-  uint8_t   play_mode;  //0 WEB, 1 SD
-  uint8_t   irtlp;
-  bool      btnpullup;
-  uint16_t  btnlongpress;
-  uint16_t  btnclickticks;
-  uint16_t  btnpressticks;
-  bool      encpullup;
-  bool      enchalf;
-  bool      enc2pullup;
-  bool      enc2half;
-  bool      forcemono;
-  bool      i2sinternal;
-  bool      rotate90;
-  bool      screensaverEnabled;
-  uint16_t  screensaverTimeout;
-  bool      screensaverBlank;
-  bool      screensaverPlayingEnabled;
-  uint16_t  screensaverPlayingTimeout;
-  bool      screensaverPlayingBlank;
-  char      mdnsname[24];
-  bool      skipPlaylistUpDown; // total: 380 bytes
+  uint16_t  config_set = 4262;
+  uint8_t   volume = 12;
+  int8_t    balance = 0;
+  int8_t    trebble = 0;
+  int8_t    middle = 0;
+  int8_t    bass = 0;
+  uint16_t  lastStation = 0;
+  uint16_t  countStation = 0;
+  uint8_t   lastSSID = 0;
+  bool      audioinfo = false;
+  uint8_t   smartstart = 2;
+  int8_t    tzHour = 3;
+  int8_t    tzMin = 0;
+  uint16_t  timezoneOffset = 0;
+  bool      vumeter = false;
+  uint8_t   softapdelay = 0;
+  bool      flipscreen = false;
+  bool      invertdisplay = false;
+  bool      numplaylist = false;
+  bool      fliptouch = false;
+  bool      dbgtouch = false;
+  bool      dspon = true;
+  uint8_t   brightness = 100;
+  uint8_t   contrast = 55;
+  char      sntp1[35] = "pool.ntp.org";
+  char      sntp2[35] = "1.ru.pool.ntp.org";
+  bool      showweather = false;
+  char      weatherlat[10] = "55.7512";
+  char      weatherlon[10] = "37.6184";
+  char      weatherkey[WEATHERKEY_LENGTH] = "";
+  uint16_t  _reserved = 0;
+  uint16_t  lastSdStation = 0;
+  bool      sdsnuffle = false;
+  uint8_t   volsteps = 1;
+  uint16_t  encacc = 200;
+  uint8_t   play_mode = 0;
+  uint8_t   irtlp = 35;
+  bool      btnpullup = true;
+  uint16_t  btnlongpress = 200;
+  uint16_t  btnclickticks = 300;
+  uint16_t  btnpressticks = 500;
+  bool      encpullup = false;
+  bool      enchalf = false;
+  bool      enc2pullup = false;
+  bool      enc2half = false;
+  bool      forcemono = false;
+  bool      i2sinternal = false;
+  bool      rotate90 = false;
+  bool      screensaverEnabled = false;
+  uint16_t  screensaverTimeout = 20;
+  bool      screensaverBlank = false;
+  bool      screensaverPlayingEnabled = false;
+  uint16_t  screensaverPlayingTimeout = 5;
+  bool      screensaverPlayingBlank = false;
+  char      mdnsname[24] = "";
+  bool      skipPlaylistUpDown = false;
+  // if adding a variable, you can do it anywhere, just be sure to add it to configKeyMap() in config.cpp
+  // if removing a variable and key, add to deleteOldKeys()
+};
 
-  // Store / EEPROM Note: ESP32 uses emulated EEPROM in flash, limited to 4096 bytes
-  // If the most recent store variable is not persisting after reboot,
-  // try expanding EEPROM Size (top of config.h) and double-check using telnet command STORE
-  // Note: 500 bytes is the starting point of the store so add minimum 500 to the telnet STORE result
+#define CONFIG_KEY_ENTRY(field, keyname) { offsetof(config_t, field), keyname, sizeof(((config_t*)0)->field) }
+
+struct configKeyMap {
+    size_t fieldOffset;
+    const char* key;
+    size_t size;
 };
 
 #if IR_PIN!=255
 struct ircodes_t
 {
-  unsigned int ir_set; //must be 4224
+  unsigned int ir_set = 0; // will be 4224 if written/restored correctly
   uint64_t irVals[20][3];
 };
 #endif
@@ -201,6 +197,8 @@ class Config {
     void saveIR();
 #endif
     void init();
+    void loadPreferences();
+    void deleteOldKeys();
     void loadTheme();
     uint8_t setVolume(uint8_t val);
     void saveVolume();
@@ -250,26 +248,57 @@ class Config {
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
     #endif
-    template <typename T>
-    size_t getAddr(const T *field) const {
-      return (size_t)((const uint8_t *)field - (const uint8_t *)&store) + EEPROM_START;
+    Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
+    static const configKeyMap keyMap[];
+
+    // Helper to get key map entry for a field pointer
+    const configKeyMap* getKeyMapEntryForField(const void* field) const {
+        size_t offset = (const uint8_t*)field - (const uint8_t*)&store;
+        for (size_t i = 0; keyMap[i].key != nullptr; ++i) {
+            if (keyMap[i].fieldOffset == offset) return &keyMap[i];
+        }
+        return nullptr;
     }
     template <typename T>
-    void saveValue(T *field, const T &value, bool commit=true, bool force=false){
-      if(*field == value && !force) return;
-      *field = value;
-      size_t address = getAddr(field);
-      EEPROM.put(address, value);
-      if(commit)
-        EEPROM.commit();
+    void loadValue(T *field) {
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) prefs.getBytes(entry->key, field, entry->size);
     }
-    void saveValue(char *field, const char *value, size_t N, bool commit = true, bool force = false) {
-      if (strncmp(field, value, N) == 0 && !force) return;
-      strlcpy(field, value, N);
-      size_t address = getAddr(field);
-      for (size_t i = 0; i < N; i++) EEPROM.write(address + i, field[i]);
-      if(commit)
-        EEPROM.commit();
+    template <typename T>
+    void saveValue(T *field, const T &value, bool commit=true, bool force=false) {
+      // commit ignored (kept for compatibility)
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) {
+        prefs.begin("yoradio", false);
+        T oldValue;
+        size_t existingLen = prefs.getBytesLength(entry->key);
+        size_t bytesRead = prefs.getBytes(entry->key, &oldValue, entry->size);
+        bool exists = bytesRead == entry->size;
+        bool needSave = (existingLen != entry->size) || !exists || memcmp(&oldValue, &value, entry->size) != 0;
+        if (needSave) {
+          prefs.putBytes(entry->key, &value, entry->size);
+          *field = value;
+        }
+        prefs.end();
+      }
+    }
+    void saveValue(char *field, const char *value, size_t N = 0, bool commit=true, bool force=false) {
+      // commit ignored (kept for compatibility)
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) {
+        size_t sz = entry->size;
+        prefs.begin("yoradio", false);
+        char oldValue[sz];
+        memset(oldValue, 0, sz);
+        size_t existingLen = prefs.getBytesLength(entry->key);
+        bool exists = prefs.getBytes(entry->key, oldValue, sz) == sz;
+        bool needSave = (existingLen != sz) || !exists || strncmp(oldValue, value, sz) != 0 || force;
+        if (needSave) {
+          prefs.putBytes(entry->key, value, sz);
+          strlcpy(field, value, sz);
+        }
+        prefs.end();
+      }
     }
     uint32_t getChipId(){
       uint32_t chipId = 0;
@@ -279,8 +308,6 @@ class Config {
       return chipId;
     }
   private:
-    template <class T> int eepromWrite(int ee, const T& value);
-    template <class T> int eepromRead(int ee, T& value);
     bool _bootDone;
     #if RTCSUPPORTED
       bool _rtcFound;
@@ -290,7 +317,6 @@ class Config {
     Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
-    void _setupVersion();
     void _initHW();
     bool _isFSempty();
     uint16_t _randomStation(){
@@ -299,6 +325,7 @@ class Config {
       return station;
     }
     char _stationBuf[BUFLEN/2];
+
 };
 
 extern Config config;

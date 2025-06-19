@@ -31,7 +31,7 @@ bool Config::_isFSempty() {
 }
 
 void Config::init() {
-  EEPROM.begin(EEPROM_SIZE);
+  loadPreferences();
   sdResumePos = 0;
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
@@ -58,16 +58,9 @@ void Config::init() {
     SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
   #endif
 #endif
-  eepromRead(EEPROM_START, store);
-  
-  // checks for signature number and breaking version changes to store
-  // last breaking change was between version 4 and 5 (which added timezones)
-  if ((store.config_set != 4262) || (store.version < 5 )) {
+  if (store.config_set != 4262) {
     setDefaults();
   }
-  if(store.version>CONFIG_VERSION) store.version=5;
-  while(store.version!=CONFIG_VERSION) _setupVersion();
-  BOOTLOG("CONFIG_VERSION\t%d", store.version);
   store.play_mode = store.play_mode & 0b11;
   if(store.play_mode>1) store.play_mode=PM_WEB;
   _initHW();
@@ -87,36 +80,30 @@ void Config::init() {
   _bootDone=false;
 }
 
-// add non-breaking new variables to store version here
-// case 5 should be able to update store to version 6, case 6 to version 7, etc.
-// cases 1-3 are preserved here but will never be used
-void Config::_setupVersion(){
-  uint16_t currentVersion = store.version;
-  switch(currentVersion){
-    case 1:
-      saveValue(&store.screensaverEnabled, false);
-      saveValue(&store.screensaverTimeout, (uint16_t)20);
-      break;
-    case 2:
-      char buf[MDNS_LENGTH];
-      snprintf(buf, MDNS_LENGTH, "yoradio-%x", getChipId());
-      saveValue(store.mdnsname, buf, MDNS_LENGTH);
-      saveValue(&store.skipPlaylistUpDown, false);
-      break;
-    case 3:
-      saveValue(&store.screensaverBlank, false);
-      saveValue(&store.screensaverPlayingEnabled, false);
-      saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
-      saveValue(&store.screensaverPlayingBlank, false);
-      break;
-    case 5:
-      // new values for version 6 get added here
-      break;
-    default:
-      break;
+void Config::loadPreferences() {
+  prefs.begin("yoradio", false);
+  // Check config_set first
+  uint16_t configSetValue = 0;
+  size_t configSetRead = prefs.getBytes("cfgset", &configSetValue, sizeof(configSetValue));
+  if (configSetRead != sizeof(configSetValue)) {
+    // Preferences is empty, save config_set and version
+    Serial.println("[Prefs] Empty NVS detected, initializing config_set...\n");
+    saveValue(&store.config_set, store.config_set);
+  } else if (configSetValue != 4262) {
+    // config_set present but not valid, reset config
+    Serial.printf("[Prefs] Invalid config_set (%u), resetting config...\n", configSetValue);
+    prefs.end();
+    reset();
+    return;
   }
-  currentVersion++;
-  saveValue(&store.version, currentVersion);
+  // Load all fields in keyMap
+  for (size_t i = 0; keyMap[i].key != nullptr; ++i) {
+    uint8_t* field = (uint8_t*)&store + keyMap[i].fieldOffset;
+    size_t sz = keyMap[i].size;
+    size_t read = prefs.getBytes(keyMap[i].key, field, sz);
+  }
+  deleteOldKeys();
+  prefs.end();
 }
 
 #ifdef USE_SD
@@ -240,11 +227,15 @@ void Config::initPlaylistMode(){
 void Config::_initHW(){
   loadTheme();
   #if IR_PIN!=255
-  eepromRead(EEPROM_START_IR, ircodes);
-  if(ircodes.ir_set!=4224){
-    ircodes.ir_set=4224;
-    memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
+  prefs.begin("yoradio", false);
+  memset(&ircodes, 0, sizeof(ircodes));
+  size_t read = prefs.getBytes("ircodes", &ircodes, sizeof(ircodes));
+  if (read != sizeof(ircodes) || ircodes.ir_set != 4224) {
+      Serial.println("[_initHW] ircodes not initialized or corrupt, resetting...");
+      prefs.remove("ircodes");
+      memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
   }
+  prefs.end();
   #endif
   #if BRIGHTNESS_PIN!=255
     pinMode(BRIGHTNESS_PIN, OUTPUT);
@@ -293,89 +284,19 @@ void Config::loadTheme(){
   #include "../displays/tools/tftinverttitle.h"
 }
 
-template <class T> int Config::eepromWrite(int ee, const T& value) {
-  const uint8_t* p = (const uint8_t*)(const void*)&value;
-  int i;
-  for (i = 0; i < sizeof(value); i++)
-    EEPROM.write(ee++, *p++);
-  EEPROM.commit();
-  return i;
-}
-
-template <class T> int Config::eepromRead(int ee, T& value) {
-  uint8_t* p = (uint8_t*)(void*)&value;
-  int i;;
-  for (i = 0; i < sizeof(value); i++)
-    *p++ = EEPROM.read(ee++);
-  return i;
-}
-
 void Config::reset(){
+  Serial.print("[Prefs] Reset requested, resetting config...\n");
+  prefs.begin("yoradio", false);
+  prefs.clear();
+  prefs.end();
   setDefaults();
   delay(500);
   ESP.restart();
 }
 
 void Config::setDefaults() {
-Serial.println("SetDefaultsA");
-Serial.printf("TZPOSIX: '%s'\n", config.store.tzposix);
-Serial.printf("TZ_NAME: '%s'\n", config.store.tz_name);
-
-  store.config_set = 4262;
-  store.version = CONFIG_VERSION;
-  store.volume = 12;
-  store.balance = 0;
-  store.trebble = 0;
-  store.middle = 0;
-  store.bass = 0;
-  store.lastStation = 0;
-  store.countStation = 0;
-  store.lastSSID = 0;
-  store.audioinfo = false;
-  store.smartstart = 2;
-  store.vumeter=false;
-  store.softapdelay=0;
-  store.flipscreen=false;
-  store.invertdisplay=false;
-  store.numplaylist=false;
-  store.fliptouch=false;
-  store.dbgtouch=false;
-  store.dspon=true;
-  store.brightness=100;
-  store.contrast=55;
-  strlcpy(store.tz_name,TIMEZONE_NAME, sizeof(config.store.tz_name));
-  strlcpy(store.tzposix,TIMEZONE_POSIX, sizeof(config.store.tzposix));
-  strlcpy(store.sntp1,SNTP1, sizeof(config.store.sntp1));
-  strlcpy(store.sntp2,SNTP2, sizeof(config.store.sntp2));
-  store.showweather=false;
-  strlcpy(store.weatherlat,WEATHERLAT, sizeof(config.store.weatherlat));
-  strlcpy(store.weatherlon,WEATHERLON, sizeof(config.store.weatherlon));
-  strlcpy(store.weatherkey,"", WEATHERKEY_LENGTH);
-  store._reserved = 0;
-  store.lastSdStation = 0;
-  store.sdsnuffle = false;
-  store.volsteps = 1;
-  store.encacc = 200;
-  store.play_mode = 0;
-  store.irtlp = 35;
-  store.btnpullup = true;
-  store.btnlongpress = 200;
-  store.btnclickticks = 300;
-  store.btnpressticks = 500;
-  store.encpullup = false;
-  store.enchalf = false;
-  store.enc2pullup = false;
-  store.enc2half = false;
-  store.forcemono = false;
-  store.i2sinternal = false;
-  store.rotate90 = false;
-  store.screensaverEnabled = false;
-  store.screensaverTimeout = 20;
+  Serial.println("[setDefaults] called");
   snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
-  store.skipPlaylistUpDown = false;
-  store.screensaverPlayingEnabled = false;
-  store.screensaverPlayingTimeout = 5;
-  eepromWrite(EEPROM_START, store);
 }
 
 void Config::setSnuffle(bool sn){
@@ -385,7 +306,10 @@ void Config::setSnuffle(bool sn){
 
 #if IR_PIN!=255
 void Config::saveIR(){
-  eepromWrite(EEPROM_START_IR, ircodes);
+  ircodes.ir_set = 4224;
+  prefs.begin("yoradio", false);
+  size_t written = prefs.putBytes("ircodes", &ircodes, sizeof(ircodes));
+  prefs.end();
 }
 #endif
 
@@ -812,3 +736,70 @@ void Config::bootInfo() {
   BOOTLOG("------------------------------------------------");
 }
 
+// Preferences Look-up Table (store_variable, "key_max_15_char")
+// Macro expands to 3 fields (offset_of_config_t_store_variable, "key_max_15_char", size_of_store_variable)
+const configKeyMap Config::keyMap[] = {
+  CONFIG_KEY_ENTRY(config_set, "cfgset"),
+  CONFIG_KEY_ENTRY(volume, "vol"),
+  CONFIG_KEY_ENTRY(balance, "bal"),
+  CONFIG_KEY_ENTRY(trebble, "treb"),
+  CONFIG_KEY_ENTRY(middle, "mid"),
+  CONFIG_KEY_ENTRY(bass, "bass"),
+  CONFIG_KEY_ENTRY(lastStation, "laststa"),
+  CONFIG_KEY_ENTRY(countStation, "countsta"),
+  CONFIG_KEY_ENTRY(lastSSID, "lastssid"),
+  CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
+  CONFIG_KEY_ENTRY(smartstart, "smartstart"),
+  CONFIG_KEY_ENTRY(tzHour, "tzh"),
+  CONFIG_KEY_ENTRY(tzMin, "tzm"),
+  CONFIG_KEY_ENTRY(timezoneOffset, "tzoff"),
+  CONFIG_KEY_ENTRY(vumeter, "vumeter"),
+  CONFIG_KEY_ENTRY(softapdelay, "softapdelay"),
+  CONFIG_KEY_ENTRY(flipscreen, "flipscr"),
+  CONFIG_KEY_ENTRY(invertdisplay, "invdisp"),
+  CONFIG_KEY_ENTRY(numplaylist, "numplaylist"),
+  CONFIG_KEY_ENTRY(fliptouch, "fliptouch"),
+  CONFIG_KEY_ENTRY(dbgtouch, "dbgtouch"),
+  CONFIG_KEY_ENTRY(dspon, "dspon"),
+  CONFIG_KEY_ENTRY(brightness, "bright"),
+  CONFIG_KEY_ENTRY(contrast, "contrast"),
+  CONFIG_KEY_ENTRY(sntp1, "sntp1"),
+  CONFIG_KEY_ENTRY(sntp2, "sntp2"),
+  CONFIG_KEY_ENTRY(showweather, "showwthr"),
+  CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
+  CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
+  CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
+  CONFIG_KEY_ENTRY(_reserved, "resv"),
+  CONFIG_KEY_ENTRY(lastSdStation, "lastsdsta"),
+  CONFIG_KEY_ENTRY(sdsnuffle, "sdsnuffle"),
+  CONFIG_KEY_ENTRY(volsteps, "vsteps"),
+  CONFIG_KEY_ENTRY(encacc, "encacc"),
+  CONFIG_KEY_ENTRY(play_mode, "playmode"),
+  CONFIG_KEY_ENTRY(irtlp, "irtlp"),
+  CONFIG_KEY_ENTRY(btnpullup, "btnpullup"),
+  CONFIG_KEY_ENTRY(btnlongpress, "btnlngpress"),
+  CONFIG_KEY_ENTRY(btnclickticks, "btnclkticks"),
+  CONFIG_KEY_ENTRY(btnpressticks, "btnprsticks"),
+  CONFIG_KEY_ENTRY(encpullup, "encpullup"),
+  CONFIG_KEY_ENTRY(enchalf, "enchalf"),
+  CONFIG_KEY_ENTRY(enc2pullup, "enc2pullup"),
+  CONFIG_KEY_ENTRY(enc2half, "enc2half"),
+  CONFIG_KEY_ENTRY(forcemono, "forcemono"),
+  CONFIG_KEY_ENTRY(i2sinternal, "i2sint"),
+  CONFIG_KEY_ENTRY(rotate90, "rotate"),
+  CONFIG_KEY_ENTRY(screensaverEnabled, "scrnsvren"),
+  CONFIG_KEY_ENTRY(screensaverTimeout, "scrnsvrto"),
+  CONFIG_KEY_ENTRY(screensaverBlank, "scrnsvrbl"),
+  CONFIG_KEY_ENTRY(screensaverPlayingEnabled, "scrnsvrplen"),
+  CONFIG_KEY_ENTRY(screensaverPlayingTimeout, "scrnsvrplto"),
+  CONFIG_KEY_ENTRY(screensaverPlayingBlank, "scrnsvrplbl"),
+  CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
+  CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
+  {0, nullptr, 0} // Yup, 3 fields - don't delete the last line!
+};
+
+void Config::deleteOldKeys() {
+  // List any old/legacy keys to remove here
+  // prefs.remove("removedkey");
+  // prefs.remove("removedkey");
+}
