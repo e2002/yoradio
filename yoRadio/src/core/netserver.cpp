@@ -562,11 +562,11 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(cmd, "sntp2") == 0) {
-        config.saveValue(config.store.sntp2, val, 35, false);
+        config.saveValue(config.store.sntp2, val, 35);
         return;
       }
       if (strcmp(cmd, "sntp1") == 0) {
-        strlcpy(config.store.sntp1, val, 35);
+        config.saveValue(config.store.sntp1, val, 35);
         bool tzdone = false;
         if (strlen(config.store.sntp1) > 0 && strlen(config.store.sntp2) > 0) {
           configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
@@ -577,7 +577,6 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         }
         if (tzdone) {
           network.forceTimeSync = true;
-          config.saveValue(config.store.sntp1, val, 35);
         }
         return;
       }
