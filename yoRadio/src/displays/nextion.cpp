@@ -209,14 +209,14 @@ void Nextion::loop() {
           if(strcmp(scanBuf, "up") == 0) {
             display.resetQueue();
             int p = display.currentPlItem - 1;
-            if (p < 1) p = config.store.countStation;
+            if (p < 1) p = config.playlistLength();
             display.currentPlItem = p;
             display.putRequest(DRAWPLAYLIST, p);
           }
           if(strcmp(scanBuf, "dn") == 0) {
             display.resetQueue();
             int p = display.currentPlItem + 1;
-            if (p > config.store.countStation) p = 1;
+            if (p > config.playlistLength()) p = 1;
             display.currentPlItem = p;
             display.putRequest(DRAWPLAYLIST, p);
           }

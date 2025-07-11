@@ -204,11 +204,12 @@ class Config {
     uint8_t setLastSSID(uint8_t val);
     void setTitle(const char* title);
     void setStation(const char* station);
+    void escapeQuotes(const char* input, char* output, size_t maxLen);
     bool parseCSV(const char* line, char* name, char* url, int &ovol);
     bool parseJSON(const char* line, char* name, char* url, int &ovol);
     bool parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize);
     bool parseSsid(const char* line, char* ssid, char* pass);
-    void loadStation(uint16_t station);
+    bool loadStation(uint16_t station);
     bool initNetwork();
     bool saveWifi();
     bool saveWifiFromNextion(const char* post);
@@ -220,6 +221,7 @@ class Config {
       void initSDPlaylist();
       void changeMode(int newmode=-1);
     #endif
+    uint16_t playlistLength();
     uint16_t lastStation(){
       return getMode()==PM_WEB?store.lastStation:store.lastSdStation;
     }

@@ -21,7 +21,7 @@
   #define NSQ_SEND_DELAY       (TickType_t)100  //portMAX_DELAY?
 #endif
 
-//#define CORS_DEBUG
+//#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
 
 NetServer netserver;
 
@@ -61,8 +61,10 @@ bool NetServer::begin(bool quiet) {
   irRecordEnable = false;
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
   while(nsQueue==NULL){;}
+
   if(config.emptyFS){
-    webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html, processor); });
+    webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html); });
+    webserver.on("/webboard", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); ESP.restart(); }, handleUploadWeb);
     webserver.on("/", HTTP_POST, [](AsyncWebServerRequest *request) { 
       if(request->arg("ssid")!="" && request->arg("pass")!=""){
         char buf[BUFLEN];
@@ -73,11 +75,14 @@ bool NetServer::begin(bool quiet) {
         return;
       }
       request->redirect("/"); 
-      ESP.restart(); 
+      ESP.restart();
     }, handleUploadWeb);
   }else{
     webserver.on("/", HTTP_ANY, handleHTTPArgs);
-    webserver.on("/webboard", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html, processor); });
+    webserver.on("/settings.html", HTTP_GET, handleHTTPArgs);
+    webserver.on("/update.html", HTTP_GET, handleHTTPArgs);
+    webserver.on("/ir.html", HTTP_GET, handleHTTPArgs);
+    webserver.on("/webboard", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html); });
     webserver.on("/webboard", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); }, handleUploadWeb);
   }
   
@@ -90,8 +95,13 @@ bool NetServer::begin(bool quiet) {
   webserver.on("/upload", HTTP_POST, beginUpload, handleUpload);
   webserver.on("/update", HTTP_GET, handleHTTPArgs);
   webserver.on("/update", HTTP_POST, beginUpdate, handleUpdate);
-  webserver.on("/settings", HTTP_GET, handleHTTPArgs);
-  if (IR_PIN != 255) webserver.on("/ir", HTTP_GET, handleHTTPArgs);
+  
+  webserver.on("/variables.js", HTTP_GET, [](AsyncWebServerRequest * request) { 
+    char varjsbuf[BUFLEN];
+    sprintf (varjsbuf, "var yoVersion='%s';\nvar formAction='%s';\nvar playMode='%s';\n", YOVERSION, (network.status == CONNECTED && !config.emptyFS)?"webboard":"", (network.status == CONNECTED)?"player":"ap");
+    request->send(200, "text/html", varjsbuf); 
+  });
+
   webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=31536000");
 #ifdef CORS_DEBUG
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
@@ -275,7 +285,7 @@ void NetServer::processQueue(){
           sprintf (wsbuf, "{\"act\":[%s]}", act.c_str());
           break;
         }
-      case GETMODE:       sprintf (wsbuf, "{\"pmode\":\"%s\"}", network.status == CONNECTED ? "player" : "ap"); break;
+      //case STARTUP:       sprintf (wsbuf, "{\"command\":\"startup\", \"payload\": {\"mode\":\"%s\", \"version\":\"%s\"}}", network.status == CONNECTED ? "player" : "ap", YOVERSION); break;
       case GETINDEX:      {
           requestOnChange(STATION, clientId); 
           requestOnChange(TITLE, clientId); 
@@ -334,11 +344,11 @@ void NetServer::processQueue(){
                                   break;
       case DSPON:         sprintf (wsbuf, "{\"dspontrue\":%d}", 1); break;
       case STATION:       requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
-      case STATIONNAME:   sprintf (wsbuf, "{\"nameset\": \"%s\"}", config.station.name); break;
+      case STATIONNAME:   sprintf (wsbuf, "{\"payload\":[{\"id\":\"nameset\", \"value\": \"%s\"}]}", config.station.name); break;
       case ITEM:          sprintf (wsbuf, "{\"current\": %d}", config.lastStation()); break;
-      case TITLE:         sprintf (wsbuf, "{\"meta\": \"%s\"}", config.station.title); telnet.printf("##CLI.META#: %s\n> ", config.station.title); break;
-      case VOLUME:        sprintf (wsbuf, "{\"vol\": %d}", config.store.volume); telnet.printf("##CLI.VOL#: %d\n", config.store.volume); break;
-      case NRSSI:         sprintf (wsbuf, "{\"rssi\": %d}", rssi); /*rssi = 255;*/ break;
+      case TITLE:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"meta\", \"value\": \"%s\"}]}", config.station.title); telnet.printf("##CLI.META#: %s\n> ", config.station.title); break;
+      case VOLUME:        sprintf (wsbuf, "{\"payload\":[{\"id\":\"volume\", \"value\": %d}]}", config.store.volume); telnet.printf("##CLI.VOL#: %d\n", config.store.volume); break;
+      case NRSSI:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"rssi\", \"value\": %d}]}", rssi); /*rssi = 255;*/ break;
       case SDPOS:         sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}", 
                                   player.getFilePos(), 
                                   player.getFileSize(), 
@@ -347,10 +357,10 @@ void NetServer::processQueue(){
                                   break;
       case SDLEN:         sprintf (wsbuf, "{\"sdmin\": %d,\"sdmax\": %d}", player.sd_min, player.sd_max); break;
       case SDSNUFFLE:     sprintf (wsbuf, "{\"snuffle\": %d}", config.store.sdsnuffle); break;
-      case BITRATE:       sprintf (wsbuf, "{\"bitrate\": %d, \"format\": \"%s\"}", config.station.bitrate, getFormat(config.configFmt)); break;
-      case MODE:          sprintf (wsbuf, "{\"mode\": \"%s\"}", player.status() == PLAYING ? "playing" : "stopped"); telnet.info(); break;
-      case EQUALIZER:     sprintf (wsbuf, "{\"bass\": %d, \"middle\": %d, \"trebble\": %d}", config.store.bass, config.store.middle, config.store.trebble); break;
-      case BALANCE:       sprintf (wsbuf, "{\"balance\": %d}", config.store.balance); break;
+      case BITRATE:       sprintf (wsbuf, "{\"payload\":[{\"id\":\"bitrate\", \"value\": %d}, {\"id\":\"fmt\", \"value\": \"%s\"}]}", config.station.bitrate, getFormat(config.configFmt)); break;
+      case MODE:          sprintf (wsbuf, "{\"payload\":[{\"id\":\"playerwrap\", \"value\": \"%s\"}]}", player.status() == PLAYING ? "playing" : "stopped"); telnet.info(); break;
+      case EQUALIZER:     sprintf (wsbuf, "{\"payload\":[{\"id\":\"bass\", \"value\": %d}, {\"id\": \"middle\", \"value\": %d}, {\"id\": \"trebble\", \"value\": %d}]}", config.store.bass, config.store.middle, config.store.trebble); break;
+      case BALANCE:       sprintf (wsbuf, "{\"payload\":[{\"id\": \"balance\", \"value\": %d}]}", config.store.balance); break;
       case SDINIT:        sprintf (wsbuf, "{\"sdinit\": %d}", SDC_CS!=255); break;
       case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
       #ifdef USE_SD
@@ -405,7 +415,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
     data[len] = 0;
     char cmd[65], val[65];
     if (config.parseWsCommand((const char*)data, cmd, val, 65)) {
-      if (strcmp(cmd, "getmode") == 0     ) { requestOnChange(GETMODE, clientId);     return; }
+      //if (strcmp(cmd, "getmode") == 0     ) { requestOnChange(GETMODE, clientId);     return; }
       if (strcmp(cmd, "getindex") == 0    ) { requestOnChange(GETINDEX, clientId);    return; }
       if (strcmp(cmd, "getsystem") == 0   ) { requestOnChange(GETSYSTEM, clientId);   return; }
       if (strcmp(cmd, "getscreen") == 0   ) { requestOnChange(GETSCREEN, clientId);   return; }
@@ -433,6 +443,12 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         display.putRequest(SHOWVUMETER);
         return;
       }
+      if (strcmp(cmd, "prev") == 0) { player.prev(); return; }
+      if (strcmp(cmd, "toggle") == 0) { player.toggle(); return; }
+      if (strcmp(cmd, "next") == 0) { player.next(); return; }
+      if (strcmp(cmd, "volm") == 0) { player.stepVol(false); return; }
+      if (strcmp(cmd, "volp") == 0) { player.stepVol(true); return; }
+      if (strcmp(cmd, "play") == 0) { uint16_t valb = atoi(val); player.sendCommand({PR_PLAY, valb}); return; }
       if (strcmp(cmd, "softap") == 0) {
         uint8_t valb = atoi(val);
         config.saveValue(&config.store.softapdelay, valb);
@@ -718,7 +734,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         netserver.requestOnChange(BALANCE, 0);
         return;
       }
-      if (strcmp(cmd, "treble") == 0) {
+      if (strcmp(cmd, "trebble") == 0) {
         int8_t valb = atoi(val);
         player.setTone(config.store.bass, config.store.middle, valb);
         config.setTone(config.store.bass, config.store.middle, valb);
@@ -737,6 +753,19 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         player.setTone(valb, config.store.middle, config.store.trebble);
         config.setTone(valb, config.store.middle, config.store.trebble);
         netserver.requestOnChange(EQUALIZER, 0);
+        return;
+      }
+      if (strcmp(cmd, "reboot") == 0) {
+        ESP.restart();
+        return;
+      }
+      if (strcmp(cmd, "format") == 0) {
+        SPIFFS.format();
+        ESP.restart();
+        return;
+      }
+      if (strcmp(cmd, "reset") == 0) {
+        config.reset();
         return;
       }
       if (strcmp(cmd, "submitplaylist") == 0) {
@@ -884,7 +913,7 @@ void handleUploadWeb(AsyncWebServerRequest *request, String filename, size_t ind
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
-    case WS_EVT_CONNECT: if (config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str()); break;
+    case WS_EVT_CONNECT: /*netserver.requestOnChange(STARTUP, client->id()); */if (config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str()); break;
     case WS_EVT_DISCONNECT: if (config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u disconnected\n", client->id()); break;
     case WS_EVT_DATA: netserver.onWsMessage(arg, data, len, client->id()); break;
     case WS_EVT_PONG:
@@ -912,16 +941,20 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       }
       return;
     }
+    Serial.println(request->url());
     if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {
-      netserver.chunkedHtmlPage(String(), request, network.status == CONNECTED ? "/www/index.html" : "/www/settings.html");
+      if(network.status == CONNECTED){
+        request->send_P(200, "text/html", index_html);
+      }else{
+        request->redirect("/settings.html");
+      }
+      //netserver.chunkedHtmlPage(String(), request, network.status == CONNECTED ? "/www/index.html" : "/www/settings.html", false);
       return;
     }
-    if (strcmp(request->url().c_str(), "/update") == 0 || strcmp(request->url().c_str(), "/settings") == 0 || strcmp(request->url().c_str(), "/ir") == 0) {
-      char buf[40] = { 0 };
-      sprintf(buf, "/www%s.html", request->url().c_str());
-      netserver.chunkedHtmlPage(String(), request, buf);
-      return;
-    }
+  }
+  if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0){
+    request->send_P(200, "text/html", index_html);
+    return;
   }
   if (network.status == CONNECTED) {
     bool commandFound=false;
@@ -969,7 +1002,8 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       AsyncWebParameter* p = request->getParam(request->hasArg("playstation") ? "playstation" : "play", request->method() == HTTP_POST);
       int id = atoi(p->value().c_str());
       if (id < 1) id = 1;
-      if (id > config.store.countStation) id = config.store.countStation;
+      uint16_t cs = config.playlistLength();
+      if (id > cs) id = cs;
       //config.sdResumePos = 0;
       player.sendCommand({PR_PLAY, id});
       commandFound=true;

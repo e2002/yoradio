@@ -3604,15 +3604,27 @@ void Audio::playAudioData(){
 }
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::parseHttpResponseHeader() { // this is the response to a GET / request
-
+    static uint32_t notavailablefor = 0;
     if(getDatamode() != HTTP_RESPONSE_HEADER) return false;
-    if(_client->available() == 0) return false;
-
+    if(_client->available() == 0) {
+      if (notavailablefor == 0) notavailablefor = millis();
+      if (millis() - notavailablefor > HEADER_TIMEOUT) {
+        notavailablefor = 0;
+        if(audio_showstation) audio_showstation("");
+        if(audio_icydescription) audio_icydescription("");
+        if(audio_icyurl) audio_icyurl("");
+        AUDIO_ERROR("Host %s not available", m_lastHost);
+        m_lastHost[0] = '\0';
+        setDatamode(AUDIO_NONE);
+        stopSong();
+      }
+      return false;
+    }
+    notavailablefor = 0;
     char rhl[512]; // responseHeaderline
     bool ct_seen = false;
     uint32_t ctime = millis();
     uint32_t timeout = 2500; // ms
-
     while(true){  // outer while
         uint16_t pos = 0;
         if((millis() - ctime) > timeout) {

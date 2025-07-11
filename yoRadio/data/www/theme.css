@@ -1,0 +1,16 @@
+:root {
+--main-bg-color:        #010101;
+--main-text-color:      #cccccc;
+--main-hl-color:        #ffffff;
+--odd-bg-color:         #272727;
+--accent-color:         #e3d25f;
+--accent-dark:          #ad9838;
+--accent-text-color:    #000000;
+--input-border:         #2d2d2d;
+--logo:                 #e3d25f;
+--logo-red:             #ff0000;
+--logo-shadow:          #a89c46;
+--playlist-hover:       #323232;
+--section-gradient:     #111111;
+--section-border:       #555555;
+}

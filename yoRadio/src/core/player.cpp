@@ -186,6 +186,7 @@ void Player::setOutputPins(bool isPlaying) {
 void Player::_play(uint16_t stationId) {
   log_i("%s called, stationId=%d", __func__, stationId);
   setError("");
+  setDefaults();
   remoteStationName = false;
   config.setDspOn(1);
   config.vuThreshold = 0;
@@ -193,21 +194,23 @@ void Player::_play(uint16_t stationId) {
   config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
   config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;
   if(config.getMode()!=PM_SDCARD) {
-  	display.putRequest(PSTOP);
+    display.putRequest(PSTOP);
   }
   setOutputPins(false);
   //config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
+  if(!config.loadStation(stationId)) return;
   config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"[next track]");
   config.station.bitrate=0;
   config.setBitrateFormat(BF_UNCNOWN);
-  config.loadStation(stationId);
+  
   _loadVol(config.store.volume);
   display.putRequest(DBITRATE);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
   netserver.loop();
   netserver.loop();
-  config.setSmartStart(0);
+  if(config.store.smartstart!=2)
+    config.setSmartStart(0);
   bool isConnected = false;
   if(config.getMode()==PM_SDCARD && SDC_CS!=255){
     isConnected=connecttoFS(sdman,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min);
@@ -223,7 +226,8 @@ void Player::_play(uint16_t stationId) {
       config.saveValue(&config.store.lastSdStation, stationId);
     }
     //config.setTitle("");
-    config.setSmartStart(1);
+    if(config.store.smartstart!=2)
+      config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
     display.putRequest(NEWMODE, PLAYER);
@@ -268,7 +272,7 @@ void Player::prev() {
   
   uint16_t lastStation = config.lastStation();
   if(config.getMode()==PM_WEB || !config.store.sdsnuffle){
-    if (lastStation == 1) config.lastStation(config.store.countStation); else config.lastStation(lastStation-1);
+    if (lastStation == 1) config.lastStation(config.playlistLength()); else config.lastStation(lastStation-1);
   }
   sendCommand({PR_PLAY, config.lastStation()});
 }
@@ -276,9 +280,9 @@ void Player::prev() {
 void Player::next() {
   uint16_t lastStation = config.lastStation();
   if(config.getMode()==PM_WEB || !config.store.sdsnuffle){
-    if (lastStation == config.store.countStation) config.lastStation(1); else config.lastStation(lastStation+1);
+    if (lastStation == config.playlistLength()) config.lastStation(1); else config.lastStation(lastStation+1);
   }else{
-    config.lastStation(random(1, config.store.countStation));
+    config.lastStation(random(1, config.playlistLength()));
   }
   sendCommand({PR_PLAY, config.lastStation()});
 }

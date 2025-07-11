@@ -234,6 +234,20 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.511
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
+In this version, the contents of the data/www directory have changed, so that the first time you flash it, you will be greeted by WEB Board Uploader. Just upload all the files from data/www (11 pcs) to it
+- fixed a bug with saving smartstart mode
+- fixed a bug with no restart when initially uploading files to spiffs
+- fixed a bug with hanging on unavailable hosts
+- fixed a bug with attempting to connect with an empty playlist
+- fixed a bug with passing strings with quotes in mqtt
+- fixing some other bugs
+- rewritten the web interface (almost), added bugs 👍
+- added listening to links in the browser in playlistEditor-e
+- added reboot format and reset buttons to the settings
+- the beginnings of theming (theme.css)
+
 ### 0.9.434
 - fixed the issue with exiting Screensaver Blank Screen mode via button presses and IR commands.
 - reduced the minimum frequency for tone control on I2S modules to 80Hz.

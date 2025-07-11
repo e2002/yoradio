@@ -18,14 +18,22 @@ void u8fix(char *src){
 }
 
 bool Config::_isFSempty() {
-  const char* reqiredFiles[] = {"dragpl.js.gz","elogo.png","elogo84.png","index.html",
-                                "ir.css.gz","ir.html","ir.js.gz","script.js.gz",
-                                "settings.css.gz","settings.html","style.css.gz","update.html"};
-  const uint8_t reqiredFilesSize = 12;
+  const char* reqiredFiles[] = {"dragpl.js.gz","ir.css.gz","irrecord.html.gz","ir.js.gz","logo.svg.gz","options.html.gz","player.html.gz","script.js.gz",
+                                "style.css.gz","updform.html.gz","theme.css"};
+  const uint8_t reqiredFilesSize = 11;
   char fullpath[28];
+  if(SPIFFS.exists("/www/settings.html")) SPIFFS.remove("/www/settings.html");
+  if(SPIFFS.exists("/www/update.html")) SPIFFS.remove("/www/update.html");
+  if(SPIFFS.exists("/www/index.html")) SPIFFS.remove("/www/index.html");
+  if(SPIFFS.exists("/www/ir.html")) SPIFFS.remove("/www/ir.html");
+  if(SPIFFS.exists("/www/elogo.png")) SPIFFS.remove("/www/elogo.png");
+  if(SPIFFS.exists("/www/elogo84.png")) SPIFFS.remove("/www/elogo84.png");
   for (uint8_t i=0; i<reqiredFilesSize; i++){
     sprintf(fullpath, "/www/%s", reqiredFiles[i]);
-    if(!SPIFFS.exists(fullpath)) return true;
+    if(!SPIFFS.exists(fullpath)) {
+      Serial.println(fullpath);
+      return true;
+    }
   }
   return false;
 }
@@ -155,26 +163,28 @@ void Config::changeMode(int newmode){
   initPlaylistMode();
   if (pir) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
   netserver.resetQueue();
-  netserver.requestOnChange(GETPLAYERMODE, 0);
-  netserver.requestOnChange(GETMODE, 0);
+  //netserver.requestOnChange(GETPLAYERMODE, 0);
+  netserver.requestOnChange(GETINDEX, 0);
+  //netserver.requestOnChange(GETMODE, 0);
+ // netserver.requestOnChange(CHANGEMODE, 0);
   display.resetQueue();
   display.putRequest(NEWMODE, PLAYER);
   display.putRequest(NEWSTATION);
 }
 
 void Config::initSDPlaylist() {
-  store.countStation = 0;
+  //store.countStation = 0;
   bool doIndex = !sdman.exists(INDEX_SD_PATH);
   if(doIndex) sdman.indexSDPlaylist();
   if (SDPLFS()->exists(INDEX_SD_PATH)) {
     File index = SDPLFS()->open(INDEX_SD_PATH, "r");
-    store.countStation = index.size() / 4;
+    //store.countStation = index.size() / 4;
     if(doIndex){
       lastStation(_randomStation());
       sdResumePos = 0;
     }
     index.close();
-    saveValue(&store.countStation, store.countStation, true, true);
+    //saveValue(&store.countStation, store.countStation, true, true);
   }
 }
 
@@ -190,6 +200,7 @@ bool Config::spiffsCleanup(){
 
 void Config::initPlaylistMode(){
   uint16_t _lastStation = 0;
+  uint16_t cs = playlistLength();
   #ifdef USE_SD
     if(getMode()==PM_SDCARD){
       if(!sdman.start()){
@@ -203,7 +214,8 @@ void Config::initPlaylistMode(){
           initSDPlaylist();
           if(_bootDone) Serial.println("done"); else BOOTLOG("done");
           _lastStation = store.lastSdStation;
-          if(_lastStation>store.countStation && store.countStation>0){
+          
+          if(_lastStation>cs && cs>0){
             _lastStation=1;
           }
           if(_lastStation==0) {
@@ -220,7 +232,7 @@ void Config::initPlaylistMode(){
   #endif
   if(getMode()==PM_WEB && !emptyFS) initPlaylist();
   log_i("%d" ,_lastStation);
-  if (_lastStation == 0 && store.countStation > 0) {
+  if (_lastStation == 0 && cs > 0) {
     _lastStation = getMode()==PM_WEB?1:_randomStation();
   }
   lastStation(_lastStation);
@@ -467,28 +479,37 @@ void Config::indexPlaylist() {
 }
 
 void Config::initPlaylist() {
-  store.countStation = 0;
+  //store.countStation = 0;
   if (!SPIFFS.exists(INDEX_PATH)) indexPlaylist();
 
-  if (SPIFFS.exists(INDEX_PATH)) {
+  /*if (SPIFFS.exists(INDEX_PATH)) {
     File index = SPIFFS.open(INDEX_PATH, "r");
     store.countStation = index.size() / 4;
     index.close();
     saveValue(&store.countStation, store.countStation, true, true);
-  }
+  }*/
 }
-
-void Config::loadStation(uint16_t ls) {
+uint16_t Config::playlistLength(){
+  uint16_t out = 0;
+  if (SDPLFS()->exists(REAL_INDEX)) {
+    File index = SDPLFS()->open(REAL_INDEX, "r");
+    out = index.size() / 4;
+    index.close();
+  }
+  return out;
+}
+bool Config::loadStation(uint16_t ls) {
   char sName[BUFLEN], sUrl[BUFLEN];
   int sOvol;
-  if (store.countStation == 0) {
+  uint16_t cs = playlistLength();
+  if (cs == 0) {
     memset(station.url, 0, BUFLEN);
     memset(station.name, 0, BUFLEN);
     strncpy(station.name, "ёRadio", BUFLEN);
     station.ovol = 0;
-    return;
+    return false;
   }
-  if (ls > store.countStation) {
+  if (ls > playlistLength()) {
     ls = 1;
   }
   File playlist = SDPLFS()->open(REAL_PLAYL, "r");
@@ -507,6 +528,7 @@ void Config::loadStation(uint16_t ls) {
     setLastStation(ls);
   }
   playlist.close();
+  return true;
 }
 
 char * Config::stationByNum(uint16_t num){
@@ -527,7 +549,7 @@ uint8_t Config::fillPlMenu(int from, uint8_t count, bool fromNextion) {
   int     ls      = from;
   uint8_t c       = 0;
   bool    finded  = false;
-  if (store.countStation == 0) {
+  if (playlistLength() == 0) {
     return 0;
   }
   File playlist = SDPLFS()->open(REAL_PLAYL, "r");
@@ -567,6 +589,19 @@ uint8_t Config::fillPlMenu(int from, uint8_t count, bool fromNextion) {
   }
   playlist.close();
   return c;
+}
+
+void Config::escapeQuotes(const char* input, char* output, size_t maxLen) {
+  size_t j = 0;
+  for (size_t i = 0; input[i] != '\0' && j < maxLen - 1; ++i) {
+    if (input[i] == '"' && j < maxLen - 2) {
+      output[j++] = '\\';
+      output[j++] = '"';
+    } else {
+      output[j++] = input[i];
+    }
+  }
+  output[j] = '\0';
 }
 
 bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {
