@@ -234,6 +234,9 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.512
+- fixed bug with saving ntp server #1 value
+
 ### 0.9.511
 In this version, the contents of the data/www directory have changed, so that the first time you flash it, you will be greeted by WEB Board Uploader. Just upload all the files from data/www (11 pcs) to it
 or -> **!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**
