@@ -699,10 +699,13 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
           config.saveValue(&config.store.fliptouch, false, false);
           config.saveValue(&config.store.dbgtouch, false, false);
           config.saveValue(&config.store.skipPlaylistUpDown, false);
-          
           setEncAcceleration(200);
           setIRTolerance(40);
           requestOnChange(GETCONTROLS, clientId);
+          return;
+        }
+        if (strcmp(val, "1") == 0) {
+          config.reset();
           return;
         }
       } /*  EOF RESETS  */
@@ -762,10 +765,6 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
       if (strcmp(cmd, "format") == 0) {
         SPIFFS.format();
         ESP.restart();
-        return;
-      }
-      if (strcmp(cmd, "reset") == 0) {
-        config.reset();
         return;
       }
       if (strcmp(cmd, "submitplaylist") == 0) {
