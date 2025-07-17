@@ -47,7 +47,10 @@ void setup() {
   #endif
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
-  if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.lastStation()});
+  if (config.store.smartstart == 1) {
+    delay(99);
+    player.sendCommand({PR_PLAY, config.lastStation()});
+  }
   pm.on_end_setup();
 }
 

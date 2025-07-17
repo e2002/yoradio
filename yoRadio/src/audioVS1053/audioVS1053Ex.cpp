@@ -1203,10 +1203,23 @@ bool Audio::latinToUTF8(char* buff, size_t bufflen){
 
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::parseHttpResponseHeader() { // this is the response to a GET / request
-
+    static uint32_t notavailablefor = 0;
     if(getDatamode() != HTTP_RESPONSE_HEADER) return false;
-    if(_client->available() == 0)  return false;
-
+    if(_client->available() == 0) {
+      if (notavailablefor == 0) notavailablefor = millis();
+      if (millis() - notavailablefor > HEADER_TIMEOUT) {
+        notavailablefor = 0;
+        if(audio_showstation) audio_showstation("");
+        if(audio_icydescription) audio_icydescription("");
+        if(audio_icyurl) audio_icyurl("");
+        AUDIO_ERROR("Host not available");
+        m_lastHost[0] = '\0';
+        setDatamode(AUDIO_NONE);
+        stopSong();
+      }
+      return false;
+    }
+    notavailablefor = 0;
     char rhl[512]; // responseHeaderline
     bool ct_seen = false;
     uint32_t ctime = millis();

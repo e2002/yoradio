@@ -36,10 +36,6 @@
 #define AUDIOBUFFER_MULTIPLIER2    8
 #endif
 
-#ifndef HEADER_TIMEOUT
-#define HEADER_TIMEOUT    5000
-#endif
-
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include "hal/gpio_ll.h"
 #endif

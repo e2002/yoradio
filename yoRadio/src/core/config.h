@@ -7,6 +7,7 @@
 #include <EEPROM.h>
 //#include "SD.h"
 #include "options.h"
+#include "telnet.h"
 #include "rtcsupport.h"
 #include "../pluginsManager/pluginsManager.h"
 
@@ -32,7 +33,7 @@
 #define DBGVB( ... )
 #define DBGH()
 #endif
-#define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("##[BOOT]#\t"); Serial.println(buf); }
+#define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; telnet.print("##[BOOT]#\t"); telnet.printf("%s\n",buf); }
 #define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
 #define REAL_PLAYL   getMode()==PM_WEB?PLAYLIST_PATH:PLAYLIST_SD_PATH
 #define REAL_INDEX   getMode()==PM_WEB?INDEX_PATH:INDEX_SD_PATH
@@ -187,6 +188,7 @@ class Config {
     uint16_t screensaverTicks;
     uint16_t screensaverPlayingTicks;
     bool     isScreensaver;
+    int      newConfigMode;
   public:
     Config() {};
     //void save();
@@ -243,6 +245,21 @@ class Config {
     uint8_t getMode() { return store.play_mode/* & 0b11*/; }
     void initPlaylistMode();
     void reset();
+    void enableScreensaver(bool val);
+    void setScreensaverTimeout(uint16_t val);
+    void setScreensaverBlank(bool val);
+    void setScreensaverPlayingEnabled(bool val);
+    void setScreensaverPlayingTimeout(uint16_t val);
+    void setScreensaverPlayingBlank(bool val);
+    void setSntpOne(const char *val);
+    void setShowweather(bool val);
+    void setWeatherKey(const char *val);
+    void setSDpos(uint32_t val);
+#if IR_PIN!=255
+    void setIrBtn(int val);
+#endif
+    void resetSystem(const char *val, uint8_t clientId);
+    
     bool spiffsCleanup();
     FS* SDPLFS(){ return _SDplaylistFS; }
     #if RTCSUPPORTED

@@ -5,6 +5,7 @@
 #include "player.h"
 #include "network.h"
 #include "netserver.h"
+#include "controls.h"
 #ifdef USE_SD
 #include "sdmanager.h"
 #endif
@@ -43,6 +44,7 @@ void Config::init() {
   sdResumePos = 0;
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
+  newConfigMode = 0;
   isScreensaver = false;
   bootInfo();
 #if RTCSUPPORTED
@@ -140,7 +142,7 @@ void Config::changeMode(int newmode){
       return;
     }
   }
-  if(newmode<0){
+  if(newmode<0||newmode>MAX_PLAY_MODE){
     store.play_mode++;
     if(getMode() > MAX_PLAY_MODE) store.play_mode=0;
   }else{
@@ -319,6 +321,160 @@ void Config::reset(){
   delay(500);
   ESP.restart();
 }
+void Config::enableScreensaver(bool val){
+  saveValue(&store.screensaverEnabled, val);
+#ifndef DSP_LCD
+  display.putRequest(NEWMODE, PLAYER);
+#endif
+}
+void Config::setScreensaverTimeout(uint16_t val){
+  val=constrain(val,5,65520);
+  saveValue(&store.screensaverTimeout, val);
+#ifndef DSP_LCD
+  display.putRequest(NEWMODE, PLAYER);
+#endif
+}
+void Config::setScreensaverBlank(bool val){
+  saveValue(&store.screensaverBlank, val);
+#ifndef DSP_LCD
+  display.putRequest(NEWMODE, PLAYER);
+#endif
+}
+void Config::setScreensaverPlayingEnabled(bool val){
+  saveValue(&store.screensaverPlayingEnabled, val);
+#ifndef DSP_LCD
+  display.putRequest(NEWMODE, PLAYER);
+#endif
+}
+void Config::setScreensaverPlayingTimeout(uint16_t val){
+  val=constrain(val,1,1080);
+  config.saveValue(&config.store.screensaverPlayingTimeout, val);
+#ifndef DSP_LCD
+  display.putRequest(NEWMODE, PLAYER);
+#endif
+}
+void Config::setScreensaverPlayingBlank(bool val){
+  saveValue(&store.screensaverPlayingBlank, val);
+#ifndef DSP_LCD
+  display.putRequest(NEWMODE, PLAYER);
+#endif
+}
+void Config::setSntpOne(const char *val){
+  bool tzdone = false;
+  if (strlen(val) > 0 && strlen(store.sntp2) > 0) {
+    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), val, store.sntp2);
+    tzdone = true;
+  } else if (strlen(val) > 0) {
+    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), val);
+    tzdone = true;
+  }
+  if (tzdone) {
+    network.forceTimeSync = true;
+    saveValue(config.store.sntp1, val, 35);
+  }
+}
+void Config::setShowweather(bool val){
+  config.saveValue(&config.store.showweather, val);
+  network.trueWeather=false;
+  network.forceWeather = true;
+  display.putRequest(SHOWWEATHER);
+}
+void Config::setWeatherKey(const char *val){
+  saveValue(store.weatherkey, val, WEATHERKEY_LENGTH);
+  network.trueWeather=false;
+  display.putRequest(NEWMODE, CLEAR);
+  display.putRequest(NEWMODE, PLAYER);
+}
+void Config::setSDpos(uint32_t val){
+  if (getMode()==PM_SDCARD){
+    sdResumePos = 0;
+    if(!player.isRunning()){
+      player.setResumeFilePos(val-player.sd_min);
+      player.sendCommand({PR_PLAY, config.store.lastSdStation});
+    }else{
+      player.setFilePos(val-player.sd_min);
+    }
+  }
+}
+#if IR_PIN!=255
+void Config::setIrBtn(int val){
+  irindex = val;
+  netserver.irRecordEnable = (irindex >= 0);
+  irchck = 0;
+  netserver.irValsToWs();
+  if (irindex < 0) saveIR();
+}
+#endif
+void Config::resetSystem(const char *val, uint8_t clientId){
+  if (strcmp(val, "system") == 0) {
+    saveValue(&store.smartstart, (uint8_t)2, false);
+    saveValue(&store.audioinfo, false, false);
+    saveValue(&store.vumeter, false, false);
+    saveValue(&store.softapdelay, (uint8_t)0, false);
+    snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
+    saveValue(store.mdnsname, store.mdnsname, MDNS_LENGTH, true, true);
+    display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
+    netserver.requestOnChange(GETSYSTEM, clientId);
+    return;
+  }
+  if (strcmp(val, "screen") == 0) {
+    saveValue(&store.flipscreen, false, false);
+    display.flip();
+    saveValue(&store.invertdisplay, false, false);
+    display.invert();
+    saveValue(&store.dspon, true, false);
+    store.brightness = 100;
+    setBrightness(false);
+    saveValue(&store.contrast, (uint8_t)55, false);
+    display.setContrast();
+    saveValue(&store.numplaylist, false);
+    saveValue(&store.screensaverEnabled, false);
+    saveValue(&store.screensaverTimeout, (uint16_t)20);
+    saveValue(&store.screensaverBlank, false);
+    saveValue(&store.screensaverPlayingEnabled, false);
+    saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
+    saveValue(&store.screensaverPlayingBlank, false);
+    display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
+    netserver.requestOnChange(GETSCREEN, clientId);
+    return;
+  }
+  if (strcmp(val, "timezone") == 0) {
+    saveValue(&store.tzHour, (int8_t)3, false);
+    saveValue(&store.tzMin, (int8_t)0, false);
+    saveValue(store.sntp1, "pool.ntp.org", 35, false);
+    saveValue(store.sntp2, "0.ru.pool.ntp.org", 35);
+    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), store.sntp1, store.sntp2);
+    network.forceTimeSync = true;
+    netserver.requestOnChange(GETTIMEZONE, clientId);
+    return;
+  }
+  if (strcmp(val, "weather") == 0) {
+    saveValue(&store.showweather, false, false);
+    saveValue(store.weatherlat, "55.7512", 10, false);
+    saveValue(store.weatherlon, "37.6184", 10, false);
+    saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
+    network.trueWeather=false;
+    display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
+    netserver.requestOnChange(GETWEATHER, clientId);
+    return;
+  }
+  if (strcmp(val, "controls") == 0) {
+    saveValue(&store.volsteps, (uint8_t)1, false);
+    saveValue(&store.fliptouch, false, false);
+    saveValue(&store.dbgtouch, false, false);
+    saveValue(&store.skipPlaylistUpDown, false);
+    setEncAcceleration(200);
+    setIRTolerance(40);
+    netserver.requestOnChange(GETCONTROLS, clientId);
+    return;
+  }
+  if (strcmp(val, "1") == 0) {
+    config.reset();
+    return;
+  }
+}
+
+
 
 void Config::setDefaults() {
   store.config_set = 4262;
@@ -373,10 +529,12 @@ void Config::setDefaults() {
   store.rotate90 = false;
   store.screensaverEnabled = false;
   store.screensaverTimeout = 20;
+  store.screensaverBlank = false;
   snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
   store.skipPlaylistUpDown = false;
   store.screensaverPlayingEnabled = false;
   store.screensaverPlayingTimeout = 5;
+  store.screensaverPlayingBlank = false;
   eepromWrite(EEPROM_START, store);
 }
 
@@ -419,6 +577,8 @@ void Config::setTone(int8_t bass, int8_t middle, int8_t trebble) {
   saveValue(&store.bass, bass, false);
   saveValue(&store.middle, middle, false);
   saveValue(&store.trebble, trebble);
+  player.setTone(store.bass, store.middle, store.trebble);
+  netserver.requestOnChange(EQUALIZER, 0);
 }
 
 void Config::setSmartStart(uint8_t ss) {
@@ -427,6 +587,8 @@ void Config::setSmartStart(uint8_t ss) {
 
 void Config::setBalance(int8_t balance) {
   saveValue(&store.balance, balance);
+  player.setBalance(store.balance);
+  netserver.requestOnChange(BALANCE, 0);
 }
 
 uint8_t Config::setLastStation(uint16_t val) {

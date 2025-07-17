@@ -3613,7 +3613,7 @@ bool Audio::parseHttpResponseHeader() { // this is the response to a GET / reque
         if(audio_showstation) audio_showstation("");
         if(audio_icydescription) audio_icydescription("");
         if(audio_icyurl) audio_icyurl("");
-        AUDIO_ERROR("Host %s not available", m_lastHost);
+        AUDIO_ERROR("Host not available");
         m_lastHost[0] = '\0';
         setDatamode(AUDIO_NONE);
         stopSong();
@@ -3883,6 +3883,7 @@ bool Audio:: initializeDecoder(){
     return true;
 
     exit:
+        AUDIO_ERROR("Not enough free memory to initialize the decoder: %u bytes free", ESP.getFreeHeap());
         stopSong();
         return false;
 }

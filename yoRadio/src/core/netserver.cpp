@@ -9,8 +9,15 @@
 #include "network.h"
 #include "mqtt.h"
 #include "controls.h"
+#include "commandhandler.h"
 #include <Update.h>
 #include <ESPmDNS.h>
+
+#if USE_OTA
+#include <NetworkUdp.h>
+#include <ArduinoOTA.h>
+#endif
+
 #ifdef USE_SD
 #include "sdmanager.h"
 #endif
@@ -27,13 +34,10 @@ NetServer netserver;
 
 AsyncWebServer webserver(80);
 AsyncWebSocket websocket("/ws");
-AsyncUDP udp;
 
-String processor(const String& var);
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-void handleUploadWeb(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-void handleUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-void handleHTTPArgs(AsyncWebServerRequest * request);
+void handleIndex(AsyncWebServerRequest * request);
+void handleNotFound(AsyncWebServerRequest * request);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 
 bool  shouldReboot  = false;
@@ -62,45 +66,9 @@ bool NetServer::begin(bool quiet) {
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
   while(nsQueue==NULL){;}
 
-  if(config.emptyFS){
-    webserver.on("/", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html); });
-    webserver.on("/webboard", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); ESP.restart(); }, handleUploadWeb);
-    webserver.on("/", HTTP_POST, [](AsyncWebServerRequest *request) { 
-      if(request->arg("ssid")!="" && request->arg("pass")!=""){
-        char buf[BUFLEN];
-        memset(buf, 0, BUFLEN);
-        snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid").c_str(), request->arg("pass").c_str());
-        request->redirect("/");
-        config.saveWifiFromNextion(buf);
-        return;
-      }
-      request->redirect("/"); 
-      ESP.restart();
-    }, handleUploadWeb);
-  }else{
-    webserver.on("/", HTTP_ANY, handleHTTPArgs);
-    webserver.on("/settings.html", HTTP_GET, handleHTTPArgs);
-    webserver.on("/update.html", HTTP_GET, handleHTTPArgs);
-    webserver.on("/ir.html", HTTP_GET, handleHTTPArgs);
-    webserver.on("/webboard", HTTP_GET, [](AsyncWebServerRequest * request) { request->send_P(200, "text/html", emptyfs_html); });
-    webserver.on("/webboard", HTTP_POST, [](AsyncWebServerRequest *request) { request->redirect("/"); }, handleUploadWeb);
-  }
-  
-  webserver.on(PLAYLIST_PATH, HTTP_GET, handleHTTPArgs);
-  webserver.on(INDEX_PATH, HTTP_GET, handleHTTPArgs);
-  webserver.on(PLAYLIST_SD_PATH, HTTP_GET, handleHTTPArgs);
-  webserver.on(INDEX_SD_PATH, HTTP_GET, handleHTTPArgs);
-  webserver.on(SSIDS_PATH, HTTP_GET, handleHTTPArgs);
-  
-  webserver.on("/upload", HTTP_POST, beginUpload, handleUpload);
-  webserver.on("/update", HTTP_GET, handleHTTPArgs);
-  webserver.on("/update", HTTP_POST, beginUpdate, handleUpdate);
-  
-  webserver.on("/variables.js", HTTP_GET, [](AsyncWebServerRequest * request) { 
-    char varjsbuf[BUFLEN];
-    sprintf (varjsbuf, "var yoVersion='%s';\nvar formAction='%s';\nvar playMode='%s';\n", YOVERSION, (network.status == CONNECTED && !config.emptyFS)?"webboard":"", (network.status == CONNECTED)?"player":"ap");
-    request->send(200, "text/html", varjsbuf); 
-  });
+  webserver.on("/", HTTP_ANY, handleIndex);
+  webserver.onNotFound(handleNotFound);
+  webserver.onFileUpload(handleUpload);
 
   webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=31536000");
 #ifdef CORS_DEBUG
@@ -110,64 +78,45 @@ bool NetServer::begin(bool quiet) {
   webserver.begin();
   if(strlen(config.store.mdnsname)>0)
     MDNS.begin(config.store.mdnsname);
+
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
-
-  //echo -n "helle?" | socat - udp-datagram:255.255.255.255:44490,broadcast
-  if (udp.listen(44490)) {
-    udp.onPacket([](AsyncUDPPacket packet) {
-      if (strcmp((char*)packet.data(), "helle?") == 0)
-        packet.println(WiFi.localIP());
+#if USE_OTA
+  if(strlen(config.store.mdnsname)>0)
+    ArduinoOTA.setHostname(config.store.mdnsname);
+#ifdef OTA_PASS
+  ArduinoOTA.setPassword(OTA_PASS);
+#endif
+  ArduinoOTA
+    .onStart([]() {
+      display.putRequest(NEWMODE, UPDATING);
+      telnet.printf("Start OTA updating %s\n", ArduinoOTA.getCommand() == U_FLASH?"firmware":"filesystem");
+    })
+    .onEnd([]() {
+      telnet.printf("\nEnd OTA update, Rebooting...\n");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      telnet.printf("Progress OTA: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      telnet.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) {
+        telnet.printf("Auth Failed\n");
+      } else if (error == OTA_BEGIN_ERROR) {
+        telnet.printf("Begin Failed\n");
+      } else if (error == OTA_CONNECT_ERROR) {
+        telnet.printf("Connect Failed\n");
+      } else if (error == OTA_RECEIVE_ERROR) {
+        telnet.printf("Receive Failed\n");
+      } else if (error == OTA_END_ERROR) {
+        telnet.printf("End Failed\n");
+      }
     });
-  }
+  ArduinoOTA.begin();
+#endif
+
   if(!quiet) Serial.println("done");
   return true;
-}
-
-void NetServer::beginUpdate(AsyncWebServerRequest *request) {
-  shouldReboot = !Update.hasError();
-  AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot ? "OK" : updateError());
-  response->addHeader("Connection", "close");
-  request->send(response);
-}
-
-void handleUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  if (!index) {
-    int target = (request->getParam("updatetarget", true)->value() == "spiffs") ? U_SPIFFS : U_FLASH;
-    Serial.printf("Update Start: %s\n", filename.c_str());
-    player.sendCommand({PR_STOP, 0});
-    display.putRequest(NEWMODE, UPDATING);
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN, target)) {
-      Update.printError(Serial);
-      request->send(200, "text/html", updateError());
-    }
-  }
-  if (!Update.hasError()) {
-    if (Update.write(data, len) != len) {
-      Update.printError(Serial);
-      request->send(200, "text/html", updateError());
-    }
-  }
-  if (final) {
-    if (Update.end(true)) {
-      Serial.printf("Update Success: %uB\n", index + len);
-    } else {
-      Update.printError(Serial);
-      request->send(200, "text/html", updateError());
-    }
-  }
-}
-
-void NetServer::beginUpload(AsyncWebServerRequest *request) {
-  if (request->hasParam("plfile", true, true)) {
-    netserver.importRequest = IMPL;
-    request->send(200);
-  } else if (request->hasParam("wifile", true, true)) {
-    netserver.importRequest = IMWIFI;
-    request->send(200);
-  } else {
-    request->send(404);
-  }
 }
 
 size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index){
@@ -188,21 +137,17 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
   size_t canread = (needread > maxLen) ? maxLen : needread;
   DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, netserver.chunkedPathBuffer, canread, maxLen);
   requiredfile.seek(index, SeekSet);
-  //vTaskDelay(1);
   requiredfile.read(buffer, canread);
   index += canread;
   if (requiredfile) requiredfile.close();
   return canread;
 }
 
-void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path, bool doproc) {
+void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path) {
   memset(chunkedPathBuffer, 0, sizeof(chunkedPathBuffer));
   strlcpy(chunkedPathBuffer, path, sizeof(chunkedPathBuffer)-1);
   AsyncWebServerResponse *response;
-  if(doproc)
-    response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback, processor);
-  else
-    response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback);
+  response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback);
   request->send(response);
 }
 
@@ -364,7 +309,7 @@ void NetServer::processQueue(){
       case SDINIT:        sprintf (wsbuf, "{\"sdinit\": %d}", SDC_CS!=255); break;
       case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
       #ifdef USE_SD
-        case CHANGEMODE:    config.changeMode(newConfigMode); return; break;
+        case CHANGEMODE:    config.changeMode(config.newConfigMode); return; break;
       #endif
       default:          break;
     }
@@ -391,8 +336,10 @@ void NetServer::loop() {
     case IMWIFI:  config.saveWifi(); importRequest = IMDONE; break;
     default:      break;
   }
-  //if (rssi < 255) requestOnChange(NRSSI, 0);
   processQueue();
+#if USE_OTA
+  ArduinoOTA.handle();
+#endif
 }
 
 #if IR_PIN!=255
@@ -413,389 +360,34 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    char cmd[65], val[65];
-    if (config.parseWsCommand((const char*)data, cmd, val, 65)) {
-      //if (strcmp(cmd, "getmode") == 0     ) { requestOnChange(GETMODE, clientId);     return; }
-      if (strcmp(cmd, "getindex") == 0    ) { requestOnChange(GETINDEX, clientId);    return; }
-      if (strcmp(cmd, "getsystem") == 0   ) { requestOnChange(GETSYSTEM, clientId);   return; }
-      if (strcmp(cmd, "getscreen") == 0   ) { requestOnChange(GETSCREEN, clientId);   return; }
-      if (strcmp(cmd, "gettimezone") == 0 ) { requestOnChange(GETTIMEZONE, clientId); return; }
-      if (strcmp(cmd, "getcontrols") == 0 ) { requestOnChange(GETCONTROLS, clientId); return; }
-      if (strcmp(cmd, "getweather") == 0  ) { requestOnChange(GETWEATHER, clientId);  return; }
-      if (strcmp(cmd, "getactive") == 0   ) { requestOnChange(GETACTIVE, clientId);   return; }
-      if (strcmp(cmd, "newmode") == 0     ) { newConfigMode = atoi(val); requestOnChange(CHANGEMODE, 0); return; }
-      if (strcmp(cmd, "smartstart") == 0) {
-        uint8_t valb = atoi(val);
-        uint8_t ss = valb == 1 ? 1 : 2;
-        if (!player.isRunning() && ss == 1) ss = 0;
-        config.setSmartStart(ss);
-        return;
-      }
-      if (strcmp(cmd, "audioinfo") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.audioinfo, valb);
-        display.putRequest(AUDIOINFO);
-        return;
-      }
-      if (strcmp(cmd, "vumeter") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.vumeter, valb);
-        display.putRequest(SHOWVUMETER);
-        return;
-      }
-      if (strcmp(cmd, "prev") == 0) { player.prev(); return; }
-      if (strcmp(cmd, "toggle") == 0) { player.toggle(); return; }
-      if (strcmp(cmd, "next") == 0) { player.next(); return; }
-      if (strcmp(cmd, "volm") == 0) { player.stepVol(false); return; }
-      if (strcmp(cmd, "volp") == 0) { player.stepVol(true); return; }
-      if (strcmp(cmd, "play") == 0) { uint16_t valb = atoi(val); player.sendCommand({PR_PLAY, valb}); return; }
-      if (strcmp(cmd, "softap") == 0) {
-        uint8_t valb = atoi(val);
-        config.saveValue(&config.store.softapdelay, valb);
-        return;
-      }
-      if (strcmp(cmd, "mdnsname") == 0) {
-        config.saveValue(config.store.mdnsname, val, MDNS_LENGTH);
-        return;
-      }
-      if (strcmp(cmd, "rebootmdns") == 0) {
-        char buf[MDNS_LENGTH*2];
-        if(strlen(config.store.mdnsname)>0)
-          snprintf(buf, MDNS_LENGTH*2, "{\"redirect\": \"http://%s.local\"}", config.store.mdnsname);
-        else
-          snprintf(buf, MDNS_LENGTH*2, "{\"redirect\": \"http://%s/\"}", WiFi.localIP().toString().c_str());
-        websocket.text(clientId, buf);
-        delay(500);
-        ESP.restart();
-        return;
-      }
-      if (strcmp(cmd, "invertdisplay") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.invertdisplay, valb);
-        display.invert();
-        return;
-      }
-      if (strcmp(cmd, "numplaylist") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.numplaylist, valb);
-        display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
-        return;
-      }
-      if (strcmp(cmd, "fliptouch") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.fliptouch, valb);
-        flipTS();
-        return;
-      }
-      if (strcmp(cmd, "dbgtouch") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.dbgtouch, valb);
-        return;
-      }
-      if (strcmp(cmd, "flipscreen") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.flipscreen, valb);
-        display.flip();
-        display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
-        return;
-      }
-      if (strcmp(cmd, "brightness") == 0) {
-        uint8_t valb = atoi(val);
-        if (!config.store.dspon) requestOnChange(DSPON, 0);
-        config.store.brightness = valb;
-        config.setBrightness(true);
-        return;
-      }
-      if (strcmp(cmd, "screenon") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.setDspOn(valb);
-        return;
-      }
-      if (strcmp(cmd, "contrast") == 0) {
-        uint8_t valb = atoi(val);
-        config.saveValue(&config.store.contrast, valb);
-        display.setContrast();
-        return;
-      }
-      if (strcmp(cmd, "screensaverenabled") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.screensaverEnabled, valb);
-        #ifndef DSP_LCD
-        display.putRequest(NEWMODE, PLAYER);
-        #endif
-        return;
-      }
-      if (strcmp(cmd, "screensavertimeout") == 0) {
-        uint16_t valb = atoi(val);
-        valb = constrain(valb,5,65520);
-        config.saveValue(&config.store.screensaverTimeout, valb);
-        #ifndef DSP_LCD
-        display.putRequest(NEWMODE, PLAYER);
-        #endif
-        return;
-      }
-      if (strcmp(cmd, "screensaverblank") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.screensaverBlank, valb);
-        #ifndef DSP_LCD
-        display.putRequest(NEWMODE, PLAYER);
-        #endif
-        return;
-      }
-      if (strcmp(cmd, "screensaverplayingenabled") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.screensaverPlayingEnabled, valb);
-        #ifndef DSP_LCD
-        display.putRequest(NEWMODE, PLAYER);
-        #endif
-        return;
-      }
-      if (strcmp(cmd, "screensaverplayingtimeout") == 0) {
-        uint16_t valb = atoi(val);
-        valb = constrain(valb,1,1080);
-        config.saveValue(&config.store.screensaverPlayingTimeout, valb);
-        #ifndef DSP_LCD
-        display.putRequest(NEWMODE, PLAYER);
-        #endif
-        return;
-      }
-      if (strcmp(cmd, "screensaverplayingblank") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.screensaverPlayingBlank, valb);
-        #ifndef DSP_LCD
-        display.putRequest(NEWMODE, PLAYER);
-        #endif
-        return;
-      }
-      if (strcmp(cmd, "tzh") == 0) {
-        int8_t vali = atoi(val);
-        config.saveValue(&config.store.tzHour, vali);
-        return;
-      }
-      if (strcmp(cmd, "tzm") == 0) {
-        int8_t vali = atoi(val);
-        config.saveValue(&config.store.tzMin, vali);
-        return;
-      }
-      if (strcmp(cmd, "sntp2") == 0) {
-        config.saveValue(config.store.sntp2, val, 35, false);
-        return;
-      }
-      if (strcmp(cmd, "sntp1") == 0) {
-        //strlcpy(config.store.sntp1, val, 35);
-        bool tzdone = false;
-        if (strlen(val) > 0 && strlen(config.store.sntp2) > 0) {
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), val, config.store.sntp2);
-          tzdone = true;
-        } else if (strlen(val) > 0) {
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), val);
-          tzdone = true;
-        }
-        if (tzdone) {
-          network.forceTimeSync = true;
-          config.saveValue(config.store.sntp1, val, 35);
-        }
-        return;
-      }
-      if (strcmp(cmd, "volsteps") == 0) {
-        uint8_t valb = atoi(val);
-        config.saveValue(&config.store.volsteps, valb);
-        return;
-      }
-      if (strcmp(cmd, "encacceleration") == 0) {
-        uint16_t valb = atoi(val);
-        setEncAcceleration(valb);
-        config.saveValue(&config.store.encacc, valb);
-        return;
-      }
-      if (strcmp(cmd, "irtlp") == 0) {
-        uint8_t valb = atoi(val);
-        setIRTolerance(valb);
-        return;
-      }
-      if (strcmp(cmd, "oneclickswitching") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.skipPlaylistUpDown, valb);
-        return;
-      }
-      if (strcmp(cmd, "showweather") == 0) {
-        bool valb = static_cast<bool>(atoi(val));
-        config.saveValue(&config.store.showweather, valb);
-        network.trueWeather=false;
-        network.forceWeather = true;
-        display.putRequest(SHOWWEATHER);
-        return;
-      }
-      if (strcmp(cmd, "lat") == 0) {
-        config.saveValue(config.store.weatherlat, val, 10, false);
-        return;
-      }
-      if (strcmp(cmd, "lon") == 0) {
-        config.saveValue(config.store.weatherlon, val, 10, false);
-        return;
-      }
-      if (strcmp(cmd, "key") == 0) {
-        config.saveValue(config.store.weatherkey, val, WEATHERKEY_LENGTH);
-        network.trueWeather=false;
-        display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
-        return;
-      }
-      /*  RESETS  */
-      if (strcmp(cmd, "reset") == 0) {
-        if (strcmp(val, "system") == 0) {
-          config.saveValue(&config.store.smartstart, (uint8_t)2, false);
-          config.saveValue(&config.store.audioinfo, false, false);
-          config.saveValue(&config.store.vumeter, false, false);
-          config.saveValue(&config.store.softapdelay, (uint8_t)0, false);
-          snprintf(config.store.mdnsname, MDNS_LENGTH, "yoradio-%x", config.getChipId());
-          config.saveValue(config.store.mdnsname, config.store.mdnsname, MDNS_LENGTH, true, true);
-          display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
-          requestOnChange(GETSYSTEM, clientId);
-          return;
-        }
-        if (strcmp(val, "screen") == 0) {
-          config.saveValue(&config.store.flipscreen, false, false);
-          display.flip();
-          config.saveValue(&config.store.invertdisplay, false, false);
-          display.invert();
-          config.saveValue(&config.store.dspon, true, false);
-          config.store.brightness = 100;
-          config.setBrightness(false);
-          config.saveValue(&config.store.contrast, (uint8_t)55, false);
-          display.setContrast();
-          config.saveValue(&config.store.numplaylist, false);
-          config.saveValue(&config.store.screensaverEnabled, false);
-          config.saveValue(&config.store.screensaverTimeout, (uint16_t)20);
-          config.saveValue(&config.store.screensaverBlank, false);
-          config.saveValue(&config.store.screensaverPlayingEnabled, false);
-          config.saveValue(&config.store.screensaverPlayingTimeout, (uint16_t)5);
-          config.saveValue(&config.store.screensaverPlayingBlank, false);
-          display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
-          requestOnChange(GETSCREEN, clientId);
-          return;
-        }
-        if (strcmp(val, "timezone") == 0) {
-          config.saveValue(&config.store.tzHour, (int8_t)3, false);
-          config.saveValue(&config.store.tzMin, (int8_t)0, false);
-          config.saveValue(config.store.sntp1, "pool.ntp.org", 35, false);
-          config.saveValue(config.store.sntp2, "0.ru.pool.ntp.org", 35);
-          configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
-          network.forceTimeSync = true;
-          requestOnChange(GETTIMEZONE, clientId);
-          return;
-        }
-        if (strcmp(val, "weather") == 0) {
-          config.saveValue(&config.store.showweather, false, false);
-          config.saveValue(config.store.weatherlat, "55.7512", 10, false);
-          config.saveValue(config.store.weatherlon, "37.6184", 10, false);
-          config.saveValue(config.store.weatherkey, "", WEATHERKEY_LENGTH);
-          network.trueWeather=false;
-          display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
-          requestOnChange(GETWEATHER, clientId);
-          return;
-        }
-        if (strcmp(val, "controls") == 0) {
-          config.saveValue(&config.store.volsteps, (uint8_t)1, false);
-          config.saveValue(&config.store.fliptouch, false, false);
-          config.saveValue(&config.store.dbgtouch, false, false);
-          config.saveValue(&config.store.skipPlaylistUpDown, false);
-          setEncAcceleration(200);
-          setIRTolerance(40);
-          requestOnChange(GETCONTROLS, clientId);
-          return;
-        }
-        if (strcmp(val, "1") == 0) {
-          config.reset();
-          return;
-        }
-      } /*  EOF RESETS  */
-      if (strcmp(cmd, "volume") == 0) {
-        uint8_t v = atoi(val);
-        player.setVol(v);
-      }
-      if (strcmp(cmd, "sdpos") == 0) {
-        //return;
-        if (config.getMode()==PM_SDCARD){
-          config.sdResumePos = 0;
-          if(!player.isRunning()){
-            player.setResumeFilePos(atoi(val)-player.sd_min);
-            player.sendCommand({PR_PLAY, config.store.lastSdStation});
-          }else{
-            player.setFilePos(atoi(val)-player.sd_min);
-          }
-        }
-        return;
-      }
-      if (strcmp(cmd, "snuffle") == 0) {
-        config.setSnuffle(strcmp(val, "true") == 0);
-        return;
-      }
-      if (strcmp(cmd, "balance") == 0) {
+    char comnd[65], val[65];
+    if (config.parseWsCommand((const char*)data, comnd, val, 65)) {
+      if (strcmp(comnd, "trebble") == 0) {
         int8_t valb = atoi(val);
-        player.setBalance(valb);
-        config.setBalance(valb);
-        netserver.requestOnChange(BALANCE, 0);
-        return;
-      }
-      if (strcmp(cmd, "trebble") == 0) {
-        int8_t valb = atoi(val);
-        player.setTone(config.store.bass, config.store.middle, valb);
         config.setTone(config.store.bass, config.store.middle, valb);
-        netserver.requestOnChange(EQUALIZER, 0);
         return;
       }
-      if (strcmp(cmd, "middle") == 0) {
+      if (strcmp(comnd, "middle") == 0) {
         int8_t valb = atoi(val);
-        player.setTone(config.store.bass, valb, config.store.trebble);
         config.setTone(config.store.bass, valb, config.store.trebble);
-        netserver.requestOnChange(EQUALIZER, 0);
         return;
       }
-      if (strcmp(cmd, "bass") == 0) {
+      if (strcmp(comnd, "bass") == 0) {
         int8_t valb = atoi(val);
-        player.setTone(valb, config.store.middle, config.store.trebble);
         config.setTone(valb, config.store.middle, config.store.trebble);
-        netserver.requestOnChange(EQUALIZER, 0);
         return;
       }
-      if (strcmp(cmd, "reboot") == 0) {
-        ESP.restart();
-        return;
-      }
-      if (strcmp(cmd, "format") == 0) {
-        SPIFFS.format();
-        ESP.restart();
-        return;
-      }
-      if (strcmp(cmd, "submitplaylist") == 0) {
-        return;
-      }
-      if (strcmp(cmd, "submitplaylistdone") == 0) {
+      if (strcmp(comnd, "submitplaylistdone") == 0) {
 #ifdef MQTT_ROOT_TOPIC
-        //mqttPublishPlaylist();
         mqttplaylistticker.attach(5, mqttplaylistSend);
 #endif
-        if (player.isRunning()) {
-          player.sendCommand({PR_PLAY, -config.lastStation()});
-        }
+        if (player.isRunning()) player.sendCommand({PR_PLAY, -config.lastStation()});
         return;
       }
-#if IR_PIN!=255
-      if (strcmp(cmd, "irbtn") == 0) {
-        config.irindex = atoi(val);
-        irRecordEnable = (config.irindex >= 0);
-        config.irchck = 0;
-        irValsToWs();
-        if (config.irindex < 0) config.saveIR();
+      
+      if(cmd.exec(comnd, val, clientId)){
+        return;
       }
-      if (strcmp(cmd, "chkid") == 0) {
-        config.irchck = atoi(val);
-      }
-      if (strcmp(cmd, "irclr") == 0) {
-        uint8_t cl = atoi(val);
-        config.ircodes.irVals[config.irindex][cl] = 0;
-      }
-#endif
     }
   }
 }
@@ -865,48 +457,66 @@ void NetServer::resetQueue(){
   if(nsQueue!=NULL) xQueueReset(nsQueue);
 }
 
-String processor(const String& var) { // %Templates%
-  if (var == "ACTION") return (network.status == CONNECTED && !config.emptyFS)?"webboard":"";
-  if (var == "UPLOADWIFI") return (network.status == CONNECTED)?" hidden":"";
-  if (var == "VERSION") return YOVERSION;
-  return String();
-}
-
 int freeSpace;
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  if (!index) {
-    if(filename!="tempwifi.csv"){
-      if(SPIFFS.exists(PLAYLIST_PATH)) SPIFFS.remove(PLAYLIST_PATH);
-      if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
-      if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
-      if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
+  if(request->url()=="/upload"){
+    if (!index) {
+      if(filename!="tempwifi.csv"){
+        if(SPIFFS.exists(PLAYLIST_PATH)) SPIFFS.remove(PLAYLIST_PATH);
+        if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
+        if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
+        if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
+      }
+      freeSpace = (float)SPIFFS.totalBytes()/100*68-SPIFFS.usedBytes();
+      request->_tempFile = SPIFFS.open(TMP_PATH , "w");
     }
-    freeSpace = (float)SPIFFS.totalBytes()/100*68-SPIFFS.usedBytes();
-    request->_tempFile = SPIFFS.open(TMP_PATH , "w");
-  }
-  if (len) {
-    if(freeSpace>index+len){
+    if (len) {
+      if(freeSpace>index+len){
+        request->_tempFile.write(data, len);
+      }
+    }
+    if (final) {
+      request->_tempFile.close();
+    }
+  }else if(request->url()=="/update"){
+    if (!index) {
+      int target = (request->getParam("updatetarget", true)->value() == "spiffs") ? U_SPIFFS : U_FLASH;
+      Serial.printf("Update Start: %s\n", filename.c_str());
+      player.sendCommand({PR_STOP, 0});
+      display.putRequest(NEWMODE, UPDATING);
+      if (!Update.begin(UPDATE_SIZE_UNKNOWN, target)) {
+        Update.printError(Serial);
+        request->send(200, "text/html", updateError());
+      }
+    }
+    if (!Update.hasError()) {
+      if (Update.write(data, len) != len) {
+        Update.printError(Serial);
+        request->send(200, "text/html", updateError());
+      }
+    }
+    if (final) {
+      if (Update.end(true)) {
+        Serial.printf("Update Success: %uB\n", index + len);
+      } else {
+        Update.printError(Serial);
+        request->send(200, "text/html", updateError());
+      }
+    }
+  }else{ // "/webboard"
+    DBGVB("File: %s, size:%u bytes, index: %u, final: %s\n", filename.c_str(), len, index, final?"true":"false");
+    if (!index) {
+      String spath = "/www/";
+      if(filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
+      request->_tempFile = SPIFFS.open(spath + filename , "w");
+    }
+    if (len) {
       request->_tempFile.write(data, len);
     }
-  }
-  if (final) {
-    request->_tempFile.close();
-  }
-}
-
-void handleUploadWeb(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  DBGVB("File: %s, size:%u bytes, index: %u, final: %s\n", filename.c_str(), len, index, final?"true":"false");
-  if (!index) {
-    String spath = "/www/";
-    if(filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
-    request->_tempFile = SPIFFS.open(spath + filename , "w");
-  }
-  if (len) {
-    request->_tempFile.write(data, len);
-  }
-  if (final) {
-    request->_tempFile.close();
-    if(filename=="playlist.csv") config.indexPlaylist();
+    if (final) {
+      request->_tempFile.close();
+      if(filename=="playlist.csv") config.indexPlaylist();
+    }
   }
 }
 
@@ -920,8 +530,19 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
       break;
   }
 }
-
-void handleHTTPArgs(AsyncWebServerRequest * request) {
+void handleNotFound(AsyncWebServerRequest * request) {
+#if defined(HTTP_USER) && defined(HTTP_PASS)
+  if(network.status == CONNECTED)
+    if (request->url() == "/logout") {
+      request->send(401);
+      return;
+    }
+    if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
+      return request->requestAuthentication();
+    }
+#endif
+  if(request->url()=="/emergency") { request->send_P(200, "text/html", emergency_form); return; }
+  if(request->method() == HTTP_POST && request->url()=="/webboard" && config.emptyFS) { request->redirect("/"); ESP.restart(); return; }
   if (request->method() == HTTP_GET) {
     DBGVB("[%s] client ip=%s request of %s", __func__, request->client()->remoteIP().toString().c_str(), request->url().c_str());
     if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 || 
@@ -934,137 +555,115 @@ void handleHTTPArgs(AsyncWebServerRequest * request) {
       if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
 #endif
       if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.getMode()==PM_SDCARD){
-         netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH, false);
+        netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH);
       }else{
-        netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str(), false);
+        netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str());
+      }
+      return;
+    }// if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 || 
+  }// if (request->method() == HTTP_GET)
+  
+  if (request->method() == HTTP_POST) {
+    if(request->url()=="/webboard"){ request->redirect("/"); return; } // <--post files from /data/www
+    if(request->url()=="/upload"){ // <--upload playlist.csv or wifi.csv
+      if (request->hasParam("plfile", true, true)) {
+        netserver.importRequest = IMPL;
+        request->send(200);
+      } else if (request->hasParam("wifile", true, true)) {
+        netserver.importRequest = IMWIFI;
+        request->send(200);
+      } else {
+        request->send(404);
       }
       return;
     }
-    Serial.println(request->url());
-    if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {
-      if(network.status == CONNECTED){
-        request->send_P(200, "text/html", index_html);
-      }else{
-        request->redirect("/settings.html");
-      }
-      //netserver.chunkedHtmlPage(String(), request, network.status == CONNECTED ? "/www/index.html" : "/www/settings.html", false);
+    if(request->url()=="/update"){ // <--upload firmware
+      shouldReboot = !Update.hasError();
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot ? "OK" : updateError());
+      response->addHeader("Connection", "close");
+      request->send(response);
       return;
     }
+  }// if (request->method() == HTTP_POST)
+  
+  if (request->url() == "/favicon.ico") {
+    request->send(200, "image/x-icon", "data:,");
+    return;
+  }
+  if (request->url() == "/variables.js") {
+    char varjsbuf[BUFLEN];
+    sprintf (varjsbuf, "var yoVersion='%s';\nvar formAction='%s';\nvar playMode='%s';\n", YOVERSION, (network.status == CONNECTED && !config.emptyFS)?"webboard":"", (network.status == CONNECTED)?"player":"ap");
+    request->send(200, "text/html", varjsbuf);
+    return;
   }
   if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0){
     request->send_P(200, "text/html", index_html);
     return;
   }
-  if (network.status == CONNECTED) {
-    bool commandFound=false;
-    if (request->hasArg("start")) { player.sendCommand({PR_PLAY, config.lastStation()}); commandFound=true; }
-    if (request->hasArg("stop")) { player.sendCommand({PR_STOP, 0}); commandFound=true; }
-    if (request->hasArg("toggle")) { player.toggle(); commandFound=true; }
-    if (request->hasArg("prev")) { player.prev(); commandFound=true; }
-    if (request->hasArg("next")) { player.next(); commandFound=true; }
-    if (request->hasArg("volm")) { player.stepVol(false); commandFound=true; }
-    if (request->hasArg("volp")) { player.stepVol(true); commandFound=true; }
-    #ifdef USE_SD
-    if (request->hasArg("mode")) {
-      AsyncWebParameter* p = request->getParam("mode");
-      int mm = atoi(p->value().c_str());
-      if(mm>2) mm=0;
-      if(mm==2)
-        config.changeMode();
-      else
-        config.changeMode(mm);
-      commandFound=true;
+  if (request->method() == HTTP_GET && request->url() == "/webboard") {
+    request->send_P(200, "text/html", emptyfs_html);
+    return;
+  }
+  Serial.print("Not Found: ");
+  Serial.println(request->url());
+  request->send(404, "text/plain", "Not found");
+}
+
+void handleIndex(AsyncWebServerRequest * request) {
+  if(config.emptyFS){
+    if(request->url()=="/" && request->method() == HTTP_GET ) { request->send_P(200, "text/html", emptyfs_html); return; }
+    if(request->url()=="/" && request->method() == HTTP_POST) {
+      if(request->arg("ssid")!="" && request->arg("pass")!=""){
+        char buf[BUFLEN];
+        memset(buf, 0, BUFLEN);
+        snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid").c_str(), request->arg("pass").c_str());
+        request->redirect("/");
+        config.saveWifiFromNextion(buf);
+        return;
+      }
+      request->redirect("/"); 
+      ESP.restart();
+      return;
     }
-    #endif
-    if (request->hasArg("reset")) { request->redirect("/"); request->send(200); config.reset(); return; }
+    Serial.print("Not Found: ");
+    Serial.println(request->url());
+    request->send(404, "text/plain", "Not found");
+    return;
+  } // end if(config.emptyFS)
+#if defined(HTTP_USER) && defined(HTTP_PASS)
+  if(network.status == CONNECTED)
+    if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
+      return request->requestAuthentication();
+    }
+#endif
+  if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {
+    if(network.status == CONNECTED) request->send_P(200, "text/html", index_html); else request->redirect("/settings.html");
+    return;
+  }
+  if(network.status == CONNECTED){
+    int paramsNr = request->params();
+    if(paramsNr==1){
+      AsyncWebParameter* p = request->getParam(0);
+      if(cmd.exec(p->name().c_str(),p->value().c_str())) {
+        if(p->name()=="reset" || p->name()=="clearspiffs") request->redirect("/");
+        if(p->name()=="clearspiffs") { delay(100); ESP.restart(); }
+        request->send(200, "text/plain", "");
+        return;
+      }
+    }
     if (request->hasArg("trebble") && request->hasArg("middle") && request->hasArg("bass")) {
-      AsyncWebParameter* pt = request->getParam("trebble", request->method() == HTTP_POST);
-      AsyncWebParameter* pm = request->getParam("middle", request->method() == HTTP_POST);
-      AsyncWebParameter* pb = request->getParam("bass", request->method() == HTTP_POST);
-      int t = atoi(pt->value().c_str());
-      int m = atoi(pm->value().c_str());
-      int b = atoi(pb->value().c_str());
-      player.setTone(b, m, t);
-      config.setTone(b, m, t);
-      netserver.requestOnChange(EQUALIZER, 0);
-      commandFound=true;
-    }
-    if (request->hasArg("ballance")) {
-      AsyncWebParameter* p = request->getParam("ballance", request->method() == HTTP_POST);
-      int b = atoi(p->value().c_str());
-      player.setBalance(b);
-      config.setBalance(b);
-      netserver.requestOnChange(BALANCE, 0);
-      commandFound=true;
-    }
-    if (request->hasArg("playstation") || request->hasArg("play")) {
-      AsyncWebParameter* p = request->getParam(request->hasArg("playstation") ? "playstation" : "play", request->method() == HTTP_POST);
-      int id = atoi(p->value().c_str());
-      if (id < 1) id = 1;
-      uint16_t cs = config.playlistLength();
-      if (id > cs) id = cs;
-      //config.sdResumePos = 0;
-      player.sendCommand({PR_PLAY, id});
-      commandFound=true;
-      DBGVB("[%s] play=%d", __func__, id);
-    }
-    if (request->hasArg("vol")) {
-      AsyncWebParameter* p = request->getParam("vol", request->method() == HTTP_POST);
-      int v = atoi(p->value().c_str());
-      if (v < 0) v = 0;
-      if (v > 254) v = 254;
-      config.store.volume = v;
-      player.setVol(v);
-      commandFound=true;
-      DBGVB("[%s] vol=%d", __func__, v);
-    }
-    if (request->hasArg("dspon")) {
-      AsyncWebParameter* p = request->getParam("dspon", request->method() == HTTP_POST);
-      int d = atoi(p->value().c_str());
-      config.setDspOn(d!=0);
-      commandFound=true;
-    }
-    if (request->hasArg("dim")) {
-      AsyncWebParameter* p = request->getParam("dim", request->method() == HTTP_POST);
-      int d = atoi(p->value().c_str());
-      if (d < 0) d = 0;
-      if (d > 100) d = 100;
-      config.store.brightness = (uint8_t)d;
-      config.setBrightness(true);
-      commandFound=true;
+      config.setTone(request->getParam("bass")->value().toInt(), request->getParam("middle")->value().toInt(), request->getParam("trebble")->value().toInt());
+      request->send(200, "text/plain", "");
+      return;
     }
     if (request->hasArg("sleep")) {
-      AsyncWebParameter* sfor = request->getParam("sleep", request->method() == HTTP_POST);
-      int sford = atoi(sfor->value().c_str());
-      int safterd = 0;
-      if(request->hasArg("after")){
-        AsyncWebParameter* safter = request->getParam("after", request->method() == HTTP_POST);
-        safterd = atoi(safter->value().c_str());
-      }
-      if(sford > 0 && safterd >= 0){
-        request->send(200);
-        config.sleepForAfter(sford, safterd);
-        commandFound=true;
-      }
+      int sford = request->getParam("sleep")->value().toInt();
+      int safterd = request->hasArg("after")?request->getParam("after")->value().toInt():0;
+      if(sford > 0 && safterd >= 0){ request->send(200, "text/plain", ""); config.sleepForAfter(sford, safterd); return; }
     }
-    if (request->hasArg("clearspiffs")) {
-      if(config.spiffsCleanup()){
-        config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB));
-        request->redirect("/");
-        ESP.restart();
-      }else{
-        request->send(200);
-      }
-      return;
-    }
-    if (request->params() > 0) {
-      request->send(commandFound?200:404);
-      return;
-    }
-  } else {
-    if (request->params() > 0) {
-      request->send(404);
-      return;
-    }
+    request->send(404, "text/plain", "Not found");
+    
+  }else{
+    request->send(404, "text/plain", "Not found");
   }
 }

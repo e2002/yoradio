@@ -234,23 +234,15 @@ void Nextion::loop() {
         }
         if (sscanf(rxbuf, "balance=%d", &scanDigit) == 1){
           config.setBalance((int8_t)scanDigit);
-          player.setBalance(config.store.balance);
-          netserver.requestOnChange(BALANCE, 0);
         }
         if (sscanf(rxbuf, "treble=%d", &scanDigit) == 1){
-          player.setTone(config.store.bass, config.store.middle, scanDigit);
           config.setTone(config.store.bass, config.store.middle, scanDigit);
-          netserver.requestOnChange(EQUALIZER, 0);
         }
         if (sscanf(rxbuf, "middle=%d", &scanDigit) == 1){
-          player.setTone(config.store.bass, scanDigit, config.store.trebble);
           config.setTone(config.store.bass, scanDigit, config.store.trebble);
-          netserver.requestOnChange(EQUALIZER, 0);
         }
         if (sscanf(rxbuf, "bass=%d", &scanDigit) == 1){
-          player.setTone(scanDigit, config.store.middle, config.store.trebble);
           config.setTone(scanDigit, config.store.middle, config.store.trebble);
-          netserver.requestOnChange(EQUALIZER, 0);
         }
         if (sscanf(rxbuf, "tzhour=%d", &scanDigit) == 1){
           config.setTimezone((int8_t)scanDigit, config.store.tzMin);

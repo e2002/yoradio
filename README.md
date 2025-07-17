@@ -234,6 +234,19 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.530
+- optimization of webserver/socket code in netserver.cpp, part#1
+- added support for ArduinoOTA (OTA update from Arduino IDE) (disabled by default)\
+  to enable you need to add to myoptions.h: `#define USE_OTA true`\
+  set password: in myoptions.h `#define OTA_PASS "myotapassword12345"`
+- in web interface added basic HTTP authentication capability (disabled by default)\
+  to enable you need to add to myoptions.h:\
+  `#define HTTP_USER "user"`\
+  `#define HTTP_PASS "password"`
+- added "emergency firmware uploader" form (for unforeseen cases) http://ipaddress/emergency
+- added config (sys.config) telnet command that displays the same information usually shown over serial at boot.
+- bug fixes 🪲
+
 ### 0.9.515
 - fixed a bug with resetting all parameters when resetting only one section of parameters
 
