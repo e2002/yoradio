@@ -234,6 +234,10 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.533
+- fixed compilation error for esp32 core version lower than 3.0.0
+- fixed error setting display brightness to 1
+
 ### 0.9.530
 - optimization of webserver/socket code in netserver.cpp, part#1
 - added support for ArduinoOTA (OTA update from Arduino IDE) (disabled by default)\

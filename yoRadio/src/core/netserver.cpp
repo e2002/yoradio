@@ -14,7 +14,11 @@
 #include <ESPmDNS.h>
 
 #if USE_OTA
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include <NetworkUdp.h>
+#else
+#include <WiFiUdp.h>
+#endif
 #include <ArduinoOTA.h>
 #endif
 
