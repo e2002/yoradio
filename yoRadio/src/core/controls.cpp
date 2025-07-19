@@ -166,7 +166,7 @@ void encodersLoop(yoEncoder *enc, bool first){
   {
     uint8_t encBtnState = digitalRead(first?ENC_BTNB:ENC2_BTNB);
 #   if defined(DUMMYDISPLAY) && !defined(USE_NEXTION)
-    first = first?(first && encBtnState):(!encBtnState);
+    first = first?(encBtnState):(!encBtnState);
     if(first){
       int nv = config.store.volume+encoderDelta;
       if(nv<0) nv=0;
