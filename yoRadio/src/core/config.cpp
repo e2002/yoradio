@@ -147,7 +147,7 @@ void Config::changeMode(int newmode){
       return;
     }
   }
-  if(newmode<0){
+  if(newmode<0||newmode>MAX_PLAY_MODE){
     store.play_mode++;
     if(getMode() > MAX_PLAY_MODE) store.play_mode=0;
   }else{
@@ -1285,7 +1285,7 @@ void Config::startAsyncServicesButWait() {
 
 void Config::bootInfo() {
   BOOTLOG("************************************************");
-  BOOTLOG("*               ёRadio v%s             *", YOVERSION);
+  BOOTLOG("*               ёRadio v%s v%s                *", YOVERSION);
   BOOTLOG("************************************************");
   BOOTLOG("------------------------------------------------");
   BOOTLOG("arduino:\t%d", ARDUINO);
