@@ -268,6 +268,29 @@ void Player::browseUrl(){
 }
 #endif
 
+void Player::playUrl(const char* url) {
+  setError("");
+  remoteStationName = true;
+  config.setDspOn(1);
+  resumeAfterUrl = _status==PLAYING;
+  display.putRequest(PSTOP);
+  setOutputPins(false);
+  config.setTitle(const_PlConnect);
+  if (connecttohost(url)) {
+    _status = PLAYING;
+    config.setTitle("");
+    netserver.requestOnChange(MODE, 0);
+    setOutputPins(true);
+    display.putRequest(PSTART);
+    if (player_on_start_play) player_on_start_play();
+    pm.on_start_play();
+  } else {
+    telnet.printf("##ERROR#:\tError connecting to %s\n", url);
+    SET_PLAY_ERROR("Error connecting to %s", url);
+    _stop(true);
+  }
+}
+
 void Player::prev() {
   
   uint16_t lastStation = config.lastStation();

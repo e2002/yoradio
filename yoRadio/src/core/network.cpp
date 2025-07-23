@@ -40,6 +40,16 @@ void ticks() {
     if(network.forceTimeSync || network.forceWeather){
       xTaskCreatePinnedToCore(doSync, "doSync", 1024 * 4, NULL, 0, &syncTaskHandle, 0);
     }
+    // check at :01s mark (fix network clock not matching system clock after Daylight Savings Time changes)
+    if (network.timeinfo.tm_sec == 1) {
+      time_t now = time(NULL);
+      struct tm localNow;
+      localtime_r(&now, &localNow);
+      if ((network.timeinfo.tm_min != localNow.tm_min) || (network.timeinfo.tm_hour != localNow.tm_hour)) {
+        timeSyncTicks = 0;
+        network.forceTimeSync = true;
+      }
+    }
     if(timeSyncTicks >= timeSyncInterval){
       timeSyncTicks=0;
       network.forceTimeSync = true;
@@ -242,21 +252,23 @@ void MyNetwork::setWifiParams(){
     memset(weatherBuf, 0, WEATHER_STRING_L);
   #endif
   if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
-    configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
+    configTzTime(config.store.tzposix, config.store.sntp1, config.store.sntp2);
   }else if(strlen(config.store.sntp1)>0){
-    configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
+    configTzTime(config.store.tzposix, config.store.sntp1);
   }
 }
 
 void MyNetwork::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
   if (withTelnetOutput) {
+    if (strlen(config.store.sntp1) > 0 && strlen(config.store.sntp2) > 0)
+      configTzTime(config.store.tzposix, config.store.sntp1, config.store.sntp2);
+    else if (strlen(config.store.sntp1) > 0)
+      configTzTime(config.store.tzposix, config.store.sntp1);
     char timeStringBuff[50];
     strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
-    if (config.store.tzHour < 0) {
-      telnet.printf(clientId, "##SYS.DATE#: %s%03d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
-    } else {
-      telnet.printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
-    }
+    telnet.printf(clientId, "##SYS.DATE#: %s (%s)\n> ", timeStringBuff, config.store.tzposix);
+    telnet.printf(clientId, "##SYS.TZNAME#: %s \n> ", config.store.tz_name);
+    telnet.printf(clientId, "##SYS.TZPOSIX#: %s \n> ", config.store.tzposix);
   }
 }
 
@@ -271,7 +283,7 @@ void MyNetwork::raiseSoftAP() {
   BOOTLOG("************************************************");
   BOOTLOG("Running in AP mode");
   BOOTLOG("Connect to AP %s with password %s", apSsid, apPassword);
-  BOOTLOG("and go to http:/192.168.4.1/ to configure");
+  BOOTLOG("and go to http://192.168.4.1/ to configure");
   BOOTLOG("************************************************");
   status = SOFT_AP;
   if(config.store.softapdelay>0)

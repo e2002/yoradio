@@ -78,7 +78,8 @@ uint16_t DspCore::textWidth(const char *txt){
 void DspCore::_getTimeBounds() {
   _timewidth = textWidth(_timeBuf);
   char buf[4];
-  strftime(buf, 4, "%H", &network.timeinfo);
+  if (config.store.clock12) strftime(buf, 4, "%l", &network.timeinfo);
+  if (!config.store.clock12) strftime(buf, 4, "%H", &network.timeinfo);
   _dotsLeft=textWidth(buf);
 }
 
@@ -142,7 +143,8 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
   clockTop = top;
   clockRightSpace = rightspace;
   clockTimeHeight = timeheight;
-  strftime(_timeBuf, sizeof(_timeBuf), "%H:%M", &network.timeinfo);
+  if (config.store.clock12) strftime(_timeBuf, sizeof(_timeBuf), "%l:%M", &network.timeinfo);
+  if (!config.store.clock12) strftime(_timeBuf, sizeof(_timeBuf), "%H:%M", &network.timeinfo);
   if(strcmp(_oldTimeBuf, _timeBuf)!=0 || redraw){
     _getTimeBounds();
     _clockTime();
