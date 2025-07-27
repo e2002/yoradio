@@ -32,10 +32,6 @@
 #include <FFat.h>
 #endif // SDFATFS_USED
 
-#ifndef AUDIOBUFFER_MULTIPLIER2
-#define AUDIOBUFFER_MULTIPLIER2    8
-#endif
-
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include "hal/gpio_ll.h"
 #endif
@@ -149,7 +145,7 @@ public:
 protected:
     size_t   m_buffSizePSRAM    = 300000;   // most webstreams limit the advance to 100...300Kbytes
     //size_t   m_buffSizeRAM      = 1600 * 5;
-    size_t   m_buffSizeRAM      = 1600 * AUDIOBUFFER_MULTIPLIER2;
+    size_t   m_buffSizeRAM      = 1600;
     size_t   m_buffSize         = 0;
     size_t   m_freeSpace        = 0;
     size_t   m_writeSpace       = 0;
@@ -287,6 +283,7 @@ private:
     void IIR_calculateCoefficients(int8_t G1, int8_t G2, int8_t G3);
     bool ts_parsePacket(uint8_t* packet, uint8_t* packetStart, uint8_t* packetLength);
     void _computeVUlevel(int16_t sample[2]);
+    static void connectTask(void* pvParams);
     // implement several function with respect to the index of string
     void trim(char *s) {
     //fb   trim in place
@@ -425,11 +422,11 @@ private:
         if(str == NULL) return 0;
         uint32_t hash = 0;
         for(int i=0; i<strlen(str); i++){
-		    if(str[i] < 32) continue; // ignore control sign
-		    hash += (str[i] - 31) * i * 32;
+        if(str[i] < 32) continue; // ignore control sign
+        hash += (str[i] - 31) * i * 32;
         }
         return hash;
-	}
+  }
 
 private:
     const char *codecname[9] = {"unknown", "WAV", "MP3", "AAC", "M4A", "FLAC", "OGG", "OGG FLAC", "OPUS"};
@@ -474,7 +471,15 @@ private:
     std::vector<char*>    m_playlistContent; // m3u8 playlist buffer
     std::vector<char*>    m_playlistURL;     // m3u8 streamURLs buffer
     std::vector<uint32_t> m_hashQueue;
-
+    
+    struct ConnectParams {
+      char *hostwoext = NULL;
+      uint16_t port = 80;
+      Audio* instance;
+    };
+    volatile bool _connectionResult;
+    TaskHandle_t _connectTaskHandle = nullptr;
+    
     const size_t    m_frameSizeWav  = 1600;
     const size_t    m_frameSizeMP3  = 1600;
     const size_t    m_frameSizeAAC  = 1600;

@@ -5,12 +5,47 @@
 #include "display.h"
 #include "player.h"
 #include "network.h"
-
+#include "netserver.h"
+#include "timekeeper.h"
 
 Display display;
 #ifdef USE_NEXTION
 Nextion nextion;
 #endif
+
+#ifndef CORE_STACK_SIZE
+  #define CORE_STACK_SIZE  1024*4
+#endif
+#ifndef DSP_TASK_PRIORITY
+  #define DSP_TASK_PRIORITY  2
+#endif
+#ifndef DSP_TASK_CORE_ID
+  #define DSP_TASK_CORE_ID  0
+#endif
+
+QueueHandle_t displayQueue;
+
+static void loopDspTask(void * pvParameters){
+  while(true){
+  #ifndef DUMMYDISPLAY
+    if(displayQueue==NULL) break;
+    netserver.loop();
+    if(timekeeper.loop0())
+      display.loop();
+    // will NOT delay here, would use message dequeue timeout instead
+    //vTaskDelay(DSP_TASK_DELAY);
+  #else
+    netserver.loop();
+    timekeeper.loop0();
+    vTaskDelay(10);
+  #endif
+  }
+  vTaskDelete( NULL );
+}
+
+void Display::_createDspTask(){
+  xTaskCreatePinnedToCore(loopDspTask, "DspTask", CORE_STACK_SIZE,  NULL,  DSP_TASK_PRIORITY, NULL, DSP_TASK_CORE_ID);
+}
 
 #ifndef DUMMYDISPLAY
 //============================================================================================================================
@@ -19,38 +54,25 @@ DspCore dsp;
 Page *pages[] = { new Page(), new Page(), new Page(), new Page() };
 
 #ifndef DSQ_SEND_DELAY
-  #define DSQ_SEND_DELAY portMAX_DELAY
+  //#define DSQ_SEND_DELAY portMAX_DELAY
+  #define DSQ_SEND_DELAY  pdMS_TO_TICKS(200)
 #endif
 
-#ifndef CORE_STACK_SIZE
-  #define CORE_STACK_SIZE  1024*3
-#endif
 #ifndef DSP_TASK_DELAY
-  #define DSP_TASK_DELAY  pdMS_TO_TICKS(10)
+  #define DSP_TASK_DELAY pdMS_TO_TICKS(20) // cap for 50 fps
 #endif
+
+// will use DSP_QUEUE_TICKS as delay interval for display task runner when there are no msgs in a queue to process
+#define DSP_QUEUE_TICKS DSP_TASK_DELAY
+
 #if !((DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB) || DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7796 || DSP_MODEL==DSP_ILI9488 || DSP_MODEL==DSP_ILI9486 || DSP_MODEL==DSP_ILI9341 || DSP_MODEL==DSP_ILI9225)
   #undef  BITRATE_FULL
   #define BITRATE_FULL     false
 #endif
-TaskHandle_t DspTask;
-QueueHandle_t displayQueue;
+
 
 void returnPlayer(){
   display.putRequest(NEWMODE, PLAYER);
-}
-
-void Display::_createDspTask(){
-  xTaskCreatePinnedToCore(loopDspTask, "DspTask", CORE_STACK_SIZE,  NULL,  4, &DspTask, !xPortGetCoreID());
-}
-
-void loopDspTask(void * pvParameters){
-  while(true){
-    if(displayQueue==NULL) break;
-    display.loop();
-    vTaskDelay(DSP_TASK_DELAY);
-  }
-  vTaskDelete( NULL );
-  DspTask=NULL;
 }
 
 void Display::init() {
@@ -117,7 +139,7 @@ void Display::_buildPager(){
     _volbar = new SliderWidget(volbarConf, config.theme.volbarin, config.theme.background, 254, config.theme.volbarout);
   #endif
   #ifndef HIDE_HEAPBAR
-    _heapbar = new SliderWidget(heapbarConf, config.theme.buffer, config.theme.background, psramInit()?300000:1600 * AUDIOBUFFER_MULTIPLIER2);
+    _heapbar = new SliderWidget(heapbarConf, config.theme.buffer, config.theme.background, psramInit()?300000:1600 * config.store.abuff);
   #endif
   #ifndef HIDE_VOL
     _voltxt = new TextWidget(voltxtConf, 10, false, config.theme.vol, config.theme.background);
@@ -197,7 +219,7 @@ void Display::_apScreen() {
     TextWidget *appass2 = (TextWidget*) &_boot->addWidget(new TextWidget(apPass2Conf, 30, false, config.theme.clock, config.theme.background));
     appass2->setText(apPassword);
     ScrollWidget *bootSett = (ScrollWidget*) &_boot->addWidget(new ScrollWidget("*", apSettConf, config.theme.title2, config.theme.background));
-    bootSett->setText(WiFi.softAPIP().toString().c_str(), apSettFmt);
+    bootSett->setText(config.ipToStr(WiFi.softAPIP()), apSettFmt);
     _pager.addPage(_boot);
     _pager.setPage(_boot);
   #else
@@ -234,7 +256,7 @@ void Display::_start() {
   if(_vuwidget) _vuwidget->lock();
   if(_rssi)     _setRSSI(WiFi.RSSI());
   #ifndef HIDE_IP
-    if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
+    if(_volip) _volip->setText(config.ipToStr(WiFi.localIP()), iptxtFmt);
   #endif
   _pager.setPage( pages[PG_PLAYER]);
   _volume();
@@ -254,11 +276,6 @@ void Display::_showDialog(const char *title){
   _meta.setText(title);
 }
 
-void Display::_setReturnTicker(uint8_t time_s){
-  _returnTicker.detach();
-  _returnTicker.once(time_s, returnPlayer);
-}
-
 void Display::_swichMode(displayMode_e newmode) {
   #ifdef USE_NEXTION
     //nextion.swichMode(newmode);
@@ -276,7 +293,6 @@ void Display::_swichMode(displayMode_e newmode) {
       dsp.clearDsp();
     #endif
     numOfNextStation = 0;
-    _returnTicker.detach();
     #ifdef META_MOVE
       _meta.moveBack();
     #endif
@@ -304,7 +320,7 @@ void Display::_swichMode(displayMode_e newmode) {
     #ifndef HIDE_IP
       _showDialog(const_DlgVolume);
     #else
-      _showDialog(WiFi.localIP().toString().c_str());
+      _showDialog(config.ipToStr(WiFi.localIP()));
     #endif
     _nums.setText(config.store.volume, numtxtFmt);
   }
@@ -329,11 +345,11 @@ void Display::resetQueue(){
 
 void Display::_drawPlaylist() {
   dsp.drawPlaylist(currentPlItem);
-  _setReturnTicker(30);
+  timekeeper.waitAndReturnPlayer(30);
 }
 
 void Display::_drawNextStationNum(uint16_t num) {
-  _setReturnTicker(30);
+  timekeeper.waitAndReturnPlayer(30);
   _meta.setText(config.stationByNum(num));
   _nums.setText(num, "%d");
 }
@@ -374,9 +390,7 @@ void Display::_layoutChange(bool played){
     }
   }
 }
-#ifndef DSP_QUEUE_TICKS
-  #define DSP_QUEUE_TICKS 0
-#endif
+
 void Display::loop() {
   if(_bootStep==0) {
     _pager.begin();
@@ -429,7 +443,7 @@ void Display::loop() {
           if(_weather) _weather->lock(!config.store.showweather);
           if(!config.store.showweather){
             #ifndef HIDE_IP
-            if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
+            if(_volip) _volip->setText(config.ipToStr(WiFi.localIP()), iptxtFmt);
             #endif
           }else{
             if(_weather) _weather->setText(const_getWeather);
@@ -463,13 +477,19 @@ void Display::loop() {
         case DSP_START: _start();  break;
         case NEWIP: {
           #ifndef HIDE_IP
-            if(_volip) _volip->setText(WiFi.localIP().toString().c_str(), iptxtFmt);
+            if(_volip) _volip->setText(config.ipToStr(WiFi.localIP()), iptxtFmt);
           #endif
           break;
         }
         default: break;
+
+        // check if there are more messages waiting in the Q, in this case break the loop() and go
+        // for another round to evict next message, do not waste time to redraw the screen, etc...
+        if (uxQueueMessagesWaiting(displayQueue))
+          return;
       }
   }
+
   dsp.loop();
   #if I2S_DOUT==255
   player.computeVUlevel();
@@ -561,7 +581,7 @@ void Display::_volume() {
     if(_voltxt) _voltxt->setText(config.store.volume, voltxtFmt);
   #endif
   if(_mode==VOL) {
-    _setReturnTicker(3);
+    timekeeper.waitAndReturnPlayer(3);
     _nums.setText(config.store.volume, numtxtFmt);
   }
   /*#ifdef USE_NEXTION

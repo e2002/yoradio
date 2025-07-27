@@ -3,20 +3,18 @@
 #include "options.h"
 
 #include "Arduino.h"
-#include <Ticker.h>
 #include "config.h"
 #include "common.h"
 #include "../displays/dspcore.h"
-
-
 
 #if NEXTION_RX!=255 && NEXTION_TX!=255
   #define USE_NEXTION
   #include "../displays/nextion.h"
 #endif
 
+//static void loopDspTask(void * pvParameters);
+
 #ifndef DUMMYDISPLAY
-  void loopDspTask(void * pvParameters);
 
 class Display {
   public:
@@ -54,7 +52,6 @@ class Display {
     ClockWidget _clock;
     Page *_boot;
     TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
-    Ticker _returnTicker;
     uint8_t _bootStep;
     void _time(bool redraw = false);
     void _apScreen();
@@ -68,7 +65,6 @@ class Display {
     void _showDialog(const char *title);
     void _buildPager();
     void _bootScreen();
-    void _setReturnTicker(uint8_t time_s);
     void _layoutChange(bool played);
     void _setRSSI(int rssi);
 };
@@ -98,6 +94,8 @@ class Display {
     bool deepsleep(){return true;}
     void wakeup(){}
     void printPLitem(uint8_t pos, const char* item){}
+  private:
+    void _createDspTask();
 };
 
 #endif

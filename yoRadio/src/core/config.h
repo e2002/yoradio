@@ -1,7 +1,6 @@
 #ifndef config_h
 #define config_h
 #include "Arduino.h"
-#include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
 #include <EEPROM.h>
@@ -47,12 +46,22 @@
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
-#define CONFIG_VERSION  4
+
+#ifdef HEAP_DBG
+  #define HEAP_INFO() printHeapFragmentationInfo(__PRETTY_FUNCTION__)
+  void printHeapFragmentationInfo(const char* title);
+#else
+  #define HEAP_INFO()
+#endif
+
+#define CONFIG_VERSION  5
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
 
 void u8fix(char *src);
+
+void checkAllTasksStack();
 
 struct theme_t {
   uint16_t background;
@@ -143,6 +152,12 @@ struct config_t
   bool      screensaverPlayingBlank;
   char      mdnsname[24];
   bool      skipPlaylistUpDown;
+  uint16_t  abuff;
+  bool      telnet;
+  bool      watchdog;
+  uint16_t  timeSyncInterval;
+  uint16_t  timeSyncIntervalRTC;
+  uint16_t  weatherSyncInterval;
 };
 
 #if IR_PIN!=255
@@ -189,6 +204,10 @@ class Config {
     uint16_t screensaverPlayingTicks;
     bool     isScreensaver;
     int      newConfigMode;
+    char      tmpBuf[BUFLEN];
+    char     tmpBuf2[BUFLEN];
+    char       ipBuf[16];
+    char _stationBuf[BUFLEN/2];
   public:
     Config() {};
     //void save();
@@ -214,6 +233,7 @@ class Config {
     bool loadStation(uint16_t station);
     bool initNetwork();
     bool saveWifi();
+    void setTimeConf();
     bool saveWifiFromNextion(const char* post);
     void setSmartStart(uint8_t ss);
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
@@ -259,8 +279,10 @@ class Config {
     void setIrBtn(int val);
 #endif
     void resetSystem(const char *val, uint8_t clientId);
-    
     bool spiffsCleanup();
+    char * ipToStr(IPAddress ip);
+    bool prepareForPlaying(uint16_t stationId);
+    void configPostPlaying(uint16_t stationId);
     FS* SDPLFS(){ return _SDplaylistFS; }
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
@@ -303,7 +325,6 @@ class Config {
     #endif
     FS* _SDplaylistFS;
     void setDefaults();
-    Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
     void _setupVersion();
@@ -314,7 +335,6 @@ class Config {
       uint16_t station = random(1, store.countStation);
       return station;
     }
-    char _stationBuf[BUFLEN/2];
 };
 
 extern Config config;

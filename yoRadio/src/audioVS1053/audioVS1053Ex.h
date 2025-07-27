@@ -9,11 +9,7 @@
 #ifndef _vs1053_ext
 #define _vs1053_ext
 
-#ifndef AUDIOBUFFER_MULTIPLIER2
-#define AUDIOBUFFER_MULTIPLIER2  10
-#endif
-
-#define VS1053VOLM 128				// 128 or 96 only
+#define VS1053VOLM 128        // 128 or 96 only
 #define VS1053VOL(v) (VS1053VOLM==128?log10(((float)v+1)) * 50.54571334 + 128:log10(((float)v+1)) * 64.54571334 + 96)
 
 
@@ -107,7 +103,7 @@ public:
 protected:
     const size_t m_buffSizePSRAM    = 300000;   // most webstreams limit the advance to 100...300Kbytes
     //const size_t m_buffSizeRAM      = 1600 * 10;
-    const size_t m_buffSizeRAM      = 1600 * AUDIOBUFFER_MULTIPLIER2;
+    const size_t m_buffSizeRAM      = 1600;
     size_t       m_buffSize         = 0;
     size_t       m_freeSpace        = 0;
     size_t       m_writeSpace       = 0;
@@ -136,6 +132,15 @@ private:
     std::vector<char*>    m_playlistURL;     // m3u8 streamURLs buffer
     std::vector<uint32_t> m_hashQueue;
 
+    struct ConnectParams {
+      char *hostwoext = NULL;
+      uint16_t port = 80;
+      Audio* instance;
+    };
+    volatile bool _connectionResult;
+    TaskHandle_t _connectTaskHandle = nullptr;
+    static void connectTask(void* pvParams);
+    
 private:
     enum : int { AUDIO_NONE, HTTP_RESPONSE_HEADER , AUDIO_DATA, AUDIO_LOCALFILE, AUDIO_METADATA, AUDIO_PLAYLISTINIT,
                  AUDIO_PLAYLISTHEADER,  AUDIO_PLAYLISTDATA, VS1053_SWM, VS1053_OGG};
@@ -146,10 +151,10 @@ private:
     enum : int { ST_NONE = 0, ST_WEBFILE = 1, ST_WEBSTREAM = 2};
 
 private:
-    uint8_t       cs_pin ;                        	// Pin where CS line is connected
-    uint8_t       dcs_pin ;                       	// Pin where DCS line is connected
-    uint8_t       dreq_pin ;                      	// Pin where DREQ line is connected
-    uint8_t       curvol ;                        	// Current volume setting 0..100%
+    uint8_t       cs_pin ;                          // Pin where CS line is connected
+    uint8_t       dcs_pin ;                         // Pin where DCS line is connected
+    uint8_t       dreq_pin ;                        // Pin where DREQ line is connected
+    uint8_t       curvol ;                          // Current volume setting 0..100%
 
     const uint8_t vs1053_chunk_size = 32 ;
     int8_t          m_balance = 0;                  // -16 (mute left) ... +16 (mute right)
@@ -171,11 +176,11 @@ private:
     const uint8_t SCI_AICTRL2       = 0xE ;
     const uint8_t SCI_AICTRL3       = 0xF ;
     // SCI_MODE bits
-    const uint8_t SM_SDINEW         = 11 ;        	// Bitnumber in SCI_MODE always on
-    const uint8_t SM_RESET          = 2 ;        	// Bitnumber in SCI_MODE soft reset
-    const uint8_t SM_CANCEL         = 3 ;         	// Bitnumber in SCI_MODE cancel song
-    const uint8_t SM_TESTS          = 5 ;         	// Bitnumber in SCI_MODE for tests
-    const uint8_t SM_LINE1          = 14 ;        	// Bitnumber in SCI_MODE for Line input
+    const uint8_t SM_SDINEW         = 11 ;          // Bitnumber in SCI_MODE always on
+    const uint8_t SM_RESET          = 2 ;          // Bitnumber in SCI_MODE soft reset
+    const uint8_t SM_CANCEL         = 3 ;           // Bitnumber in SCI_MODE cancel song
+    const uint8_t SM_TESTS          = 5 ;           // Bitnumber in SCI_MODE for tests
+    const uint8_t SM_LINE1          = 14 ;          // Bitnumber in SCI_MODE for Line input
 
     SPIClass*       spi_VS1053 = NULL;
     SPISettings     VS1053_SPI_DATA;                // SPI settings normal speed
@@ -242,7 +247,7 @@ protected:
     inline void DCS_LOW()  {(dcs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << (dcs_pin - 32) : GPIO.out_w1tc = 1 << dcs_pin;}
     inline void CS_HIGH()  {( cs_pin&0x20) ? GPIO.out1_w1ts.data = 1 << ( cs_pin - 32) : GPIO.out_w1ts = 1 <<  cs_pin;}
     inline void CS_LOW()   {( cs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << ( cs_pin - 32) : GPIO.out_w1tc = 1 <<  cs_pin;}
-    inline void await_data_request() {while(!digitalRead(dreq_pin)) NOP();}	  // Very short delay
+    inline void await_data_request() {while(!digitalRead(dreq_pin)) NOP();}    // Very short delay
     inline bool data_request()     {return(digitalRead(dreq_pin) == HIGH);}
 
     void     initInBuff();
@@ -319,8 +324,8 @@ public:
     size_t   bufferFree();
     size_t   inBufferFilled(){ return bufferFilled(); }
     size_t   inBufferFree(){ return bufferFree(); }
-		void     setBalance(int8_t bal = 0);
-		void     setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass);
+    void     setBalance(int8_t bal = 0);
+    void     setTone(int8_t gainLowPass, int8_t gainBandPass, int8_t gainHighPass);
     void     setDefaults();
     void     forceMono(bool m) {}                        // TODO
     /* VU METER */

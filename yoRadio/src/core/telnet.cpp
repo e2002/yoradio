@@ -5,11 +5,12 @@
 #include "player.h"
 #include "network.h"
 #include "telnet.h"
+#include "esp_heap_caps.h"
 
 Telnet telnet;
 
 bool Telnet::_isIPSet(IPAddress ip) {
-  return ip.toString() == "0.0.0.0";
+  return strcmp(config.ipToStr(ip), "0.0.0.0") == 0;
 }
 
 bool Telnet::begin(bool quiet) {
@@ -21,12 +22,11 @@ bool Telnet::begin(bool quiet) {
   }
   if(!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
   if (WiFi.status() == WL_CONNECTED || _isIPSet(WiFi.softAPIP())) {
-    server.begin();
-    server.setNoDelay(true);
+    toggle();
     if(!quiet){
       Serial.println("done");
       Serial.println("##[BOOT]#");
-      BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
+      BOOTLOG("Ready! Go to http:/%s/ to configure", config.ipToStr(WiFi.localIP()));
       BOOTLOG("------------------------------------------------");
       Serial.println("##[BOOT]#");
     }
@@ -36,8 +36,17 @@ bool Telnet::begin(bool quiet) {
   }
 }
 
+void Telnet::start() {
+  server.begin();
+  server.setNoDelay(true);
+}
+
 void Telnet::stop() {
   server.stop();
+}
+
+void Telnet::toggle() {
+  if(config.store.telnet) { start(); }else{ stop(); }
 }
 
 void Telnet::emptyClientStream(WiFiClient client) {
@@ -72,40 +81,41 @@ void Telnet::loop() {
     return;
   }
   uint8_t i;
-  if (WiFi.status() == WL_CONNECTED) {
-    if (server.hasClient()) {
-      for (i = 0; i < MAX_TLN_CLIENTS; i++) {
-        if (!clients[i] || !clients[i].connected()) {
-          if (clients[i]) {
-            clients[i].stop();
+  if(config.store.telnet)
+    if (WiFi.status() == WL_CONNECTED) {
+      if (server.hasClient()) {
+        for (i = 0; i < MAX_TLN_CLIENTS; i++) {
+          if (!clients[i] || !clients[i].connected()) {
+            if (clients[i]) {
+              clients[i].stop();
+            }
+            clients[i] = server.available();
+            if (!clients[i]) Serial.println("available broken");
+            on_connect(config.ipToStr(clients[i].remoteIP()), i);
+            clients[i].setNoDelay(true);
+            emptyClientStream(clients[i]);
+            break;
           }
-          clients[i] = server.available();
-          if (!clients[i]) Serial.println("available broken");
-          on_connect(clients[i].remoteIP().toString().c_str(), i);
-          clients[i].setNoDelay(true);
-          emptyClientStream(clients[i]);
-          break;
+        }
+        if (i >= MAX_TLN_CLIENTS) {
+          server.available().stop();
         }
       }
-      if (i >= MAX_TLN_CLIENTS) {
-        server.available().stop();
+      for (i = 0; i < MAX_TLN_CLIENTS; i++) {
+        if (clients[i] && clients[i].connected() && clients[i].available()) {
+          String inputstr = clients[i].readStringUntil('\n');
+          inputstr.trim();
+          on_input(inputstr.c_str(), i);
+        }
       }
-    }
-    for (i = 0; i < MAX_TLN_CLIENTS; i++) {
-      if (clients[i] && clients[i].connected() && clients[i].available()) {
-        String inputstr = clients[i].readStringUntil('\n');
-        inputstr.trim();
-        on_input(inputstr.c_str(), i);
+    } else {
+      for (i = 0; i < MAX_TLN_CLIENTS; i++) {
+        if (clients[i]) {
+          clients[i].stop();
+        }
       }
+      delay(1000);
     }
-  } else {
-    for (i = 0; i < MAX_TLN_CLIENTS; i++) {
-      if (clients[i]) {
-        clients[i].stop();
-      }
-    }
-    delay(1000);
-  }
   handleSerial();
 }
 
@@ -125,35 +135,33 @@ void Telnet::print(uint8_t id, const char *buf) {
 }
 
 void Telnet::printf(const char *format, ...) {
-  char buf[MAX_PRINTF_LEN];
   va_list args;
   va_start (args, format );
-  vsnprintf(buf, MAX_PRINTF_LEN, format, args);
+  vsnprintf(cmBuf, sizeof(cmBuf), format, args);
   va_end (args);
   for (int id = 0; id < MAX_TLN_CLIENTS; id++) {
     if (clients[id] && clients[id].connected()) {
-      clients[id].print(buf);
+      clients[id].print(cmBuf);
     }
   }
-  if (strcmp(buf, "> ") == 0) return;
+  if (strcmp(cmBuf, "> ") == 0) return;
   //if(strstr(buf,"\n> ")==NULL) Serial.print(buf);
-  char *nl = strstr(buf, "\n> ");
-  if (nl != NULL) { buf[nl-buf+1] = '\0'; }
-  Serial.print(buf);
+  char *nl = strstr(cmBuf, "\n> ");
+  if (nl != NULL) { cmBuf[nl-cmBuf+1] = '\0'; }
+  Serial.print(cmBuf);
 }
 
 void Telnet::printf(uint8_t id, const char *format, ...) {
-  char buf[MAX_PRINTF_LEN];
   va_list argptr;
   va_start(argptr, format);
-  vsnprintf(buf, MAX_PRINTF_LEN, format, argptr);
+  vsnprintf(cmBuf, sizeof(cmBuf), format, argptr);
   va_end(argptr);
   if(id>MAX_TLN_CLIENTS){
-    Serial.print(buf);
+    Serial.print(cmBuf);
     return;
   }
   if (clients[id] && clients[id].connected()) {
-    clients[id].print(buf);
+    clients[id].print(cmBuf);
   }
 }
 
@@ -164,9 +172,8 @@ void Telnet::on_connect(const char* str, uint8_t clientId) {
 
 void Telnet::info() {
   telnet.printf("##CLI.INFO#\n");
-  char timeStringBuff[50];
-  strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S+03:00", &network.timeinfo);
-  telnet.printf("##SYS.DATE#: %s\n", timeStringBuff); //TODO timezone offset
+  strftime(config.tmpBuf, sizeof(config.tmpBuf), "%Y-%m-%dT%H:%M:%S+03:00", &network.timeinfo);
+  telnet.printf("##SYS.DATE#: %s\n", config.tmpBuf); //TODO timezone offset
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.lastStation(), config.station.name);
   if (player.status() == PLAYING) {
     telnet.printf("##CLI.META#: %s\n",  config.station.title);
@@ -180,6 +187,16 @@ void Telnet::info() {
   telnet.printf("> ");
 }
 
+void Telnet::printHeapFragmentationInfo(uint8_t id){
+  size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+  size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+  float fragmentation = 100.0 * (1.0 - ((float)largestBlock / (float)freeHeap));
+  printf(id, "\n*************************************\n");
+  printf(id, "* Free heap: %u bytes\n", freeHeap);
+  printf(id, "* Largest free block: %u bytes\n", largestBlock);
+  printf(id, "* Fragmentation: %.2f%%\n", fragmentation);
+  printf(id, "*************************************\n\n");
+}
 void Telnet::on_input(const char* str, uint8_t clientId) {
   if (strlen(str) == 0) return;
   if(network.status == CONNECTED){
@@ -253,12 +270,11 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       if (!file || file.isDirectory()) {
         return;
       }
-      char sName[BUFLEN], sUrl[BUFLEN];
       int sOvol;
       uint8_t c = 1;
       while (file.available()) {
-        if (config.parseCSV(file.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
-          printf(clientId, "#CLI.LISTNUM#: %*d: %s, %s\n", 3, c, sName, sUrl);
+        if (config.parseCSV(file.readStringUntil('\n').c_str(), config.tmpBuf, config.tmpBuf2, sOvol)) {
+          printf(clientId, "#CLI.LISTNUM#: %*d: %s, %s\n", 3, c, config.tmpBuf, config.tmpBuf2);
           c++;
         }
       }
@@ -268,12 +284,11 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     }
     if (strcmp(str, "cli.info") == 0 || strcmp(str, "info") == 0) {
       printf(clientId, "##CLI.INFO#\n");
-      char timeStringBuff[50];
-      strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
+      strftime(config.tmpBuf, sizeof(config.tmpBuf), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
       if (config.store.tzHour < 0) {
-        printf(clientId, "##SYS.DATE#: %s%03d:%02d\n", timeStringBuff, config.store.tzHour, config.store.tzMin);
+        printf(clientId, "##SYS.DATE#: %s%03d:%02d\n", config.tmpBuf, config.store.tzHour, config.store.tzMin);
       } else {
-        printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n", timeStringBuff, config.store.tzHour, config.store.tzMin);
+        printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n", config.tmpBuf, config.store.tzHour, config.store.tzMin);
       }
       printf(clientId, "##CLI.NAMESET#: %d %s\n", config.lastStation(), config.station.name);
       if (player.status() == PLAYING) {
@@ -406,11 +421,10 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "#WIFI.CON#\n");
     File file = SPIFFS.open(SSIDS_PATH, "r");
     if (file && !file.isDirectory()) {
-      char sSid[BUFLEN], sPas[BUFLEN];
       uint8_t c = 1;
       while (file.available()) {
-        if (config.parseSsid(file.readStringUntil('\n').c_str(), sSid, sPas)) {
-          printf(clientId, "%d: %s, %s\n", c, sSid, sPas);
+        if (config.parseSsid(file.readStringUntil('\n').c_str(), config.tmpBuf, config.tmpBuf2)) {
+          printf(clientId, "%d: %s, %s\n", c, config.tmpBuf, config.tmpBuf2);
           c++;
         }
       }
@@ -422,11 +436,10 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "#WIFI.STATION#\n");
     File file = SPIFFS.open(SSIDS_PATH, "r");
     if (file && !file.isDirectory()) {
-      char sSid[BUFLEN], sPas[BUFLEN];
       uint8_t c = 1;
       while (file.available()) {
-        if (config.parseSsid(file.readStringUntil('\n').c_str(), sSid, sPas)) {
-          if(c==config.store.lastSSID) printf(clientId, "%d: %s, %s\n", c, sSid, sPas);
+        if (config.parseSsid(file.readStringUntil('\n').c_str(), config.tmpBuf, config.tmpBuf2)) {
+          if(c==config.store.lastSSID) printf(clientId, "%d: %s, %s\n", c, config.tmpBuf, config.tmpBuf2);
           c++;
         }
       }
@@ -434,23 +447,21 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "##WIFI.STATION#\n> ");
     return;
   }
-  char newssid[30], newpass[40];
-  if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", newssid, newpass) == 2 || sscanf(str, "wifi %[^ ] %s", newssid, newpass) == 2) {
-    char buf[BUFLEN];
-    snprintf(buf, BUFLEN, "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", newssid, newpass);
-    printf(clientId, buf);
+  if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", config.tmpBuf, config.tmpBuf2) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", config.tmpBuf, config.tmpBuf2) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", config.tmpBuf, config.tmpBuf2) == 2 || sscanf(str, "wifi %[^ ] %s", config.tmpBuf, config.tmpBuf2) == 2) {
+    snprintf(cmBuf, sizeof(cmBuf), "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", config.tmpBuf, config.tmpBuf2);
+    printf(clientId, cmBuf);
     printf(clientId, "...REBOOTING...\n> ");
-    memset(buf, 0, BUFLEN);
-    snprintf(buf, BUFLEN, "%s\t%s", newssid, newpass);
-    config.saveWifiFromNextion(buf);
+    memset(cmBuf, 0, sizeof(cmBuf));
+    snprintf(cmBuf, sizeof(cmBuf), "%s\t%s", config.tmpBuf, config.tmpBuf2);
+    config.saveWifiFromNextion(cmBuf);
     return;
   }
   if (strcmp(str, "wifi.status") == 0 || strcmp(str, "status") == 0) {
     printf(clientId, "#WIFI.STATUS#\nStatus:\t\t%d\nMode:\t\t%s\nIP:\t\t%s\nMask:\t\t%s\nGateway:\t%s\nRSSI:\t\t%d dBm\n##WIFI.STATUS#\n> ", 
       WiFi.status(), WiFi.getMode()==WIFI_STA?"WIFI_STA":"WIFI_AP", 
-      WiFi.getMode()==WIFI_STA?WiFi.localIP().toString():WiFi.softAPIP().toString(),
-      WiFi.getMode()==WIFI_STA?WiFi.subnetMask().toString():"255.255.255.0",
-      WiFi.getMode()==WIFI_STA?WiFi.gatewayIP().toString():WiFi.softAPIP().toString(),
+      WiFi.getMode()==WIFI_STA?config.ipToStr(WiFi.localIP()):config.ipToStr(WiFi.softAPIP()),
+      WiFi.getMode()==WIFI_STA?config.ipToStr(WiFi.subnetMask()):"255.255.255.0",
+      WiFi.getMode()==WIFI_STA?config.ipToStr(WiFi.gatewayIP()):config.ipToStr(WiFi.softAPIP()),
       WiFi.RSSI()
     );
     return;
@@ -460,12 +471,14 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     return;
   }
   if (strcmp(str, "sys.heap") == 0 || strcmp(str, "heap") == 0) {
-    printf(clientId, "Free heap:\t%d bytes\n> ", xPortGetFreeHeapSize());
+    //printf(clientId, "Free heap:\t%d bytes\n> ", xPortGetFreeHeapSize());
+    printHeapFragmentationInfo(clientId);
     return;
   }
   if (strcmp(str, "sys.config") == 0 || strcmp(str, "config") == 0) {
     config.bootInfo();
-    printf(clientId, "Free heap:\t%d bytes\n> ", xPortGetFreeHeapSize());
+    //printf(clientId, "Free heap:\t%d bytes\n> ", xPortGetFreeHeapSize());
+    printHeapFragmentationInfo(clientId);
     return;
   }
   if (strcmp(str, "wifi.discon") == 0 || strcmp(str, "discon") == 0 || strcmp(str, "disconnect") == 0) {

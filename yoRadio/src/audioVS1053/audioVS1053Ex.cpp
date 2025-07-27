@@ -42,9 +42,9 @@ size_t AudioBuffer::init() {
             }
         }
     } else {  // no PSRAM available, use ESP32 Flash Memory"
-        m_buffSize = m_buffSizeRAM;
+        m_buffSize = m_buffSizeRAM * config.store.abuff;
         m_buffer = (uint8_t*) calloc(m_buffSize, sizeof(uint8_t));
-        m_buffSize = m_buffSizeRAM - m_resBuffSizeRAM;
+        m_buffSize = m_buffSizeRAM * config.store.abuff - m_resBuffSizeRAM;
     }
     if(!m_buffer)
         return 0;
@@ -1713,6 +1713,22 @@ void Audio::setConnectionTimeout(uint16_t timeout_ms, uint16_t timeout_ms_ssl){
     if(timeout_ms)     m_timeout_ms     = timeout_ms;
     if(timeout_ms_ssl) m_timeout_ms_ssl = timeout_ms_ssl;
 }
+
+void Audio::connectTask(void* pvParams) {
+  ConnectParams* params = static_cast<ConnectParams*>(pvParams);
+  Audio* self = params->instance;
+  bool res = true;
+  if(self->_client){
+    self->_connectionResult = self->_client->connect(params->hostwoext, params->port/*, self->m_f_ssl ? self->m_timeout_ms_ssl : self->m_timeout_ms*/);
+  }else{
+    self->_connectionResult = false;
+  }
+  free((void*)params->hostwoext);
+  delete params;
+  self->_connectTaskHandle = nullptr;
+  vTaskDelete(nullptr);
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::connecttohost(String host){
     return connecttohost(host.c_str());
@@ -1827,8 +1843,24 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     uint32_t t = millis();
     if(m_f_Log) AUDIO_INFO("connect to %s on port %d path %s", hostwoext, port, extension);
-    res = _client->connect(hostwoext, port, m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms);
-
+    //res = _client->connect(hostwoext, port, m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms);
+    if(!config.store.watchdog){
+      res = _client->connect(hostwoext, port, m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms);
+    }else{
+      ConnectParams* params = new ConnectParams{ strdup(hostwoext), port, this }; _connectionResult = false;
+      xTaskCreatePinnedToCore(connectTask, "ConnectTask", WATCHDOG_TASK_SIZE, params, WATCHDOG_TASK_PRIORITY, &_connectTaskHandle, WATCHDOG_TASK_CORE_ID);
+      for(;;){
+        if(millis()-t>(m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms) || _connectionResult) break;
+        vTaskDelay(10);
+      }
+      res = _connectionResult;
+      if (_connectTaskHandle!=nullptr) {
+        vTaskDelete(_connectTaskHandle);
+        _connectTaskHandle = nullptr;
+        AUDIO_INFO("WATCH DOG HAS FINISHED A WORK, BYE!");
+      }
+    }
+    
     if(res){
         uint32_t dt = millis() - t;
         strcpy(m_lastHost, l_host);

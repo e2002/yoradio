@@ -61,9 +61,9 @@ size_t AudioBuffer::init() {
     if(m_buffer == NULL) {
         // PSRAM not found, not configured or not enough available
         m_f_psram = false;
-        m_buffSize = m_buffSizeRAM;
+        m_buffSize = m_buffSizeRAM * config.store.abuff;
         m_buffer = (uint8_t*) calloc(m_buffSize, sizeof(uint8_t));
-        m_buffSize = m_buffSizeRAM - m_resBuffSizeRAM;
+        m_buffSize = m_buffSizeRAM * config.store.abuff - m_resBuffSizeRAM;
     }
     if(!m_buffer)
         return 0;
@@ -183,7 +183,7 @@ Audio::Audio(bool internalDAC /* = false */, uint8_t channelEnabled /* = I2S_DAC
     m_i2s_config.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
     m_i2s_config.intr_alloc_flags     = ESP_INTR_FLAG_LEVEL1; // interrupt priority
 #ifdef OLD_DMABUF_PARAMS
-    m_i2s_config.dma_buf_count        = 16;		// 4×512×16=32768
+    m_i2s_config.dma_buf_count        = 16;    // 4×512×16=32768
 #else
     m_i2s_config.dma_buf_count        = psramInit()?16:DMA_BUFCOUNT;
 #endif
@@ -370,6 +370,20 @@ void Audio::setConnectionTimeout(uint16_t timeout_ms, uint16_t timeout_ms_ssl){
     if(timeout_ms_ssl) m_timeout_ms_ssl = timeout_ms_ssl;
 }
 
+void Audio::connectTask(void* pvParams) {
+  ConnectParams* params = static_cast<ConnectParams*>(pvParams);
+  Audio* self = params->instance;
+  if(self->_client){
+    self->_connectionResult = self->_client->connect(params->hostwoext, params->port/*, self->m_f_ssl ? self->m_timeout_ms_ssl : self->m_timeout_ms*/);
+  }else{
+    self->_connectionResult = false;
+  }
+  free((void*)params->hostwoext);
+  delete params;
+  self->_connectTaskHandle = nullptr;
+  vTaskDelete(nullptr);
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     // user and pwd for authentification only, can be empty
@@ -480,7 +494,22 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     uint32_t t = millis();
     if(m_f_Log) AUDIO_INFO("connect to %s on port %d path %s", hostwoext, port, extension);
-    res = _client->connect(hostwoext, port, m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms);
+    if(!config.store.watchdog){
+      res = _client->connect(hostwoext, port, m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms);
+    }else{
+      ConnectParams* params = new ConnectParams{ strdup(hostwoext), port, this }; _connectionResult = false;
+      xTaskCreatePinnedToCore(connectTask, "ConnectTask", WATCHDOG_TASK_SIZE, params, WATCHDOG_TASK_PRIORITY, &_connectTaskHandle, WATCHDOG_TASK_CORE_ID);
+      for(;;){
+        if(millis()-t>(m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms) || _connectionResult) break;
+        vTaskDelay(10);
+      }
+      res = _connectionResult;
+      if (_connectTaskHandle!=nullptr) {
+        vTaskDelete(_connectTaskHandle);
+        _connectTaskHandle = nullptr;
+        AUDIO_INFO("WATCH DOG HAS FINISHED A WORK, BYE!");
+      }
+    }
     if(res){
         uint32_t dt = millis() - t;
         strcpy(m_lastHost, l_host);
