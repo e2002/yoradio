@@ -36,6 +36,9 @@
 #include "hal/gpio_ll.h"
 #endif
 #ifdef SDFATFS_USED
+
+struct Audio; // forward declaration, żeby Audio* działało
+
 //typedef File32 File;
 typedef FsFile File;
 
@@ -472,10 +475,15 @@ private:
     std::vector<char*>    m_playlistURL;     // m3u8 streamURLs buffer
     std::vector<uint32_t> m_hashQueue;
     
+    
+
     struct ConnectParams {
-      char *hostwoext = NULL;
-      uint16_t port = 80;
-      Audio* instance;
+        char* hostwoext = nullptr;
+        uint16_t port = 80;
+        Audio* instance = nullptr;
+
+    ConnectParams(char* h, uint16_t p, Audio* a)
+        : hostwoext(h), port(p), instance(a) {}
     };
     volatile bool _connectionResult;
     TaskHandle_t _connectTaskHandle = nullptr;
