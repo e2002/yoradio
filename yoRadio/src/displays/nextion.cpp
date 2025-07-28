@@ -252,21 +252,13 @@ void Nextion::loop() {
         /*
         if (sscanf(rxbuf, "tzhour=%d", &scanDigit) == 1){
           config.setTimezone((int8_t)scanDigit, config.store.tzMin);
-          if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
-            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
-          }else if(strlen(config.store.sntp1)>0){
-            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
-          }
-          network.forceTimeSync = true;
+          config.setTimeConf();
+          timekeeper.forceTimeSync = true;
         }
         if (sscanf(rxbuf, "tzmin=%d", &scanDigit) == 1){
           config.setTimezone(config.store.tzHour, (int8_t)scanDigit);
-          if(strlen(config.store.sntp1)>0 && strlen(config.store.sntp2)>0){
-            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1, config.store.sntp2);
-          }else if(strlen(config.store.sntp1)>0){
-            configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
-          }
-          network.forceTimeSync = true;
+          config.setTimeConf();
+          timekeeper.forceTimeSync = true;
         }
         */
         if (sscanf(rxbuf, "audioinfo=%d", &scanDigit) == 1){
@@ -420,7 +412,8 @@ void Nextion::newTitle(const char* title){
 
 void Nextion::printClock(struct tm timeinfo){
   char timeStringBuff[100] = { 0 };
-  strftime(timeStringBuff, sizeof(timeStringBuff), "player.clock.txt=\"%H:%M\"", &timeinfo);
+  if (config.store.clock12) strftime(timeStringBuff, sizeof(timeStringBuff), "player.clock.txt=\"%l:%M\"", &timeinfo);
+  if (!config.store.clock12) strftime(timeStringBuff, sizeof(timeStringBuff), "player.clock.txt=\"%H:%M\"", &timeinfo);
   putcmd(timeStringBuff);
   putcmdf("player.secText.txt=\"%02d\"", timeinfo.tm_sec);
   snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", dowf[timeinfo.tm_wday], timeinfo.tm_mday, mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
@@ -431,7 +424,8 @@ void Nextion::printClock(struct tm timeinfo){
 
 void Nextion::localTime(struct tm timeinfo){
   char timeStringBuff[40] = { 0 };
-  strftime(timeStringBuff, sizeof(timeStringBuff), "localTime.txt=\"%H:%M:%S\"", &timeinfo);
+  if (config.store.clock12) strftime(timeStringBuff, sizeof(timeStringBuff), "localTime.txt=\"%l:%M:%S\"", &timeinfo);
+  if (!config.store.clock12) strftime(timeStringBuff, sizeof(timeStringBuff), "localTime.txt=\"%H:%M:%S\"", &timeinfo);
   putcmd(timeStringBuff);
 }
 

@@ -1,16 +1,16 @@
 #ifndef pages_h
 #define pages_h
 
-#include "Arduino.h"
-#include "../../AsyncWebServer/StringArray.h"
+#include <list>
+
 
 class Page {
   protected:
-    LinkedList<Widget*> _widgets;
-    LinkedList<Page*> _pages;
+    std::list<Widget*> _widgets;
+    std::list<Page*> _pages;
     bool _active;
   public:
-    Page();
+    //Page();
     ~Page();
     void loop();
     Widget& addWidget(Widget* widget);
@@ -23,14 +23,14 @@ class Page {
 
 class Pager{
   public:
-    Pager() : _pages(LinkedList<Page*>([](Page* pg){ delete pg; })) {}
+    //Pager() : _pages(std::list<Page*>([](Page* pg){ delete pg; })) {}
     void begin();
     void loop();
     Page& addPage(Page* page, bool setNow = false);
     bool removePage(Page* page);
     void setPage(Page* page, bool black=false);
   private:
-    LinkedList<Page*> _pages;
+    std::list<Page*> _pages;
     
 };
 

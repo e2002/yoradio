@@ -119,6 +119,7 @@ class TextWidget: public Widget {
     TextWidget() {}
     TextWidget(WidgetConfig wconf, uint16_t buffsize, bool uppercase, uint16_t fgcolor, uint16_t bgcolor) { init(wconf, buffsize, uppercase, fgcolor, bgcolor); }
     ~TextWidget();
+    using Widget::init;
     void init(WidgetConfig wconf, uint16_t buffsize, bool uppercase, uint16_t fgcolor, uint16_t bgcolor);
     void setText(const char* txt);
     void setText(int val, const char *format);
@@ -139,6 +140,7 @@ class FillWidget: public Widget {
   public:
     FillWidget() {}
     FillWidget(FillConfig conf, uint16_t bgcolor) { init(conf, bgcolor); }
+    using Widget::init;
     void init(FillConfig conf, uint16_t bgcolor);
     void setHeight(uint16_t newHeight);
   protected:
@@ -151,6 +153,7 @@ class ScrollWidget: public TextWidget {
     ScrollWidget(){}
     ScrollWidget(const char* separator, ScrollConfig conf, uint16_t fgcolor, uint16_t bgcolor);
     ~ScrollWidget();
+    using Widget::init;
     void init(const char* separator, ScrollConfig conf, uint16_t fgcolor, uint16_t bgcolor);
     void loop();
     void setText(const char* txt);
@@ -182,6 +185,7 @@ class SliderWidget: public Widget {
     SliderWidget(FillConfig conf, uint16_t fgcolor, uint16_t bgcolor, uint32_t maxval, uint16_t oucolor=0){
       init(conf, fgcolor, bgcolor, maxval, oucolor);
     }
+    using Widget::init;
     void init(FillConfig conf, uint16_t fgcolor, uint16_t bgcolor, uint32_t maxval, uint16_t oucolor=0);
     void setValue(uint32_t val);
   protected:
@@ -199,6 +203,7 @@ class VuWidget: public Widget {
     VuWidget() {}
     VuWidget(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor, uint16_t vumincolor, uint16_t bgcolor) { init(wconf, bands, vumaxcolor, vumincolor, bgcolor); }
     ~VuWidget();
+    using Widget::init;
     void init(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor, uint16_t vumincolor, uint16_t bgcolor);
     void loop();
   protected:
@@ -213,6 +218,7 @@ class VuWidget: public Widget {
 
 class NumWidget: public TextWidget {
   public:
+    using Widget::init;
     void init(WidgetConfig wconf, uint16_t buffsize, bool uppercase, uint16_t fgcolor, uint16_t bgcolor);
     void setText(const char* txt);
     void setText(int val, const char *format);
@@ -227,6 +233,7 @@ class ProgressWidget: public TextWidget {
     ProgressWidget(WidgetConfig conf, ProgressConfig pconf, uint16_t fgcolor, uint16_t bgcolor) { 
       init(conf, pconf, fgcolor, bgcolor);
     }
+    using Widget::init;
     void init(WidgetConfig conf, ProgressConfig pconf, uint16_t fgcolor, uint16_t bgcolor){
       TextWidget::init(conf, pconf.width, false, fgcolor, bgcolor);
       _speed = pconf.speed; _width = pconf.width; _barwidth = pconf.barwidth;
@@ -254,6 +261,7 @@ class BitrateWidget: public Widget {
     BitrateWidget() {}
     BitrateWidget(BitrateConfig bconf, uint16_t fgcolor, uint16_t bgcolor) { init(bconf, fgcolor, bgcolor); }
     ~BitrateWidget(){}
+    using Widget::init;
     void init(BitrateConfig bconf, uint16_t fgcolor, uint16_t bgcolor);
     void setBitrate(uint16_t bitrate);
     void setFormat(BitrateFormat format);

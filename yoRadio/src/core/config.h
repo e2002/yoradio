@@ -1,7 +1,6 @@
 #ifndef config_h
 #define config_h
 #include "Arduino.h"
-#include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
 #include <Preferences.h>
@@ -57,10 +56,19 @@
   #define ESP_ARDUINO_3 1
 #endif
 
+#ifdef HEAP_DBG
+  #define HEAP_INFO() printHeapFragmentationInfo(__PRETTY_FUNCTION__)
+  void printHeapFragmentationInfo(const char* title);
+#else
+  #define HEAP_INFO()
+#endif
+
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV, BF_VOR, BF_OPU };
 
 void u8fix(char *src);
+
+void checkAllTasksStack();
 
 struct theme_t {
   uint16_t background;
@@ -92,65 +100,75 @@ struct theme_t {
   uint16_t plcurrentfill;
   uint16_t playlist[5];
 };
-struct config_t // specify defaults here (defaults are NOT saved to Prefs)
+struct config_t
 {
-  uint16_t  config_set = 4262;
-  uint8_t   volume = 12;
-  int8_t    balance = 0;
-  int8_t    trebble = 0;
-  int8_t    middle = 0;
-  int8_t    bass = 0;
-  uint16_t  lastStation = 0;
-  uint16_t  countStation = 0;
-  uint8_t   lastSSID = 0;
-  bool      audioinfo = false;
-  uint8_t   smartstart = 2;
-  uint16_t  timezoneOffset = 0;
-  bool      vumeter = false;
-  uint8_t   softapdelay = 0;
-  bool      flipscreen = false;
-  bool      invertdisplay = false;
-  bool      numplaylist = false;
-  bool      fliptouch = false;
-  bool      dbgtouch = false;
-  bool      dspon = true;
-  uint8_t   brightness = 100;
-  uint8_t   contrast = 55;
-  char      tz_name[70] = TIMEZONE_NAME;
-  char      tzposix[70] = TIMEZONE_POSIX;
-  char      sntp1[35] = SNTP1;
-  char      sntp2[35] = SNTP2;
-  bool      showweather = false;
-  char      weatherlat[10] = WEATHERLAT;
-  char      weatherlon[10] = WEATHERLON;
-  char      weatherkey[WEATHERKEY_LENGTH] = "";
-  uint16_t  _reserved = 0;
-  uint16_t  lastSdStation = 0;
-  bool      sdsnuffle = false;
-  uint8_t   volsteps = 1;
-  uint16_t  encacc = 200;
-  uint8_t   play_mode = 0;
-  uint8_t   irtlp = 35;
-  bool      btnpullup = true;
-  uint16_t  btnlongpress = 200;
-  uint16_t  btnclickticks = 300;
-  uint16_t  btnpressticks = 500;
-  bool      encpullup = false;
-  bool      enchalf = false;
-  bool      enc2pullup = false;
-  bool      enc2half = false;
-  bool      forcemono = false;
-  bool      i2sinternal = false;
-  bool      rotate90 = false;
-  bool      screensaverEnabled = false;
-  uint16_t  screensaverTimeout = 20;
-  bool      screensaverBlank = false;
-  bool      screensaverPlayingEnabled = false;
-  uint16_t  screensaverPlayingTimeout = 300;
-  bool      screensaverPlayingBlank = false;
-  char      mdnsname[24] = "";
-  bool      skipPlaylistUpDown = false;
-  // if adding a variable, you can do it anywhere, just be sure to add it to configKeyMap() in config.cpp
+  uint16_t  config_set; //must be 4262
+  uint16_t  version;
+  uint8_t   volume;
+  int8_t    balance;
+  int8_t    trebble;
+  int8_t    middle;
+  int8_t    bass;
+  uint16_t  lastStation;
+  uint16_t  countStation;
+  uint8_t   lastSSID;
+  bool      audioinfo;
+  uint8_t   smartstart;
+  int8_t    tzHour;
+  int8_t    tzMin;
+  uint16_t  timezoneOffset;
+  bool      vumeter;
+  uint8_t   softapdelay;
+  bool      flipscreen;
+  bool      volumepage;
+  bool      clock12;
+  bool      invertdisplay;
+  bool      numplaylist;
+  bool      fliptouch;
+  bool      dbgtouch;
+  bool      dspon;
+  uint8_t   brightness;
+  uint8_t   contrast;
+  char      tz_name[70];
+  char      tzposix[70];
+  char      sntp1[35];
+  char      sntp2[35];
+  bool      showweather;
+  char      weatherlat[10];
+  char      weatherlon[10];
+  char      weatherkey[WEATHERKEY_LENGTH];
+  uint16_t  _reserved;
+  uint16_t  lastSdStation;
+  bool      sdsnuffle;
+  uint8_t   volsteps;
+  uint16_t  encacc;
+  uint8_t   play_mode;  //0 WEB, 1 SD
+  uint8_t   irtlp;
+  bool      btnpullup;
+  uint16_t  btnlongpress;
+  uint16_t  btnclickticks;
+  uint16_t  btnpressticks;
+  bool      encpullup;
+  bool      enchalf;
+  bool      enc2pullup;
+  bool      enc2half;
+  bool      forcemono;
+  bool      i2sinternal;
+  bool      rotate90;
+  bool      screensaverEnabled;
+  uint16_t  screensaverTimeout;
+  bool      screensaverBlank;
+  bool      screensaverPlayingEnabled;
+  uint16_t  screensaverPlayingTimeout;
+  bool      screensaverPlayingBlank;
+  char      mdnsname[24];
+  bool      skipPlaylistUpDown;
+  uint16_t  abuff;
+  bool      telnet;
+  bool      watchdog;
+  uint16_t  timeSyncInterval;
+  uint16_t  timeSyncIntervalRTC;
+  uint16_t  weatherSyncInterval;
   // if removing a variable and key, add to deleteOldKeys()
 };
 
@@ -165,7 +183,7 @@ struct configKeyMap {
 #if IR_PIN!=255
 struct ircodes_t
 {
-  unsigned int ir_set = 0; // will be 4224 if written/restored correctly
+  unsigned int ir_set; //must be 4224
   uint64_t irVals[20][3];
 };
 #endif
@@ -206,6 +224,10 @@ class Config {
     uint16_t screensaverPlayingTicks;
     bool     isScreensaver;
     int      newConfigMode;
+    char      tmpBuf[BUFLEN];
+    char     tmpBuf2[BUFLEN];
+    char       ipBuf[16];
+    char _stationBuf[BUFLEN/2];
   public:
     Config() {};
     //void save();
@@ -234,6 +256,7 @@ class Config {
     bool loadStation(uint16_t station);
     bool initNetwork();
     bool saveWifi();
+    void setTimeConf();
     bool saveWifiFromNextion(const char* post);
     void setSmartStart(uint8_t ss);
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
@@ -280,8 +303,10 @@ class Config {
     void setIrBtn(int val);
 #endif
     void resetSystem(const char *val, uint8_t clientId);
-    
     bool spiffsCleanup();
+    char * ipToStr(IPAddress ip);
+    bool prepareForPlaying(uint16_t stationId);
+    void configPostPlaying(uint16_t stationId);
     FS* SDPLFS(){ return _SDplaylistFS; }
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
@@ -352,7 +377,6 @@ class Config {
     #endif
     FS* _SDplaylistFS;
     void setDefaults();
-    Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
     void _initHW();
@@ -362,7 +386,6 @@ class Config {
       uint16_t station = random(1, store.countStation);
       return station;
     }
-    char _stationBuf[BUFLEN/2];
 };
 
 extern Config config;

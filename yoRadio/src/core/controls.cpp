@@ -56,12 +56,11 @@ constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #include "../IRremoteESP8266/IRtext.h"
 #include "../IRremoteESP8266/IRutils.h"
 uint8_t irVolRepeat = 0;
-const uint16_t kCaptureBufferSize = 1024;
-const uint8_t kTimeout = IR_TIMEOUT;
+//const uint16_t kCaptureBufferSize = 1024;
 const uint16_t kMinUnknownSize = 12;
 #define LEGACY_TIMING_INFO false
 
-IRrecv irrecv(IR_PIN, kCaptureBufferSize, kTimeout, true);
+IRrecv irrecv(IR_PIN, IR_BUFSIZE, IR_TIMEOUT, true);
 decode_results irResults;
 #endif
 
@@ -429,11 +428,13 @@ void onBtnDuringLongPress(int id) {
         }
       case EVT_BTNUP:
       case EVT_BTNDOWN: {
-          if (display.mode() == PLAYER) {
-            display.putRequest(NEWMODE, STATIONS);
-          }
-          if (display.mode() == STATIONS) {
-            controlsEvent(id == EVT_BTNDOWN);
+          if(!config.store.skipPlaylistUpDown) {
+            if (display.mode() == PLAYER) {
+              display.putRequest(NEWMODE, STATIONS);
+            }
+            if (display.mode() == STATIONS) {
+              controlsEvent(id == EVT_BTNDOWN);
+            }
           }
           break;
         }

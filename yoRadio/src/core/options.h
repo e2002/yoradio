@@ -1,7 +1,7 @@
 #ifndef options_h
 #define options_h
 
-#define YOVERSION "0.9.533 Trip5/2025.07.20"
+#define YOVERSION "0.9.552 Trip5/2025.07.28"
 #define YOURL "https://github.com/trip5/yoradio" // used by the ESPFileUpdater in BrowserClient
 
 /*******************************************************
@@ -375,6 +375,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #ifndef IR_TIMEOUT
   #define IR_TIMEOUT            80        // kTimeout, see IRremoteESP8266 documentation
 #endif
+#ifndef IR_BUFSIZE
+  #define IR_BUFSIZE            128
+#endif
 
 /*        THEMES                                 */
 /*        color name               R    G    B   */
@@ -493,9 +496,27 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #ifndef USE_OTA
   #define USE_OTA    false
 #endif
+#ifndef WATCHDOG_INTERVAL
+  #define WATCHDOG_INTERVAL    3 //sec.
+#endif
 //#define OTA_PASS "myotapassword12345"
 //#define HTTP_USER "user"
 //#define HTTP_PASS "password"
+#ifndef WATCHDOG_TASK_SIZE
+  #define WATCHDOG_TASK_SIZE    1024*6
+#endif
+#ifndef WATCHDOG_TASK_PRIORITY
+  #define WATCHDOG_TASK_PRIORITY    3
+#endif
+#ifndef WATCHDOG_TASK_CORE_ID
+  #define WATCHDOG_TASK_CORE_ID    1
+#endif
+#ifndef CONNECTION_TIMEOUT
+  #define CONNECTION_TIMEOUT    5700
+#endif
+#ifndef CONNECTION_TIMEOUT_SSL
+  #define CONNECTION_TIMEOUT_SSL    5700
+#endif
 
 
 /*      Source of JSON files      */

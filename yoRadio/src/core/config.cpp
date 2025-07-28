@@ -6,6 +6,7 @@
 #include "network.h"
 #include "netserver.h"
 #include "controls.h"
+#include "timekeeper.h"
 #ifdef USE_SD
 #include "sdmanager.h"
 #endif
@@ -21,6 +22,18 @@ static const size_t requiredFilesCount = sizeof(requiredFiles) / sizeof(required
 Config config;
 
 bool wasUpdated(ESPFileUpdater::UpdateStatus status) { return status == ESPFileUpdater::UPDATED; }
+#ifdef HEAP_DBG
+void printHeapFragmentationInfo(const char* title){
+  size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+  size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+  float fragmentation = 100.0 * (1.0 - ((float)largestBlock / (float)freeHeap));
+  Serial.printf("\n****** %s ******\n", title);
+  Serial.printf("* Free heap: %u bytes\n", freeHeap);
+  Serial.printf("* Largest free block: %u bytes\n", largestBlock);
+  Serial.printf("* Fragmentation: %.2f%%\n", fragmentation);
+  Serial.printf("*************************************\n\n");
+}
+#endif
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -41,13 +54,13 @@ bool Config::_isFSempty() {
 }
 
 void Config::init() {
-  loadPreferences();
   sdResumePos = 0;
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
   newConfigMode = 0;
   isScreensaver = false;
-  bootInfo();
+  memset(tmpBuf, 0, BUFLEN);
+  //bootInfo();
 #if RTCSUPPORTED
   _rtcFound = false;
   BOOTLOG("RTC begin(SDA=%d,SCL=%d)", RTC_SDA, RTC_SCL);
@@ -69,6 +82,8 @@ void Config::init() {
     SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
   #endif
 #endif
+  loadPreferences();
+  bootInfo(); // https://github.com/e2002/yoradio/pull/149
   if (store.config_set != 4262) {
     setDefaults();
   }
@@ -98,6 +113,7 @@ void Config::init() {
   _SDplaylistFS = &SPIFFS;
   #endif
   _bootDone=false;
+  setTimeConf();
 }
 
 void Config::loadPreferences() {
@@ -205,6 +221,44 @@ bool Config::spiffsCleanup(){
   return ret;
 }
 
+char * Config::ipToStr(IPAddress ip){
+  snprintf(ipBuf, 16, "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+  return ipBuf;
+}
+bool Config::prepareForPlaying(uint16_t stationId){
+  setDspOn(1);
+  vuThreshold = 0;
+  screensaverTicks=SCREENSAVERSTARTUPDELAY;
+  screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;
+  if(getMode()!=PM_SDCARD) {
+    display.putRequest(PSTOP);
+  }
+  
+  if(!loadStation(stationId)) return false;
+  setTitle(getMode()==PM_WEB?const_PlConnect:"[next track]");
+  station.bitrate=0;
+  setBitrateFormat(BF_UNCNOWN);
+  display.putRequest(DBITRATE);
+  display.putRequest(NEWSTATION);
+  display.putRequest(NEWMODE, PLAYER);
+  netserver.requestOnChange(STATION, 0);
+  netserver.requestOnChange(MODE, 0);
+  netserver.loop();
+  netserver.loop();
+  if(store.smartstart!=2)
+    setSmartStart(0);
+  return true;
+}
+void Config::configPostPlaying(uint16_t stationId){
+  if(getMode()==PM_SDCARD) {
+    sdResumePos = 0;
+    saveValue(&store.lastSdStation, stationId);
+  }
+  if(store.smartstart!=2) setSmartStart(1);
+  netserver.requestOnChange(MODE, 0);
+  //display.putRequest(NEWMODE, PLAYER);
+  display.putRequest(PSTART);
+}
 void Config::initPlaylistMode(){
   uint16_t _lastStation = 0;
   uint16_t cs = playlistLength();
@@ -358,13 +412,11 @@ void Config::setScreensaverPlayingBlank(bool val){
 
 void Config::setShowweather(bool val){
   config.saveValue(&config.store.showweather, val);
-  network.trueWeather=false;
-  network.forceWeather = true;
+  timekeeper.forceWeather = true;
   display.putRequest(SHOWWEATHER);
 }
 void Config::setWeatherKey(const char *val){
   saveValue(store.weatherkey, val, WEATHERKEY_LENGTH);
-  network.trueWeather=false;
   display.putRequest(NEWMODE, CLEAR);
   display.putRequest(NEWMODE, PLAYER);
 }
@@ -394,7 +446,10 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     saveValue(&store.audioinfo, false, false);
     saveValue(&store.vumeter, false, false);
     saveValue(&store.softapdelay, (uint8_t)0, false);
-    snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
+    saveValue(&store.abuff, (uint16_t)(VS1053_CS==255?7:10), false);
+    saveValue(&store.telnet, true);
+    saveValue(&store.watchdog, true);
+    snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", (unsigned int)getChipId());
     saveValue(store.mdnsname, store.mdnsname, MDNS_LENGTH, true, true);
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
     netserver.requestOnChange(GETSYSTEM, clientId);
@@ -402,6 +457,8 @@ void Config::resetSystem(const char *val, uint8_t clientId){
   }
   if (strcmp(val, "screen") == 0) {
     saveValue(&store.flipscreen, false, false);
+    saveValue(&store.volumepage, true);
+    saveValue(&store.clock12, false);
     display.flip();
     saveValue(&store.invertdisplay, false, false);
     display.invert();
@@ -426,9 +483,9 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     saveValue(store.tzposix, TIMEZONE_POSIX, sizeof(store.tzposix), false);
     saveValue(store.sntp1, SNTP1, sizeof(store.sntp1), false);
     saveValue(store.sntp2, SNTP2, sizeof(store.sntp2));
-    network.forceTimeSync = true;
-    network.requestTimeSync(true);
-    network.forceTimeSync = true;
+    saveValue(&store.timeSyncInterval, (uint16_t)60);
+    saveValue(&store.timeSyncIntervalRTC, (uint16_t)24);
+    timekeeper.forceTimeSync = true;
     netserver.requestOnChange(GETTIMEZONE, clientId);
     return;
   }
@@ -437,7 +494,8 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     saveValue(store.weatherlat, WEATHERLAT, sizeof(store.weatherlat), false);
     saveValue(store.weatherlon, WEATHERLON, sizeof(store.weatherlon), false);
     saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
-    network.trueWeather=false;
+    saveValue(&store.weatherSyncInterval, (uint16_t)30);
+    //network.trueWeather=false;
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
     netserver.requestOnChange(GETWEATHER, clientId);
     return;
@@ -458,12 +516,73 @@ void Config::resetSystem(const char *val, uint8_t clientId){
   }
 }
 
-
-
 void Config::setDefaults() {
-  // defaults set byt struct, except one
-  Serial.println("[setDefaults] called");
-  snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
+  store.config_set = 4262;
+  store.volume = 12;
+  store.balance = 0;
+  store.trebble = 0;
+  store.middle = 0;
+  store.bass = 0;
+  store.lastStation = 0;
+  store.countStation = 0;
+  store.lastSSID = 0;
+  store.audioinfo = false;
+  store.smartstart = 2;
+  store.tzHour = 3;
+  store.tzMin = 0;
+  store.timezoneOffset = 0;
+  store.vumeter=false;
+  store.softapdelay=0;
+  store.flipscreen=false;
+  store.volumepage = true;
+  store.clock12 = false;
+  store.invertdisplay=false;
+  store.numplaylist=false;
+  store.fliptouch=false;
+  store.dbgtouch=false;
+  store.dspon=true;
+  store.brightness=100;
+  store.contrast=55;
+  strlcpy(store.tz_name,TIMEZONE_NAME, sizeof(store.tz_name));
+  strlcpy(store.tzposix,TIMEZONE_POSIX, sizeof(store.tzposix));
+  strlcpy(store.sntp1,SNTP1, sizeof(store.sntp1));
+  strlcpy(store.sntp2,SNTP2, sizeof(store.sntp2));
+  store.showweather=false;
+  strlcpy(store.weatherlat,WEATHERLAT, sizeof(store.weatherlat));
+  strlcpy(store.weatherlon,WEATHERLON, sizeof(store.weatherlon));
+  strlcpy(store.weatherkey,"", WEATHERKEY_LENGTH);
+  store._reserved = 0;
+  store.lastSdStation = 0;
+  store.sdsnuffle = false;
+  store.volsteps = 1;
+  store.encacc = 200;
+  store.play_mode = 0;
+  store.irtlp = 35;
+  store.btnpullup = true;
+  store.btnlongpress = 200;
+  store.btnclickticks = 300;
+  store.btnpressticks = 500;
+  store.encpullup = false;
+  store.enchalf = false;
+  store.enc2pullup = false;
+  store.enc2half = false;
+  store.forcemono = false;
+  store.i2sinternal = false;
+  store.rotate90 = false;
+  store.screensaverEnabled = false;
+  store.screensaverTimeout = 20;
+  store.screensaverBlank = false;
+  snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", (unsigned int)getChipId());
+  store.skipPlaylistUpDown = false;
+  store.screensaverPlayingEnabled = false;
+  store.screensaverPlayingTimeout = 5;
+  store.screensaverPlayingBlank = false;
+  store.abuff = VS1053_CS==255?7:10;
+  store.telnet = true;
+  store.watchdog = true;
+  store.timeSyncInterval = 60;    //min
+  store.timeSyncIntervalRTC = 24; //hour
+  store.weatherSyncInterval = 30; //min
 }
 
 void Config::setSnuffle(bool sn){
@@ -545,12 +664,11 @@ void Config::indexPlaylist() {
   if (!playlist) {
     return;
   }
-  char sName[BUFLEN], sUrl[BUFLEN];
   int sOvol;
   File index = SPIFFS.open(INDEX_PATH, "w");
   while (playlist.available()) {
     uint32_t pos = playlist.position();
-    if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
+    if (parseCSV(playlist.readStringUntil('\n').c_str(), tmpBuf, tmpBuf2, sOvol)) {
       index.write((uint8_t *) &pos, 4);
     }
   }
@@ -579,7 +697,6 @@ uint16_t Config::playlistLength(){
   return out;
 }
 bool Config::loadStation(uint16_t ls) {
-  char sName[BUFLEN], sUrl[BUFLEN];
   int sOvol;
   uint16_t cs = playlistLength();
   if (cs == 0) {
@@ -603,11 +720,11 @@ bool Config::loadStation(uint16_t ls) {
   index.readBytes((char *) &pos, 4);
   index.close();
   playlist.seek(pos, SeekSet);
-  if (parseCSV(playlist.readStringUntil('\n').c_str(), sName, sUrl, sOvol)) {
+  if (parseCSV(playlist.readStringUntil('\n').c_str(), tmpBuf, tmpBuf2, sOvol)) {
     memset(station.url, 0, BUFLEN);
     memset(station.name, 0, BUFLEN);
-    strncpy(station.name, sName, BUFLEN);
-    strncpy(station.url, sUrl, BUFLEN);
+    strncpy(station.name, tmpBuf, BUFLEN);
+    strncpy(station.url, tmpBuf2, BUFLEN);
     station.ovol = sOvol;
     setLastStation(ls);
   }
@@ -620,11 +737,11 @@ char * Config::stationByNum(uint16_t num){
   File index = SDPLFS()->open(REAL_INDEX, "r");
   index.seek((num - 1) * 4, SeekSet);
   uint32_t pos;
-  memset(_stationBuf, 0, BUFLEN/2);
+  memset(_stationBuf, 0, sizeof(_stationBuf));
   index.readBytes((char *) &pos, 4);
   index.close();
   playlist.seek(pos, SeekSet);
-  strncpy(_stationBuf, playlist.readStringUntil('\t').c_str(), BUFLEN/2);
+  strncpy(_stationBuf, playlist.readStringUntil('\t').c_str(), sizeof(_stationBuf));
   playlist.close();
   return _stationBuf;
 }
@@ -1064,6 +1181,14 @@ bool Config::saveWifi() {
   return true;
 }
 
+void Config::setTimeConf(){
+  if(strlen(store.sntp1)>0 && strlen(store.sntp2)>0){
+    configTzTime(store.tzposix, store.sntp1, store.sntp2);
+  }else if(strlen(store.sntp1)>0){
+    configTzTime(store.tzposix, store.sntp1);
+  }
+}
+
 bool Config::initNetwork() {
   File file = SPIFFS.open(SSIDS_PATH, "r");
   if (!file || file.isDirectory()) {
@@ -1157,7 +1282,7 @@ void Config::doSleepW(){
 
 void Config::sleepForAfter(uint16_t sf, uint16_t sa){
   sleepfor = sf;
-  if(sa > 0) _sleepTimer.attach(sa * 60, doSleep);
+  if(sa > 0) timekeeper.waitAndDo(sa * 60, doSleep);
   else doSleep();
 }
 
@@ -1307,6 +1432,8 @@ void Config::bootInfo() {
   BOOTLOG("vumeter:\t%s", store.vumeter?"true":"false");
   BOOTLOG("softapdelay:\t%d", store.softapdelay);
   BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
+  BOOTLOG("volumepage:\t%s", store.volumepage?"true":"false");
+  BOOTLOG("clock12:\t%s", store.clock12?"true":"false");
   BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
   BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
   BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, mode=%d, pullup=%s", 
@@ -1339,6 +1466,8 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),
   CONFIG_KEY_ENTRY(softapdelay, "softapdelay"),
   CONFIG_KEY_ENTRY(flipscreen, "flipscr"),
+  CONFIG_KEY_ENTRY(volumepage, "volpage"),
+  CONFIG_KEY_ENTRY(clock12, "clock12"),
   CONFIG_KEY_ENTRY(invertdisplay, "invdisp"),
   CONFIG_KEY_ENTRY(numplaylist, "numplaylist"),
   CONFIG_KEY_ENTRY(fliptouch, "fliptouch"),
@@ -1380,6 +1509,12 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(screensaverPlayingBlank, "scrnsvrplbl"),
   CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
   CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
+  CONFIG_KEY_ENTRY(abuff, "abuff"),
+  CONFIG_KEY_ENTRY(telnet, "telnet"),
+  CONFIG_KEY_ENTRY(watchdog, "watchdog"),
+  CONFIG_KEY_ENTRY(timeSyncInterval, "tsyncint"),
+  CONFIG_KEY_ENTRY(timeSyncIntervalRTC, "tsyncintrtc"),
+  CONFIG_KEY_ENTRY(weatherSyncInterval, "wsyncint"),
   {0, nullptr, 0} // Yup, 3 fields - don't delete the last line!
 };
 

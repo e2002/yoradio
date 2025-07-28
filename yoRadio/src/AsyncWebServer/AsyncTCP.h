@@ -40,20 +40,23 @@ extern "C" {
 #endif
 
 #ifndef XTASK_MEM_SIZE
-  #define XTASK_MEM_SIZE  6144 // 8192 / 2
+  //#define XTASK_MEM_SIZE  6144 // 8192 / 2
+  #define XTASK_MEM_SIZE  1024*5
 #endif
 #ifndef XTASK_PRIOTITY
-  #define XTASK_PRIOTITY  5 //3
+  #define XTASK_PRIOTITY  3 //3
 #endif
 #ifndef ATCP_TASK_DELAY
   #define ATCP_TASK_DELAY  2
 #endif
 
 #ifndef XQUEUE_SIZE
-  #define XQUEUE_SIZE     128  // (32)
+  //#define XQUEUE_SIZE     128  // (32)
+  #define XQUEUE_SIZE     32
 #endif
 #ifndef SEND_ASYNC_EVENT_DELAY
-  #define SEND_ASYNC_EVENT_DELAY  portMAX_DELAY
+  //#define SEND_ASYNC_EVENT_DELAY  portMAX_DELAY
+  #define SEND_ASYNC_EVENT_DELAY  pdMS_TO_TICKS(1000)
 #endif
 class AsyncClient;
 

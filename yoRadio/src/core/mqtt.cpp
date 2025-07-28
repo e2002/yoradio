@@ -9,7 +9,7 @@
 
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
-char topic[140], status[BUFLEN*3], vol[5], buf[20];
+char topic[100], status[BUFLEN+50];
 
 void connectToMqtt() {
   mqttClient.connect();
@@ -25,8 +25,10 @@ void mqttInit() {
   connectToMqtt();
 }
 
+void zeroBuffer(){ memset(topic, 0, sizeof(topic)); memset(status, 0, sizeof(status)); }
+
 void onMqttConnect(bool sessionPresent) {
-  memset(topic, 0, 140);
+  zeroBuffer();
   sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "command");
   mqttClient.subscribe(topic, 2);
   mqttPublishStatus();
@@ -36,13 +38,12 @@ void onMqttConnect(bool sessionPresent) {
 
 void mqttPublishStatus() {
   if(mqttClient.connected()){
-    memset(topic, 0, 140);
-    memset(status, 0, BUFLEN*3);
+    zeroBuffer();
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
-    char name[BUFLEN*2];
-    char title[BUFLEN*2];
-    config.escapeQuotes(config.station.name, name, sizeof(name));
-    config.escapeQuotes(config.station.title, title, sizeof(name));
+    char name[BUFLEN/2];
+    char title[BUFLEN/2];
+    config.escapeQuotes(config.station.name, name, sizeof(name)-10);
+    config.escapeQuotes(config.station.title, title, sizeof(title)-10);
     sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.status()==PLAYING?1:0, config.lastStation(), name, title, config.store.dspon);
     mqttClient.publish(topic, 0, true, status);
   }
@@ -50,17 +51,17 @@ void mqttPublishStatus() {
 
 void mqttPublishPlaylist() {
   if(mqttClient.connected()){
-    memset(topic, 0, 140);
-    memset(status, 0, BUFLEN*3);
+    zeroBuffer();
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "playlist");
-    sprintf(status, "http://%s%s", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
+    sprintf(status, "http://%s%s", config.ipToStr(WiFi.localIP()), PLAYLIST_PATH);
     mqttClient.publish(topic, 0, true, status);
   }
 }
 
 void mqttPublishVolume(){
   if(mqttClient.connected()){
-    memset(topic, 0, 140);
+    zeroBuffer();
+    char vol[5];
     memset(vol, 0, 5);
     sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "volume");
     sprintf(vol, "%d", config.store.volume);
@@ -76,75 +77,64 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 
 void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
   if (len == 0) return;
-  memset(buf, 0, 20);
-  strlcpy(buf, payload, len+1);
-  if (strcmp(buf, "prev") == 0) {
-    player.prev();
+  if(len<20){
+    char buf[len+1];
+    strncpy(buf, payload, len);
+    buf[len]='\0';
+    if (strcmp(buf, "prev") == 0) { player.sendCommand({PR_PREV, 0}); return; }
+    if (strcmp(buf, "next") == 0) { player.sendCommand({PR_NEXT, 0}); return; }
+    if (strcmp(buf, "toggle") == 0) { player.sendCommand({PR_TOGGLE, 0}); return; }
+    if (strcmp(buf, "stop") == 0) { player.sendCommand({PR_STOP, 0}); return; }
+    if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) { player.sendCommand({PR_PLAY, config.lastStation()}); return; }
+    if (strcmp(buf, "boot") == 0 || strcmp(buf, "reboot") == 0) { ESP.restart(); return; }
+    if (strcmp(buf, "volm") == 0) {
+      player.stepVol(false);
+      return;
+    }
+    if (strcmp(buf, "volp") == 0) {
+      player.stepVol(true);
+      return;
+    }
+    if (strcmp(buf, "turnoff") == 0) {
+      uint8_t sst = config.store.smartstart;
+      config.setDspOn(0);
+      player.sendCommand({PR_STOP, 0});
+      delay(100);
+      config.saveValue(&config.store.smartstart, sst);
+      return;
+    }
+    if (strcmp(buf, "turnon") == 0) {
+      config.setDspOn(1);
+      if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.lastStation()});
+      return;
+    }
+    int volume;
+    if ( sscanf(buf, "vol %d", &volume) == 1) {
+      if (volume < 0) volume = 0;
+      if (volume > 254) volume = 254;
+      player.setVol(volume);
+      return;
+    }
+    int sb;
+    if (sscanf(buf, "play %d", &sb) == 1 ) {
+      if (sb < 1) sb = 1;
+      uint16_t cs = config.playlistLength();
+      if (sb >= cs) sb = cs;
+      player.sendCommand({PR_PLAY, (uint16_t)sb});
+      return;
+    }
+  }else{
+    if(len>MQTT_BURL_SIZE) return;
+    strncpy(player.burl, payload, len);
+    player.burl[len]='\0';
+    player.sendCommand({PR_BURL, 0});
     return;
   }
-  if (strcmp(buf, "next") == 0) {
-    player.next();
-    return;
-  }
-  if (strcmp(buf, "toggle") == 0) {
-    player.toggle();
-    return;
-  }
-  if (strcmp(buf, "stop") == 0) {
-    player.sendCommand({PR_STOP, 0});
-    //telnet.info();
-    return;
-  }
-  if (strcmp(buf, "start") == 0 || strcmp(buf, "play") == 0) {
-    player.sendCommand({PR_PLAY, config.lastStation()});
-    return;
-  }
-  if (strcmp(buf, "boot") == 0 || strcmp(buf, "reboot") == 0) {
-    ESP.restart();
-    return;
-  }
-  if (strcmp(buf, "volm") == 0) {
-    player.stepVol(false);
-    return;
-  }
-  if (strcmp(buf, "volp") == 0) {
-    player.stepVol(true);
-    return;
-  }
-  if (strcmp(buf, "turnoff") == 0) {
-    uint8_t sst = config.store.smartstart;
-    config.setDspOn(0);
-    player.sendCommand({PR_STOP, 0});
-    //telnet.info();
-    delay(100);
-    config.saveValue(&config.store.smartstart, sst);
-    return;
-  }
-  if (strcmp(buf, "turnon") == 0) {
-    config.setDspOn(1);
-    if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.lastStation()});
-    return;
-  }
-  int volume;
-  if ( sscanf(buf, "vol %d", &volume) == 1) {
-    if (volume < 0) volume = 0;
-    if (volume > 254) volume = 254;
-    player.setVol(volume);
-    return;
-  }
-  int sb;
-  if (sscanf(buf, "play %d", &sb) == 1 ) {
-    if (sb < 1) sb = 1;
-    uint16_t cs = config.playlistLength();
-    if (sb >= cs) sb = cs;
-    player.sendCommand({PR_PLAY, (uint16_t)sb});
-    return;
-  }
-  if (strstr(buf, "http")==buf){
+  /*if (strstr(buf, "http")==0){
     if(len+1>sizeof(player.burl)) return;
     strlcpy(player.burl, payload, len+1);
     return;
-  }
+  }*/
 }
 
 #endif // #ifdef MQTT_ROOT_TOPIC

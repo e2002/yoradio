@@ -13,13 +13,14 @@
 #endif
 
 #ifndef PLQ_SEND_DELAY
-	#define PLQ_SEND_DELAY portMAX_DELAY
+  //#define PLQ_SEND_DELAY portMAX_DELAY
+  #define PLQ_SEND_DELAY pdMS_TO_TICKS(1000)
 #endif
 
-#define PLERR_LN        64
-#define SET_PLAY_ERROR(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); setError(buff);}
+//#define PLERR_LN        64
+//#define SET_PLAY_ERROR(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); setError(buff);}
 
-enum playerRequestType_e : uint8_t { PR_PLAY = 1, PR_STOP = 2, PR_PREV = 3, PR_NEXT = 4, PR_VOL = 5, PR_CHECKSD = 6, PR_VUTONUS = 7 };
+enum playerRequestType_e : uint8_t { PR_PLAY = 1, PR_STOP = 2, PR_PREV = 3, PR_NEXT = 4, PR_VOL = 5, PR_CHECKSD = 6, PR_VUTONUS = 7, PR_BURL = 8, PR_TOGGLE = 9 };
 struct playerRequestParams_t
 {
   playerRequestType_e type;
@@ -34,11 +35,12 @@ class Player: public Audio {
     bool        _volTimer;   /* delayed volume save  */
     uint32_t    _resumeFilePos;
     plStatus_e  _status;
-    char        _plError[PLERR_LN];
+    //char        _plError[PLERR_LN];
   private:
     void _stop(bool alreadyStopped = false);
     void _play(uint16_t stationId);
     void _loadVol(uint8_t volume);
+    bool _hasError;
   public:
     bool lockOutput = true;
     bool resumeAfterUrl = false;
@@ -51,8 +53,9 @@ class Player: public Audio {
     void init();
     void loop();
     void initHeaders(const char *file);
+    void setError();
     void setError(const char *e);
-    bool hasError() { return strlen(_plError)>0; }
+    //bool hasError() { return strlen(_plError)>0; }
     void sendCommand(playerRequestParams_t request);
     void resetQueue();
     #ifdef MQTT_ROOT_TOPIC
