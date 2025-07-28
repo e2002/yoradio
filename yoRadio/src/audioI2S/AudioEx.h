@@ -163,6 +163,8 @@ protected:
 };
 //----------------------------------------------------------------------------------------------------------------------
 
+struct Audio;
+
 class Audio : private AudioBuffer{
 
     AudioBuffer InBuff; // instance of input buffer
@@ -473,9 +475,12 @@ private:
     std::vector<uint32_t> m_hashQueue;
     
     struct ConnectParams {
-      char *hostwoext = NULL;
+      char *hostwoext = nullptr;
       uint16_t port = 80;
-      Audio* instance;
+      Audio* instance = nullptr;
+      
+      ConnectParams(char* h, uint16_t p, Audio* a)
+        : hostwoext(h), port(p), instance(a) {}
     };
     volatile bool _connectionResult;
     TaskHandle_t _connectTaskHandle = nullptr;

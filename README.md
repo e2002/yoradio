@@ -234,6 +234,29 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.552
+- fixed compilation error for ESP cores version below 3.0.0\
+  Thanks to @salawalas ! https://github.com/e2002/yoradio/pull/197/
+- disabled websocket reconnection on all pages except the start page "/"\
+  just reupload the file `script.js.gz`
+
+### 0.9.550
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required. After updating please press CTRL+F5 in browser !!!**\
+or-> just upload all files from data/www (11 pcs) to Webboard Uploader http://radioipaddr/webboard
+- fixed the issue with selecting all rows in the playlist editor
+- netserver optimization – Part 2
+- cleanup – Part 1
+- page class migrated from LinkedList to std::list (Huge thanks to @vortigont!)
+  https://github.com/vortigont/yoradio/commit/b6d7fdd973bfa7395a894ceceaef40925b3f5161#diff-5df2b3b2edb81bdf3594469c55ec7093c641d13a2555a0cea25e7f3380c7de1a
+- added WebSocket connection check in the web interface
+- buffer indicator added to the web interface
+- display performance optimization (Big thanks to @vortigont!) https://github.com/e2002/yoradio/pull/196/
+- audio buffer size setting for modules without PSRAM moved to the web interface (new value applies after reboot, optimal value is 7)
+- added option in the web interface to disable the Telnet server
+- added option in the web interface to enable the Watchdog that stops connect to broken streams
+- settings for time and weather synchronization intervals have been added to the web interface
+- bug fixes, optimization
+
 ### 0.9.533
 - fixed compilation error for esp32 core version lower than 3.0.0
 - fixed error setting display brightness to 1
