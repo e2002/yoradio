@@ -20,7 +20,7 @@ from homeassistant.components.media_player import (
     RepeatMode,
 )
 
-VERSION = '0.9.410'
+VERSION = '0.9.553'
 
 _LOGGER      = logging.getLogger(__name__)
 
@@ -137,16 +137,19 @@ class yoradioDevice(MediaPlayerEntity):
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/volume', self.volume_listener, 0, "utf-8")
     
   async def status_listener(self, msg):
-    js = json.loads(msg.payload)
-    self._media_title = js['title']
-    self._track_artist = js['name']
-    if js['on']==1:
-      self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.IDLE
-    else:
-      self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.OFF
-    self._current_source = str(js['station']) + '. ' + js['name']
     try:
-      self.async_schedule_update_ha_state()
+      js = json.loads(msg.payload)
+      self._media_title = js['title']
+      self._track_artist = js['name']
+      if js['on']==1:
+        self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.IDLE
+      else:
+        self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.OFF
+      self._current_source = str(js['station']) + '. ' + js['name']
+      try:
+        self.async_schedule_update_ha_state()
+      except:
+        pass
     except:
       pass
 

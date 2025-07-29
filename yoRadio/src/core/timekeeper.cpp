@@ -53,36 +53,11 @@ bool TimeKeeper::loop0(){ // core0 (display)
     _last2s = currentTime;
     _upRSSI();
   }
-  if (currentTime - _last5s >= 5000) { // 2sec
+  if (currentTime - _last5s >= 5000) { // 5sec
     _last5s = currentTime;
     //HEAP_INFO();
   }
-  #ifdef DUMMYDISPLAY
-  return true;
-  #endif
-  static uint32_t lastWeatherTime = 0;
-  if (currentTime - lastWeatherTime >= WEATHER_SYNC_INTERVAL) {
-    lastWeatherTime = currentTime;
-    forceWeather = true;
-  }
-  static uint32_t lastTimeTime = 0;
-  if (currentTime - lastTimeTime >= TIME_SYNC_INTERVAL) {
-    lastTimeTime = currentTime;
-    forceTimeSync = true;
-  }
-  if (!busy && (forceWeather || forceTimeSync) && network.status == CONNECTED) {
-    busy = true;
-    //config.setTimeConf();
-    xTaskCreatePinnedToCore(
-      _syncTask,
-      "syncTask",
-      SYNC_STACK_SIZE,
-      NULL,           // Params
-      SYNC_TASK_PRIORITY,
-      NULL,           // Descriptor
-      SYNC_TASK_CORE
-    );
-  }
+
   return true; // just in case
 }
 
@@ -106,6 +81,35 @@ bool TimeKeeper::loop1(){ // core1 (player)
   if (currentTime - _last2s >= 2000) { // 2sec
     _last2s = currentTime;
   }
+
+  #ifdef DUMMYDISPLAY
+  return true;
+  #endif
+  // Sync weather & time
+  static uint32_t lastWeatherTime = 0;
+  if (currentTime - lastWeatherTime >= WEATHER_SYNC_INTERVAL) {
+    lastWeatherTime = currentTime;
+    forceWeather = true;
+  }
+  static uint32_t lastTimeTime = 0;
+  if (currentTime - lastTimeTime >= TIME_SYNC_INTERVAL) {
+    lastTimeTime = currentTime;
+    forceTimeSync = true;
+  }
+  if (!busy && (forceWeather || forceTimeSync) && network.status == CONNECTED) {
+    busy = true;
+    //config.setTimeConf();
+    xTaskCreatePinnedToCore(
+      _syncTask,
+      "syncTask",
+      SYNC_STACK_SIZE,
+      NULL,           // Params
+      SYNC_TASK_PRIORITY,
+      NULL,           // Descriptor
+      SYNC_TASK_CORE
+    );
+  }
+  
   return true; // just in case
 }
 
@@ -217,7 +221,6 @@ void TimeKeeper::weatherTask(){
 
 bool _getWeather(char *wstr) {
 #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
-
   WiFiClient client;
   const char* host  = "api.openweathermap.org";
   if (!client.connect(host, 80)) {

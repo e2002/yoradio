@@ -234,6 +234,12 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.553
+- fix "No 'Access-Control-Allow-Origin' header is present on the requested resource" on saving playlist\
+  just reupload the file `script.js.gz` with Webboard uploader
+- fixed error "assert failed: udp_new_ip_type /IDF/components/lwip/lwip/src/core/udp.c:1278 (Required to lock TCPIP core functionality!)"
+- fixed error "Exception in status_listener when handling msg" in HA component
+
 ### 0.9.552
 - fixed compilation error for ESP cores version below 3.0.0\
   Thanks to @salawalas ! https://github.com/e2002/yoradio/pull/197/
