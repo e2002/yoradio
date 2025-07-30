@@ -153,11 +153,6 @@ void MyNetwork::setWifiParams(){
   WiFi.setSleep(false);
   WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.onEvent(WiFiLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-  weatherBuf=NULL;
-  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
-    weatherBuf = (char *) malloc(sizeof(char) * WEATHER_STRING_L);
-    memset(weatherBuf, 0, WEATHER_STRING_L);
-  #endif
   //config.setTimeConf(); //??
 }
 

@@ -234,6 +234,11 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.555
+- fixed error "assert failed: udp_new_ip_type /IDF/components/lwip/lwip/src/core/udp.c:1278 (Required to lock TCPIP core functionality!)"\
+  part #2
+- weather synchronization code rewritten
+
 ### 0.9.553
 - fix "No 'Access-Control-Allow-Origin' header is present on the requested resource" on saving playlist\
   just reupload the file `script.js.gz` with Webboard uploader

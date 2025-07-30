@@ -451,7 +451,7 @@ void Display::loop() {
           break;
         }
         case NEWWEATHER: {
-          if(_weather && network.weatherBuf) _weather->setText(network.weatherBuf);
+          if(_weather && timekeeper.weatherBuf) _weather->setText(timekeeper.weatherBuf);
           break;
         }
         case BOOTSTRING: {

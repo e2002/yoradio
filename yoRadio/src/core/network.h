@@ -6,9 +6,6 @@
 
 #define apSsid      "yoRadioAP"
 #define apPassword  "12345987"
-//#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
-#define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour
-#define WEATHER_STRING_L  254
 
 enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 
@@ -17,9 +14,6 @@ class MyNetwork {
     n_Status_e status;
     struct tm timeinfo;
     bool lostPlaying = false, beginReconnect = false;
-    //uint8_t tsFailCnt, wsFailCnt;
-    char *weatherBuf;
-    //bool trueWeather;
   public:
     MyNetwork() {};
     void begin();

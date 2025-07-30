@@ -44,6 +44,7 @@ class Player: public Audio {
   public:
     bool lockOutput = true;
     bool resumeAfterUrl = false;
+    volatile bool connproc = true;
     uint32_t sd_min, sd_max;
     #ifdef MQTT_ROOT_TOPIC
     char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */

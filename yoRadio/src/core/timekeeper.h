@@ -2,21 +2,19 @@
 #define timekeeper_h
 #include "Arduino.h"
 
+#define WEATHER_STRING_L  254
+
 void _syncTask(void * pvParameters);
-bool _getWeather(char *wstr);
+bool _getWeather();
 
 class TimeKeeper {
   public:
     volatile bool forceWeather;
     volatile bool forceTimeSync;
     volatile bool busy;
+    char *weatherBuf;
   public:
-    TimeKeeper() {
-      busy          = false;
-      forceWeather  = true;
-      forceTimeSync = true;
-      _returnPlayerTime = _doAfterTime = 0;
-    }
+    TimeKeeper();
     bool loop0();
     bool loop1();
     void timeTask();

@@ -125,7 +125,7 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
 #endif
 
 #ifndef NS_QUEUE_TICKS
-  #define NS_QUEUE_TICKS 0
+  #define NS_QUEUE_TICKS 2
 #endif
 
 const char *getFormat(BitrateFormat _format) {
