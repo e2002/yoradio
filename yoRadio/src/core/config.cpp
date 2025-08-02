@@ -175,8 +175,10 @@ void Config::changeMode(int newmode){
   if(getMode()==PM_SDCARD){
     if(pir) player.sendCommand({PR_STOP, 0});
     display.putRequest(NEWMODE, SDCHANGE);
+    #ifdef NETSERVER_LOOP1
     while(display.mode()!=SDCHANGE)
       delay(10);
+    #endif
     delay(50);
   }
   if(getMode()==PM_WEB) {
@@ -220,6 +222,11 @@ bool Config::spiffsCleanup(){
   if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
   if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
   return ret;
+}
+
+void Config::waitConnection(){
+  while(!player.connproc) vTaskDelay(50);
+  vTaskDelay(500);
 }
 
 char * Config::ipToStr(IPAddress ip){

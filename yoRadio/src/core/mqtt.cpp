@@ -12,7 +12,7 @@ TimerHandle_t mqttReconnectTimer;
 char topic[100], status[BUFLEN+50];
 
 void connectToMqtt() {
-  while(!player.connproc) vTaskDelay(50);
+  //config.waitConnection();
   mqttClient.connect();
 }
 

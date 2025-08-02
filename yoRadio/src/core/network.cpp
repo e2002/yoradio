@@ -7,6 +7,7 @@
 #include "player.h"
 #include "mqtt.h"
 #include "timekeeper.h"
+#include <ESPmDNS.h>
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -154,6 +155,8 @@ void MyNetwork::setWifiParams(){
   WiFi.onEvent(WiFiReconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.onEvent(WiFiLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   //config.setTimeConf(); //??
+  if(strlen(config.store.mdnsname)>0)
+    MDNS.begin(config.store.mdnsname);
 }
 
 void MyNetwork::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {

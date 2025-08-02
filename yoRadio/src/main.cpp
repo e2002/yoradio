@@ -99,7 +99,6 @@ void setup() {
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
   if (config.store.smartstart == 1) {
-    delay(250);
     player.sendCommand({PR_PLAY, config.lastStation()});
   }
   pm.on_end_setup();
@@ -115,7 +114,9 @@ void loop() {
 #endif
   }
   loopControls();
-  //netserver.loop();
+  #ifdef NETSERVER_LOOP1
+  netserver.loop();
+  #endif
 }
 
 #include "core/audiohandlers.h"

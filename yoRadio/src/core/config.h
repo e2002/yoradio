@@ -280,6 +280,7 @@ class Config {
 #endif
     void resetSystem(const char *val, uint8_t clientId);
     bool spiffsCleanup();
+    void waitConnection();
     char * ipToStr(IPAddress ip);
     bool prepareForPlaying(uint16_t stationId);
     void configPostPlaying(uint16_t stationId);

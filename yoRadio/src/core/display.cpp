@@ -22,6 +22,16 @@ Nextion nextion;
 #ifndef DSP_TASK_CORE_ID
   #define DSP_TASK_CORE_ID  0
 #endif
+#ifndef DSP_TASK_DELAY
+  #define DSP_TASK_DELAY pdMS_TO_TICKS(10) // cap for 50 fps
+#endif
+
+#define DSP_QUEUE_TICKS 0
+
+#ifndef DSQ_SEND_DELAY
+  //#define DSQ_SEND_DELAY portMAX_DELAY
+  #define DSQ_SEND_DELAY  pdMS_TO_TICKS(200)
+#endif
 
 QueueHandle_t displayQueue;
 
@@ -29,16 +39,19 @@ static void loopDspTask(void * pvParameters){
   while(true){
   #ifndef DUMMYDISPLAY
     if(displayQueue==NULL) break;
-    netserver.loop();
-    if(timekeeper.loop0())
+    if(timekeeper.loop0()){
       display.loop();
-    // will NOT delay here, would use message dequeue timeout instead
-    //vTaskDelay(DSP_TASK_DELAY);
+    #ifndef NETSERVER_LOOP1
+      netserver.loop();
+    #endif
+    }
   #else
-    netserver.loop();
     timekeeper.loop0();
-    vTaskDelay(10);
+    #ifndef NETSERVER_LOOP1
+      netserver.loop();
+    #endif
   #endif
+    vTaskDelay(DSP_TASK_DELAY);
   }
   vTaskDelete( NULL );
 }
@@ -52,18 +65,6 @@ void Display::_createDspTask(){
 DspCore dsp;
 
 Page *pages[] = { new Page(), new Page(), new Page(), new Page() };
-
-#ifndef DSQ_SEND_DELAY
-  //#define DSQ_SEND_DELAY portMAX_DELAY
-  #define DSQ_SEND_DELAY  pdMS_TO_TICKS(200)
-#endif
-
-#ifndef DSP_TASK_DELAY
-  #define DSP_TASK_DELAY pdMS_TO_TICKS(20) // cap for 50 fps
-#endif
-
-// will use DSP_QUEUE_TICKS as delay interval for display task runner when there are no msgs in a queue to process
-#define DSP_QUEUE_TICKS DSP_TASK_DELAY
 
 #if !((DSP_MODEL==DSP_ST7735 && DTYPE==INITR_BLACKTAB) || DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7796 || DSP_MODEL==DSP_ILI9488 || DSP_MODEL==DSP_ILI9486 || DSP_MODEL==DSP_ILI9341 || DSP_MODEL==DSP_ILI9225)
   #undef  BITRATE_FULL
@@ -397,7 +398,7 @@ void Display::loop() {
     _bootScreen();
     return;
   }
-  if(displayQueue==NULL) return;
+  if(displayQueue==NULL || _locked) return;
   _pager.loop();
 #ifdef USE_NEXTION
   nextion.loop();

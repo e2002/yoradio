@@ -37,6 +37,8 @@ class Display {
     void wakeup();
     void setContrast();
     void printPLitem(uint8_t pos, const char* item);
+    void lock()   { _locked=true; }
+    void unlock() { _locked=false; }
   private:
     ScrollWidget _meta, _title1, _plcurrent;
     ScrollWidget *_weather;
@@ -52,6 +54,7 @@ class Display {
     ClockWidget _clock;
     Page *_boot;
     TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
+    bool _locked = false;
     uint8_t _bootStep;
     void _time(bool redraw = false);
     void _apScreen();

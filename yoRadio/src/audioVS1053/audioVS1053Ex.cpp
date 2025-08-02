@@ -1717,7 +1717,6 @@ void Audio::setConnectionTimeout(uint16_t timeout_ms, uint16_t timeout_ms_ssl){
 void Audio::connectTask(void* pvParams) {
   ConnectParams* params = static_cast<ConnectParams*>(pvParams);
   Audio* self = params->instance;
-  bool res = true;
   if(self->_client){
     self->_connectionResult = self->_client->connect(params->hostwoext, params->port/*, self->m_f_ssl ? self->m_timeout_ms_ssl : self->m_timeout_ms*/);
   }else{

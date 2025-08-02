@@ -206,6 +206,7 @@ void TimeKeeper::_upSDPos(){
 
 void TimeKeeper::timeTask(){
   static uint8_t tsFailCnt = 0;
+  config.waitConnection();
   if(getLocalTime(&network.timeinfo)){
     tsFailCnt = 0;
     forceTimeSync = false;
@@ -226,8 +227,8 @@ void TimeKeeper::timeTask(){
   }
 }
 void TimeKeeper::weatherTask(){
-  if(!weatherBuf || strlen(config.store.weatherkey)==0 || !config.store.showweather) return;
   forceWeather = false;
+  if(!weatherBuf || strlen(config.store.weatherkey)==0 || !config.store.showweather) return;
   _getWeather();
 }
 
@@ -328,7 +329,7 @@ bool _getWeather() {
       }
     }, NULL); // <-- client->onData
   }, NULL); // <-- weatherClient->onConnect
-  while(!player.connproc) vTaskDelay(50);
+  config.waitConnection();
   if(!weatherClient->connect(host, 80)){
     Serial.println("##WEATHER###: connection failed");
     AsyncClient * client = weatherClient;

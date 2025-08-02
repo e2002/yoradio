@@ -11,7 +11,7 @@
 #include "commandhandler.h"
 #include "timekeeper.h"
 #include <Update.h>
-#include <ESPmDNS.h>
+
 //#include <Ticker.h>
 
 #ifdef USE_SD
@@ -21,7 +21,12 @@
 #define MIN_MALLOC 24112
 #endif
 #ifndef NSQ_SEND_DELAY
-  #define NSQ_SEND_DELAY       pdMS_TO_TICKS(100)  //portMAX_DELAY?
+  //#define NSQ_SEND_DELAY       portMAX_DELAY
+  #define NSQ_SEND_DELAY       pdMS_TO_TICKS(300)
+#endif
+#ifndef NS_QUEUE_TICKS
+  //#define NS_QUEUE_TICKS pdMS_TO_TICKS(2)
+  #define NS_QUEUE_TICKS 0
 #endif
 
 //#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
@@ -72,8 +77,8 @@ bool NetServer::begin(bool quiet) {
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
 #endif
   webserver.begin();
-  if(strlen(config.store.mdnsname)>0)
-    MDNS.begin(config.store.mdnsname);
+  //if(strlen(config.store.mdnsname)>0)
+  //  MDNS.begin(config.store.mdnsname);
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
   if(!quiet) Serial.println("done");
@@ -93,10 +98,12 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
   size_t needread = filesize - index;
   if (!needread) {
     requiredfile.close();
+    display.unlock();
     return 0;
   }
   size_t canread = (needread > maxLen) ? maxLen : needread;
   DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, netserver.chunkedPathBuffer, canread, maxLen);
+  //netserver.loop();
   requiredfile.seek(index, SeekSet);
   requiredfile.read(buffer, canread);
   index += canread;
@@ -108,6 +115,9 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
   memset(chunkedPathBuffer, 0, sizeof(chunkedPathBuffer));
   strlcpy(chunkedPathBuffer, path, sizeof(chunkedPathBuffer)-1);
   AsyncWebServerResponse *response;
+  #ifndef NETSERVER_LOOP1
+  display.lock();
+  #endif
   response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback);
   response->addHeader("Cache-Control","max-age=31536000");
   request->send(response);
@@ -122,10 +132,6 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
   #define SHOW_WEATHER  true
 #else
   #define SHOW_WEATHER  false
-#endif
-
-#ifndef NS_QUEUE_TICKS
-  #define NS_QUEUE_TICKS 2
 #endif
 
 const char *getFormat(BitrateFormat _format) {
@@ -308,13 +314,14 @@ void NetServer::loop() {
     delay(100);
     ESP.restart();
   }
+  processQueue();
   websocket.cleanupClients();
   switch (importRequest) {
     case IMPL:    importPlaylist();  importRequest = IMDONE; break;
     case IMWIFI:  config.saveWifi(); importRequest = IMDONE; break;
     default:      break;
   }
-  processQueue();
+  //processQueue();
 }
 
 #if IR_PIN!=255

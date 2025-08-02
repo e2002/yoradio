@@ -234,6 +234,14 @@ Work is in progress...
 
 ---
 ## Version history
+### 0.9.561
+**!!! a [full update](#update-over-web-interface) with Sketch data upload is required !!!**\
+  or-> just upload `yoRadio/data/www/script.js.gz` to Webboard Uploader http://radioipaddr/webboard\
+  After updating please clear browser cache.
+- fixed error when switching to SD Card mode
+- fixed issue causing random reboots
+- fixed preview playback bug in Playlist Editor
+
 ### 0.9.555
 - fixed error "assert failed: udp_new_ip_type /IDF/components/lwip/lwip/src/core/udp.c:1278 (Required to lock TCPIP core functionality!)"\
   part #2

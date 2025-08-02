@@ -1225,12 +1225,14 @@ AsyncWebSocketMessageBuffer * AsyncWebSocket::makeBuffer(uint8_t * data, size_t 
 void AsyncWebSocket::_cleanBuffers()
 {
   AsyncWebLockGuard l(_lock);
-
-  for(AsyncWebSocketMessageBuffer * c: _buffers){
+  while (_buffers.remove_first([](AsyncWebSocketMessageBuffer* b) {
+    return b && b->canDelete();
+  }));
+  /*for(AsyncWebSocketMessageBuffer * c: _buffers){
     if(c && c->canDelete()){
         _buffers.remove(c);
     }
-  }
+  }*/
 }
 
 AsyncWebSocket::AsyncWebSocketClientLinkedList AsyncWebSocket::getClients() const {
