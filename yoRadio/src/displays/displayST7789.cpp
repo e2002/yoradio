@@ -1,9 +1,14 @@
 #include "../core/options.h"
-#if DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_240
+#if DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_240 || DSP_MODEL==DSP_ST7789_76
 
 #include "displayST7789.h"
 //#include <SPI.h>
+#if DSP_MODEL==DSP_ST7789_76
+#include "fonts/bootlogo40.h"
+#else
 #include "fonts/bootlogo.h"
+#endif
+
 #include "../core/config.h"
 #include "../core/network.h"
 
@@ -20,7 +25,11 @@ DspCore::DspCore(): Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST) {}
 #include "tools/utf8RusGFX.h"
 
 void DspCore::initDisplay() {
-  init(240,(DSP_MODEL==DSP_ST7789)?320:240);
+  if(DSP_MODEL==DSP_ST7789_76){
+    init(76,284);
+  }else{
+    init(240,(DSP_MODEL==DSP_ST7789)?320:240);
+  }
   if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   invert();
   cp437(true);
@@ -36,8 +45,14 @@ void DspCore::initDisplay() {
   plYStart = (height() / 2 - plItemHeight / 2) - plItemHeight * (plTtemsCount - 1) / 2 + playlistConf.widget.textsize*2;
   
 }
-
+#if DSP_MODEL==DSP_ST7789_76
+void DspCore::drawLogo(uint16_t top) {
+  //drawBitmap( (width()  - LOGO_WIDTH ) / 2, 8, logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  drawRGBBitmap((width() - 62) / 2, 8, bootlogo40, 62, 40);
+}
+#else
 void DspCore::drawLogo(uint16_t top) { drawRGBBitmap((width() - 99) / 2, top, bootlogo2, 99, 64); }
+#endif
 
 void DspCore::printPLitem(uint8_t pos, const char* item, ScrollWidget& current){
   setTextSize(playlistConf.widget.textsize);
@@ -66,7 +81,11 @@ GFXglyph *pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c) {
 }
 
 uint8_t DspCore::_charWidth(unsigned char c){
+#if DSP_MODEL==DSP_ST7789_76
+  GFXglyph *glyph = pgm_read_glyph_ptr(&DS_DIGI28pt7b, c - 0x20);
+#else
   GFXglyph *glyph = pgm_read_glyph_ptr(&DS_DIGI42pt7b, c - 0x20);
+#endif
   return pgm_read_byte(&glyph->xAdvance);
 }
 
@@ -82,15 +101,61 @@ void DspCore::_getTimeBounds() {
   strftime(buf, 4, "%H", &network.timeinfo);
   _dotsLeft=textWidth(buf);
 }
+#if DSP_MODEL==DSP_ST7789_76
+void DspCore::_clockSeconds(){
+  setTextSize(1);
+  setFont(&DS_DIGI28pt7b);
+  setTextColor((network.timeinfo.tm_sec % 2 == 0) ? config.theme.clock : (CLOCKFONT_MONO?config.theme.clockbg:config.theme.background), config.theme.background);
+  setCursor(_timeleft+_dotsLeft, clockTop);
+  print(":");  
+  setFont();
+}
 
+void DspCore::_clockDate(){  }
+
+void DspCore::_clockTime(){
+  if(_oldtimeleft>0 && !CLOCKFONT_MONO) dsp.fillRect(_oldtimeleft,  clockTop-clockTimeHeight+1, _oldtimewidth+CHARWIDTH*2+2, clockTimeHeight, config.theme.background);
+  _timeleft = (width()/*/2*/ - _timewidth/*/2*/)-clockRightSpace;
+  setTextSize(1);
+  setFont(&DS_DIGI28pt7b);
+  
+  if(CLOCKFONT_MONO) {
+    setCursor(_timeleft, clockTop);
+    setTextColor(config.theme.clockbg, config.theme.background);
+    print("88:88");
+  }
+  setTextColor(config.theme.clock, config.theme.background);
+  setCursor(_timeleft, clockTop);
+  print(_timeBuf);
+  setFont();
+  strlcpy(_oldTimeBuf, _timeBuf, sizeof(_timeBuf));
+  _oldtimewidth = _timewidth;
+  _oldtimeleft = _timeleft;
+}
+
+void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight, bool redraw){
+  clockTop = top;
+  clockRightSpace = rightspace;
+  clockTimeHeight = timeheight;
+  strftime(_timeBuf, sizeof(_timeBuf), "%H:%M", &network.timeinfo);
+  if(strcmp(_oldTimeBuf, _timeBuf)!=0 || redraw){
+    _getTimeBounds();
+    _clockTime();
+  }
+  _clockSeconds();
+}
+
+void DspCore::clearClock(){
+  dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+2, clockTimeHeight+1, config.theme.background);
+}
+#else
 void DspCore::_clockSeconds(){
   setTextSize(3);
   setTextColor(config.theme.seconds, config.theme.background);
   setCursor(width() - 8 - clockRightSpace - CHARWIDTH*3*2, clockTop-clockTimeHeight+1);
   sprintf(_bufforseconds, "%02d", network.timeinfo.tm_sec);
   if(!config.isScreensaver) print(_bufforseconds);                                      /* print seconds */
-  setTextSize(1);
-  setFont(&DS_DIGI42pt7b);
+  setNumFont();
   setTextColor((network.timeinfo.tm_sec % 2 == 0) ? config.theme.clock : (CLOCKFONT_MONO?config.theme.clockbg:config.theme.background), config.theme.background);
   setCursor(_timeleft+_dotsLeft, clockTop);
   print(":");                                     /* print dots */
@@ -115,8 +180,7 @@ void DspCore::_clockDate(){
 void DspCore::_clockTime(){
   if(_oldtimeleft>0 && !CLOCKFONT_MONO) dsp.fillRect(_oldtimeleft, clockTop-clockTimeHeight+1, _oldtimewidth, clockTimeHeight, config.theme.background);
   _timeleft = width()-clockRightSpace-CHARWIDTH*3*2-24-_timewidth;
-  setTextSize(1);
-  setFont(&DS_DIGI42pt7b);
+  setNumFont();
 
   if(CLOCKFONT_MONO) {
     setCursor(_timeleft, clockTop);
@@ -155,6 +219,7 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
 void DspCore::clearClock(){
   dsp.fillRect(_timeleft,  clockTop-clockTimeHeight, _timewidth+CHARWIDTH*3*2+24, clockTimeHeight+10+CHARHEIGHT, config.theme.background);
 }
+#endif
 
 void DspCore::startWrite(void) {
   Adafruit_ST7789::startWrite();
@@ -178,7 +243,7 @@ void DspCore::setTextSize(uint8_t s){
 }
 
 void DspCore::flip(){
-#if DSP_MODEL==DSP_ST7789
+#if DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_76
   setRotation(config.store.flipscreen?3:1);
 #endif
 #if DSP_MODEL==DSP_ST7789_240
@@ -226,7 +291,11 @@ void DspCore::clearClipping(){
 }
 
 void DspCore::setNumFont(){
+#if DSP_MODEL==DSP_ST7789_76
+  setFont(&DS_DIGI28pt7b);
+#else
   setFont(&DS_DIGI42pt7b);
+#endif
   setTextSize(1);
 }
 #endif

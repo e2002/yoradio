@@ -6,10 +6,18 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 
-#if CLOCKFONT_MONO
-  #include "fonts/DS_DIGI42pt7b_mono.h"        // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+#if DSP_MODEL==DSP_ST7789_76
+  #if CLOCKFONT_MONO
+    #include "fonts/DS_DIGI28pt7b_mono.h"                          // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+  #else
+    #include "fonts/DS_DIGI28pt7b.h"
+  #endif
 #else
-  #include "fonts/DS_DIGI42pt7b.h"
+  #if CLOCKFONT_MONO
+    #include "fonts/DS_DIGI42pt7b_mono.h"        // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+  #else
+    #include "fonts/DS_DIGI42pt7b.h"
+  #endif
 #endif
 #include "tools/l10n.h"
 
@@ -25,6 +33,8 @@ typedef GFXcanvas16 Canvas;
 #else
   #if DSP_MODEL==DSP_ST7789
     #include "conf/displayST7789conf.h"
+  #elif DSP_MODEL==DSP_ST7789_76
+    #include "conf/displayST7789_76conf.h"
   #else
     #include "conf/displayST7789_240conf.h"
   #endif

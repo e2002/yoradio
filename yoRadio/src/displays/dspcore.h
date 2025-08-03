@@ -12,7 +12,7 @@
   #include "displaySSD1306.h"
 #elif DSP_MODEL==DSP_NOKIA5110
   #include "displayN5110.h"
-#elif DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_240
+#elif DSP_MODEL==DSP_ST7789 || DSP_MODEL==DSP_ST7789_240 || DSP_MODEL==DSP_ST7789_76
   #include "displayST7789.h"
 #elif DSP_MODEL==DSP_SH1106
   #include "displaySH1106.h"
