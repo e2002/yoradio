@@ -235,6 +235,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.574
+- fixed compilation error for certain displays when `#define DSP_INVERT_TITLE false` is set
+- fixed compilation error for `DSP_DUMMY`
+
 #### v0.9.570
 - added support for ST7789 284x76 2.25' SPI displays https://aliexpress.ru/item/1005009016973081.html \
   note: the brightness pin of this display should be pulled up to GND

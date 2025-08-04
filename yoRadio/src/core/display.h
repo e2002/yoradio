@@ -97,6 +97,8 @@ class Display {
     bool deepsleep(){return true;}
     void wakeup(){}
     void printPLitem(uint8_t pos, const char* item){}
+    void lock()   {}
+    void unlock() {}
   private:
     void _createDspTask();
 };

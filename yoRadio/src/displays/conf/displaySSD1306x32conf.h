@@ -30,6 +30,7 @@ const ScrollConfig weatherConf    PROGMEM = {{ 0, 20, 1, WA_LEFT }, 140, true, D
 
 /* BACKGROUNGC9106DS  */                       /* {{ left, top, fontsize, align }, width, height, outlined } */
 const FillConfig   metaBGConf     PROGMEM = {{ 0, 0, 0, WA_LEFT }, DSP_WIDTH/*-6*5-3*/, 9, false };
+const FillConfig   metaBGConfInv  PROGMEM = {{ 0, 9, 0, WA_LEFT }, DSP_WIDTH/*-6*5-3*/, 1, false };
 const FillConfig   volbarConf     PROGMEM = {{ 0, 32-1-1-1, 0, WA_LEFT }, DSP_WIDTH, 3, true };
 const FillConfig  playlBGConf     PROGMEM = {{ 0, 13, 0, WA_LEFT }, DSP_WIDTH, 9, false };
 //const FillConfig  heapbarConf     PROGMEM = {{ 0, 63, 0, WA_LEFT }, DSP_WIDTH, 1, false };
