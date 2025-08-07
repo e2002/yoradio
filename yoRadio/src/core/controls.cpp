@@ -428,11 +428,13 @@ void onBtnDuringLongPress(int id) {
         }
       case EVT_BTNUP:
       case EVT_BTNDOWN: {
-          if (display.mode() == PLAYER) {
-            display.putRequest(NEWMODE, STATIONS);
-          }
-          if (display.mode() == STATIONS) {
-            controlsEvent(id == EVT_BTNDOWN);
+          if(!config.store.skipPlaylistUpDown) {
+            if (display.mode() == PLAYER) {
+              display.putRequest(NEWMODE, STATIONS);
+            }
+            if (display.mode() == STATIONS) {
+              controlsEvent(id == EVT_BTNDOWN);
+            }
           }
           break;
         }

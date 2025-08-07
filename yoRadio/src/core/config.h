@@ -3,23 +3,32 @@
 #include "Arduino.h"
 #include <SPI.h>
 #include <SPIFFS.h>
-#include <EEPROM.h>
+#include <Preferences.h>
 //#include "SD.h"
 #include "options.h"
 #include "telnet.h"
 #include "rtcsupport.h"
 #include "../pluginsManager/pluginsManager.h"
 
-#define EEPROM_SIZE       768
-#define EEPROM_START      500
-#define EEPROM_START_IR   0
-#define EEPROM_START_2    10
 #ifndef BUFLEN
-  #define BUFLEN            170
+  #define BUFLEN            250
 #endif
+
+#define ESPFILEUPDATER_USERAGENT "yoRadio/" YOVERSION "(" YOURL ")"  // used as a user-agent string for downloading with ESPFileUpdater
+#ifdef ESPFILEUPDATER_DEBUG
+  #define ESPFILEUPDATER_VERBOSE true
+#else
+  #define ESPFILEUPDATER_VERBOSE false
+#endif
+
+#ifdef UPDATEURL
+  #define ONLINEUPDATE_MARKERFILE "/data/otaupdate.meta"
+#endif
+
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
 #define TMP_PATH          "/data/tmpfile.txt"
+#define TMP2_PATH         "/data/tmpfile2.txt"
 #define INDEX_PATH        "/data/index.dat"
 
 #define PLAYLIST_SD_PATH     "/data/playlistsd.csv"
@@ -54,10 +63,8 @@
   #define HEAP_INFO()
 #endif
 
-#define CONFIG_VERSION  5
-
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
-enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV };
+enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV, BF_VOR, BF_OPU };
 
 void u8fix(char *src);
 
@@ -113,6 +120,8 @@ struct config_t
   bool      vumeter;
   uint8_t   softapdelay;
   bool      flipscreen;
+  bool      volumepage;
+  bool      clock12;
   bool      invertdisplay;
   bool      numplaylist;
   bool      fliptouch;
@@ -120,6 +129,8 @@ struct config_t
   bool      dspon;
   uint8_t   brightness;
   uint8_t   contrast;
+  char      tz_name[70];
+  char      tzposix[70];
   char      sntp1[35];
   char      sntp2[35];
   bool      showweather;
@@ -158,6 +169,15 @@ struct config_t
   uint16_t  timeSyncInterval;
   uint16_t  timeSyncIntervalRTC;
   uint16_t  weatherSyncInterval;
+  // if removing a variable and key, add to deleteOldKeys()
+};
+
+#define CONFIG_KEY_ENTRY(field, keyname) { offsetof(config_t, field), keyname, sizeof(((config_t*)0)->field) }
+
+struct configKeyMap {
+    size_t fieldOffset;
+    const char* key;
+    size_t size;
 };
 
 #if IR_PIN!=255
@@ -215,6 +235,8 @@ class Config {
     void saveIR();
 #endif
     void init();
+    void loadPreferences();
+    void deleteOldKeys();
     void loadTheme();
     uint8_t setVolume(uint8_t val);
     void saveVolume();
@@ -227,6 +249,7 @@ class Config {
     void setStation(const char* station);
     void escapeQuotes(const char* input, char* output, size_t maxLen);
     bool parseCSV(const char* line, char* name, char* url, int &ovol);
+    bool parseCSVimport(const char* line, char* name, char* url, int &ovol);
     bool parseJSON(const char* line, char* name, char* url, int &ovol);
     bool parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize);
     bool parseSsid(const char* line, char* ssid, char* pass);
@@ -239,6 +262,10 @@ class Config {
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
+    void updateTZjson(void* param);
+    void getRequiredFiles(void* param);
+    void startAsyncServicesButWait();
+    void updateRadioBrowserServersjson();
     #ifdef USE_SD
       void initSDPlaylist();
       void changeMode(int newmode=-1);
@@ -253,9 +280,6 @@ class Config {
     }
     uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
-    void setTimezone(int8_t tzh, int8_t tzm);
-    void setTimezoneOffset(uint16_t tzo);
-    uint16_t getTimezoneOffset();
     void setBrightness(bool dosave=false);
     void setDspOn(bool dspon, bool saveval = true);
     void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
@@ -288,27 +312,57 @@ class Config {
     #if RTCSUPPORTED
       bool isRTCFound(){ return _rtcFound; };
     #endif
-    template <typename T>
-    size_t getAddr(const T *field) const {
-      return (size_t)((const uint8_t *)field - (const uint8_t *)&store) + EEPROM_START;
+    Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
+    static const configKeyMap keyMap[];
+
+    // Helper to get key map entry for a field pointer
+    const configKeyMap* getKeyMapEntryForField(const void* field) const {
+        size_t offset = (const uint8_t*)field - (const uint8_t*)&store;
+        for (size_t i = 0; keyMap[i].key != nullptr; ++i) {
+            if (keyMap[i].fieldOffset == offset) return &keyMap[i];
+        }
+        return nullptr;
     }
     template <typename T>
-    void saveValue(T *field, const T &value, bool commit=true, bool force=false){
-      if(*field == value && !force) return;
-      *field = value;
-      size_t address = getAddr(field);
-      EEPROM.put(address, value);
-      if(commit)
-        EEPROM.commit();
+    void loadValue(T *field) {
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) prefs.getBytes(entry->key, field, entry->size);
     }
-    void saveValue(char *field, const char *value, size_t N, bool commit=true, bool force=false) {
-      if (strcmp(field, value) == 0 && !force) return;
-      strlcpy(field, value, N);
-      size_t address = getAddr(field);
-      size_t fieldlen = strlen(field);
-      for (size_t i = 0; i <=fieldlen ; i++) EEPROM.write(address + i, field[i]);
-      if(commit)
-        EEPROM.commit();
+    template <typename T>
+    void saveValue(T *field, const T &value, bool commit=true, bool force=false) {
+      // commit ignored (kept for compatibility)
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) {
+        prefs.begin("yoradio", false);
+        T oldValue;
+        size_t existingLen = prefs.getBytesLength(entry->key);
+        size_t bytesRead = prefs.getBytes(entry->key, &oldValue, entry->size);
+        bool exists = bytesRead == entry->size;
+        bool needSave = (existingLen != entry->size) || !exists || memcmp(&oldValue, &value, entry->size) != 0;
+        if (needSave) {
+          prefs.putBytes(entry->key, &value, entry->size);
+          *field = value;
+        }
+        prefs.end();
+      }
+    }
+    void saveValue(char *field, const char *value, size_t N = 0, bool commit=true, bool force=false) {
+      // commit ignored (kept for compatibility)
+      const configKeyMap* entry = getKeyMapEntryForField(field);
+      if (entry) {
+        size_t sz = entry->size;
+        prefs.begin("yoradio", false);
+        char oldValue[sz];
+        memset(oldValue, 0, sz);
+        size_t existingLen = prefs.getBytesLength(entry->key);
+        bool exists = prefs.getBytes(entry->key, oldValue, sz) == sz;
+        bool needSave = (existingLen != sz) || !exists || strncmp(oldValue, value, sz) != 0 || force;
+        if (needSave) {
+          prefs.putBytes(entry->key, value, sz);
+          strlcpy(field, value, sz);
+        }
+        prefs.end();
+      }
     }
     uint32_t getChipId(){
       uint32_t chipId = 0;
@@ -318,8 +372,6 @@ class Config {
       return chipId;
     }
   private:
-    template <class T> int eepromWrite(int ee, const T& value);
-    template <class T> int eepromRead(int ee, T& value);
     bool _bootDone;
     #if RTCSUPPORTED
       bool _rtcFound;
@@ -328,7 +380,6 @@ class Config {
     void setDefaults();
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
-    void _setupVersion();
     void _initHW();
     bool _isFSempty();
     uint16_t _randomStation(){

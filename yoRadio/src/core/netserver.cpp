@@ -1,6 +1,8 @@
 #include "netserver.h"
 #include <SPIFFS.h>
-
+#include <ArduinoJson.h>
+#include "../ESPFileUpdater/ESPFileUpdater.h"
+#include "config.h"
 #include "player.h"
 #include "telnet.h"
 #include "display.h"
@@ -9,16 +11,26 @@
 #include "mqtt.h"
 #include "controls.h"
 #include "commandhandler.h"
-#include "timekeeper.h"
 #include <Update.h>
 
 //#include <Ticker.h>
+#if USE_OTA
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+#include <NetworkUdp.h>
+#else
+#include <WiFiUdp.h>
+#endif
+#include <ArduinoOTA.h>
+#endif
 
+#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
+#include <freertos/FreeRTOS.h>
 #ifdef USE_SD
-#include "sdmanager.h"
+  #include "sdmanager.h"
 #endif
 #ifndef MIN_MALLOC
-#define MIN_MALLOC 24112
+  #define MIN_MALLOC 24112
 #endif
 #ifndef NSQ_SEND_DELAY
   //#define NSQ_SEND_DELAY       portMAX_DELAY
@@ -28,6 +40,12 @@
   //#define NS_QUEUE_TICKS pdMS_TO_TICKS(2)
   #define NS_QUEUE_TICKS 0
 #endif
+
+// Global list for radio-browser servers to persist across searches
+String g_ipv4_servers[20];
+// For the search task
+TaskHandle_t g_searchTaskHandle = NULL;
+#define FS_REQUIRED_FREE_SPACE 150 // in KB - must be minimum x1.5 of the limit_per_page in search.js (100)
 
 //#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
 
@@ -40,6 +58,12 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 void handleIndex(AsyncWebServerRequest * request);
 void handleNotFound(AsyncWebServerRequest * request);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
+void vTaskSearchRadioBrowser(void *pvParameters);
+void handleSearchPost(AsyncWebServerRequest *request);
+#ifdef UPDATEURL
+void checkForOnlineUpdate();
+void startOnlineUpdate();
+#endif
 
 bool  shouldReboot  = false;
 #ifdef MQTT_ROOT_TOPIC
@@ -58,20 +82,107 @@ char* updateError() {
   return netserver.nsBuf;
 }
 
+void handleSearch(AsyncWebServerRequest *request) {
+  // handle search request
+  if (request->hasParam("search")) {
+    if (g_searchTaskHandle != NULL) {
+      request->send(429, "text/plain", "Search task is already running.");
+      return;
+    }
+    String searchQuery = request->getParam("search")->value();
+    char* search_str = new (std::nothrow) char[searchQuery.length() + 1];
+    if (!search_str) {
+      request->send(500, "text/plain", "Failed to allocate memory for search task.");
+      return;
+    }
+    strcpy(search_str, searchQuery.c_str());
+    xTaskCreate(vTaskSearchRadioBrowser, "searchRadioBrowser", 8192, (void*)search_str, 1, &g_searchTaskHandle);
+    request->send(200, "application/json", "{\"status\":\"searching\"}");
+  }
+}
+
+void handleSearchPost(AsyncWebServerRequest *request) {
+  // handle preview or add to playlist
+  bool addtoplaylist = false;
+  if (request->hasParam("addtoplaylist", true)) {
+    if (request->getParam("addtoplaylist", true)->value() == "true") addtoplaylist = true;
+  }
+  if (!request->hasParam("url", true) || !request->hasParam("name", true)) {
+    request->send(400, "text/plain", "Missing url or name");
+    return;
+  }
+  String sUrl = request->getParam("url", true)->value();
+  String sName = request->getParam("name", true)->value();
+  sName.trim();
+  sUrl.trim();
+  if (sName.length() >= sizeof(config.station.name)) sName = sName.substring(0, sizeof(config.station.name) - 1);
+  if (sUrl.length() >= sizeof(config.station.url)) sUrl = sUrl.substring(0, sizeof(config.station.url) - 1);
+  if (!addtoplaylist) { // This is a preview
+    config.loadStation(0); // Load into temporary station slot
+    launchPlaybackTask(sUrl, sName);
+    netserver.requestOnChange(GETINDEX, 0);
+    request->send(200, "text/plain", "PREVIEW");
+  } else { // This is add to playlist
+    int sOvol = 0;
+    // Check for duplicate URL before adding
+    bool found = false;
+    int foundIdx = 0;
+    auto normalizeUrl = [](const String& url) -> String {
+        String u = url;
+        u.trim();
+        if (u.startsWith("http://")) u = u.substring(7);
+        else if (u.startsWith("https://")) u = u.substring(8);
+        u.trim();
+        return u;
+        };
+    String normNewUrl = normalizeUrl(sUrl);
+    uint16_t cs = config.playlistLength();
+    for (int i = 1; i <= cs; ++i) {
+      config.loadStation(i);
+      String existingUrl = String(config.station.url);
+      String normExistingUrl = normalizeUrl(existingUrl);
+      if (normExistingUrl.equalsIgnoreCase(normNewUrl)) {
+        found = true;
+        foundIdx = i;
+        break;
+      }
+    }
+    if (found) { // play the slot if it already exists
+      player.sendCommand({PR_PLAY, (uint16_t)foundIdx});
+      request->send(200, "text/plain", "DUPLICATE");
+    } else { // add it and play it
+      File playlistfile = SPIFFS.open(PLAYLIST_PATH, "a");
+      if (playlistfile) {
+        playlistfile.printf("%s\t%s\t%d\r\n", sName.c_str(), sUrl.c_str(), sOvol);
+        playlistfile.close();
+        uint16_t newIdx = cs + 1;
+        config.indexPlaylist();
+        config.initPlaylist();
+        player.sendCommand({PR_PLAY, newIdx});
+        netserver.requestOnChange(PLAYLISTSAVED, 0);
+        request->send(200, "text/plain", "ADDED");
+      } else {
+        request->send(500, "text/plain", "Failed to open playlist file");
+      }
+    }
+  }
+}
+
 bool NetServer::begin(bool quiet) {
   if(network.status==SDREADY) return true;
   if(!quiet) Serial.print("##[BOOT]#\tnetserver.begin\t");
   importRequest = IMDONE;
   irRecordEnable = false;
-  playerBufMax = psramInit()?300000:1600 * config.store.abuff;
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
   while(nsQueue==NULL){;}
 
   webserver.on("/", HTTP_ANY, handleIndex);
+  webserver.on("/search", HTTP_GET, handleSearch);
+  webserver.on("/search", HTTP_POST, handleSearchPost);
   webserver.onNotFound(handleNotFound);
   webserver.onFileUpload(handleUpload);
 
-  webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=31536000");
+  webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=3600");
 #ifdef CORS_DEBUG
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
@@ -81,6 +192,40 @@ bool NetServer::begin(bool quiet) {
   //  MDNS.begin(config.store.mdnsname);
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
+#if USE_OTA
+  if(strlen(config.store.mdnsname)>0)
+    ArduinoOTA.setHostname(config.store.mdnsname);
+#ifdef OTA_PASS
+  ArduinoOTA.setPassword(OTA_PASS);
+#endif
+  ArduinoOTA
+    .onStart([]() {
+      display.putRequest(NEWMODE, UPDATING);
+      telnet.printf("Start OTA updating %s\n", ArduinoOTA.getCommand() == U_FLASH?"firmware":"filesystem");
+    })
+    .onEnd([]() {
+      telnet.printf("\nEnd OTA update, Rebooting...\n");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      telnet.printf("Progress OTA: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      telnet.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) {
+        telnet.printf("Auth Failed\n");
+      } else if (error == OTA_BEGIN_ERROR) {
+        telnet.printf("Begin Failed\n");
+      } else if (error == OTA_CONNECT_ERROR) {
+        telnet.printf("Connect Failed\n");
+      } else if (error == OTA_RECEIVE_ERROR) {
+        telnet.printf("Receive Failed\n");
+      } else if (error == OTA_END_ERROR) {
+        telnet.printf("End Failed\n");
+      }
+    });
+  ArduinoOTA.begin();
+#endif
+
   if(!quiet) Serial.println("done");
   return true;
 }
@@ -119,7 +264,7 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
   display.lock();
   #endif
   response = request->beginChunkedResponse(contentType, chunkedHtmlPageCallback);
-  response->addHeader("Cache-Control","max-age=31536000");
+  response->addHeader("Cache-Control","max-age=3600");
   request->send(response);
 }
 
@@ -134,6 +279,10 @@ void NetServer::chunkedHtmlPage(const String& contentType, AsyncWebServerRequest
   #define SHOW_WEATHER  false
 #endif
 
+#ifndef NS_QUEUE_TICKS
+  #define NS_QUEUE_TICKS 0
+#endif
+
 const char *getFormat(BitrateFormat _format) {
   switch (_format) {
     case BF_MP3:  return "MP3";
@@ -141,6 +290,8 @@ const char *getFormat(BitrateFormat _format) {
     case BF_FLAC: return "FLC";
     case BF_OGG:  return "OGG";
     case BF_WAV:  return "WAV";
+    case BF_VOR:  return "VOR";
+    case BF_OPU:  return "OPU";
     default:      return "bitrate";
   }
 }
@@ -234,7 +385,7 @@ void NetServer::processQueue(){
                                   config.store.telnet,
                                   config.store.watchdog); 
                                   break;
-      case GETSCREEN:     sprintf (wsBuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d,\"scrb\":%d,\"scrpe\":%d,\"scrpt\":%d,\"scrpb\":%d}", 
+      case GETSCREEN:     sprintf (wsBuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d,\"scrb\":%d,\"scrpe\":%d,\"scrpt\":%d,\"scrpb\":%d,\"volumepage\":%d,\"clock12\":%d}", 
                                   config.store.flipscreen, 
                                   config.store.invertdisplay, 
                                   config.store.numplaylist, 
@@ -248,11 +399,13 @@ void NetServer::processQueue(){
                                   config.store.screensaverBlank,
                                   config.store.screensaverPlayingEnabled,
                                   config.store.screensaverPlayingTimeout,
-                                  config.store.screensaverPlayingBlank);
+                                  config.store.screensaverPlayingBlank,
+                                  config.store.volumepage, 
+                                  config.store.clock12);
                                   break;
-      case GETTIMEZONE:   sprintf (wsBuf, "{\"tzh\":%d,\"tzm\":%d,\"sntp1\":\"%s\",\"sntp2\":\"%s\", \"timeint\":%d,\"timeintrtc\":%d}", 
-                                  config.store.tzHour, 
-                                  config.store.tzMin, 
+      case GETTIMEZONE:   sprintf (wsBuf, "{\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\", \"timeint\":%d,\"timeintrtc\":%d}", 
+                                  config.store.tz_name, 
+                                  config.store.tzposix, 
                                   config.store.sntp1, 
                                   config.store.sntp2,
                                   config.store.timeSyncInterval,
@@ -399,35 +552,97 @@ bool NetServer::importPlaylist() {
   if (!tempfile) {
     return false;
   }
-  char linePl[BUFLEN*3];
+  char sName[BUFLEN], sUrl[BUFLEN], linePl[BUFLEN*3];
   int sOvol;
-  _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-  if (config.parseCSV(linePl, nsBuf, nsBuf2, sOvol)) {
-    tempfile.close();
-    SPIFFS.rename(TMP_PATH, PLAYLIST_PATH);
-    requestOnChange(PLAYLISTSAVED, 0);
-    return true;
+  // Read first non-empty line
+  String firstLine;
+  size_t firstPos = tempfile.position();
+  while (tempfile.available()) {
+    _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
+    firstLine = String(linePl); firstLine.trim();
+    if (firstLine.length() > 0) break;
+    firstPos = tempfile.position();
   }
-  if (config.parseJSON(linePl, nsBuf, nsBuf2, sOvol)) {
-    File playlistfile = SPIFFS.open(PLAYLIST_PATH, "w");
-    snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", nsBuf, nsBuf2, 0);
-    playlistfile.println(linePl);
+  tempfile.seek(firstPos); // rewind to first non-empty line
+  // Detect minified JSON array (single line, starts with [)
+  bool isJsonArray = firstLine.startsWith("[");
+  bool foundAny = false;
+  File playlistfile = SPIFFS.open(TMP2_PATH, "w");
+  if (isJsonArray) {
+    // Read the whole file into a String
+    String jsonStr;
+    tempfile.seek(0);
     while (tempfile.available()) {
       _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-      if (config.parseJSON(linePl, nsBuf, nsBuf2, sOvol)) {
-        snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", nsBuf, nsBuf2, 0);
-        playlistfile.println(linePl);
+      jsonStr += String(linePl);
+    }
+    jsonStr.trim();
+    // Remove leading/trailing brackets if present
+    if (jsonStr.startsWith("[")) jsonStr = jsonStr.substring(1);
+    if (jsonStr.endsWith("]")) jsonStr = jsonStr.substring(0, jsonStr.length()-1);
+    // Robustly extract each {...} object using brace counting
+    int len = jsonStr.length();
+    int i = 0;
+    while (i < len) {
+      // Skip whitespace and commas
+      while (i < len && (jsonStr[i] == ' ' || jsonStr[i] == '\n' || jsonStr[i] == '\r' || jsonStr[i] == ',')) i++;
+      if (i >= len) break;
+      if (jsonStr[i] != '{') { i++; continue; }
+      int start = i;
+      int brace = 1;
+      i++;
+      while (i < len && brace > 0) {
+        if (jsonStr[i] == '{') brace++;
+        else if (jsonStr[i] == '}') brace--;
+        i++;
+      }
+      if (brace == 0) {
+        String objStr = jsonStr.substring(start, i);
+        objStr.trim();
+        if (objStr.length() == 0) continue;
+        strncpy(linePl, objStr.c_str(), sizeof(linePl)-1);
+        if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
+          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
+          playlistfile.print(String(linePl) + "\r\n");
+          foundAny = true;
+        }
       }
     }
-    playlistfile.flush();
-    playlistfile.close();
-    tempfile.close();
-    SPIFFS.remove(TMP_PATH);
+  } else {
+    // Not a minified array: process line by line
+    tempfile.seek(0);
+    while (tempfile.available()) {
+      _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
+      String trimmed = String(linePl); trimmed.trim();
+      if (trimmed.length() == 0 || trimmed == "[" || trimmed == "]" || trimmed == ",") continue;
+      // Only treat as JSON if line starts with '{' and ends with '}'
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+        if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
+          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
+          playlistfile.print(String(linePl) + "\r\n");
+          foundAny = true;
+        }
+      } else {
+        // Only treat as CSV if not JSON
+        if (config.parseCSVimport(linePl, sName, sUrl, sOvol)) {
+          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
+          playlistfile.print(String(linePl) + "\r\n");
+          foundAny = true;
+        }
+      }
+    }
+  }
+  playlistfile.flush();
+  playlistfile.close();
+  tempfile.close();
+  if (foundAny) {
+    SPIFFS.remove(PLAYLIST_PATH);
+    SPIFFS.rename(TMP2_PATH, PLAYLIST_PATH);
     requestOnChange(PLAYLISTSAVED, 0);
     return true;
   }
-  tempfile.close();
   SPIFFS.remove(TMP_PATH);
+  SPIFFS.remove(TMP2_PATH);
   return false;
 }
 
@@ -521,6 +736,346 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
       break;
   }
 }
+
+// Helper to select and randomize radio-browser servers
+void selectRadioBrowserServer() {
+  size_t arr_size = sizeof(g_ipv4_servers) / sizeof(g_ipv4_servers[0]);
+  for (size_t i = 0; i < arr_size; ++i) g_ipv4_servers[i] = "";
+  File serversFile = SPIFFS.open("/www/rb_srvrs.json", "r");
+  if (!serversFile) {
+    Serial.println("[Search] [Error] Failed to open /www/rb_srvrs.json - will try to get IP of all.api.radio-browser.info instead.");
+    goto useIP;
+  } else {
+    DynamicJsonDocument doc(2048);
+    DeserializationError error = deserializeJson(doc, serversFile);
+    serversFile.close();
+    if (error) {
+      Serial.print(F("[Search] [Error] deserializeJson() failed: "));
+      Serial.println(error.c_str());
+      goto useIP; // get out of the else
+    }
+    JsonArray servers = doc.as<JsonArray>();
+    if (servers.isNull() || servers.size() == 0) {
+      Serial.println("[Search] [Error] JSON is not a valid or is an empty array.");
+      goto useIP; //get out of the else
+    }
+    // Collect unique IPv4 server names
+    size_t count = 0;
+    for (JsonObject server_obj : servers) {
+      const char* ip = server_obj["ip"];
+      if (ip && strchr(ip, '.')) { // It's an IPv4
+        bool duplicate = false;
+        for (size_t j = 0; j < count; ++j) {
+          if (g_ipv4_servers[j] == ip) {
+            duplicate = true;
+            break;
+          }
+        }
+        if (!duplicate && count < arr_size) {
+          g_ipv4_servers[count++] = ip;
+        }
+      }
+    }
+    // Shuffle
+    for (size_t i = count - 1; i > 0; --i) {
+      size_t j = random(i + 1);
+      String temp = g_ipv4_servers[i];
+      g_ipv4_servers[i] = g_ipv4_servers[j];
+      g_ipv4_servers[j] = temp;
+    }
+
+    IPAddress serverIP;
+    if (WiFi.hostByName("all.api.radio-browser.info", serverIP)) {
+      Serial.printf("Resolved IP: %s\n", serverIP.toString().c_str());
+      g_ipv4_servers[0] = serverIP.toString();
+    }
+  }
+  return;
+useIP:
+  IPAddress serverIP;
+  if (WiFi.hostByName("all.api.radio-browser.info", serverIP)) {
+    Serial.printf("Resolved IP: %s\n", serverIP.toString().c_str());
+    g_ipv4_servers[0] = serverIP.toString();
+  }
+}
+
+void vTaskSearchRadioBrowser(void *pvParameters) {
+  char* search_str = (char*)pvParameters;
+  Serial.printf("[Search] Starting radio browser search. Search: %s\n", search_str);
+  SPIFFS.remove("/www/searchresults.json");
+  // Check SPIFFS free space
+  size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+  if (freeSpace < (FS_REQUIRED_FREE_SPACE * 1024)) {
+    Serial.printf("[Search] [Error] Not enough free SPIFFS space: %u bytes. Aborting.\n", freeSpace);
+    netserver.requestOnChange(SEARCH_FAILED, 0);
+    delete[] search_str;
+    g_searchTaskHandle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+  // Count non-empty servers from our global persistent list
+  size_t arr_size = sizeof(g_ipv4_servers) / sizeof(g_ipv4_servers[0]);
+  int server_count = 0;
+  for (size_t i = 0; i < arr_size; ++i) {
+    if (g_ipv4_servers[i].length() > 0) server_count++;
+  }
+  // If the list is empty, it's the first run or all servers failed previously. Let's (re)populate it.
+  if (server_count == 0) {
+    Serial.println("[Search] Server list is empty, repopulating from file.");
+    selectRadioBrowserServer();
+    // Recount after filling
+    server_count = 0;
+    for (size_t i = 0; i < arr_size; ++i) {
+      if (g_ipv4_servers[i].length() > 0) server_count++;
+    }
+  }
+  // If still no servers, then the API source is likely down or unreachable.
+  if (server_count == 0) {
+    Serial.println("[Search] [Error] No IPv4 servers available after attempting to select.");
+    netserver.requestOnChange(SEARCH_FAILED, 0);
+    delete[] search_str;
+    g_searchTaskHandle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+  ESPFileUpdater searchResultsFetch(SPIFFS);
+  searchResultsFetch.setUserAgent(ESPFILEUPDATER_USERAGENT);
+  const char* localPath = "/www/searchresults.json";
+  bool success = false;
+  bool server_retried = false;
+  bool json_valid = false;
+  for (size_t i = 0; i < arr_size; ++i) {
+    if (g_ipv4_servers[i].length() == 0) continue;
+    String server = g_ipv4_servers[i];
+    // Compose the URL using the full search string
+    String url = "http://" + server + "/json/stations/search?" + String(search_str);
+    Serial.printf("[Search] Attempting to download from: %s\n", url.c_str());
+    auto status = searchResultsFetch.checkAndUpdate(localPath, url, ESPFILEUPDATER_VERBOSE);
+    if (status == ESPFileUpdater::UPDATED) {
+      Serial.printf("[Search] Successfully downloaded from %s\n", server.c_str());
+      // Check if the downloaded file ends with ']'
+      File jsonFile = SPIFFS.open(localPath, "r");
+      if (jsonFile) {
+        int fileSize = jsonFile.size();
+        char lastChar = 0;
+        if (fileSize > 0) {
+          for (int pos = fileSize - 1; pos >= 0; --pos) {
+            jsonFile.seek(pos, SeekSet);
+            char c = jsonFile.read();
+            if (!isspace((unsigned char)c)) {
+              lastChar = c;
+              break;
+            }
+          }
+        }
+        jsonFile.close();
+        if (lastChar != ']') {
+          if (server_retried == true) {
+            Serial.printf("[Search] [Warning] searchresults.json is incomplete. Not retrying.\n");
+            server_retried = false;
+          } else {
+            Serial.printf("[Search] [Warning] searchresults.json is incomplete. Retrying same server.\n");
+            server_retried = true;
+            --i;
+          }
+          continue;
+        } else {
+          json_valid = true;
+        }
+      } else {
+        if (server_retried == true) {
+          Serial.println("[Search] [Error] Could not open searchresults.json for validation. Not retrying.\n");
+          server_retried = false;
+        } else {
+          Serial.println("[Search] [Error] Could not open searchresults.json for validation. Retrying same server.\n");
+          server_retried = true;
+          --i;
+        }
+        continue;
+      }
+      if (json_valid) {
+        // Write /www/search.txt with the actual search string (single line)
+        File file = SPIFFS.open("/www/search.txt", "w");
+        if (file) {
+          file.printf("%s\n", search_str);
+          file.close();
+        } else {
+          Serial.println("[Search] [Error] Failed to open search.txt for writing.");
+        }
+        success = true;
+        break;
+      } else {
+        Serial.printf("[Search] [Error] Invalid JSON from %s. Removing from list.\n", server.c_str());
+        g_ipv4_servers[i] = "";
+        server_retried = false;
+      }
+    } else {
+      Serial.printf("[Search] [Error] Failed to download from %s. Removing from persistent list.\n", server.c_str());
+      g_ipv4_servers[i] = "";
+      server_retried = false;
+    }
+  }
+  if (success) {
+    netserver.requestOnChange(SEARCH_DONE, 0);
+  } else {
+    Serial.println("[Search] [Error] Failed to download from all available servers.");
+    netserver.requestOnChange(SEARCH_FAILED, 0);
+  }
+  delete[] search_str;
+  search_str = nullptr;
+  g_searchTaskHandle = NULL;
+  vTaskDelete(NULL);
+}
+
+void launchPlaybackTask(const String& url, const String& name) {
+  if (name.length() > 0 && name.length() < sizeof(config.station.name)) {
+    strlcpy(config.station.name, name.c_str(), sizeof(config.station.name));
+  } else {
+    strlcpy(config.station.name, "Playing", sizeof(config.station.name));
+  }
+  player.sendCommand({PR_STOP, 0}); // Stop any current playback first
+  display.putRequest(NEWSTATION, 0);
+  Serial.println("[netserver] Creating a dedicated task for playback.");
+  // Use a lambda to capture the URL and pass it to the task
+  String* url_copy = new String(url);
+  if (url_copy) {
+    // Use a larger stack for HTTPS, as it requires more memory for SSL/TLS.
+    UBaseType_t stackSize = url.startsWith("https://") ? 8192 : 4096;
+    xTaskCreate(
+        [](void* pvParameters) {
+          String* urlToPlay = (String*)pvParameters;
+          vTaskDelay(pdMS_TO_TICKS(100)); // A small delay can help the network stack release resources
+          Serial.printf("[PlaybackTask] Starting playback for URL: %s. Free heap: %u\n", urlToPlay->c_str(), ESP.getFreeHeap());
+          player.playUrl(urlToPlay->c_str());
+          delete urlToPlay; // Free the string
+          vTaskDelete(NULL);
+        },
+        "playbackTask",
+        stackSize,
+        (void*)url_copy,
+        1,
+        NULL
+    );
+  } else {
+    Serial.println("[netserver] ERROR: Failed to allocate memory for playback task URL.");
+  }
+}
+
+#ifdef UPDATEURL
+  void checkForOnlineUpdate() {
+    const char* versionUrl = CHECKUPDATEURL;
+    WiFiClientSecure client;
+    client.setInsecure(); // skip server cert validation
+    HTTPClient http;
+    http.begin(client, versionUrl);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    http.addHeader("User-Agent", ESPFILEUPDATER_USERAGENT);
+    int httpCode = http.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      WiFiClient* stream = http.getStreamPtr();
+      String line;
+      String remoteVer;
+      while (stream->connected() || stream->available()) {
+        if (stream->available()) {
+          char c = stream->read();
+          if (c == '\n') {
+            if (line.startsWith(VERSIONSTRING)) {
+              int q1 = line.indexOf('"');
+              int q2 = line.indexOf('"', q1 + 1);
+              if (q1 > 0 && q2 > q1) {
+                remoteVer = line.substring(q1 + 1, q2);
+                break;
+              }
+            }
+            line.clear();
+          } else {
+            line += c;
+          }
+        }
+      }
+      http.end();
+      if (remoteVer.length() == 0) {
+        websocket.textAll("{\"onlineupdateerror\": \"Remote YOVERSION not found\"}");
+        return;
+      }
+      char msgBuf[128];
+      if (remoteVer != String(YOVERSION)) {
+        snprintf(msgBuf, sizeof(msgBuf), "{\"onlineupdateavailable\":true,\"remoteVersion\":\"%s\"}", remoteVer.c_str());
+      } else {
+        snprintf(msgBuf, sizeof(msgBuf), "{\"onlineupdateavailable\":false,\"remoteVersion\":\"%s\"}", remoteVer.c_str());
+      }
+      websocket.textAll(msgBuf);
+    } else {
+      websocket.textAll(String("{\"onlineupdateerror\": \"HTTP code ") + httpCode + "\"}");
+      http.end();
+    }
+  }
+
+  void startOnlineUpdate() {
+    String updateUrl = String(UPDATEURL) + String(FIRMWARE);
+    Serial.printf("[Online Update] Online Update download URL: %s\n", updateUrl.c_str());
+    WiFiClientSecure client;
+    client.setInsecure(); // skip server cert validation
+    HTTPClient http;
+    http.begin(client, updateUrl);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    http.addHeader("User-Agent", ESPFILEUPDATER_USERAGENT);
+    int httpCode = http.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      int contentLength = http.getSize();
+      Serial.printf("[Online Update] Content-Length: %d\n", contentLength);
+      if (contentLength > 0) {
+        bool canBegin = Update.begin(contentLength);
+        if (canBegin) {
+          player.sendCommand({PR_STOP, 0});
+          display.putRequest(NEWMODE, UPDATING);
+          WiFiClient* stream = http.getStreamPtr();
+          size_t written = 0;
+          const size_t bufSize = 512;
+          uint8_t buf[bufSize];
+          unsigned long lastProgressTime = millis();
+          while (written < contentLength) {
+            int len = stream->read(buf, bufSize);
+            if (len <= 0) {
+              if (!stream->connected()) break;
+              vTaskDelay(pdMS_TO_TICKS(10));
+              continue;
+            }
+            size_t w = Update.write(buf, len);
+            written += w;
+            int percent = (written * 100) / contentLength;
+            unsigned long now = millis();
+            if (percent == 100 || now - lastProgressTime >= 1000) {
+              lastProgressTime = now;
+              char progMsg[64];
+              snprintf(progMsg, sizeof(progMsg), "{\"onlineupdateprogress\":%d}", percent);
+              websocket.textAll(progMsg);
+            }
+          }
+          bool ended = Update.end();
+          Serial.printf("[Online Update] Written %u bytes, expected %d, end() returned %s\n", written, contentLength, ended?"true":"false");
+          if (written == contentLength && ended) {
+            File markerFile = SPIFFS.open(ONLINEUPDATE_MARKERFILE, "w");
+            if (markerFile) markerFile.close();
+            websocket.textAll("{\"onlineupdatestatus\": \"Update successful, rebooting...\"}");
+            delay(1000);
+            ESP.restart();
+          } else {
+            websocket.textAll("{\"onlineupdateerror\": \"Update failed or incomplete\"}");
+          }
+        } else {
+         websocket.textAll("{\"onlineupdateerror\": \"Cannot begin update (reboot then try again)\"}");
+        }
+      } else {
+        websocket.textAll("{\"onlineupdateerror\": \"Invalid firmware size\"}");
+      }
+    } else {
+      websocket.textAll("{\"onlineupdateerror\": \"Failed to download firmware\"}");
+    }
+    http.end();
+  }
+#endif //#ifdef UPDATEURL
+
 void handleNotFound(AsyncWebServerRequest * request) {
 #if defined(HTTP_USER) && defined(HTTP_PASS)
   if(network.status == CONNECTED)
@@ -534,6 +1089,20 @@ void handleNotFound(AsyncWebServerRequest * request) {
 #endif
   if(request->url()=="/emergency") { request->send_P(200, "text/html", emergency_form); return; }
   if(request->method() == HTTP_POST && request->url()=="/webboard" && config.emptyFS) { request->redirect("/"); ESP.restart(); return; }
+  if(request->method() == HTTP_GET && request->url() == "/search") { handleSearch(request); return; }
+  if (request->method() == HTTP_POST && request->url() == "/search") { handleSearchPost(request); return; }
+
+  #ifdef UPDATEURL
+    if (request->method() == HTTP_GET && request->url() == "/onlineupdatecheck") {
+      xTaskCreate([](void*) { checkForOnlineUpdate(); vTaskDelete(NULL); }, "checkForOnlineUpdateTask", 8096, nullptr, 1, nullptr);
+      request->send(200, "text/plain", "Update check started"); return;
+    }
+    if (request->method() == HTTP_GET && request->url() == "/onlineupdatestart") {
+      xTaskCreate([](void*) { startOnlineUpdate(); vTaskDelete(NULL); }, "startOnlineUpdateTask", 16384, nullptr, 3, nullptr);
+      request->send(200, "text/plain", "Update started"); return;
+    }
+  #endif
+
   if (request->method() == HTTP_GET) {
     DBGVB("[%s] client ip=%s request of %s", __func__, config.ipToStr(request->client()->remoteIP()), request->url().c_str());
     if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 || 
@@ -582,14 +1151,29 @@ void handleNotFound(AsyncWebServerRequest * request) {
     return;
   }
   if (request->url() == "/variables.js") {
-    sprintf (netserver.nsBuf, "var yoVersion='%s';\nvar formAction='%s';\nvar playMode='%s';\n", YOVERSION, (network.status == CONNECTED && !config.emptyFS)?"webboard":"", (network.status == CONNECTED)?"player":"ap");
-    request->send(200, "text/html", netserver.nsBuf);
+    const char* onlineCapable =
+    #ifdef UPDATEURL
+      "true";
+    #else
+      "false";
+    #endif
+    snprintf(netserver.nsBuf, sizeof(netserver.nsBuf),
+      "var yoVersion='%s';\n"
+      "var formAction='%s';\n"
+      "var playMode='%s';\n"
+      "var onlineupdatecapable=%s;\n",
+      YOVERSION,
+      (network.status == CONNECTED && !config.emptyFS) ? "webboard" : "",
+      (network.status == CONNECTED) ? "player" : "ap",
+      onlineCapable
+    );
+    request->send(200, "application/javascript", netserver.nsBuf);
     return;
   }
   if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0){
     //request->send_P(200, "text/html", index_html);
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html);
-    response->addHeader("Cache-Control","max-age=31536000");
+    response->addHeader("Cache-Control","max-age=3600");
     request->send(response);
     return;
   }
@@ -631,7 +1215,7 @@ void handleIndex(AsyncWebServerRequest * request) {
   if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {
     if(network.status == CONNECTED) {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html);
-      response->addHeader("Cache-Control","max-age=31536000");
+      response->addHeader("Cache-Control","max-age=3600");
       request->send(response);
       //request->send_P(200, "text/html", index_html); 
     } else request->redirect("/settings.html");

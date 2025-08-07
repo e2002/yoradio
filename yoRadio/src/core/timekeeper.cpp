@@ -121,7 +121,15 @@ bool TimeKeeper::loop1(){ // core1 (player)
       SYNC_TASK_CORE
     );
   }
-  
+  // check at :01s mark (fix network clock not matching system clock after Daylight Savings Time changes)
+  if (network.timeinfo.tm_sec == 1) {
+    time_t now = time(NULL);
+    struct tm localNow;
+    localtime_r(&now, &localNow);
+    if ((network.timeinfo.tm_min != localNow.tm_min) || (network.timeinfo.tm_hour != localNow.tm_hour)) {
+      forceTimeSync = true;
+    }
+  }
   return true; // just in case
 }
 

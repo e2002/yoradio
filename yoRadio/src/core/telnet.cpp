@@ -5,7 +5,9 @@
 #include "player.h"
 #include "network.h"
 #include "telnet.h"
+#include "timekeeper.h"
 #include "esp_heap_caps.h"
+#include "netserver.h" // For launchPlaybackTask
 
 Telnet telnet;
 
@@ -26,7 +28,7 @@ bool Telnet::begin(bool quiet) {
     if(!quiet){
       Serial.println("done");
       Serial.println("##[BOOT]#");
-      BOOTLOG("Ready! Go to http:/%s/ to configure", config.ipToStr(WiFi.localIP()));
+      BOOTLOG("Ready! Go to http://%s/ to configure", config.ipToStr(WiFi.localIP()));
       BOOTLOG("------------------------------------------------");
       Serial.println("##[BOOT]#");
     }
@@ -167,13 +169,16 @@ void Telnet::printf(uint8_t id, const char *format, ...) {
 
 void Telnet::on_connect(const char* str, uint8_t clientId) {
   Serial.printf("Telnet: [%d] %s connected\n", clientId, str);
-  print(clientId, "\nWelcome to ёRadio!\n(Use ^] + q  to disconnect.)\n> ");
+  print(clientId, "\nWelcome to ёRadio!\n(Use ^] + q  ( Ctrl+[ + q ) to disconnect.)\n> ");
 }
 
 void Telnet::info() {
   telnet.printf("##CLI.INFO#\n");
-  strftime(config.tmpBuf, sizeof(config.tmpBuf), "%Y-%m-%dT%H:%M:%S+03:00", &network.timeinfo);
-  telnet.printf("##SYS.DATE#: %s\n", config.tmpBuf); //TODO timezone offset
+  char timeStringBuff[50];
+  strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S+03:00", &network.timeinfo);
+  telnet.printf("##SYS.DATE#: %s\n", timeStringBuff);
+  telnet.printf("##CLI.TZNAME#: %s\n", config.store.tz_name);
+  telnet.printf("##CLI.TZPOSIX#: %s\n", config.store.tzposix);
   telnet.printf("##CLI.NAMESET#: %d %s\n", config.lastStation(), config.station.name);
   if (player.status() == PLAYING) {
     telnet.printf("##CLI.META#: %s\n",  config.station.title);
@@ -284,12 +289,11 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     }
     if (strcmp(str, "cli.info") == 0 || strcmp(str, "info") == 0) {
       printf(clientId, "##CLI.INFO#\n");
-      strftime(config.tmpBuf, sizeof(config.tmpBuf), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
-      if (config.store.tzHour < 0) {
-        printf(clientId, "##SYS.DATE#: %s%03d:%02d\n", config.tmpBuf, config.store.tzHour, config.store.tzMin);
-      } else {
-        printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n", config.tmpBuf, config.store.tzHour, config.store.tzMin);
-      }
+      char timeStringBuff[50];
+      strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
+      printf(clientId, "##SYS.DATE#: %s\n", timeStringBuff);
+      printf(clientId, "##CLI.TZNAME#: %s\n", config.store.tz_name);
+      printf(clientId, "##CLI.TZPOSIX#: %s\n", config.store.tzposix);
       printf(clientId, "##CLI.NAMESET#: %d %s\n", config.lastStation(), config.station.name);
       if (player.status() == PLAYING) {
         printf(clientId, "##CLI.META#: %s\n", config.station.title);
@@ -303,12 +307,20 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       printf(clientId, "> ");
       return;
     }
-    int sb;
-    if (sscanf(str, "play(%d)", &sb) == 1 || sscanf(str, "cli.play(\"%d\")", &sb) == 1 || sscanf(str, "play %d", &sb) == 1 ) {
-      if (sb < 1) sb = 1;
-      uint16_t cs = config.playlistLength();
-      if (sb >= cs) sb = cs;
-      player.sendCommand({PR_PLAY, (uint16_t)sb});
+    char playarg[512];
+    if (sscanf(str, "play(%511[^)])", playarg) == 1 || sscanf(str, "cli.play(\"%511[^\"]\")", playarg) == 1 || sscanf(str, "play %511s", playarg) == 1) {
+      // Check if playarg is a number or a URL
+      if (strncmp(playarg, "http", 4) == 0) {
+        config.loadStation(0);
+        launchPlaybackTask(String(playarg), String(playarg)); // from netserver.cpp
+        printf(clientId, "Playing URL: %s\n> ", playarg);
+      } else {
+        int sb = atoi(playarg);
+        if (sb < 1) sb = 1;
+        uint16_t cs = config.playlistLength();
+        if (sb >= cs) sb = cs;
+        player.sendCommand({PR_PLAY, (uint16_t)sb});
+      }
       return;
     }
     #ifdef USE_SD
@@ -322,36 +334,88 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       return;
     }
     #endif
-    if (strcmp(str, "sys.tzo") == 0 || strcmp(str, "tzo") == 0) {
-      printf(clientId, "##SYS.TZO#: %d:%d\n> ", config.store.tzHour, config.store.tzMin);
+    if (strcmp(str, "sys.tz") == 0 || strcmp(str, "tz") == 0 )  {
+      strftime(config.tmpBuf, sizeof(config.tmpBuf), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
+      printf(clientId, "##SYS.DATE#: %s\n", config.tmpBuf);
+      printf(clientId, "##SYS.TZNAME#: %s\n", config.store.tz_name);
+      printf(clientId, "##SYS.TZPOSIX#: %s\n", config.store.tzposix);
       return;
     }
-    //int16_t tzh, tzm;
+    if (strcmp(str, "sys.tzo") == 0 || strcmp(str, "tzo") == 0 )  {
+      printf(clientId, "##SYS.TZPOSIX#: %s\n", config.store.tzposix);
+      return;
+    }
+    if (strcmp(str, "sys.tzname") == 0 || strcmp(str, "tzname") == 0  )  {
+      printf(clientId, "##SYS.TZNAME#: %s\n", config.store.tz_name);
+      return;
+    }
+    //int16_t tzh, tzm; (re-used multiple times below)
     int tzh, tzm;
     if (sscanf(str, "tzo(%d:%d)", &tzh, &tzm) == 2 || sscanf(str, "sys.tzo(\"%d:%d\")", &tzh, &tzm) == 2 || sscanf(str, "tzo %d:%d", &tzh, &tzm) == 2) {
       if (tzh < -12) tzh = -12;
       if (tzh > 14) tzh = 14;
       if (tzm < 0) tzm = 0;
       if (tzm > 59) tzm = 59;
-      config.setTimezone((int8_t)tzh, (int8_t)tzm);
-      if(tzh<0){
-        printf(clientId, "new timezone offset: %03d:%02d\n", config.store.tzHour, config.store.tzMin);
-      }else{
-        printf(clientId, "new timezone offset: %02d:%02d\n", config.store.tzHour, config.store.tzMin);
-      }
+      // Construct POSIX TZ string (inverting sign)
+      snprintf(config.store.tzposix, sizeof(config.store.tzposix), "GMT%+03d:%02d", -tzh, tzm);
+      snprintf(config.store.tz_name, sizeof(config.store.tz_name), "%s", config.store.tzposix);
+      printf(clientId, "New timezone offset: %c%02d:%02d\n> ", (tzh < 0 ? '-' : '+'), abs(tzh), tzm);
+      printf(clientId, "##SYS.TZNAME#: %s\n> ", config.store.tz_name);
+      printf(clientId, "##SYS.TZPOSIX#: %s\n> ", config.store.tzposix);
+      config.saveValue(config.store.tzposix, config.store.tzposix, sizeof(config.store.tzposix), true, true);
+      config.saveValue(config.store.tz_name, config.store.tz_name, sizeof(config.store.tz_name), true, true);
+      timekeeper.forceTimeSync = true;
       network.requestTimeSync(true);
       return;
     }
     if (sscanf(str, "tzo(%d)", &tzh) == 1 || sscanf(str, "sys.tzo(\"%d\")", &tzh) == 1 || sscanf(str, "tzo %d", &tzh) == 1) {
       if (tzh < -12) tzh = -12;
       if (tzh > 14) tzh = 14;
-      config.setTimezone((int8_t)tzh, 0);
-      if(tzh<0){
-        printf(clientId, "new timezone offset: %03d:%02d\n", config.store.tzHour, config.store.tzMin);
-      }else{
-        printf(clientId, "new timezone offset: %02d:%02d\n", config.store.tzHour, config.store.tzMin);
-      }
+      // Construct proper tz_name like "<+08>-8" or "<-04>4"
+      snprintf(config.store.tz_name, sizeof(config.store.tz_name), "Etc/GMT%+d", -tzh);  // POSIX/Etc/GMT is inverted
+      if (tzh >= 0) {
+        snprintf(config.store.tzposix, sizeof(config.store.tzposix), "<-%02d>%d", tzh, tzh);
+      } else {
+        snprintf(config.store.tzposix, sizeof(config.store.tzposix), "<+%02d>%d", -tzh, tzh);
+     }
+      printf(clientId, "New timezone offset: %+d\n> ", tzh);
+      printf(clientId, "##SYS.TZNAME#: %s\n> ", config.store.tz_name);
+      printf(clientId, "##SYS.TZPOSIX#: %s\n> ", config.store.tzposix);
+      config.saveValue(config.store.tzposix, config.store.tzposix, sizeof(config.store.tzposix), true, true);
+      config.saveValue(config.store.tz_name, config.store.tz_name, sizeof(config.store.tz_name), true, true);
+      timekeeper.forceTimeSync = true;
       network.requestTimeSync(true);
+      return;
+    }
+    if (strcmp(str, "sys.tzposix") == 0 || strcmp(str, "tzposix") == 0 )  {
+      printf(clientId, "##SYS.TZPOSIX#: %s\n", config.store.tzposix);
+      printf(clientId, "WARNING! USE THIS COMMAND CAREFULLY!\n", config.store.tzposix);
+      return;
+    }
+    char tzString[70]; // only used by the below section
+    if (sscanf(str, "tzposix(%69[^)])", tzString) == 1 || sscanf(str, "sys.tzposix(\"%69[^\"]\")", tzString) == 1 || sscanf(str, "tzposix %69s", tzString) == 1) {
+      // Temporarily set TZ env var
+      if (setenv("TZ", tzString, 1) == 0) {
+        tzset();  // Apply TZ setting
+        time_t now = time(NULL);
+        struct tm *tm_info = localtime(&now);
+        if (tm_info != NULL) {
+          // POSIX string passes basic test. Save it.
+          snprintf(config.store.tzposix, sizeof(config.store.tzposix), "%s", tzString);
+          snprintf(config.store.tz_name, sizeof(config.store.tz_name), "%s", "Custom Timezone");
+          printf(clientId, "POSIX timezone string applied. If not valid, expect strange behavior!\n> ");
+          printf(clientId, "##SYS.TZNAME#: %s\n> ", config.store.tz_name);
+          printf(clientId, "##SYS.TZPOSIX: %s\n> ", config.store.tzposix);
+          config.saveValue(config.store.tzposix, config.store.tzposix, sizeof(config.store.tzposix), true, true);
+          config.saveValue(config.store.tz_name, config.store.tz_name, sizeof(config.store.tz_name), true, true);
+          timekeeper.forceTimeSync = true;
+          network.requestTimeSync(true);
+        } else {
+          printf(clientId, "Invalid POSIX timezone (localtime returned NULL)\n> ");
+        }
+      } else {
+        printf(clientId, "Failed to set TZ environment variable\n> ");
+      }
       return;
     }
     if (sscanf(str, "dspon(%d)", &tzh) == 1 || sscanf(str, "cli.dspon(\"%d\")", &tzh) == 1 || sscanf(str, "dspon %d", &tzh) == 1) {

@@ -6,6 +6,8 @@
 #include "controls.h"
 #include "options.h"
 #include "telnet.h"
+#include "network.h"
+#include "timekeeper.h"
 
 CommandHandler cmd;
 
@@ -57,6 +59,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "fliptouch"))    { config.saveValue(&config.store.fliptouch, static_cast<bool>(atoi(value))); flipTS(); return true; }
   if (strEquals(command, "dbgtouch"))     { config.saveValue(&config.store.dbgtouch, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "flipscreen"))   { config.saveValue(&config.store.flipscreen, static_cast<bool>(atoi(value))); display.flip(); display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER); return true; }
+  if (strEquals(command, "volumepage"))   { config.saveValue(&config.store.volumepage, static_cast<bool>(atoi(value))); display.putRequest(NEWMODE, PLAYER); return true; }
+  if (strEquals(command, "clock12"))      { config.saveValue(&config.store.clock12, static_cast<bool>(atoi(value))); display.putRequest(NEWMODE, PLAYER); return true; }
   if (strEquals(command, "brightness"))   { if (!config.store.dspon) netserver.requestOnChange(DSPON, 0); config.store.brightness = static_cast<uint8_t>(atoi(value)); config.setBrightness(true); return true; }
   if (strEquals(command, "screenon"))     { config.setDspOn(static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "contrast"))     { config.saveValue(&config.store.contrast, static_cast<uint8_t>(atoi(value))); display.setContrast(); return true; }
@@ -70,10 +74,10 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "telnet")){ config.saveValue(&config.store.telnet, static_cast<bool>(atoi(value))); telnet.toggle(); return true; }
   if (strEquals(command, "watchdog")){ config.saveValue(&config.store.watchdog, static_cast<bool>(atoi(value))); return true; }
   
-  if (strEquals(command, "tzh"))        { config.saveValue(&config.store.tzHour, static_cast<int8_t>(atoi(value))); return true; }
-  if (strEquals(command, "tzm"))        { config.saveValue(&config.store.tzMin, static_cast<int8_t>(atoi(value))); return true; }
-  if (strEquals(command, "sntp2"))      { config.saveValue(config.store.sntp2, value, 35, false); return true; }
-  if (strEquals(command, "sntp1"))      { config.setSntpOne(value); return true; }
+  if (strEquals(command, "tz_name"))    { config.saveValue(config.store.tz_name, value, sizeof(config.store.tz_name), false); return true; }
+  if (strEquals(command, "tzposix"))    { config.saveValue(config.store.tzposix, value, sizeof(config.store.tzposix), false); timekeeper.forceTimeSync = true; network.requestTimeSync(true); return true; }
+  if (strEquals(command, "sntp2"))      { config.saveValue(config.store.sntp2, value, sizeof(config.store.sntp2), false); return true; }
+  if (strEquals(command, "sntp1"))      { config.saveValue(config.store.sntp1, value, sizeof(config.store.sntp1), false); timekeeper.forceTimeSync = true; network.requestTimeSync(true); return true; }
   if (strEquals(command, "timeint"))    { config.saveValue(&config.store.timeSyncInterval, static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "timeintrtc")) { config.saveValue(&config.store.timeSyncIntervalRTC, static_cast<uint16_t>(atoi(value))); return true; }
   
@@ -82,8 +86,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "irtlp"))            { setIRTolerance(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "oneclickswitching")){ config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "showweather"))      { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "lat"))              { config.saveValue(config.store.weatherlat, value, 10, false); return true; }
-  if (strEquals(command, "lon"))              { config.saveValue(config.store.weatherlon, value, 10, false); return true; }
+  if (strEquals(command, "lat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); return true; }
+  if (strEquals(command, "lon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); return true; }
   if (strEquals(command, "key"))              { config.setWeatherKey(value); return true; }
   if (strEquals(command, "wint"))  { config.saveValue(&config.store.weatherSyncInterval, static_cast<uint16_t>(atoi(value))); return true; }
   
@@ -93,7 +97,13 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "balance")) { config.setBalance(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "reboot"))  { ESP.restart(); return true; }
   if (strEquals(command, "boot"))    { ESP.restart(); return true; }
-  if (strEquals(command, "format"))  { SPIFFS.format(); ESP.restart(); return true; }
+  if (strEquals(command, "format"))  { player.sendCommand({PR_STOP, 0}); SPIFFS.format();
+    #ifdef UPDATEURL
+      delay(250);
+      File markerFile = SPIFFS.open(ONLINEUPDATE_MARKERFILE, "w"); if (markerFile) markerFile.close();
+      delay(250);
+    #endif
+    ESP.restart(); return true; }
   if (strEquals(command, "submitplaylist"))  { player.sendCommand({PR_STOP, 0}); return true; }
 
 #if IR_PIN!=255

@@ -1,7 +1,15 @@
 #ifndef utf8RusGFX_h
 #define  utf8RusGFX_h
 
+#ifdef PRINT_FIX
+#include "printFix.h"
+#endif
+
 char* DspCore::utf8Rus(const char* str, bool uppercase) {
+#ifdef PRINT_FIX
+  return printFix(str);
+#endif
+
   int index = 0;
   static char strn[BUFLEN];
   bool E = false;

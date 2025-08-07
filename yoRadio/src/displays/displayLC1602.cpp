@@ -122,7 +122,8 @@ void DspCore::printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight,
   clockTop = 0;
   _timeleft = width()-5;
   _dotsLeft = 2;
-  strftime(_timeBuf, sizeof(_timeBuf), "%H:%M", &network.timeinfo);
+  if (config.store.clock12) strftime(buf, 4, "%l", &network.timeinfo);
+  if (!config.store.clock12) strftime(buf, 4, "%H", &network.timeinfo);
   if(strcmp(_oldTimeBuf, _timeBuf)!=0 || redraw){
     setCursor(_timeleft, clockTop);
     print(_timeBuf);

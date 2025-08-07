@@ -20,15 +20,10 @@
 */
 #include "WebAuthentication.h"
 #include <libb64/cencode.h>
-#ifdef ESP32
 #include "mbedtls/md5.h"
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include "mbedtls/compat-2.x.h"
 #endif
-#else
-#include "md5.h"
-#endif
-
 
 // Basic Auth hash = base64("username:password")
 
@@ -96,11 +91,8 @@ static bool getMD5(uint8_t * data, uint16_t len, char * output){//33 bytes or mo
 }
 
 static String genRandomMD5(){
-#ifdef ESP8266
-  uint32_t r = RANDOM_REG32;
-#else
+
   uint32_t r = rand();
-#endif
   char * out = (char*)malloc(33);
   if(out == NULL || !getMD5((uint8_t*)(&r), 4, out))
     return "";

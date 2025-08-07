@@ -11,9 +11,17 @@
 #include "sdmanager.h"
 #endif
 #include <cstddef>
+#include "../ESPFileUpdater/ESPFileUpdater.h"
+
+// List of required web asset files
+static const char* requiredFiles[] = {"dragpl.js.gz","ir.css.gz","irrecord.html.gz","ir.js.gz","logo.svg.gz","options.html.gz","script.js.gz",
+                                     "timezones.json.gz","rb_srvrs.json","search.html.gz","search.js.gz","search.css.gz",
+                                     "style.css.gz","updform.html.gz","theme.css","player.html.gz"}; // keep main page at end
+static const size_t requiredFilesCount = sizeof(requiredFiles) / sizeof(requiredFiles[0]);
 
 Config config;
 
+bool wasUpdated(ESPFileUpdater::UpdateStatus status) { return status == ESPFileUpdater::UPDATED; }
 #ifdef HEAP_DBG
 void printHeapFragmentationInfo(const char* title){
   size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
@@ -33,18 +41,10 @@ void u8fix(char *src){
 }
 
 bool Config::_isFSempty() {
-  const char* reqiredFiles[] = {"dragpl.js.gz","ir.css.gz","irrecord.html.gz","ir.js.gz","logo.svg.gz","options.html.gz","player.html.gz","script.js.gz",
-                                "style.css.gz","updform.html.gz","theme.css"};
-  const uint8_t reqiredFilesSize = 11;
-  char fullpath[28];
-  if(SPIFFS.exists("/www/settings.html")) SPIFFS.remove("/www/settings.html");
-  if(SPIFFS.exists("/www/update.html")) SPIFFS.remove("/www/update.html");
-  if(SPIFFS.exists("/www/index.html")) SPIFFS.remove("/www/index.html");
-  if(SPIFFS.exists("/www/ir.html")) SPIFFS.remove("/www/ir.html");
-  if(SPIFFS.exists("/www/elogo.png")) SPIFFS.remove("/www/elogo.png");
-  if(SPIFFS.exists("/www/elogo84.png")) SPIFFS.remove("/www/elogo84.png");
-  for (uint8_t i=0; i<reqiredFilesSize; i++){
-    sprintf(fullpath, "/www/%s", reqiredFiles[i]);
+  // Use global requiredFiles and requiredFilesCount
+  char fullpath[32];
+  for (size_t i = 0; i < requiredFilesCount; i++) {
+    sprintf(fullpath, "/www/%s", requiredFiles[i]);
     if(!SPIFFS.exists(fullpath)) {
       Serial.println(fullpath);
       return true;
@@ -54,7 +54,6 @@ bool Config::_isFSempty() {
 }
 
 void Config::init() {
-  EEPROM.begin(EEPROM_SIZE);
   sdResumePos = 0;
   screensaverTicks = 0;
   screensaverPlayingTicks = 0;
@@ -83,14 +82,11 @@ void Config::init() {
     SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
   #endif
 #endif
-  eepromRead(EEPROM_START, store);
+  loadPreferences();
   bootInfo(); // https://github.com/e2002/yoradio/pull/149
   if (store.config_set != 4262) {
     setDefaults();
   }
-  if(store.version>CONFIG_VERSION) store.version=1;
-  while(store.version!=CONFIG_VERSION) _setupVersion();
-  BOOTLOG("CONFIG_VERSION\t%d", store.version);
   store.play_mode = store.play_mode & 0b11;
   if(store.play_mode>1) store.play_mode=PM_WEB;
   _initHW();
@@ -100,7 +96,16 @@ void Config::init() {
   }
   BOOTLOG("SPIFFS mounted");
   emptyFS = _isFSempty();
-  if(emptyFS) BOOTLOG("SPIFFS is empty!");
+  if(emptyFS) {
+    #ifndef FILESURL
+      BOOTLOG("SPIFFS is empty!");
+    #else
+      BOOTLOG("SPIFFS is empty.  Will attempt to get files from online...");
+      File markerFile = SPIFFS.open(ONLINEUPDATE_MARKERFILE, "w");
+      if (markerFile) markerFile.close();
+      display.putRequest(NEWMODE, UPDATING);
+    #endif
+  }
   ssidsCount = 0;
   #ifdef USE_SD
   _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
@@ -111,36 +116,30 @@ void Config::init() {
   setTimeConf();
 }
 
-void Config::_setupVersion(){
-  uint16_t currentVersion = store.version;
-  switch(currentVersion){
-    case 1:
-      saveValue(&store.screensaverEnabled, false);
-      saveValue(&store.screensaverTimeout, (uint16_t)20);
-      break;
-    case 2:
-      snprintf(tmpBuf, MDNS_LENGTH, "yoradio-%x", (unsigned int)getChipId());
-      saveValue(store.mdnsname, tmpBuf, MDNS_LENGTH);
-      saveValue(&store.skipPlaylistUpDown, false);
-      break;
-    case 3:
-      saveValue(&store.screensaverBlank, false);
-      saveValue(&store.screensaverPlayingEnabled, false);
-      saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
-      saveValue(&store.screensaverPlayingBlank, false);
-      break;
-    case 4:
-      saveValue(&store.abuff, (uint16_t)(VS1053_CS==255?7:10));
-      saveValue(&store.telnet, true);
-      saveValue(&store.watchdog, true);
-      saveValue(&store.timeSyncInterval, (uint16_t)60);    //min
-      saveValue(&store.timeSyncIntervalRTC, (uint16_t)24); //hours
-      saveValue(&store.weatherSyncInterval, (uint16_t)30); // min
-    default:
-      break;
+void Config::loadPreferences() {
+  prefs.begin("yoradio", false);
+  // Check config_set first
+  uint16_t configSetValue = 0;
+  size_t configSetRead = prefs.getBytes("cfgset", &configSetValue, sizeof(configSetValue));
+  if (configSetRead != sizeof(configSetValue)) {
+    // Preferences is empty, save config_set and version
+    Serial.println("[Prefs] Empty NVS detected, initializing config_set...\n");
+    saveValue(&store.config_set, store.config_set);
+  } else if (configSetValue != 4262) {
+    // config_set present but not valid, reset config
+    Serial.printf("[Prefs] Invalid config_set (%u), resetting config...\n", configSetValue);
+    prefs.end();
+    reset();
+    return;
   }
-  currentVersion++;
-  saveValue(&store.version, currentVersion);
+  // Load all fields in keyMap
+  for (size_t i = 0; keyMap[i].key != nullptr; ++i) {
+    uint8_t* field = (uint8_t*)&store + keyMap[i].fieldOffset;
+    size_t sz = keyMap[i].size;
+    size_t read = prefs.getBytes(keyMap[i].key, field, sz);
+  }
+  deleteOldKeys();
+  prefs.end();
 }
 
 #ifdef USE_SD
@@ -313,11 +312,15 @@ void Config::initPlaylistMode(){
 void Config::_initHW(){
   loadTheme();
   #if IR_PIN!=255
-  eepromRead(EEPROM_START_IR, ircodes);
-  if(ircodes.ir_set!=4224){
-    ircodes.ir_set=4224;
-    memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
+  prefs.begin("yoradio", false);
+  memset(&ircodes, 0, sizeof(ircodes));
+  size_t read = prefs.getBytes("ircodes", &ircodes, sizeof(ircodes));
+  if (read != sizeof(ircodes) || ircodes.ir_set != 4224) {
+      Serial.println("[_initHW] ircodes not initialized or corrupt, resetting...");
+      prefs.remove("ircodes");
+      memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
   }
+  prefs.end();
   #endif
   #if BRIGHTNESS_PIN!=255
     pinMode(BRIGHTNESS_PIN, OUTPUT);
@@ -366,24 +369,11 @@ void Config::loadTheme(){
   #include "../displays/tools/tftinverttitle.h"
 }
 
-template <class T> int Config::eepromWrite(int ee, const T& value) {
-  const uint8_t* p = (const uint8_t*)(const void*)&value;
-  int i;
-  for (i = 0; i < sizeof(value); i++)
-    EEPROM.write(ee++, *p++);
-  EEPROM.commit();
-  return i;
-}
-
-template <class T> int Config::eepromRead(int ee, T& value) {
-  uint8_t* p = (uint8_t*)(void*)&value;
-  int i;;
-  for (i = 0; i < sizeof(value); i++)
-    *p++ = EEPROM.read(ee++);
-  return i;
-}
-
 void Config::reset(){
+  Serial.print("[Prefs] Reset requested, resetting config...\n");
+  prefs.begin("yoradio", false);
+  prefs.clear();
+  prefs.end();
   setDefaults();
   delay(500);
   ESP.restart();
@@ -426,20 +416,7 @@ void Config::setScreensaverPlayingBlank(bool val){
   display.putRequest(NEWMODE, PLAYER);
 #endif
 }
-void Config::setSntpOne(const char *val){
-  bool tzdone = false;
-  if (strlen(val) > 0 && strlen(store.sntp2) > 0) {
-    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), val, store.sntp2);
-    tzdone = true;
-  } else if (strlen(val) > 0) {
-    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), val);
-    tzdone = true;
-  }
-  if (tzdone) {
-    timekeeper.forceTimeSync = true;
-    saveValue(config.store.sntp1, val, 35);
-  }
-}
+
 void Config::setShowweather(bool val){
   config.saveValue(&config.store.showweather, val);
   timekeeper.forceWeather = true;
@@ -487,6 +464,8 @@ void Config::resetSystem(const char *val, uint8_t clientId){
   }
   if (strcmp(val, "screen") == 0) {
     saveValue(&store.flipscreen, false, false);
+    saveValue(&store.volumepage, true);
+    saveValue(&store.clock12, false);
     display.flip();
     saveValue(&store.invertdisplay, false, false);
     display.invert();
@@ -507,21 +486,20 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     return;
   }
   if (strcmp(val, "timezone") == 0) {
-    saveValue(&store.tzHour, (int8_t)3, false);
-    saveValue(&store.tzMin, (int8_t)0, false);
-    saveValue(store.sntp1, "pool.ntp.org", 35, false);
-    saveValue(store.sntp2, "0.ru.pool.ntp.org", 35);
+    saveValue(store.tz_name, TIMEZONE_NAME, sizeof(store.tz_name), false);
+    saveValue(store.tzposix, TIMEZONE_POSIX, sizeof(store.tzposix), false);
+    saveValue(store.sntp1, SNTP1, sizeof(store.sntp1), false);
+    saveValue(store.sntp2, SNTP2, sizeof(store.sntp2));
     saveValue(&store.timeSyncInterval, (uint16_t)60);
     saveValue(&store.timeSyncIntervalRTC, (uint16_t)24);
-    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), store.sntp1, store.sntp2);
     timekeeper.forceTimeSync = true;
     netserver.requestOnChange(GETTIMEZONE, clientId);
     return;
   }
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
-    saveValue(store.weatherlat, "55.7512", 10, false);
-    saveValue(store.weatherlon, "37.6184", 10, false);
+    saveValue(store.weatherlat, WEATHERLAT, sizeof(store.weatherlat), false);
+    saveValue(store.weatherlon, WEATHERLON, sizeof(store.weatherlon), false);
     saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
     saveValue(&store.weatherSyncInterval, (uint16_t)30);
     //network.trueWeather=false;
@@ -545,11 +523,8 @@ void Config::resetSystem(const char *val, uint8_t clientId){
   }
 }
 
-
-
 void Config::setDefaults() {
   store.config_set = 4262;
-  store.version = CONFIG_VERSION;
   store.volume = 12;
   store.balance = 0;
   store.trebble = 0;
@@ -563,10 +538,11 @@ void Config::setDefaults() {
   store.tzHour = 3;
   store.tzMin = 0;
   store.timezoneOffset = 0;
-
   store.vumeter=false;
   store.softapdelay=0;
   store.flipscreen=false;
+  store.volumepage = true;
+  store.clock12 = false;
   store.invertdisplay=false;
   store.numplaylist=false;
   store.fliptouch=false;
@@ -574,11 +550,13 @@ void Config::setDefaults() {
   store.dspon=true;
   store.brightness=100;
   store.contrast=55;
-  strlcpy(store.sntp1,"pool.ntp.org", 35);
-  strlcpy(store.sntp2,"1.ru.pool.ntp.org", 35);
+  strlcpy(store.tz_name,TIMEZONE_NAME, sizeof(store.tz_name));
+  strlcpy(store.tzposix,TIMEZONE_POSIX, sizeof(store.tzposix));
+  strlcpy(store.sntp1,SNTP1, sizeof(store.sntp1));
+  strlcpy(store.sntp2,SNTP2, sizeof(store.sntp2));
   store.showweather=false;
-  strlcpy(store.weatherlat,"55.7512", 10);
-  strlcpy(store.weatherlon,"37.6184", 10);
+  strlcpy(store.weatherlat,WEATHERLAT, sizeof(store.weatherlat));
+  strlcpy(store.weatherlon,WEATHERLON, sizeof(store.weatherlon));
   strlcpy(store.weatherkey,"", WEATHERKEY_LENGTH);
   store._reserved = 0;
   store.lastSdStation = 0;
@@ -612,20 +590,6 @@ void Config::setDefaults() {
   store.timeSyncInterval = 60;    //min
   store.timeSyncIntervalRTC = 24; //hour
   store.weatherSyncInterval = 30; //min
-  eepromWrite(EEPROM_START, store);
-}
-
-void Config::setTimezone(int8_t tzh, int8_t tzm) {
-  saveValue(&store.tzHour, tzh, false);
-  saveValue(&store.tzMin, tzm);
-}
-
-void Config::setTimezoneOffset(uint16_t tzo) {
-  saveValue(&store.timezoneOffset, tzo);
-}
-
-uint16_t Config::getTimezoneOffset() {
-  return 0; // TODO
 }
 
 void Config::setSnuffle(bool sn){
@@ -635,7 +599,10 @@ void Config::setSnuffle(bool sn){
 
 #if IR_PIN!=255
 void Config::saveIR(){
-  eepromWrite(EEPROM_START_IR, ircodes);
+  ircodes.ir_set = 4224;
+  prefs.begin("yoradio", false);
+  size_t written = prefs.putBytes("ircodes", &ircodes, sizeof(ircodes));
+  prefs.end();
 }
 #endif
 
@@ -742,7 +709,11 @@ bool Config::loadStation(uint16_t ls) {
   if (cs == 0) {
     memset(station.url, 0, BUFLEN);
     memset(station.name, 0, BUFLEN);
-    strncpy(station.name, "ёRadio", BUFLEN);
+    #ifdef YO_FIX
+      strncpy(station.name, "yoRadio", BUFLEN);
+    #else
+      strncpy(station.name, "ёRadio", BUFLEN);
+    #endif
     station.ovol = 0;
     return false;
   }
@@ -861,52 +832,314 @@ bool Config::parseCSV(const char* line, char* name, char* url, int &ovol) {
   return true;
 }
 
+bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) {
+  // Reset outputs
+  if (name) name[0] = 0;
+  if (url) url[0] = 0;
+  ovol = 0;
+
+  // Copy line to a buffer for tokenization
+  char buf[BUFLEN * 2];
+  strncpy(buf, line, sizeof(buf) - 1);
+  buf[sizeof(buf) - 1] = 0;
+
+  // Detect delimiter: prefer tab, then space
+  char delim = 0;
+  if (strchr(buf, '\t')) delim = '\t';
+  else delim = ' ';
+
+  // Tokenize by detected delimiter only
+  char* tokens[32];
+  int t = 0;
+  char* p = strtok(buf, (delim == '\t') ? "\t" : " ");
+  while (p && t < 32) {
+    tokens[t++] = p;
+    p = strtok(nullptr, (delim == '\t') ? "\t" : " ");
+  }
+
+  // --- TAB-DELIMITED LOGIC ---
+  if (delim == '\t') {
+    if (t == 1) {
+      // 1 field: URL only
+      if (strstr(tokens[0], ".") && (strstr(tokens[0], "/") || strstr(tokens[0], "://"))) {
+        if (url) {
+          if (strncmp(tokens[0], "http://", 7) != 0 && strncmp(tokens[0], "https://", 8) != 0) {
+            snprintf(url, BUFLEN, "http://%s", tokens[0]);
+          } else {
+            strlcpy(url, tokens[0], BUFLEN);
+          }
+        }
+        if (name) {
+          const char* u = url;
+          if (strncmp(u, "http://", 7) == 0) u += 7;
+          else if (strncmp(u, "https://", 8) == 0) u += 8;
+          strlcpy(name, u, BUFLEN);
+          // Sanitize '/' to ' '
+          for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+        }
+        ovol = 0;
+        return true;
+      } else {
+        return false;
+      }
+    } else if (t == 2) {
+      // 2 fields: one is URL, one is name (order does not matter)
+      int urlIdx = -1, nameIdx = -1;
+      for (int i = 0; i < 2; ++i) {
+        if (strstr(tokens[i], ".") && (strstr(tokens[i], "/") || strstr(tokens[i], "://"))) urlIdx = i;
+        else nameIdx = i;
+      }
+      if (urlIdx == -1 || nameIdx == -1) return false;
+      if (url) {
+        if (strncmp(tokens[urlIdx], "http://", 7) != 0 && strncmp(tokens[urlIdx], "https://", 8) != 0) {
+          snprintf(url, BUFLEN, "http://%s", tokens[urlIdx]);
+        } else {
+          strlcpy(url, tokens[urlIdx], BUFLEN);
+        }
+      }
+      if (name) {
+        strlcpy(name, tokens[nameIdx], BUFLEN);
+        // Sanitize '/' to ' '
+        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+      }
+      ovol = 0;
+      return true;
+    } else if (t == 3) {
+      // 3 fields: one is URL, one is name, one is ovol (ovol must be integer 0-255)
+      int urlIdx = -1, nameIdx = -1, ovolIdx = -1;
+      for (int i = 0; i < 3; ++i) {
+        if (strstr(tokens[i], ".") && (strstr(tokens[i], "/") || strstr(tokens[i], "://"))) urlIdx = i;
+        else {
+          char* endptr = nullptr;
+          long val = strtol(tokens[i], &endptr, 10);
+          if (endptr && *endptr == '\0' && val >= 0 && val <= 255) {
+            ovolIdx = i;
+            ovol = (int)val;
+          } else {
+            nameIdx = i;
+          }
+        }
+      }
+      if (urlIdx == -1 || nameIdx == -1) return false;
+      if (url) {
+        if (strncmp(tokens[urlIdx], "http://", 7) != 0 && strncmp(tokens[urlIdx], "https://", 8) != 0) {
+          snprintf(url, BUFLEN, "http://%s", tokens[urlIdx]);
+        } else {
+          strlcpy(url, tokens[urlIdx], BUFLEN);
+        }
+      }
+      if (name) {
+        strlcpy(name, tokens[nameIdx], BUFLEN);
+        // Sanitize '/' to ' '
+        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+      }
+      if (ovolIdx == -1) ovol = 0;
+      return true;
+    } else {
+      // More than 3 fields: invalid for tab-delimited
+      return false;
+    }
+  }
+
+  // --- SPACE-DELIMITED LOGIC ---
+  // Find URL token (must contain dot and slash or ://)
+  int urlIdx = -1;
+  for (int i = 0; i < t; ++i) {
+    if (strstr(tokens[i], ".") && (strstr(tokens[i], "/") || strstr(tokens[i], "://"))) {
+      urlIdx = i;
+      break;
+    }
+  }
+  if (urlIdx == -1) return false; // URL is required
+
+  // Check for ovol at the end (name url ovol)
+  int ovolIdx = -1;
+  if (t == urlIdx + 2) {
+    char* endptr = nullptr;
+    long val = strtol(tokens[t-1], &endptr, 10);
+    if (endptr && *endptr == '\0' && val >= 0 && val <= 255) {
+      ovolIdx = t-1;
+      ovol = (int)val;
+    }
+  }
+
+  // If URL is at the end
+  if (urlIdx == t-1 || (ovolIdx != -1 && urlIdx == t-2)) {
+    // name is everything before URL (or before URL and ovol)
+    if (name) name[0] = 0;
+    int nameEnd = (ovolIdx != -1) ? urlIdx : t-1;
+    for (int i = 0; i < nameEnd; ++i) {
+      if (name && tokens[i][0]) {
+        if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
+        strlcat(name, tokens[i], BUFLEN);
+      }
+    }
+    // URL
+    if (url) {
+      if (strncmp(tokens[urlIdx], "http://", 7) != 0 && strncmp(tokens[urlIdx], "https://", 8) != 0) {
+        snprintf(url, BUFLEN, "http://%s", tokens[urlIdx]);
+      } else {
+        strlcpy(url, tokens[urlIdx], BUFLEN);
+      }
+    }
+    if (ovolIdx == -1) ovol = 0;
+    // If name is missing or empty, use url (minus protocol) as name
+    if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
+      const char* u = url;
+      if (strncmp(u, "http://", 7) == 0) u += 7;
+      else if (strncmp(u, "https://", 8) == 0) u += 8;
+      if (name) {
+        strlcpy(name, u, BUFLEN);
+        // Sanitize '/' to ' '
+        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+      }
+    }
+    if (!url || strlen(url) == 0) return false;
+    return true;
+  }
+  // If URL is at the beginning
+  if (urlIdx == 0) {
+    // name is everything after URL (and before ovol if present)
+    if (name) name[0] = 0;
+    int nameStart = 1;
+    int nameEnd = (ovolIdx != -1) ? ovolIdx : t;
+    for (int i = nameStart; i < nameEnd; ++i) {
+      if (name && tokens[i][0]) {
+        if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
+        strlcat(name, tokens[i], BUFLEN);
+      }
+    }
+    // URL
+    if (url) {
+      if (strncmp(tokens[0], "http://", 7) != 0 && strncmp(tokens[0], "https://", 8) != 0) {
+        snprintf(url, BUFLEN, "http://%s", tokens[0]);
+      } else {
+        strlcpy(url, tokens[0], BUFLEN);
+      }
+    }
+    if (ovolIdx == -1) ovol = 0;
+    // If name is missing or empty, use url (minus protocol) as name
+    if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
+      const char* u = url;
+      if (strncmp(u, "http://", 7) == 0) u += 7;
+      else if (strncmp(u, "https://", 8) == 0) u += 8;
+      if (name) {
+        strlcpy(name, u, BUFLEN);
+        // Sanitize '/' to ' '
+        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+      }
+    }
+    if (!url || strlen(url) == 0) return false;
+    return true;
+  }
+  // Otherwise, invalid for space-delimited
+  return false;
+}
+
 bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
-  char* tmps, *tmpe;
-  const char* cursor = line;
-  char port[8], host[246], file[254];
-  tmps = strstr(cursor, "\":\"");
-  if (tmps == NULL) return false;
-  tmpe = strstr(tmps, "\",\"");
-  if (tmpe == NULL) return false;
-  strlcpy(name, tmps + 3, tmpe - tmps - 3 + 1);
-  if (strlen(name) == 0) return false;
-  cursor = tmpe + 3;
-  tmps = strstr(cursor, "\":\"");
-  if (tmps == NULL) return false;
-  tmpe = strstr(tmps, "\",\"");
-  if (tmpe == NULL) return false;
-  strlcpy(host, tmps + 3, tmpe - tmps - 3 + 1);
-  if (strlen(host) == 0) return false;
-  if (strstr(host, "http://") == NULL && strstr(host, "https://") == NULL) {
-    sprintf(file, "http://%s", host);
-    strlcpy(host, file, strlen(file) + 1);
+  // Reset outputs
+  if (name) name[0] = 0;
+  if (url) url[0] = 0;
+  ovol = 0;
+
+  // Helper lambda to extract a value by key (key must be quoted, e.g. "name")
+  // Handles both string and numeric values
+  auto extract = [](const char* src, const char* key, char* out, size_t outlen) -> bool {
+    const char* k = strstr(src, key);
+    if (!k) return false;
+    k += strlen(key);
+    // Skip whitespace and colon
+    while (*k && (*k == ' ' || *k == '\t')) k++;
+    if (*k != ':') return false;
+    k++;
+    while (*k && (*k == ' ' || *k == '\t')) k++;
+    if (*k == '"') {
+      // String value
+      k++;
+      const char* end = strchr(k, '"');
+      if (!end) return false;
+      size_t len = end - k;
+      if (len >= outlen) len = outlen - 1;
+      strncpy(out, k, len);
+      out[len] = 0;
+      return true;
+    } else {
+      // Numeric value (int, float, etc.)
+      const char* end = k;
+      while (*end && ((*end >= '0' && *end <= '9') || *end == '-' || *end == '+')) end++;
+      size_t len = end - k;
+      if (len == 0 || len >= outlen) return false;
+      strncpy(out, k, len);
+      out[len] = 0;
+      return true;
+    }
+  };
+
+  // If the line starts with '[', treat as JSON array and extract the first object
+  const char* obj = line;
+  if (line[0] == '[') {
+    // Find the first '{' and the matching '}'
+    const char* start = strchr(line, '{');
+    if (!start) return false;
+    int brace = 1;
+    const char* end = start + 1;
+    while (*end && brace > 0) {
+      if (*end == '{') brace++;
+      else if (*end == '}') brace--;
+      end++;
+    }
+    if (brace != 0) return false;
+    static char objbuf[512];
+    size_t len = end - start;
+    if (len >= sizeof(objbuf)) len = sizeof(objbuf) - 1;
+    strncpy(objbuf, start, len);
+    objbuf[len] = 0;
+    obj = objbuf;
   }
-  cursor = tmpe + 3;
-  tmps = strstr(cursor, "\":\"");
-  if (tmps == NULL) return false;
-  tmpe = strstr(tmps, "\",\"");
-  if (tmpe == NULL) return false;
-  strlcpy(file, tmps + 3, tmpe - tmps - 3 + 1);
-  cursor = tmpe + 3;
-  tmps = strstr(cursor, "\":\"");
-  if (tmps == NULL) return false;
-  tmpe = strstr(tmps, "\",\"");
-  if (tmpe == NULL) return false;
-  strlcpy(port, tmps + 3, tmpe - tmps - 3 + 1);
-  int p = atoi(port);
-  if (p > 0) {
-    sprintf(url, "%s:%d%s", host, p, file);
+
+  char buf[256];
+  // 1. Extract name
+  if (!extract(obj, "\"name\"", name, BUFLEN)) {
+    return false;
+  }
+
+  // 2. Try url_resolved, then url, then host+file+port
+  bool gotUrl = false;
+  if (extract(obj, "\"url_resolved\"", buf, sizeof(buf))) {
+    strncpy(url, buf, BUFLEN);
+    gotUrl = true;
+  } else if (extract(obj, "\"url\"", buf, sizeof(buf))) {
+    strncpy(url, buf, BUFLEN);
+    gotUrl = true;
   } else {
-    sprintf(url, "%s%s", host, file);
+    char host[246] = {0}, file[254] = {0}, port[16] = {0};
+    bool gotHost = extract(obj, "\"host\"", host, sizeof(host));
+    bool gotFile = extract(obj, "\"file\"", file, sizeof(file));
+    bool gotPort = extract(obj, "\"port\"", port, sizeof(port));
+    if (gotHost && gotFile) {
+      if (strstr(host, "http://") == NULL && strstr(host, "https://") == NULL) {
+        snprintf(buf, sizeof(buf), "http://%s", host);
+        strlcpy(host, buf, sizeof(host));
+      }
+      if (gotPort && strlen(port) > 0) {
+        snprintf(url, BUFLEN, "%s:%s%s", host, port, file);
+      } else {
+        snprintf(url, BUFLEN, "%s%s", host, file);
+      }
+      gotUrl = true;
+    }
   }
-  cursor = tmpe + 3;
-  tmps = strstr(cursor, "\":\"");
-  if (tmps == NULL) return false;
-  tmpe = strstr(tmps, "\"}");
-  if (tmpe == NULL) return false;
-  strlcpy(port, tmps + 3, tmpe - tmps - 3 + 1);
-  ovol = atoi(port);
+  if (!gotUrl || strlen(url) == 0) {
+    return false;
+  }
+
+  // 3. Try ovol, default to 0 if not found
+  char ovolbuf[16] = {0};
+  if (extract(obj, "\"ovol\"", ovolbuf, sizeof(ovolbuf))) {
+    ovol = atoi(ovolbuf);
+  } else {
+    ovol = 0;
+  }
   return true;
 }
 
@@ -957,9 +1190,9 @@ bool Config::saveWifi() {
 
 void Config::setTimeConf(){
   if(strlen(store.sntp1)>0 && strlen(store.sntp2)>0){
-    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), store.sntp1, store.sntp2);
+    configTzTime(store.tzposix, store.sntp1, store.sntp2);
   }else if(strlen(store.sntp1)>0){
-    configTime(store.tzHour * 3600 + store.tzMin * 60, getTimezoneOffset(), store.sntp1);
+    configTzTime(store.tzposix, store.sntp1);
   }
 }
 
@@ -1060,9 +1293,131 @@ void Config::sleepForAfter(uint16_t sf, uint16_t sa){
   else doSleep();
 }
 
+void cleanStaleSearchResults() {
+  const char* metaPath = "/data/searchresults.json.meta";
+  if (SPIFFS.exists(metaPath)) {
+    File metaFile = SPIFFS.open(metaPath, "r");
+    metaFile.readStringUntil('\n'); // 1st line query
+    String timeStr = metaFile.readStringUntil('\n'); //2nd line is time
+    metaFile.close();
+    if (timeStr.length() > 0) {
+      time_t fileTime = atol(timeStr.c_str());
+      time_t now = time(nullptr);
+      if (now < 100000000 || (now - fileTime) > 86400) {
+        Serial.print("Cleaning stale search results.\n");
+        SPIFFS.remove(metaPath);
+        SPIFFS.remove("/data/searchresults.json");
+        SPIFFS.remove("/data/search.txt");
+      }
+    }
+  }
+}
+
+void fixPlaylistFileEnding() {
+  const char* playlistPath = PLAYLIST_PATH;
+  if (!SPIFFS.exists(playlistPath)) return;
+  File playlistfile = SPIFFS.open(playlistPath, "r+");
+  if (!playlistfile) return;
+  size_t sz = playlistfile.size();
+  if (sz < 2) { playlistfile.close(); return; }
+  playlistfile.seek(sz - 2, SeekSet);
+  char last2[3] = {0};
+  playlistfile.read((uint8_t*)last2, 2);
+  if (!(last2[0] == '\r' && last2[1] == '\n')) {
+    playlistfile.seek(sz, SeekSet);
+    playlistfile.write((const uint8_t*)"\r\n", 2);
+  }
+  playlistfile.close();
+}
+
+void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName) {
+  char startMsg[128];
+  snprintf(startMsg, sizeof(startMsg), "[ESPFileUpdater: %s] Started update.", simpleName);
+  Serial.println(startMsg);
+  ESPFileUpdater* updater = (ESPFileUpdater*)param;
+  ESPFileUpdater::UpdateStatus result = updater->checkAndUpdate(
+      localFile,
+      onlineFile,
+      updatePeriod,
+      ESPFILEUPDATER_VERBOSE
+  );
+  if (result == ESPFileUpdater::UPDATED) {
+    Serial.printf("[ESPFileUpdater: %s] Update completed.\n", simpleName);
+  } else if (result == ESPFileUpdater::NOT_MODIFIED||result == ESPFileUpdater::MAX_AGE_NOT_REACHED) {
+    Serial.printf("[ESPFileUpdater: %s] No update needed.\n", simpleName);
+  } else {
+    Serial.printf("[ESPFileUpdater: %s] Update failed.\n", simpleName);
+  }
+}
+
+#ifdef UPDATEURL
+  void getRequiredFiles(void* param) {
+    for (size_t i = 0; i < requiredFilesCount; i++) {
+      player.sendCommand({PR_STOP, 0});
+      display.putRequest(NEWMODE, UPDATING);
+      const char* fname = requiredFiles[i];
+      char localPath[64];
+      char remoteUrl[128];
+      snprintf(localPath, sizeof(localPath), "/www/%s", fname);
+      snprintf(remoteUrl, sizeof(remoteUrl), "%s%s", UPDATEURL, fname);
+      updateFile(param, localPath, remoteUrl, "", fname);
+    }
+    // Delete any files in /www that are not in the requiredFiles list
+    File root = SPIFFS.open("/www");
+    if (root && root.isDirectory()) {
+      File file = root.openNextFile();
+      while (file) {
+        const char* path = file.name();
+        // Extract filename from full path
+        const char* name = path;
+        const char* slash = strrchr(path, '/');
+        if (slash) name = slash + 1;
+        bool found = false;
+        for (size_t j = 0; j < requiredFilesCount; j++) {
+          if (strcmp(name, requiredFiles[j]) == 0) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          Serial.printf("[File: /www/%s] Deleting - not in required file list.\n", path);
+          SPIFFS.remove(path);
+        }
+        file = root.openNextFile();
+      }
+    }
+  }
+#endif //#ifdef UPDATEURL
+
+void startAsyncServices(void* param){
+  fixPlaylistFileEnding();
+  // if the OTA marker file exists, fetch all web assets immediately, clean up, restart
+ #ifdef UPDATEURL
+    if (SPIFFS.exists(ONLINEUPDATE_MARKERFILE)) {
+      getRequiredFiles(param);
+      SPIFFS.remove(ONLINEUPDATE_MARKERFILE);
+      delay(200);
+      ESP.restart();
+    }
+  #endif
+  updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, "1 week", "Timezones database file");
+  updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "4 weeks", "Radio Browser Servers list");
+  cleanStaleSearchResults();
+  vTaskDelete(NULL);
+}
+
+void Config::startAsyncServicesButWait() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  ESPFileUpdater* updater = nullptr;
+  updater = new ESPFileUpdater(SPIFFS);
+  updater->setMaxSize(1024);
+  updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
+  xTaskCreate(startAsyncServices, "startAsyncServices", 8192, updater, 2, NULL);
+}
+
 void Config::bootInfo() {
   BOOTLOG("************************************************");
-  BOOTLOG("*               ёPadio v%s                *", YOVERSION);
+  BOOTLOG("*               ёRadio v%s v%s                *", YOVERSION);
   BOOTLOG("************************************************");
   BOOTLOG("------------------------------------------------");
   BOOTLOG("arduino:\t%d", ARDUINO);
@@ -1084,6 +1439,8 @@ void Config::bootInfo() {
   BOOTLOG("vumeter:\t%s", store.vumeter?"true":"false");
   BOOTLOG("softapdelay:\t%d", store.softapdelay);
   BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
+  BOOTLOG("volumepage:\t%s", store.volumepage?"true":"false");
+  BOOTLOG("clock12:\t%s", store.clock12?"true":"false");
   BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
   BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
   BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, mode=%d, pullup=%s", 
@@ -1091,7 +1448,85 @@ void Config::bootInfo() {
   BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", 
           ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"true":"false", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"true":"false");
   BOOTLOG("ir:\t\t%d", IR_PIN);
-  if(SDC_CS!=255) BOOTLOG("SD:\t\t%d", SDC_CS);
+  if(SDC_CS!=255) BOOTLOG("SD:\t%d", SDC_CS);
+  #ifdef FIRMWARE
+    BOOTLOG("firmware:\t%s", FIRMWARE);
+  #endif
   BOOTLOG("------------------------------------------------");
 }
 
+// Preferences Look-up Table (store_variable, "key_max_15_char")
+// Macro expands to 3 fields (offset_of_config_t_store_variable, "key_max_15_char", size_of_store_variable)
+const configKeyMap Config::keyMap[] = {
+  CONFIG_KEY_ENTRY(config_set, "cfgset"),
+  CONFIG_KEY_ENTRY(volume, "vol"),
+  CONFIG_KEY_ENTRY(balance, "bal"),
+  CONFIG_KEY_ENTRY(trebble, "treb"),
+  CONFIG_KEY_ENTRY(middle, "mid"),
+  CONFIG_KEY_ENTRY(bass, "bass"),
+  CONFIG_KEY_ENTRY(lastStation, "laststa"),
+  CONFIG_KEY_ENTRY(countStation, "countsta"),
+  CONFIG_KEY_ENTRY(lastSSID, "lastssid"),
+  CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
+  CONFIG_KEY_ENTRY(smartstart, "smartstart"),
+  CONFIG_KEY_ENTRY(timezoneOffset, "tzoff"),
+  CONFIG_KEY_ENTRY(vumeter, "vumeter"),
+  CONFIG_KEY_ENTRY(softapdelay, "softapdelay"),
+  CONFIG_KEY_ENTRY(flipscreen, "flipscr"),
+  CONFIG_KEY_ENTRY(volumepage, "volpage"),
+  CONFIG_KEY_ENTRY(clock12, "clock12"),
+  CONFIG_KEY_ENTRY(invertdisplay, "invdisp"),
+  CONFIG_KEY_ENTRY(numplaylist, "numplaylist"),
+  CONFIG_KEY_ENTRY(fliptouch, "fliptouch"),
+  CONFIG_KEY_ENTRY(dbgtouch, "dbgtouch"),
+  CONFIG_KEY_ENTRY(dspon, "dspon"),
+  CONFIG_KEY_ENTRY(brightness, "bright"),
+  CONFIG_KEY_ENTRY(contrast, "contrast"),
+  CONFIG_KEY_ENTRY(tz_name, "tzname"),
+  CONFIG_KEY_ENTRY(tzposix, "tzposix"),
+  CONFIG_KEY_ENTRY(sntp1, "sntp1"),
+  CONFIG_KEY_ENTRY(sntp2, "sntp2"),
+  CONFIG_KEY_ENTRY(showweather, "showwthr"),
+  CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
+  CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
+  CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
+  CONFIG_KEY_ENTRY(_reserved, "resv"),
+  CONFIG_KEY_ENTRY(lastSdStation, "lastsdsta"),
+  CONFIG_KEY_ENTRY(sdsnuffle, "sdsnuffle"),
+  CONFIG_KEY_ENTRY(volsteps, "vsteps"),
+  CONFIG_KEY_ENTRY(encacc, "encacc"),
+  CONFIG_KEY_ENTRY(play_mode, "playmode"),
+  CONFIG_KEY_ENTRY(irtlp, "irtlp"),
+  CONFIG_KEY_ENTRY(btnpullup, "btnpullup"),
+  CONFIG_KEY_ENTRY(btnlongpress, "btnlngpress"),
+  CONFIG_KEY_ENTRY(btnclickticks, "btnclkticks"),
+  CONFIG_KEY_ENTRY(btnpressticks, "btnprsticks"),
+  CONFIG_KEY_ENTRY(encpullup, "encpullup"),
+  CONFIG_KEY_ENTRY(enchalf, "enchalf"),
+  CONFIG_KEY_ENTRY(enc2pullup, "enc2pullup"),
+  CONFIG_KEY_ENTRY(enc2half, "enc2half"),
+  CONFIG_KEY_ENTRY(forcemono, "forcemono"),
+  CONFIG_KEY_ENTRY(i2sinternal, "i2sint"),
+  CONFIG_KEY_ENTRY(rotate90, "rotate"),
+  CONFIG_KEY_ENTRY(screensaverEnabled, "scrnsvren"),
+  CONFIG_KEY_ENTRY(screensaverTimeout, "scrnsvrto"),
+  CONFIG_KEY_ENTRY(screensaverBlank, "scrnsvrbl"),
+  CONFIG_KEY_ENTRY(screensaverPlayingEnabled, "scrnsvrplen"),
+  CONFIG_KEY_ENTRY(screensaverPlayingTimeout, "scrnsvrplto"),
+  CONFIG_KEY_ENTRY(screensaverPlayingBlank, "scrnsvrplbl"),
+  CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
+  CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
+  CONFIG_KEY_ENTRY(abuff, "abuff"),
+  CONFIG_KEY_ENTRY(telnet, "telnet"),
+  CONFIG_KEY_ENTRY(watchdog, "watchdog"),
+  CONFIG_KEY_ENTRY(timeSyncInterval, "tsyncint"),
+  CONFIG_KEY_ENTRY(timeSyncIntervalRTC, "tsyncintrtc"),
+  CONFIG_KEY_ENTRY(weatherSyncInterval, "wsyncint"),
+  {0, nullptr, 0} // Yup, 3 fields - don't delete the last line!
+};
+
+void Config::deleteOldKeys() {
+  // List any old/legacy keys to remove here
+  // prefs.remove("removedkey");
+  // prefs.remove("removedkey");
+}
