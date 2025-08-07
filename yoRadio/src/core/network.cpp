@@ -160,14 +160,12 @@ void MyNetwork::setWifiParams(){
 }
 
 void MyNetwork::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
+  config.setTimeConf();
   if (withTelnetOutput) {
-    char timeStringBuff[50];
-    strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
-    if (config.store.tzHour < 0) {
-      telnet.printf(clientId, "##SYS.DATE#: %s%03d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
-    } else {
-      telnet.printf(clientId, "##SYS.DATE#: %s+%02d:%02d\n> ", timeStringBuff, config.store.tzHour, config.store.tzMin);
-    }
+    strftime(config.tmpBuf, sizeof(config.tmpBuf), "%Y-%m-%dT%H:%M:%S", &timeinfo);
+    telnet.printf(clientId, "##SYS.DATE#: %s (%s)\n> ", config.tmpBuf, config.store.tzposix);
+    telnet.printf(clientId, "##SYS.TZNAME#: %s \n> ", config.store.tz_name);
+    telnet.printf(clientId, "##SYS.TZPOSIX#: %s \n> ", config.store.tzposix);
   }
 }
 
@@ -182,7 +180,7 @@ void MyNetwork::raiseSoftAP() {
   BOOTLOG("************************************************");
   BOOTLOG("Running in AP mode");
   BOOTLOG("Connect to AP %s with password %s", apSsid, apPassword);
-  BOOTLOG("and go to http:/192.168.4.1/ to configure");
+  BOOTLOG("and go to http://192.168.4.1/ to configure");
   BOOTLOG("************************************************");
   status = SOFT_AP;
   if(config.store.softapdelay>0)

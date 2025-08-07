@@ -1,0 +1,8 @@
+If using Platformio, sepcify the partition file like
+
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+
+board_build.partitions = 4MBflash.csv

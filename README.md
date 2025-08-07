@@ -235,6 +235,11 @@ Work is in progress...
 
 ---
 ## Version history
+
+### v0.9.574 Trip5/2025.08.07
+
+- Trip5's changes merged with v0.9.574
+
 #### v0.9.574
 - fixed compilation error for certain displays when `#define DSP_INVERT_TITLE false` is set
 - fixed compilation error for `DSP_DUMMY`
@@ -262,6 +267,11 @@ Work is in progress...
 - fixed error "assert failed: udp_new_ip_type /IDF/components/lwip/lwip/src/core/udp.c:1278 (Required to lock TCPIP core functionality!)"
 - fixed error "Exception in status_listener when handling msg" in HA component
 
+### v0.9.552 Trip5/2025.07.28
+
+- Trip5's changes merged with 0.9.552
+- likely unfixed: ESP cores below 3.0.0 (should I undo maleksm's audio decoders?)
+
 ### v0.9.552
 - fixed compilation error for ESP cores version below 3.0.0\
   Thanks to @salawalas ! https://github.com/e2002/yoradio/pull/197/
@@ -284,6 +294,152 @@ or-> just upload all files from data/www (11 pcs) to Webboard Uploader http://ra
 - added option in the web interface to enable the Watchdog that stops connect to broken streams
 - settings for time and weather synchronization intervals have been added to the web interface
 - bug fixes, optimization
+
+
+### v0.9.533 Trip5/2025.07.23
+
+- minor additions to UI / display options
+  - one-click option ignores long-press right/left
+  - 12-hour clock
+  - hide volume page (instead of using a `#define`)
+
+### v0.9.533 Trip5/2025.07.20
+
+- BREAKING CHANGES
+  - requires larger app partitions
+    - if using 4MB flash sizeESP32, use the `ESP32-4MB.csv` as your partition file (see the text file for more)
+  - many settings will be reset to defaults
+  - notes were added to `config.cpp` how to handle breaking and non-breaking store updates in the future
+  - future re-flashes should not lose settings after this update
+  - capability to update firmware and download SPIFFS files from online has been added
+- library dependency: `bblanchon/ArduinoJson@^6.21.3`
+  - https://github.com/bblanchon/ArduinoJson
+- EEProm storage removed in favor of Preferences
+  - config.store variables may still be used as before
+  - no need to handle store version changes except by adding old ones to the "remove" list in `config.cpp`
+    - char handling improved throughout (size may be changed later with 1 edit to `config.h`)
+      - affects timezone, mdnsname, weather coordinate variables
+- shorter searching for Wi-fi message
+- LED_INVERT fixed (`#define LED_INVERT`)
+- fixes for screens that can't display certain characters (add to `myoptions.h`)
+  - `#define YO_FIX` // changes ёRadio to yoRadio for screens that can't print ё
+  - `#define PRINT_FIX` // fix Chinese certain screens so they don't display gibberish
+    - hijacks `utf8RusGFX.h` (which is meant for Russian model displays?)
+      - does not interrupt this function unless `PRINT_FIX` defined
+    - will transliterate as many European characters as possible by dropping accents
+    - will transliterate Cyrillic... probably badly
+    - will transliterate various punctuation and currency symbols
+    - any characters that can't be handled will be replaced by a space
+- ESPFileUpdater can update and download files (used in multiple places)
+  - a new library created for this project
+  - this may be used to download / update any file from online to SPIFFS
+  - add `#define ESPFILEUPDATER_DEBUG` to `myoptions.h` to get verbose output
+- Online updating for pre-built BIN files and other assets
+  - Uses ESPFileUpdater when SPIFFS is empty or incomplete if the running program is a pre-built firmware
+  - the online URL path used to download SPIFFS file assets (for the running version):
+    - `#define FILESURL "https://github.com/trip5/yoradio/releases/download/2025.07.19/"`
+  - the online URL path used to OTA update firmware:
+    - `#define UPDATEURL "https://github.com/trip5/yoradio/releases/latest/download/"`
+  - the online file that the current version can compare it's version against:
+    - `#define CHECKUPDATEURL "https://raw.githubusercontent.com/trip5/yoradio/refs/heads/trip5/yoRadio/src/core/options.h"`
+  - the above file must contain a line that is defined by this setting:
+    - `#define VERSIONSTRING "#define YOVERSION"` (followed by a version string)
+  - which `.bin` file to be used for online OTA updates can be specified as:
+    - `#define FIRMWARE "firmware_sh1106_pcm_remote.bin"`
+  - all of these can be automatically defined by `platformio.ini` amd `myoptions.h`
+    - an example of this automatic building is at `https://github.com/trip5/yoradio/tree/trip5/`
+    - check out `platformio-trip5-builds.yml` to see how firmwares are built and files made available online
+      - First commit your changes to Github
+      - Tag your local most recent commit and push it to Github:
+        - `git tag 2025.07.20`
+        - `git push origin 2025.07.20`
+      - Re-doing a tagged release:
+        - `git tag -d 2025.07.20`
+        - `git tag -a 2025.07.20 -m "2025.07.20"`
+        - `git push origin 2025.07.20 --force`
+    - this means you can just download a .bin file and flash from a command line (see the Release page for detailed instructions)
+- implements proper timezones
+  - uses ESPFileUpdater to download an up-to-date json to be used as a selector in the WebUI
+  - fetches from https://raw.githubusercontent.com/trip5/timezones.json/refs/heads/master/timezones.gz.json
+    - this can be a gzipped or regular json
+    - uses github workflow to automatically update whenever tzdb has changed
+    - also created for this project
+    - another json.gz can be used by a define in `myoptions.h` (default in quotes)
+      - `#define TIMEZONES_JSON_URL "https://raw.githubusercontent.com/trip5/timezones.json/master/timezones.json.gz"`
+  - will handle Daylight Savings Times
+    - does not affect timed functions that use ticks (screensaver, weather)
+    - may have side-effects on other timed functions that don't use ticks
+  - timezone offset completely removed
+  - timezones may be changed through WebUI or telnet
+  - telnet has some extra functions added
+    - `TZO ±X` now just changes to a GMT-type (non-standard is OK)
+    - `TZO ±X:XX` now just changes to a custom timezone (based on GMT-type)
+    - `TZPOSIX` command can create a custom timezone (be careful)
+    - `PLAY url` can play a station not on the playlist
+  - Nextion displays only show timezone now, cannot change timezone
+    - there may be a good way to implement with + & - with GMT timezones (see `telnet.cpp` for some idea)
+    - I have no Nextion display to test (sorry!)
+- regional defaults now be defined in `myoptions.h` (defaults in quotes):
+  - `#define TIMEZONE_NAME "Europe/Moscow"`
+  - `#define TIMEZONE_POSIX "MSK-3"`
+  - `#define SNTP1 "pool.ntp.org"`
+  - `#define SNTP2 "0.ru.pool.ntp.org"`
+  - `#define WEATHERLAT "55.7512"`
+  - `#define WEATHERLON "37.6184"`
+  - all can still be edited using WebUI
+- Radio station search via Radio Browser API
+  - performs search queries to a https://www.radio-browser.info/ server
+  - uses ESPFileUpdater to download an up-to-date json of API servers
+    - another json can be used by a define in options.h
+      - `#define RADIO_BROWSER_SERVERS_URL "https://all.api.radio-browser.info/json/servers"` in `myoptions.h`
+  - handles down API servers gracefully (and they do go down fairly often)
+  - uses ESPFileUpdater to download JSON search results directly from the API to the ESP's file system
+    - previous searches are saved and not lost on reboot (100 results, page number)
+    - saved searches will be deleted on reboot if they are older than 24 hours
+  - search results shows station name, country code, codec, bitrate
+  - stations can be previewed (through the radio) with a play button that does not add it to the playlist
+    - if matches URL in the playlist will play the station from the playlist
+  - stations can be added with a plus button
+    - will not add a station which has the same URL as one already in the playlist (http & https considered same)
+- Playback queue (either from playlist, search, or telnet) put into an RTOS task that runs in the background
+  - stability improved but slight delay added
+- Improved JSON and CSV file importing
+  - CSV import made more resilient
+    - can import any type of list with fields separated by tabs or spaces
+    - missing name or ovol fields will continue to be imported
+    - for example, all of these are valid:
+      - space-separated values:
+        - `nap.casthost.net:8793/stream Intra Nature Radio`
+        - `Ambient Sleeping Pill http://radio.stereoscenic.com/asp-s`
+        - `Super Relax FM https://streams.radio.menu/listen/super-relax-fm/radio.mp3 0`
+      - tab-separated values:
+        - `Traxx FM - Ambient	http://traxx011.ice.infomaniak.ch/traxx011-low.mp3	0`
+        - `Positively Meditation	0	https://streaming.positivity.radio/pr/posimeditation/icecast.audio`
+        - `0	Cryosleep	http://streams.echoesofbluemars.org/8000/cryosleep`
+        - `https://ice4.somafm.com/darkzone-128-mp3	Soma FM - Dark Zone 0`
+      - just the URL
+        - `https://ice4.somafm.com/dronezone-128-mp3`
+    - the old CSV parser is still used for the yoRadio playlist internally
+  - JSON import made more resilient
+    - can handle line-by-line files that are not enclosed in [ ]
+      - ie. each line looks like
+        - `{"name":"Swinging radio 60s","host":"http://s2.xrad.io","file":"/8058/stream","port":"0","ovol":"0"}`
+    - can handle proper json files where all entries are enclosed in [ ]
+      - the field "url_resolved" will be preferred
+      - fallback to "url"
+      - finally, fallback to "host" and "file" and "port" - which will be combined into a url
+  - in both parsers, only the url is mandatory
+    - if "name" is absent, it will be assumed to be the url even without http(s)://
+    - if "ovol" is absent, is will be assumed to be 0
+- Added some of Maleksm's additions and changes from v0.9.434m (04.04.25) (with some changes)
+  - includes improved decoding for VS1053 and PCM decoder and various codecs
+  - ESP8266 support completely removed
+  - includes BacklightDown plugin (tweaked to be non-blocking)
+    - dims the display after awhile
+    - `#define BRIGHTNESS_PIN` must be in your `myoptions.h`
+    - `#define DOWN_LEVEL 2` (brightness level 0 to 255, default 2 )
+    - `#define DOWN_INTERVAL 60` (seconds to dim, default 60 = 60 seconds)
+  - use `#define HIDE_VOLPAGE` to hide the separate page showing volume (uses the progress bar instead)
 
 ### v0.9.533
 - fixed compilation error for esp32 core version lower than 3.0.0
