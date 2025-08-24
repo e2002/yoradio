@@ -1,8 +1,6 @@
 #ifndef commandhandler_h
 #define commandhandler_h
 
-#include <Arduino.h>
-
 class CommandHandler {
 public:
   bool exec(const char *command, const char *value, uint8_t cid=0);

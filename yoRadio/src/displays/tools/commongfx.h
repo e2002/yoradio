@@ -1,31 +1,50 @@
 #ifndef common_gfx_h
 #define common_gfx_h
-  public:
-    uint16_t plItemHeight, plTtemsCount, plCurrentPos;
-    int plYStart;
+#include "../widgets/widgetsconfig.h" // displayXXXDDDDconf.h
+#include "utf8Rus.h"
+#define ADAFRUIT_CLIPPING !defined(DSP_LCD) && DSP_MODEL!=DSP_ILI9225
+
+typedef struct clipArea {
+  uint16_t left; 
+  uint16_t top; 
+  uint16_t width;  
+  uint16_t height;
+} clipArea;
+
+class psFrameBuffer;
+
+class DspCore: public yoDisplay {
   public:
     DspCore();
-    //char plMenu[PLMITEMS][PLMITEMLENGHT];
     void initDisplay();
-    void drawLogo(uint16_t top);
     void clearDsp(bool black=false);
     void printClock(){}
-    void printClock(uint16_t top, uint16_t rightspace, uint16_t timeheight, bool redraw);
-    void clearClock();
-    char* utf8Rus(const char* str, bool uppercase);
-    void drawPlaylist(uint16_t currentItem);
-    void loop(bool force=false);
-    void charSize(uint8_t textsize, uint8_t& width, uint16_t& height);
-    #ifndef DSP_LCD
+    #ifdef DSP_OLED
+    inline void loop(bool force=false){
       #if DSP_MODEL==DSP_NOKIA5110
-        virtual void command(uint8_t c);
-        virtual void data(uint8_t c);
+        if(digitalRead(TFT_CS)==LOW) return;
+        display();
       #else
-        virtual void startWrite(void);
-        virtual void endWrite(void);
+        display();
+        //delay(DSP_MODEL==DSP_ST7920?20:5);
+        vTaskDelay(DSP_MODEL==DSP_ST7920?10:0);
       #endif
-      void setTextSize(uint8_t s);
+    }
+    inline void drawLogo(uint16_t top) {
+      #if DSP_MODEL!=DSP_SSD1306x32
+        drawBitmap((width()  - LOGO_WIDTH ) / 2, top, logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
+      #else
+        setTextSize(1); setCursor((width() - 6*CHARWIDTH) / 2, 0); setTextColor(TFT_FG, TFT_BG); print(utf8Rus("ёRadio", false));
+      #endif
+      display();
+    }
     #else
+      #ifndef DSP_LCD
+      inline void loop(bool force=false){}
+      inline void drawLogo(uint16_t top){ drawRGBBitmap((width() - LOGO_WIDTH) / 2, top, logo, LOGO_WIDTH, LOGO_HEIGHT); }
+      #endif
+    #endif
+    #ifdef DSP_LCD
       uint16_t width();
       uint16_t height();
       void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
@@ -35,24 +54,20 @@
       void setTextColor(uint16_t c, uint16_t bg){}
       void setFont(){}
       void apScreen();
+      void drawLogo(uint16_t top){}
+      void loop(bool force=false){}
     #endif
-    
     void flip();
     void invert();
     void sleep();
     void wake();
-    void writePixel(int16_t x, int16_t y, uint16_t color);
-    void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-    void setClipping(clipArea ca);
-    void clearClipping();
     void setScrollId(void * scrollid) { _scrollid = scrollid; }
     void * getScrollId() { return _scrollid; }
-    void setNumFont();
     uint16_t textWidth(const char *txt);
     #if DSP_MODEL==DSP_ILI9225
       uint16_t width(void) { return (int16_t)maxX(); }
       uint16_t height(void) { return (int16_t)maxY(); }
-      void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h);
+      inline void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h){ drawBitmap(x, y, bitmap, w, h); }
       uint16_t print(const char* s);
       void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
       void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
@@ -62,24 +77,57 @@
       void setCursor(int16_t x, int16_t y);
       void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
       void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-      uint16_t drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color = COLOR_WHITE);
+      inline uint16_t drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color = COLOR_WHITE){
+        if(_clipping){
+          if ((x < _cliparea.left) || (x >= _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height))  {
+            return cfont.width;
+          }
+        }
+        uint16_t ret=TFT_22_ILI9225::drawChar(x, y, ch, color);
+        return ret;
+      }
+      void setTextSize(uint8_t s);
     #endif
-    void printPLitem(uint8_t pos, const char* item, ScrollWidget& current);
+    #if ADAFRUIT_CLIPPING
+      inline void writePixel(int16_t x, int16_t y, uint16_t color) {
+        if(_clipping){
+          if ((x < _cliparea.left) || (x > _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height)) return;
+        }
+        yoDisplay::writePixel(x, y, color);
+      }
+      inline void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+        if(_clipping){
+          if ((x < _cliparea.left) || (x >= _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height))  return;
+        }
+        yoDisplay::writeFillRect(x, y, w, h, color);
+      }
+    #else
+      inline void writePixel(int16_t x, int16_t y, uint16_t color) { }
+      inline void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) { }
+    #endif
+    inline void setClipping(clipArea ca){
+      _cliparea = ca;
+      _clipping = true;
+    }
+    inline void clearClipping(){
+      _clipping = false;
+      #ifdef DSP_LCD
+      setClipping({0, 0, width(), height()});
+      #endif
+    }
   private:
-    char  _timeBuf[20], _dateBuf[20], _oldTimeBuf[20], _oldDateBuf[20], _bufforseconds[4], _buffordate[40];
-    uint16_t _timewidth, _timeleft, _datewidth, _dateleft, _oldtimeleft, _oldtimewidth, _olddateleft, _olddatewidth, clockTop, clockRightSpace, clockTimeHeight, _dotsLeft;
-    bool _clipping, _printdots;
+    bool _clipping;
     clipArea _cliparea;
     void * _scrollid;
-    void _getTimeBounds();
-    void _clockSeconds();
-    void _clockDate();
-    void _clockTime();
-    uint8_t _charWidth(unsigned char c);
+    #ifdef PSFBUFFER
+    psFrameBuffer* _fb=nullptr;
+    #endif
     #if DSP_MODEL==DSP_ILI9225
       uint16_t _bgcolor, _fgcolor;
       int16_t  _cursorx, _cursory;
       bool _gFont/*, _started*/;
     #endif
+};
 
+extern DspCore dsp;
 #endif

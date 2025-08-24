@@ -1,7 +1,8 @@
-#include "../dspcore.h"
+#include "../../core/options.h"
 #if DSP_MODEL!=DSP_DUMMY
-
+#include "../dspcore.h"
 #include "pages.h"
+#include "widgets.h"
 
 void Pager::begin(){
 

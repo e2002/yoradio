@@ -1,5 +1,7 @@
 #include "../core/options.h"
-
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
+#endif
 #if NEXTION_RX!=255 && NEXTION_TX!=255
 #include "nextion.h"
 #include "../core/config.h"
@@ -8,6 +10,8 @@
 #include "../core/controls.h"
 #include "../core/netserver.h"
 #include "../core/network.h"
+#include "../core/timekeeper.h"
+#include "tools/l10n.h"
 
 #ifndef CORE_STACK_SIZE
   #define CORE_STACK_SIZE  1024*3
@@ -63,7 +67,7 @@ void Nextion::start(){
   }
 #ifdef DUMMYDISPLAY
   display.mode(PLAYER);
-  config.setTitle(const_PlReady);
+  config.setTitle(LANG::const_PlReady);
 #endif
   putRequest({NEWMODE, PLAYER});
   putRequest({NEWSTATION, 0});
@@ -97,7 +101,7 @@ void Nextion::processQueue(){
       case NEWTITLE: newTitle(config.station.title); break;
       case BOOTSTRING: {
         char buf[50];
-        snprintf(buf, 50, bootstrFmt, config.ssids[request.payload].ssid);
+        snprintf(buf, 50, LANG::bootstrFmt, config.ssids[request.payload].ssid);
         bootString(buf);
         break;
       }
@@ -251,7 +255,7 @@ void Nextion::loop() {
           }else if(strlen(config.store.sntp1)>0){
             configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
           }
-          network.forceTimeSync = true;
+          timekeeper.forceTimeSync = true;
         }
         if (sscanf(rxbuf, "tzmin=%d", &scanDigit) == 1){
           config.setTimezone(config.store.tzHour, (int8_t)scanDigit);
@@ -260,7 +264,7 @@ void Nextion::loop() {
           }else if(strlen(config.store.sntp1)>0){
             configTime(config.store.tzHour * 3600 + config.store.tzMin * 60, config.getTimezoneOffset(), config.store.sntp1);
           }
-          network.forceTimeSync = true;
+          timekeeper.forceTimeSync = true;
         }
         if (sscanf(rxbuf, "audioinfo=%d", &scanDigit) == 1){
           config.saveValue(&config.store.audioinfo, static_cast<bool>(scanDigit));
@@ -416,7 +420,7 @@ void Nextion::printClock(struct tm timeinfo){
   strftime(timeStringBuff, sizeof(timeStringBuff), "player.clock.txt=\"%H:%M\"", &timeinfo);
   putcmd(timeStringBuff);
   putcmdf("player.secText.txt=\"%02d\"", timeinfo.tm_sec);
-  snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", dowf[timeinfo.tm_wday], timeinfo.tm_mday, mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
+  snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", LANG::dowf[timeinfo.tm_wday], timeinfo.tm_mday, LANG::mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
   putcmd(utf8Rus(timeStringBuff, false));
   if(mode==TIMEZONE) localTime(network.timeinfo);
   if(mode==INFO)     rssi();
@@ -434,12 +438,52 @@ void Nextion::printPLitem(uint8_t pos, const char* item){
   putcmd(cmd);
 }
 
+uint8_t Nextion::_fillPlMenu(int from, uint8_t count) {
+  int     ls      = from;
+  uint8_t c       = 0;
+  bool    finded  = false;
+  if (config.playlistLength() == 0) {
+    return 0;
+  }
+  File playlist = config.SDPLFS()->open(REAL_PLAYL, "r");
+  File index = config.SDPLFS()->open(REAL_INDEX, "r");
+  while (true) {
+    if (ls < 1) {
+      ls++;
+      printPLitem(c, "");
+      c++;
+      continue;
+    }
+    if (!finded) {
+      index.seek((ls - 1) * 4, SeekSet);
+      uint32_t pos;
+      index.readBytes((char *) &pos, 4);
+      finded = true;
+      index.close();
+      playlist.seek(pos, SeekSet);
+    }
+    bool pla = true;
+    while (pla) {
+      pla = playlist.available();
+      String stationName = playlist.readStringUntil('\n');
+      stationName = stationName.substring(0, stationName.indexOf('\t'));
+      if(config.store.numplaylist && stationName.length()>0) stationName = String(from+c)+" "+stationName;
+      printPLitem(c, stationName.c_str());
+      c++;
+      if (c >= count) break;
+    }
+    break;
+  }
+  playlist.close();
+  return c;
+}
+
 void Nextion::drawPlaylist(uint16_t currentPlItem){
   mode=STATIONS;
-  uint8_t lastPos = config.fillPlMenu(currentPlItem - 3, 7, true);
+  uint8_t lastPos = _fillPlMenu(currentPlItem - 3, 7);
   if(lastPos<7){
     for(int i=0;i<7-lastPos;i++){
-      nextion.printPLitem(lastPos+i, "");
+      printPLitem(lastPos+i, "");
     }
   }
   _volDelay = millis();

@@ -1,15 +1,20 @@
 #include "Arduino.h"
-#include "controls.h"
 #include "options.h"
+#include "controls.h"
 #include "config.h"
 #include "player.h"
 #include "display.h"
 #include "network.h"
 #include "netserver.h"
+#include "../pluginsManager/pluginsManager.h"
 
 long encOldPosition  = 0;
 long enc2OldPosition  = 0;
 int lpId = -1;
+
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
+#endif
 
 #define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_CENTER!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255 || BTN_UP!=255 || BTN_DOWN!=255 || ENC2_BTNB!=255 || BTN_MODE!=255
 #if ISPUSHBUTTONS
@@ -34,6 +39,7 @@ constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
 #if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
+  #include "../yoEncoder/yoEncoder.h"
   #if (ENC_BTNL!=255 && ENC_BTNR!=255)
     yoEncoder encoder = yoEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
   #endif
@@ -115,7 +121,7 @@ void initControls() {
   }
 #endif
 #if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
-  touchscreen.init();
+  touchscreen.init(display.width(), display.height());
 #endif
 #if IR_PIN!=255
   pinMode(IR_PIN, INPUT);
@@ -502,7 +508,8 @@ void onBtnClick(int id) {
           #ifdef DSP_LCD
             delay(200);
           #endif
-          player.sendCommand({PR_PLAY, display.currentPlItem});
+          display.putRequest(CLOSEPLAYLIST, display.currentPlItem);
+          //player.sendCommand({PR_PLAY, display.currentPlItem});
         }
         if(network.status==SOFT_AP || display.mode()==LOST){
           #ifdef USE_SD

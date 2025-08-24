@@ -1,13 +1,12 @@
 #ifndef touchscreen_h
 #define touchscreen_h
-#include "Arduino.h"
 
 enum tsDirection_e { TSD_STAY, TSD_LEFT, TSD_RIGHT, TSD_UP, TSD_DOWN, TDS_REQUEST };
 
 class TouchScreen {
   public:
     TouchScreen() {}
-    void init();
+    void init(uint16_t w, uint16_t h);
     void loop();
     void flip();
   private:

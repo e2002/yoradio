@@ -161,6 +161,12 @@ void ILI9486_SPI::drawPixel(int16_t x, int16_t y, uint16_t color)
 
 #endif
 
+void ILI9486_SPI::writePixels(uint16_t *colors, uint32_t len) {
+  _startTransaction();
+  _writeColor16(colors, len);
+  _endTransaction();
+}
+
 void ILI9486_SPI::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
   //  if ((x < 0) || (y < 0) || (w < 1) || (h < 1) || (x + w > _width) || (y + h > _height))

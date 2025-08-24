@@ -1687,23 +1687,24 @@ void Audio::setVUmeter() {
  *
  * \warning This feature is only available with patches that support VU meter.
  */
-const uint8_t everyn = 4;
+//const uint8_t everyn = 4;
 void Audio::computeVUlevel() {
-  if(!VS_PATCH_ENABLE) return;
+  /*if(!VS_PATCH_ENABLE) return;
   static uint8_t cc = 0;
   cc++;
   if(!_vuInitalized || !config.store.vumeter || cc!=everyn) return;
-  if(cc==everyn) cc=0;
+  if(cc==everyn) cc=0;*/
   int16_t reg = read_register(SCI_AICTRL3);
   vuLeft = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
   vuRight = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
-  if(vuLeft>config.vuThreshold) config.vuThreshold = vuLeft;
+  if(vuLeft>config.vuThreshold)  config.vuThreshold=vuLeft;
   if(vuRight>config.vuThreshold) config.vuThreshold=vuRight;
 }
 
 uint16_t Audio::get_VUlevel(uint16_t dimension){
   if(!VS_PATCH_ENABLE) return 0;
-  if(!_vuInitalized || !config.store.vumeter || config.vuThreshold==0) return 0;
+  if(!_vuInitalized || !config.store.vumeter/* || config.vuThreshold==0*/) return 0;
+  computeVUlevel();
   uint8_t L = map(vuLeft, config.vuThreshold, 0, 0, dimension);
   uint8_t R = map(vuRight, config.vuThreshold, 0, 0, dimension);
   return (L << 8) | R;

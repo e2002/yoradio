@@ -41,12 +41,12 @@ const WidgetConfig bitrateConf    PROGMEM = { 0, 11, 1, WA_RIGHT };
 const WidgetConfig voltxtConf     PROGMEM = { 0, 20, 1, WA_RIGHT };
 const WidgetConfig  iptxtConf     PROGMEM = { 0, 64-11, 1, WA_LEFT };
 const WidgetConfig   rssiConf     PROGMEM = { 0, 64-11, 1, WA_RIGHT };
-const WidgetConfig numConf        PROGMEM = { 0, 12, 2, WA_CENTER };
+const WidgetConfig numConf        PROGMEM = { 0, 12, 0, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { 0, 9, 1, WA_LEFT };
 const WidgetConfig apName2Conf    PROGMEM = { 0, 9, 1, WA_RIGHT };
 const WidgetConfig apPassConf     PROGMEM = { 0, 17, 1, WA_LEFT };
 const WidgetConfig apPass2Conf    PROGMEM = { 0, 17, 1, WA_RIGHT };
-const WidgetConfig  clockConf     PROGMEM = { 0,  1, 1, WA_RIGHT };
+const WidgetConfig  clockConf     PROGMEM = { 0,  1, 0, WA_RIGHT };
 //const WidgetConfig vuConf         PROGMEM = { 1, 28, 1, WA_LEFT };
 
 const WidgetConfig bootWdtConf    PROGMEM = { 0, 32-8*2-5, 1, WA_CENTER };

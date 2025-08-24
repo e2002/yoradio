@@ -1,5 +1,6 @@
 #ifndef _OLEDCOLORFIX_H_
 #define _OLEDCOLORFIX_H_
+#pragma once
 
   config.theme.background = TFT_BG;
 #if DSP_INVERT_TITLE
@@ -12,6 +13,7 @@
   config.theme.metafill   = TFT_BG;
 #endif  
   config.theme.clock      = TFT_FG;
+  config.theme.seconds    = TFT_FG;
   config.theme.clockbg    = TFT_BG;
   config.theme.weather    = TFT_FG;
   config.theme.title1     = TFT_FG;

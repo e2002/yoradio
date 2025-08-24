@@ -30,6 +30,7 @@ class Nextion {
     unsigned long _volDelay;
     void processQueue();
     void drawVU();
+    uint8_t _fillPlMenu(int from, uint8_t count);
   public:
     displayMode_e mode;
     bool dt;

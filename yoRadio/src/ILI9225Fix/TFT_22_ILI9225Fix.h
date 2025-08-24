@@ -8,7 +8,7 @@
 //#define SPI_CHANNEL SPI_2
 #endif
 
-#define USE_STRING_CLASS
+//#define USE_STRING_CLASS
 
 #ifdef USE_STRING_CLASS
     #define STRING String

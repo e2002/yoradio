@@ -1,6 +1,6 @@
 #include "options.h"
 #if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
-
+#include "Arduino.h"
 #include "touchscreen.h"
 #include "config.h"
 #include "controls.h"
@@ -36,7 +36,7 @@
   typedef TP_Point TSPoint;
 #endif
 
-void TouchScreen::init(){
+void TouchScreen::init(uint16_t w, uint16_t h){
   
 #if TS_MODEL==TS_MODEL_XPT2046
   #ifdef TS_SPIPINS
@@ -55,8 +55,8 @@ void TouchScreen::init(){
   ts.begin();
   ts.setRotation(config.store.fliptouch?0:2);
 #endif
-  _width  = dsp.width();
-  _height = dsp.height();
+  _width  = w;
+  _height = h;
 #if TS_MODEL==TS_MODEL_GT911
   ts.setResolution(_width, _height);
 #endif

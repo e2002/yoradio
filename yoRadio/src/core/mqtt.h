@@ -1,6 +1,5 @@
 #ifndef mqtt_h
 #define mqtt_h
-#include "options.h"
 
 #ifdef MQTT_ROOT_TOPIC
 #include "../async-mqtt-client/AsyncMqttClient.h"

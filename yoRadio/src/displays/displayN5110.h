@@ -1,40 +1,24 @@
 #ifndef displayN5110_h
 #define displayN5110_h
-#include "../core/options.h"
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include "fonts/TinyFont5.h"
 #include "fonts/TinyFont6.h"
-
-#if CLOCKFONT_MONO
-  #include "fonts/DS_DIGI15pt7b_mono.h"
-#else
-  #include "fonts/DS_DIGI15pt7b.h"
-#endif
-#include "tools/l10n.h"
-
-#define CHARWIDTH   6
-#define CHARHEIGHT  8
-
-#define DSP_OLED
+#include "fonts/bootlogo21x28.h"
+#include "fonts/bootlogo35.h"
 
 typedef GFXcanvas1 Canvas;
-#include "widgets/widgets.h"
-#include "widgets/pages.h"
+typedef Adafruit_PCD8544 yoDisplay;
+
+#include "tools/commongfx.h"
 
 #if __has_include("conf/displayN5110conf_custom.h")
   #include "conf/displayN5110conf_custom.h"
 #else
   #include "conf/displayN5110conf.h"
 #endif
-
-class DspCore: public Adafruit_PCD8544 {
-#include "tools/commongfx.h"
-};
-
-extern DspCore dsp;
 
 /*
  * TFT COLORS

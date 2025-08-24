@@ -1,11 +1,6 @@
 #ifndef network_h
 #define network_h
-#include "time.h"
-#include "WiFi.h"
-#include "rtcsupport.h"
-
-#define apSsid      "yoRadioAP"
-#define apPassword  "12345987"
+#include <WiFi.h>
 
 enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 

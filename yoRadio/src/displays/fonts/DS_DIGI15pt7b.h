@@ -53,7 +53,7 @@ const GFXglyph DS_DIGI15pt7bGlyphs[] PROGMEM = {
   {   257,   3,  15,   6,    2,  -14 }    // 0x3A ':'
 };
 
-const GFXfont DS_DIGI15pt7b PROGMEM = {
+const GFXfont Clock_GFXfont PROGMEM = {
   (uint8_t  *)DS_DIGI15pt7bBitmaps,   
   (GFXglyph *)DS_DIGI15pt7bGlyphs, 0x20, 0x3A,    29 };
 

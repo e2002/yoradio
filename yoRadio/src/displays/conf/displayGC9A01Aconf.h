@@ -37,12 +37,12 @@ const WidgetConfig bitrateConf    PROGMEM = { 134, 23, 1, WA_RIGHT };
 const WidgetConfig voltxtConf     PROGMEM = { 80, 12, 1, WA_CENTER };
 const WidgetConfig  iptxtConf     PROGMEM = { TFT_FRAMEWDT, 214, 1, WA_CENTER };
 const WidgetConfig   rssiConf     PROGMEM = { 134, 23, 1, WA_LEFT };
-const WidgetConfig numConf        PROGMEM = { 0, 120+30+20, 52, WA_CENTER };
+const WidgetConfig numConf        PROGMEM = { 0, 120+30+20, 0, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { TFT_FRAMEWDT, 96, 2, WA_CENTER };
 const WidgetConfig apName2Conf    PROGMEM = { TFT_FRAMEWDT, 118, 2, WA_CENTER };
 const WidgetConfig apPassConf     PROGMEM = { TFT_FRAMEWDT, 146, 2, WA_CENTER };
 const WidgetConfig apPass2Conf    PROGMEM = { TFT_FRAMEWDT, 168, 2, WA_CENTER };
-const WidgetConfig  clockConf     PROGMEM = { 0, 176, 52, WA_CENTER };  /* 52 is a fixed font size. do not change */
+const WidgetConfig  clockConf     PROGMEM = { 0, 176, 0, WA_CENTER };
 const WidgetConfig vuConf         PROGMEM = { TFT_FRAMEWDT+20, 188, 1, WA_CENTER };
 
 const WidgetConfig bootWdtConf    PROGMEM = { 0, 162, 1, WA_CENTER };

@@ -16,7 +16,7 @@
 #define HIDE_TITLE2
 #define HIDE_VOL
 
-#define bootLogoTop     68
+#define bootLogoTop     5
 
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
 const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, TFT_FRAMEWDT, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 4, 30 };
@@ -40,12 +40,12 @@ const WidgetConfig bitrateConf    PROGMEM = { TFT_FRAMEWDT, 19, 1, WA_RIGHT };
 //const WidgetConfig voltxtConf     PROGMEM = { 32, 108, 1, WA_RIGHT };
 //const WidgetConfig  iptxtConf     PROGMEM = { TFT_FRAMEWDT, 108, 1, WA_LEFT };
 const WidgetConfig   rssiConf     PROGMEM = { TFT_FRAMEWDT, 80-13, 1, WA_RIGHT };
-const WidgetConfig numConf        PROGMEM = { 0, 29+32, 35, WA_CENTER };
+const WidgetConfig numConf        PROGMEM = { 0, 29+32, 0, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { 0, 20, 1, WA_CENTER };
 const WidgetConfig apName2Conf    PROGMEM = { 0, 32, 1, WA_CENTER };
 const WidgetConfig apPassConf     PROGMEM = { 0, 46, 1, WA_CENTER };
 const WidgetConfig apPass2Conf    PROGMEM = { 0, 58, 1, WA_CENTER };
-const WidgetConfig  clockConf     PROGMEM = { 0, 29+34, 35, WA_RIGHT };  /* 35 is a fixed font size. do not change */
+const WidgetConfig  clockConf     PROGMEM = { 20, 29+34, 0, WA_RIGHT };  /* 35 is a fixed font size. do not change */
 const WidgetConfig vuConf         PROGMEM = { 1, 28, 1, WA_LEFT };
 
 const WidgetConfig bootWdtConf    PROGMEM = { 0, 50, 1, WA_CENTER };
@@ -62,7 +62,7 @@ const char           rssiFmt[]    PROGMEM = "%d";
 const char        bitrateFmt[]    PROGMEM = "%d";
 
 /* MOVES  */                             /* { left, top, width } */
-const MoveConfig    clockMove     PROGMEM = { 14, 29+34, 0};
+const MoveConfig    clockMove     PROGMEM = { 6, 29+34, 0};
 const MoveConfig   weatherMove    PROGMEM = { TFT_FRAMEWDT, 80-13, MAX_WIDTH-6*3-30 };
 const MoveConfig   weatherMoveVU  PROGMEM = { 30, 80-13, MAX_WIDTH-6*3-30 };
 

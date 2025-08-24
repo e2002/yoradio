@@ -1,33 +1,21 @@
 #ifndef displayST7920_h
 #define displayST7920_h
-#include "../core/options.h"
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include "../ST7920/ST7920.h"
-#include "tools/l10n.h"
-
-#define CHARWIDTH   6
-#define CHARHEIGHT  8
-
-#define DSP_OLED
-#define GXCLOCKFONT
+#include "fonts/bootlogo21x32.h"
 
 typedef GFXcanvas1 Canvas;
-#include "widgets/widgets.h"
-#include "widgets/pages.h"
+typedef ST7920 yoDisplay;
+
+#include "tools/commongfx.h"
 
 #if __has_include("conf/displayST7920conf_custom.h")
   #include "conf/displayST7920conf_custom.h"
 #else
   #include "conf/displayST7920conf.h"
 #endif
-
-class DspCore: public ST7920 {
-#include "tools/commongfx.h"
-};
-
-extern DspCore dsp;
 
 /*
  * OLED COLORS

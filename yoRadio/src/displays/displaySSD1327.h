@@ -1,38 +1,22 @@
 #ifndef displaySSD1327_h
 #define displaySSD1327_h
-#include "../core/options.h"
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1327.h>
-
-#if CLOCKFONT_MONO
-  #include "fonts/DS_DIGI28pt7b_mono.h"                          // https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
-#else
-  #include "fonts/DS_DIGI28pt7b.h"
-#endif
-#include "tools/l10n.h"
-
-#define CHARWIDTH   6
-#define CHARHEIGHT  8
-
-#define DSP_OLED
+#include "fonts/bootlogo62x40.h"
+#include "fonts/dsfont35.h"
 
 typedef GFXcanvas1 Canvas;
-#include "widgets/widgets.h"
-#include "widgets/pages.h"
+typedef Adafruit_SSD1327 yoDisplay;
+
+#include "tools/commongfx.h"
 
 #if __has_include("conf/displaySSD1327conf_custom.h")
   #include "conf/displaySSD1327conf_custom.h"
 #else
   #include "conf/displaySSD1327conf.h"
 #endif
-
-class DspCore: public Adafruit_SSD1327 {
-#include "tools/commongfx.h"
-};
-
-extern DspCore dsp;
 
       /*
       SSD1327_GRAYTABLE,
@@ -43,14 +27,12 @@ extern DspCore dsp;
 /*
  * TFT COLORS
  */
-#define BOOT_PRG_COLOR    0x07
-#define BOOT_TXT_COLOR    0x3f
+
 #define DARK_GRAY   0x01
 #define SILVER      0x07
 #define TFT_BG      0x00
 #define TFT_FG      0x08
 #define TFT_LOGO    0x3f
 #define ORANGE      0x05
-#define PINK        0x02
 
 #endif

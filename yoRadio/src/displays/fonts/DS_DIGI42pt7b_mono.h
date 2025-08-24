@@ -192,7 +192,7 @@ const GFXglyph DS_DIGI42pt7bGlyphs[] PROGMEM = {
   {  1888,   6,  43,  15,    4,  -42 }    // 0x3A ':'
 };
 
-const GFXfont DS_DIGI42pt7b PROGMEM = {
+const GFXfont Clock_GFXfont PROGMEM = {
   (uint8_t  *)DS_DIGI42pt7bBitmaps,  
   (GFXglyph *)DS_DIGI42pt7bGlyphs, 0x20, 0x3A,    82 };
 

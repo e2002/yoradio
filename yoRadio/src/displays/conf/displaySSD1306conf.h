@@ -16,7 +16,7 @@
 #define HIDE_VOL
 #define HIDE_VU
 
-#define bootLogoTop     68
+#define bootLogoTop     8
 
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
 const ScrollConfig metaConf       PROGMEM = {{ TFT_FRAMEWDT, 0, 2, WA_LEFT }, 140, true, MAX_WIDTH, 5000, 3, 15 };
@@ -40,12 +40,12 @@ const WidgetConfig bitrateConf    PROGMEM = { 0, 17, 1, WA_RIGHT };
 //const WidgetConfig voltxtConf     PROGMEM = { 32, 108, 1, WA_RIGHT };
 const WidgetConfig  iptxtConf     PROGMEM = { 0, 64-11, 1, WA_LEFT };
 const WidgetConfig   rssiConf     PROGMEM = { 0, 64-11, 1, WA_RIGHT };
-const WidgetConfig numConf        PROGMEM = { 0, 28, 2, WA_CENTER };
+const WidgetConfig numConf        PROGMEM = { 0, 28, 0, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { 0, 18, 1, WA_CENTER };
 const WidgetConfig apName2Conf    PROGMEM = { 0, 26, 1, WA_CENTER };
 const WidgetConfig apPassConf     PROGMEM = { 0, 37, 1, WA_CENTER };
 const WidgetConfig apPass2Conf    PROGMEM = { 0, 45, 1, WA_CENTER };
-const WidgetConfig  clockConf     PROGMEM = { 6, 36, 2, WA_CENTER };
+const WidgetConfig  clockConf     PROGMEM = { 6, 36, 0, WA_CENTER };
 const WidgetConfig vuConf         PROGMEM = { 1, 28, 1, WA_LEFT };
 
 const WidgetConfig bootWdtConf    PROGMEM = { 0, 64-8*2-5, 1, WA_CENTER };

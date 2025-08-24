@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "core/options.h"
 #include "core/config.h"
+#include "pluginsManager/pluginsManager.h"
 #include "core/telnet.h"
 #include "core/player.h"
 #include "core/display.h"
@@ -10,6 +11,9 @@
 #include "core/mqtt.h"
 #include "core/optionschecker.h"
 #include "core/timekeeper.h"
+#ifdef USE_NEXTION
+#include "displays/nextion.h"
+#endif
 
 #if USE_OTA
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)

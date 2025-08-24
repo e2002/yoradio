@@ -1,6 +1,12 @@
+#include "options.h"
 #if SDC_CS!=255
-
-#define USE_SD
+#include <Arduino.h>
+#include <SPI.h>
+#include <SD.h>
+#include "vfs_api.h"
+#include "sd_diskio.h"
+//#define USE_SD
+#include "config.h"
 #include "sdmanager.h"
 #include "display.h"
 #include "player.h"

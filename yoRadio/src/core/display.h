@@ -1,21 +1,24 @@
 #ifndef display_h
 #define display_h
-#include "options.h"
-
-#include "Arduino.h"
-#include "config.h"
 #include "common.h"
-#include "../displays/dspcore.h"
 
-#if NEXTION_RX!=255 && NEXTION_TX!=255
-  #define USE_NEXTION
-  #include "../displays/nextion.h"
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
 #endif
 
-//static void loopDspTask(void * pvParameters);
-
 #ifndef DUMMYDISPLAY
-
+class ScrollWidget;
+class PlayListWidget;
+class BitrateWidget;
+class FillWidget;
+class SliderWidget;
+class Pager;
+class Page;
+class VuWidget;
+class NumWidget;
+class ClockWidget;
+class TextWidget;
+    
 class Display {
   public:
     uint16_t currentPlItem;
@@ -23,6 +26,7 @@ class Display {
     displayMode_e _mode;
   public:
     Display() {};
+    ~Display();
     displayMode_e mode() { return _mode; }
     void mode(displayMode_e m) { _mode=m; }
     void init();
@@ -36,22 +40,21 @@ class Display {
     bool deepsleep();
     void wakeup();
     void setContrast();
-    void printPLitem(uint8_t pos, const char* item);
     void lock()   { _locked=true; }
     void unlock() { _locked=false; }
+    uint16_t width();
+    uint16_t height();
   private:
-    ScrollWidget _meta, _title1, _plcurrent;
-    ScrollWidget *_weather;
-    ScrollWidget *_title2;
+    ScrollWidget *_meta, *_title1, *_plcurrent, *_weather, *_title2;
+    PlayListWidget *_plwidget;
     BitrateWidget *_fullbitrate;
     FillWidget *_metabackground, *_plbackground;
     SliderWidget *_volbar, *_heapbar;
-    Pager _pager;
-    Page _footer;
+    Pager *_pager;
+    Page *_footer;
     VuWidget *_vuwidget;
-    NumWidget _nums;
-    ProgressWidget _testprogress;
-    ClockWidget _clock;
+    NumWidget *_nums;
+    ClockWidget *_clock;
     Page *_boot;
     TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
     bool _locked = false;
@@ -99,6 +102,8 @@ class Display {
     void printPLitem(uint8_t pos, const char* item){}
     void lock()   {}
     void unlock() {}
+    uint16_t width(){ return 0; }
+    uint16_t height(){ return 0; }
   private:
     void _createDspTask();
 };

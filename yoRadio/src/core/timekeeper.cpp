@@ -1,11 +1,20 @@
-#include "timekeeper.h"
 #include "options.h"
+#include "Arduino.h"
+#include "timekeeper.h"
 #include "config.h"
 #include "network.h"
 #include "display.h"
 #include "player.h"
 #include "netserver.h"
 #include "rtcsupport.h"
+#include "../displays/tools/l10n.h"
+#include "../pluginsManager/pluginsManager.h"
+#ifdef USE_NEXTION
+#include "../displays/nextion.h"
+#endif
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
+#endif
 
 #if RTCSUPPORTED
   //#define TIME_SYNC_INTERVAL  24*60*60*1000
@@ -17,7 +26,24 @@
 
 #define SYNC_STACK_SIZE       1024 * 4
 #define SYNC_TASK_CORE        0
-#define SYNC_TASK_PRIORITY    1
+#define SYNC_TASK_PRIORITY    3
+#define WEATHER_STRING_L      254
+
+#ifdef HEAP_DBG
+  void printHeapFragmentationInfo(const char* title){
+    size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+    size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+    float fragmentation = 100.0 * (1.0 - ((float)largestBlock / (float)freeHeap));
+    Serial.printf("\n****** %s ******\n", title);
+    Serial.printf("* Free heap: %u bytes\n", freeHeap);
+    Serial.printf("* Largest free block: %u bytes\n", largestBlock);
+    Serial.printf("* Fragmentation: %.2f%%\n", fragmentation);
+    Serial.printf("*************************************\n\n");
+  }
+  #define HEAP_INFO() printHeapFragmentationInfo(__PRETTY_FUNCTION__)
+#else
+  #define HEAP_INFO()
+#endif
 
 TimeKeeper timekeeper;
 
@@ -55,7 +81,8 @@ bool TimeKeeper::loop0(){ // core0 (display)
   static uint32_t _last5s = 0;
   if (currentTime - _last1s >= 1000) { // 1sec
     _last1s = currentTime;
-#ifndef DUMMYDISPLAY
+//#ifndef DUMMYDISPLAY
+#if !defined(DUMMYDISPLAY) || defined(USE_NEXTION)
   #ifndef UPCLOCK_CORE1
     _upClock();
   #endif
@@ -80,7 +107,8 @@ bool TimeKeeper::loop1(){ // core1 (player)
   if (currentTime - _last1s >= 1000) { // 1sec
     pm.on_ticker();
     _last1s = currentTime;
-#ifndef DUMMYDISPLAY
+//#ifndef DUMMYDISPLAY
+#if !defined(DUMMYDISPLAY) || defined(USE_NEXTION)
   #ifdef UPCLOCK_CORE1
     _upClock();
   #endif
@@ -94,7 +122,8 @@ bool TimeKeeper::loop1(){ // core1 (player)
     _last2s = currentTime;
   }
 
-  #ifdef DUMMYDISPLAY
+  //#ifdef DUMMYDISPLAY
+  #if defined(DUMMYDISPLAY) && !defined(USE_NEXTION)
   return true;
   #endif
   // Sync weather & time
@@ -150,8 +179,10 @@ void TimeKeeper::_upClock(){
 #if RTCSUPPORTED
   if(config.isRTCFound()){
     rtc.getTime(&network.timeinfo);
-    mktime(&network.timeinfo);
-    if(display.ready()) display.putRequest(CLOCK);
+    if(network.timeinfo.tm_year>100){
+      mktime(&network.timeinfo);
+      if(display.ready()) display.putRequest(CLOCK);
+    }
   }
 #else
   if(network.timeinfo.tm_year>100 || network.status == SDREADY) {
@@ -173,6 +204,7 @@ void TimeKeeper::_upScreensaver(){
       }else{
         display.putRequest(NEWMODE, SCREENSAVER);
       }
+      config.screensaverTicks=SCREENSAVERSTARTUPDELAY;
     }
   }
   if(config.store.screensaverPlayingEnabled && display.mode()==PLAYER && player.isRunning()){
@@ -183,6 +215,7 @@ void TimeKeeper::_upScreensaver(){
       }else{
         display.putRequest(NEWMODE, SCREENSAVER);
       }
+      config.screensaverPlayingTicks=SCREENSAVERSTARTUPDELAY;
     }
   }
 #endif
@@ -251,7 +284,7 @@ bool _getWeather() {
     weatherClient->onDisconnect([](void * arg, AsyncClient * c){ weatherClient = NULL; delete c; }, NULL);
     
     char httpget[250] = {0};
-    sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, weatherUnits, weatherLang, config.store.weatherkey, host);
+    sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, LANG::weatherUnits, LANG::weatherLang, config.store.weatherkey, host);
     client->write(httpget);
     
     client->onData([](void * arg, AsyncClient * c, void * data, size_t len){
@@ -318,9 +351,9 @@ bool _getWeather() {
         sprintf(timekeeper.weatherBuf, weatherFmt, tempf, press, hum);
         #else
           #if EXT_WEATHER
-            sprintf(timekeeper.weatherBuf, weatherFmt, desc, tempf, tempfl, press, hum, wind_speed, wind[(int)(wind_deg/22.5)]);
+            sprintf(timekeeper.weatherBuf, LANG::weatherFmt, desc, tempf, tempfl, press, hum, wind_speed, LANG::wind[(int)(wind_deg/22.5)]);
           #else
-            sprintf(timekeeper.weatherBuf, weatherFmt, desc, tempf, press, hum);
+            sprintf(timekeeper.weatherBuf, LANG::weatherFmt, desc, tempf, press, hum);
           #endif
         #endif
         display.putRequest(NEWWEATHER);

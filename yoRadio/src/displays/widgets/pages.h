@@ -3,6 +3,7 @@
 
 #include <list>
 
+class Widget;
 
 class Page {
   protected:

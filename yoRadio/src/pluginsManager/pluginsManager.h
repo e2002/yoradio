@@ -121,24 +121,24 @@ public:
   Plugin* get(size_t index);
   requestParams_t *request;
   template <typename Func, typename... Args>
-  void call_event(Func&& func, Args&&... args){
+  inline void call_event(Func&& func, Args&&... args){
     for (auto* plugin : plugins) {
       if (plugin) {
         (plugin->*func)(std::forward<Args>(args)...);
       }
     }
   }
-  void on_setup(){ call_event(&Plugin::on_setup); }
-  void on_end_setup(){ call_event(&Plugin::on_end_setup); }
-  void on_connect(){ call_event(&Plugin::on_connect); }
-  void on_start_play(){ call_event(&Plugin::on_start_play); }
-  void on_stop_play(){ call_event(&Plugin::on_stop_play); }
-  void on_track_change(){ call_event(&Plugin::on_track_change); }
-  void on_station_change(){ call_event(&Plugin::on_station_change); }
-  void on_display_queue(requestParams_t &request, bool& result){ call_event(&Plugin::on_display_queue, request, result); }
-  void on_display_player(){ call_event(&Plugin::on_display_player); }
-  void on_ticker(){ call_event(&Plugin::on_ticker); }
-  void on_btn_click(controlEvt_e &btnid){ call_event(&Plugin::on_btn_click, btnid); }
+  inline void on_setup(){ call_event(&Plugin::on_setup); }
+  inline void on_end_setup(){ call_event(&Plugin::on_end_setup); }
+  inline void on_connect(){ call_event(&Plugin::on_connect); }
+  inline void on_start_play(){ call_event(&Plugin::on_start_play); }
+  inline void on_stop_play(){ call_event(&Plugin::on_stop_play); }
+  inline void on_track_change(){ call_event(&Plugin::on_track_change); }
+  inline void on_station_change(){ call_event(&Plugin::on_station_change); }
+  inline void on_display_queue(requestParams_t &request, bool& result){ call_event(&Plugin::on_display_queue, request, result); }
+  inline void on_display_player(){ call_event(&Plugin::on_display_player); }
+  inline void on_ticker(){ call_event(&Plugin::on_ticker); }
+  inline void on_btn_click(controlEvt_e &btnid){ call_event(&Plugin::on_btn_click, btnid); }
 private:
   std::vector<Plugin*> plugins;
 };

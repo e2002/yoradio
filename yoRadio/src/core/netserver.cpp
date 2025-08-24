@@ -1,18 +1,22 @@
-#include "netserver.h"
+#include "options.h"
+#include "Arduino.h"
 #include <SPIFFS.h>
-
+#include <Update.h>
+#include "config.h"
+#include "netserver.h"
 #include "player.h"
 #include "telnet.h"
 #include "display.h"
-#include "options.h"
 #include "network.h"
 #include "mqtt.h"
 #include "controls.h"
 #include "commandhandler.h"
 #include "timekeeper.h"
-#include <Update.h>
+#include "../displays/widgets/widgetsconfig.h" //BitrateFormat
 
-//#include <Ticker.h>
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
+#endif
 
 #ifdef USE_SD
 #include "sdmanager.h"
@@ -27,6 +31,12 @@
 #ifndef NS_QUEUE_TICKS
   //#define NS_QUEUE_TICKS pdMS_TO_TICKS(2)
   #define NS_QUEUE_TICKS 0
+#endif
+
+#ifdef DEBUG_V
+#define DBGVB( ... ) { char buf[200]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("[DEBUG]\t"); Serial.println(buf); }
+#else
+#define DBGVB( ... )
 #endif
 
 //#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)

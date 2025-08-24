@@ -1,67 +1,17 @@
 #ifndef widgets_h
 #define widgets_h
+#if DSP_MODEL!=DSP_DUMMY
+#include "widgetsconfig.h"
 
-#include "Arduino.h"
-#include "../../core/config.h"
-enum WidgetAlign { WA_LEFT, WA_CENTER, WA_RIGHT };
+#ifndef DSP_LCD
+  #define CHARWIDTH   6
+  #define CHARHEIGHT  8
+#else
+  #define CHARWIDTH   1
+  #define CHARHEIGHT  1
+#endif
 
-
-typedef struct clipArea {
-  uint16_t left; 
-  uint16_t top; 
-  uint16_t width;  
-  uint16_t height;
-} clipArea;
-
-struct WidgetConfig {
-  uint16_t left; 
-  uint16_t top; 
-  uint16_t textsize;
-  WidgetAlign align;
-};
-
-struct ScrollConfig {
-  WidgetConfig widget;
-  uint16_t buffsize;
-  bool uppercase;
-  uint16_t width;
-  uint16_t startscrolldelay;
-  uint8_t scrolldelta;
-  uint16_t scrolltime;
-};
-
-struct FillConfig {
-  WidgetConfig widget;
-  uint16_t width;
-  uint16_t height;
-  bool outlined;
-};
-
-struct ProgressConfig {
-  uint16_t speed;
-  uint16_t width;
-  uint16_t barwidth;
-};
-
-struct VUBandsConfig {
-  uint16_t width;
-  uint16_t height;
-  uint8_t  space;
-  uint8_t  vspace;
-  uint8_t  perheight;
-  uint8_t  fadespeed;
-};
-
-struct MoveConfig {
-  uint16_t x;
-  uint16_t y;
-  int16_t width;
-};
-
-struct BitrateConfig {
-  WidgetConfig widget;
-  uint16_t dimension;
-};
+class psFrameBuffer;
 
 class Widget{
   public:
@@ -133,7 +83,8 @@ class TextWidget: public Widget {
     uint8_t _charWidth;
   protected:
     void _draw();
-    uint16_t _realLeft();
+    uint16_t _realLeft(bool w_fb=false);
+    void _charSize(uint8_t textsize, uint8_t& width, uint16_t& height);
 };
 
 class FillWidget: public Widget {
@@ -168,6 +119,7 @@ class ScrollWidget: public TextWidget {
     uint32_t _scrolldelay;
     uint16_t _sepwidth, _startscrolldelay;
     uint8_t _charWidth;
+    psFrameBuffer* _fb=nullptr;
   private:
     void _setTextParams();
     void _calcX();
@@ -201,7 +153,8 @@ class SliderWidget: public Widget {
 class VuWidget: public Widget {
   public:
     VuWidget() {}
-    VuWidget(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor, uint16_t vumincolor, uint16_t bgcolor) { init(wconf, bands, vumaxcolor, vumincolor, bgcolor); }
+    VuWidget(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor, uint16_t vumincolor, uint16_t bgcolor)
+            { init(wconf, bands, vumaxcolor, vumincolor, bgcolor); }
     ~VuWidget();
     using Widget::init;
     void init(WidgetConfig wconf, VUBandsConfig bands, uint16_t vumaxcolor, uint16_t vumincolor, uint16_t bgcolor);
@@ -250,10 +203,41 @@ class ProgressWidget: public TextWidget {
 
 class ClockWidget: public Widget {
   public:
+    using Widget::init;
+    void init(WidgetConfig wconf, uint16_t fgcolor, uint16_t bgcolor);
     void draw();
+    uint8_t textsize(){ return _config.textsize; }
+    void clear(){ _clearClock(); }
+    inline uint16_t dateSize(){ return _space+ _dateheight; }
+    inline uint16_t clockWidth(){ return _clockwidth; }
+  private:
+  #ifndef DSP_LCD
+    #if DSP_MODEL==DSP_ILI9225
+    auto &getRealDsp();
+    #else
+    Adafruit_GFX &getRealDsp();
+    #endif
+  #endif
   protected:
+    char  _timebuffer[20]="00:00";
+    char _tmp[30], _datebuf[30];
+    uint8_t _superfont;
+    uint16_t _clockleft, _clockwidth, _timewidth, _dotsleft, _linesleft;
+    uint8_t  _clockheight, _timeheight, _dateheight, _space;
+    uint16_t _forceflag = 0;
+    bool dots = true;
+    bool _fullclock;
+    psFrameBuffer* _fb=nullptr;
     void _draw();
     void _clear();
+    void _reset();
+    void _getTimeBounds();
+    void _printClock(bool force=false);
+    void _clearClock();
+    bool _getTime();
+    uint16_t _left();
+    uint16_t _top();
+    void _begin();
 };
 
 class BitrateWidget: public Widget {
@@ -272,6 +256,29 @@ class BitrateWidget: public Widget {
     uint16_t _dimension, _bitrate, _textheight;
     void _draw();
     void _clear();
+    void _charSize(uint8_t textsize, uint8_t& width, uint16_t& height);
 };
 
+class PlayListWidget: public Widget {
+  public:
+    using Widget::init;
+    void init(ScrollWidget* current);
+    void drawPlaylist(uint16_t currentItem);
+    inline uint16_t itemHeight(){ return _plItemHeight; }
+    inline uint16_t currentTop(){ return _plYStart+_plCurrentPos*_plItemHeight; }
+  private:
+    ScrollWidget* _current;
+    uint16_t _plItemHeight, _plTtemsCount, _plCurrentPos;
+    int _plYStart;
+    uint8_t _fillPlMenu(int from, uint8_t count);
+    void _printPLitem(uint8_t pos, const char* item);
+    
+};
+
+
 #endif
+#endif
+
+
+
+

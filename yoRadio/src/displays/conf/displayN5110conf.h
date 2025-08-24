@@ -39,12 +39,12 @@ const FillConfig   volbarConf     PROGMEM = {{ 0, 45, 0, WA_LEFT }, MAX_WIDTH, 3
 const WidgetConfig bootstrConf    PROGMEM = { 0, 48-7, 1, WA_CENTER };
 const WidgetConfig bitrateConf    PROGMEM = { TFT_FRAMEWDT, 8, 1, WA_RIGHT };
 const WidgetConfig voltxtConf     PROGMEM = { 0, 48-11, 1, WA_RIGHT };
-const WidgetConfig numConf        PROGMEM = { 0, 34, 19, WA_CENTER };
+const WidgetConfig numConf        PROGMEM = { 0, 34, 0, WA_CENTER };
 const WidgetConfig apNameConf     PROGMEM = { 0, 8, 1, WA_CENTER };
 const WidgetConfig apName2Conf    PROGMEM = { 0, 16, 1, WA_CENTER };
 const WidgetConfig apPassConf     PROGMEM = { 0, 24, 1, WA_CENTER };
 const WidgetConfig apPass2Conf    PROGMEM = { 0, 32, 1, WA_CENTER };
-const WidgetConfig clockConf      PROGMEM = { 4, 35, 19, WA_RIGHT };  /* 19 is a fixed font size. do not change */
+const WidgetConfig clockConf      PROGMEM = { 4, 35, 0, WA_RIGHT };
 const WidgetConfig vuConf         PROGMEM = { TFT_FRAMEWDT, 50, 1, WA_LEFT };
 
 const WidgetConfig bootWdtConf    PROGMEM = { 0, 48-7-10, 1, WA_CENTER };

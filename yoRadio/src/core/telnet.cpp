@@ -1,11 +1,10 @@
+#include "options.h"
 #include <stdarg.h>
-#include "WiFi.h"
-
 #include "config.h"
 #include "player.h"
 #include "network.h"
 #include "telnet.h"
-#include "esp_heap_caps.h"
+//#include "esp_heap_caps.h"
 
 Telnet telnet;
 

@@ -1,11 +1,16 @@
+#include <Arduino.h>
+#include "options.h"
 #include "commandhandler.h"
 #include "player.h"
 #include "display.h"
 #include "netserver.h"
 #include "config.h"
 #include "controls.h"
-#include "options.h"
 #include "telnet.h"
+
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
+#endif
 
 CommandHandler cmd;
 

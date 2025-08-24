@@ -1,3 +1,4 @@
+#include "options.h"
 #include "rtcsupport.h"
 
 #if RTCSUPPORTED

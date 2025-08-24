@@ -1,6 +1,6 @@
 #ifndef _display_l10n_h
 #define _display_l10n_h
-
+namespace LANG{
 //==================================================
 #if L10N_LANGUAGE==RU
   #define L10N_PATH "../../../locale/displayL10n_ru.h"
@@ -14,5 +14,5 @@
   #include L10N_PATH
 #endif
 //==================================================
-
+}
 #endif

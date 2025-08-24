@@ -1,8 +1,6 @@
 #ifndef timekeeper_h
 #define timekeeper_h
-#include "Arduino.h"
-
-#define WEATHER_STRING_L  254
+#pragma once
 
 void _syncTask(void * pvParameters);
 bool _getWeather();

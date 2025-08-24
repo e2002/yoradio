@@ -1,11 +1,10 @@
-#include "mqtt.h"
-
+#include "options.h"
 #ifdef MQTT_ROOT_TOPIC
-#include "WiFi.h"
 
-#include "telnet.h"
-#include "player.h"
 #include "config.h"
+#include "mqtt.h"
+#include "WiFi.h"
+#include "player.h"
 
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;

@@ -1,31 +1,27 @@
+#include "options.h"
 #include "config.h"
-
-//#include <SPIFFS.h>
 #include "display.h"
 #include "player.h"
 #include "network.h"
 #include "netserver.h"
 #include "controls.h"
 #include "timekeeper.h"
+#include "telnet.h"
+#include "rtcsupport.h"
+#include "../displays/tools/l10n.h"
 #ifdef USE_SD
 #include "sdmanager.h"
 #endif
+#ifdef USE_NEXTION
+#include "../displays/nextion.h"
+#endif
 #include <cstddef>
 
-Config config;
-
-#ifdef HEAP_DBG
-void printHeapFragmentationInfo(const char* title){
-  size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-  size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
-  float fragmentation = 100.0 * (1.0 - ((float)largestBlock / (float)freeHeap));
-  Serial.printf("\n****** %s ******\n", title);
-  Serial.printf("* Free heap: %u bytes\n", freeHeap);
-  Serial.printf("* Largest free block: %u bytes\n", largestBlock);
-  Serial.printf("* Fragmentation: %.2f%%\n", fragmentation);
-  Serial.printf("*************************************\n\n");
-}
+#if DSP_MODEL==DSP_DUMMY
+#define DUMMYDISPLAY
 #endif
+
+Config config;
 
 void u8fix(char *src){
   char last = src[strlen(src)-1]; 
@@ -143,9 +139,8 @@ void Config::_setupVersion(){
   saveValue(&store.version, currentVersion);
 }
 
-#ifdef USE_SD
-
 void Config::changeMode(int newmode){
+#ifdef USE_SD
   bool pir = player.isRunning();
   if(SDC_CS==255) return;
   if(getMode()==PM_SDCARD) {
@@ -196,9 +191,11 @@ void Config::changeMode(int newmode){
   display.resetQueue();
   display.putRequest(NEWMODE, PLAYER);
   display.putRequest(NEWSTATION);
+#endif
 }
 
 void Config::initSDPlaylist() {
+#ifdef USE_SD
   //store.countStation = 0;
   bool doIndex = !sdman.exists(INDEX_SD_PATH);
   if(doIndex) sdman.indexSDPlaylist();
@@ -212,9 +209,8 @@ void Config::initSDPlaylist() {
     index.close();
     //saveValue(&store.countStation, store.countStation, true, true);
   }
-}
-
 #endif //#ifdef USE_SD
+}
 
 bool Config::spiffsCleanup(){
   bool ret = (SPIFFS.exists(PLAYLIST_SD_PATH)) || (SPIFFS.exists(INDEX_SD_PATH)) || (SPIFFS.exists(INDEX_PATH));
@@ -243,9 +239,9 @@ bool Config::prepareForPlaying(uint16_t stationId){
   }
   
   if(!loadStation(stationId)) return false;
-  setTitle(getMode()==PM_WEB?const_PlConnect:"[next track]");
+  setTitle(getMode()==PM_WEB?LANG::const_PlConnect:"[next track]");
   station.bitrate=0;
-  setBitrateFormat(BF_UNCNOWN);
+  setBitrateFormat(BF_UNKNOWN);
   display.putRequest(DBITRATE);
   display.putRequest(NEWSTATION);
   display.putRequest(NEWMODE, PLAYER);
@@ -780,52 +776,6 @@ char * Config::stationByNum(uint16_t num){
   strncpy(_stationBuf, playlist.readStringUntil('\t').c_str(), sizeof(_stationBuf));
   playlist.close();
   return _stationBuf;
-}
-
-uint8_t Config::fillPlMenu(int from, uint8_t count, bool fromNextion) {
-  int     ls      = from;
-  uint8_t c       = 0;
-  bool    finded  = false;
-  if (playlistLength() == 0) {
-    return 0;
-  }
-  File playlist = SDPLFS()->open(REAL_PLAYL, "r");
-  File index = SDPLFS()->open(REAL_INDEX, "r");
-  while (true) {
-    if (ls < 1) {
-      ls++;
-      if(!fromNextion) display.printPLitem(c, "");
-  #ifdef USE_NEXTION
-    if(fromNextion) nextion.printPLitem(c, "");
-  #endif
-      c++;
-      continue;
-    }
-    if (!finded) {
-      index.seek((ls - 1) * 4, SeekSet);
-      uint32_t pos;
-      index.readBytes((char *) &pos, 4);
-      finded = true;
-      index.close();
-      playlist.seek(pos, SeekSet);
-    }
-    bool pla = true;
-    while (pla) {
-      pla = playlist.available();
-      String stationName = playlist.readStringUntil('\n');
-      stationName = stationName.substring(0, stationName.indexOf('\t'));
-      if(config.store.numplaylist && stationName.length()>0) stationName = String(from+c)+" "+stationName;
-      if(!fromNextion) display.printPLitem(c, stationName.c_str());
-      #ifdef USE_NEXTION
-        if(fromNextion) nextion.printPLitem(c, stationName.c_str());
-      #endif
-      c++;
-      if (c >= count) break;
-    }
-    break;
-  }
-  playlist.close();
-  return c;
 }
 
 void Config::escapeQuotes(const char* input, char* output, size_t maxLen) {
