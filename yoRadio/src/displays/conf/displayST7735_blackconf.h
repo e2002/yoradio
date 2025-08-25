@@ -65,6 +65,6 @@ const char        bitrateFmt[]    PROGMEM = "%d";
 /* MOVES  */                             /* { left, top, width (0 - auto, -1 - lock } */
 const MoveConfig    clockMove     PROGMEM = { 14, 94, 0};
 const MoveConfig   weatherMove    PROGMEM = {TFT_FRAMEWDT, 48, MAX_WIDTH};
-const MoveConfig   weatherMoveVU  PROGMEM = { 34, 48, 122 };
+const MoveConfig   weatherMoveVU  PROGMEM = { 34, 48, MAX_WIDTH-34+TFT_FRAMEWDT };
 
 #endif
