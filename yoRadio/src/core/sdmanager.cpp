@@ -28,7 +28,9 @@ bool SDManager::start(){
   ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   vTaskDelay(10);
   if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
-  vTaskDelay(10);
+  vTaskDelay(20);
+  if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
+  vTaskDelay(50);
   if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   return ready;
 }

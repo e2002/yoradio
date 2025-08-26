@@ -333,7 +333,7 @@ void Display::_swichMode(displayMode_e newmode) {
   dsp.setScrollId(NULL);
   if (newmode == PLAYER) {
     if(player.isRunning())
-      _clock->moveTo(clockMove);
+      if(clockMove.width<0) _clock->moveBack(); else _clock->moveTo(clockMove);
     else
       _clock->moveBack();
     #ifdef DSP_LCD
@@ -418,7 +418,8 @@ void Display::_layoutChange(bool played){
   if(config.store.vumeter){
     if(played){
       if(_vuwidget) _vuwidget->unlock();
-      _clock->moveTo(clockMove);
+      //_clock->moveTo(clockMove);
+      if(clockMove.width<0) _clock->moveBack(); else _clock->moveTo(clockMove);
       if(_weather) _weather->moveTo(weatherMoveVU);
     }else{
       if(_vuwidget) if(!_vuwidget->locked()) _vuwidget->lock();
