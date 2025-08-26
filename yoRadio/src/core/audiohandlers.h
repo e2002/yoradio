@@ -84,11 +84,9 @@ void audio_id3album(const char *info){
     if(strlen(config.station.title)==0){
       config.setTitle(info);
     }else{
-      size_t tbs = sizeof(config.tmpBuf);
-      strlcat(config.tmpBuf, config.station.title, tbs);
-      strlcat(config.tmpBuf, " - ", tbs);
-      strlcat(config.tmpBuf, info, tbs);
-      config.setTitle(config.tmpBuf);
+      char tmp[BUFLEN];
+      snprintf(tmp, BUFLEN, "%s - %s", config.station.title, info);
+      config.setTitle(tmp);
     }
   }
 }

@@ -235,6 +235,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.682
+- fixed bug with redundant epoch time being added to the tag in SD mode https://t.me/yoradiochat/66688
+
 #### v0.9.680
 - fixed clock display bug when exiting screensaver in playback mode
 - increased number of SD card initialization attempts when switching mode
