@@ -177,20 +177,14 @@ void TimeKeeper::_doAfterWait(){
 
 void TimeKeeper::_upClock(){
 #if RTCSUPPORTED
-  if(config.isRTCFound()){
-    rtc.getTime(&network.timeinfo);
-    if(network.timeinfo.tm_year>100){
-      mktime(&network.timeinfo);
-      if(display.ready()) display.putRequest(CLOCK);
-    }
-  }
+  if(config.isRTCFound()) rtc.getTime(&network.timeinfo);
 #else
   if(network.timeinfo.tm_year>100 || network.status == SDREADY) {
     network.timeinfo.tm_sec++;
     mktime(&network.timeinfo);
-    if(display.ready()) display.putRequest(CLOCK);
   }
 #endif
+  if(display.ready()) display.putRequest(CLOCK);
 }
 
 void TimeKeeper::_upScreensaver(){

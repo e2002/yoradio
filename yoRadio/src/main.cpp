@@ -25,7 +25,7 @@
 #endif
 
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-SPIClass  SPI2(HOOPSENb);
+SPIClass  SPI2(HSPI);
 #endif
 
 extern __attribute__((weak)) void yoradio_on_setup();

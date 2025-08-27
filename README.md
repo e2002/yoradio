@@ -235,6 +235,10 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.686
+- fixed SD card connection bug in configurations with `SD_SPIPINS` defined
+- time synchronization setting
+
 #### v0.9.682
 - fixed bug with redundant epoch time being added to the tag in SD mode https://t.me/yoradiochat/66688
 
