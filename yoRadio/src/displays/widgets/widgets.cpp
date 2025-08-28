@@ -167,14 +167,14 @@ void ScrollWidget::setText(const char* txt) {
       #ifdef PSFBUFFER
         _fb->fillRect(0, 0, _width, _textheight, _bgcolor);
         _fb->setCursor(0, 0);
-        snprintf(_window, _width / _charWidth + 2, "%s", _text); //TODO
+        snprintf(_window, _width / _charWidth + 1, "%s", _text); //TODO
         _fb->print(_window);
         _fb->display();
       #endif
       } else {
         dsp.fillRect(_config.left,  _config.top, _width, _textheight, _bgcolor);
         dsp.setCursor(_config.left, _config.top);
-        snprintf(_window, _width / _charWidth + 2, "%s", _text); //TODO
+        snprintf(_window, _width / _charWidth + 1, "%s", _text); //TODO
         dsp.setClipping({_config.left, _config.top, _width, _textheight});
         dsp.print(_window);
         dsp.clearClipping();
@@ -235,13 +235,14 @@ void ScrollWidget::_draw() {
     const char* _cursor = _text + _newx / _charWidth;
     uint16_t hiddenChars = _cursor - _text;
     if (hiddenChars < strlen(_text)) {
-      snprintf(_window, _width / _charWidth + 2, "%s%s%s", _cursor, _sep, _text);
+      snprintf(_window, _width / _charWidth + 1, "%s%s%s", _cursor, _sep, _text);
     } else {
       const char* _scursor = _sep + (_cursor - (_text + strlen(_text)));
-      snprintf(_window, _width / _charWidth + 2, "%s%s", _scursor, _text);
+      snprintf(_window, _width / _charWidth + 1, "%s%s", _scursor, _text);
     }
     if(_fb->ready()){
     #ifdef PSFBUFFER
+      _fb->fillRect(0, 0, _width, _textheight, _bgcolor);
       _fb->setCursor(_x + hiddenChars * _charWidth, 0);
       _fb->print(_window);
       _fb->display();

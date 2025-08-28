@@ -63,7 +63,7 @@ class  psFrameBuffer : public Adafruit_GFX {
       }
       if(buffer){
         for (int i = 0; i < _hh * _ww; i++)
-          buffer[i] = 0;
+          buffer[i] = _bgcolor;
         _ready = true;
       }
     }
