@@ -415,7 +415,7 @@ void Display::putRequest(displayRequestType_e type, int payload){
 }
 
 void Display::_layoutChange(bool played){
-  if(config.store.vumeter){
+  if(config.store.vumeter && _vuwidget){
     if(played){
       if(_vuwidget) _vuwidget->unlock();
       //_clock->moveTo(clockMove);
@@ -428,8 +428,9 @@ void Display::_layoutChange(bool played){
     }
   }else{
     if(played){
+      if(clockMove.width<0) _clock->moveBack(); else _clock->moveTo(clockMove);
       if(_weather) _weather->moveTo(weatherMove);
-      _clock->moveBack();
+      //_clock->moveBack();
     }else{
       if(_weather) _weather->moveBack();
       _clock->moveBack();

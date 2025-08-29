@@ -12,6 +12,7 @@
 #include "controls.h"
 #include "commandhandler.h"
 #include "timekeeper.h"
+#include "../displays/dspcore.h"
 #include "../displays/widgets/widgetsconfig.h" //BitrateFormat
 
 #if DSP_MODEL==DSP_DUMMY

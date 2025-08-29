@@ -235,6 +235,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.693
+- fixed incorrect behavior of the `HIDE_VU` setting [#205](https://github.com/e2002/yoradio/issues/205)
+- fixed `CORRUPT HEAP` error when playing "invalid links" [#203](https://github.com/e2002/yoradio/issues/203)
+- optimized code of `utfToAscii` [utf8Rus](https://github.com/e2002/yoradio/blob/main/yoRadio/src/displays/tools/utf8Rus.cpp)
+
 #### v0.9.689
 - fixed artifacts in scrolling text
 

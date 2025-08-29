@@ -427,7 +427,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     char *extension = NULL;                                  // "/mp3" in "skonto.ls.lv:8002/mp3"
 
     if(pos_slash > 1) {
-        hostwoext = (char*)malloc(pos_slash + 1);
+        hostwoext = (char*)malloc(pos_slash + 2);
         memcpy(hostwoext, h_host, pos_slash);
         hostwoext[pos_slash] = '\0';
         uint16_t extLen =  urlencode_expected_len(h_host + pos_slash);
@@ -579,7 +579,7 @@ bool Audio::httpPrint(const char* host) {
     char *extension = NULL;                                  // "/mp3" in "skonto.ls.lv:8002/mp3"
 
     if(pos_slash > 1) {
-        hostwoext = (char*)malloc(pos_slash + 1);
+        hostwoext = (char*)malloc(pos_slash + 2);
         memcpy(hostwoext, h_host, pos_slash);
         hostwoext[pos_slash] = '\0';
         uint16_t extLen =  urlencode_expected_len(h_host + pos_slash);

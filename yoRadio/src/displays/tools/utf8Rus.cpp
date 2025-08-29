@@ -3,190 +3,87 @@
 #include "../dspcore.h"
 #include "utf8Rus.h"
 
-#ifndef DSP_LCD
-char* utf8Rus(const char* str, bool uppercase) {
-  int index = 0;
-  static char strn[BUFLEN];
-  bool E = false;
-  strlcpy(strn, str, BUFLEN);
-  if (uppercase) {
-    bool next = false;
-    for (char *iter = strn; *iter != '\0'; ++iter)
-    {
-      if (E) {
-        E = false;
-        continue;
-      }
-      uint8_t rus = (uint8_t) * iter;
-      if (rus == 208 && (uint8_t) * (iter + 1) == 129) { // ёКостыли
-        *iter = (char)209;
-        *(iter + 1) = (char)145;
-        E = true;
-        continue;
-      }
-      if (rus == 209 && (uint8_t) * (iter + 1) == 145) {
-        *iter = (char)209;
-        *(iter + 1) = (char)145;
-        E = true;
-        continue;
-      }
-      if (next) {
-        if (rus >= 128 && rus <= 143) *iter = (char)(rus + 32);
-        if (rus >= 176 && rus <= 191) *iter = (char)(rus - 32);
-        next = false;
-      }
-      if (rus == 208) next = true;
-      if (rus == 209) {
-        *iter = (char)208;
-        next = true;
-      }
-      *iter = toupper(*iter);
+size_t strlen_utf8(const char* s) {
+  size_t count = 0;
+  while (*s) {
+    count++;
+    if ((*s & 0xF0) == 0xF0) { // 4-byte character
+      s += 4;
+    } else if ((*s & 0xE0) == 0xE0) { // 3-byte character
+      s += 3;
+    } else if ((*s & 0xC0) == 0xC0) { // 2-byte character
+      s += 2;
+    } else { // 1-byte character (ASCII)
+      s += 1;
     }
   }
-  if(L10N_LANGUAGE==EN) return strn;
-  while (strn[index])
-  {
-    if (strn[index] >= 0xBF)
-    {
-      switch (strn[index]) {
-        case 0xD0: {
-            if (strn[index + 1] == 0x81) {
-              strn[index] = 0xA8;
-              break;
-            }
-            if (strn[index + 1] >= 0x90 && strn[index + 1] <= 0xBF) strn[index] = strn[index + 1] + 0x30;
-            break;
-          }
-        case 0xD1: {
-            if (strn[index + 1] == 0x91) {
-              //strn[index] = 0xB7;
-              strn[index] = 0xB8;
-              break;
-            }
-            if (strn[index + 1] >= 0x80 && strn[index + 1] <= 0x8F) strn[index] = strn[index + 1] + 0x70;
-            break;
-          }
-      }
-      int sind = index + 2;
-      while (strn[sind]) {
-        strn[sind - 1] = strn[sind];
-        sind++;
-      }
-      strn[sind - 1] = 0;
-    }
-    index++;
-  }
-  return strn;
+  return count;
 }
-#else //#ifndef DSP_LCD
+
 char* utf8Rus(const char* str, bool uppercase) {
-  int index = 0;
-  static char strn[BUFLEN];
-  static char newStr[BUFLEN];
-  bool E = false;
-  strlcpy(strn, str, BUFLEN);
-  newStr[0] = '\0';
-  bool next = false;
-  for (char *iter = strn; *iter != '\0'; ++iter)
-  {
-    if (E) {
-      E = false;
-      continue;
-    }
-    uint8_t rus = (uint8_t) * iter;
-    if (rus == 208 && (uint8_t) * (iter + 1) == 129) { // ёКостыли
-      *iter = (char)209;
-      *(iter + 1) = (char)145;
-      E = true;
-      continue;
-    }
-    if (rus == 209 && (uint8_t) * (iter + 1) == 145) {
-      *iter = (char)209;
-      *(iter + 1) = (char)145;
-      E = true;
-      continue;
-    }
-    if (next) {
-      if (rus >= 128 && rus <= 143) *iter = (char)(rus + 32);
-      if (rus >= 176 && rus <= 191) *iter = (char)(rus - 32);
-      next = false;
-    }
-    if (rus == 208) next = true;
-    if (rus == 209) {
-      *iter = (char)208;
-      next = true;
-    }
-    *iter = toupper(*iter);
-  }
-
-  while (strn[index])
-  {
-    if (strlen(newStr) > BUFLEN - 2) break;
-    if (strn[index] >= 0xBF)
-    {
-      switch (strn[index]) {
-        case 0xD0: {
-            switch (strn[index + 1])
-            {
-              case 0x90: strcat(newStr, "A"); break;
-              case 0x91: strcat(newStr, "B"); break;
-              case 0x92: strcat(newStr, "V"); break;
-              case 0x93: strcat(newStr, "G"); break;
-              case 0x94: strcat(newStr, "D"); break;
-              case 0x95: strcat(newStr, "E"); break;
-              case 0x96: strcat(newStr, "ZH"); break;
-              case 0x97: strcat(newStr, "Z"); break;
-              case 0x98: strcat(newStr, "I"); break;
-              case 0x99: strcat(newStr, "Y"); break;
-              case 0x9A: strcat(newStr, "K"); break;
-              case 0x9B: strcat(newStr, "L"); break;
-              case 0x9C: strcat(newStr, "M"); break;
-              case 0x9D: strcat(newStr, "N"); break;
-              case 0x9E: strcat(newStr, "O"); break;
-              case 0x9F: strcat(newStr, "P"); break;
-              case 0xA0: strcat(newStr, "R"); break;
-              case 0xA1: strcat(newStr, "S"); break;
-              case 0xA2: strcat(newStr, "T"); break;
-              case 0xA3: strcat(newStr, "U"); break;
-              case 0xA4: strcat(newStr, "F"); break;
-              case 0xA5: strcat(newStr, "H"); break;
-              case 0xA6: strcat(newStr, "TS"); break;
-              case 0xA7: strcat(newStr, "CH"); break;
-              case 0xA8: strcat(newStr, "SH"); break;
-              case 0xA9: strcat(newStr, "SHCH"); break;
-              case 0xAA: strcat(newStr, "'"); break;
-              case 0xAB: strcat(newStr, "YU"); break;
-              case 0xAC: strcat(newStr, "'"); break;
-              case 0xAD: strcat(newStr, "E"); break;
-              case 0xAE: strcat(newStr, "YU"); break;
-              case 0xAF: strcat(newStr, "YA"); break;
-            }
-            break;
-          }
-        case 0xD1: {
-            if (strn[index + 1] == 0x91) {
-              strcat(newStr, "YO"); break;
-              break;
-            }
-            break;
-          }
+  static char out[BUFLEN];
+  int outPos = 0;
+#ifdef DSP_LCD
+  static const char* mapD0[] = {
+    "A","B","V","G","D","E","ZH","Z","I","Y",
+    "K","L","M","N","O","P","R","S","T","U",
+    "F","H","TS","CH","SH","SHCH","'","YU","'","E","YU","YA"
+  };
+#endif
+  for (int i = 0; str[i] && outPos < BUFLEN - 1; i++) {
+    uint8_t c = (uint8_t)str[i];
+    if (c == 0xD0 && str[i+1]) {
+      uint8_t n = (uint8_t)str[++i];
+      if (n == 0x81) {                  // Ё
+      #ifdef DSP_LCD
+        const char* t = "YO";
+        for (; *t && outPos < BUFLEN-1; t++) out[outPos++] = *t;
+      #else
+        out[outPos++] = uppercase ? 0xA8 : 0xB8;
+      #endif
+      } else if (n >= 144 && n <= 191) {
+      #ifdef DSP_LCD
+        if(n>=176) n-=32;
+        const char* t = mapD0[n - 0x90];
+        for (; *t && outPos < BUFLEN-1; t++) out[outPos++] = *t;
+      #else
+        uint8_t ch = n + 48;
+        if(n>=176 && uppercase) ch-=32;
+        out[outPos++] = ch;
+      #endif
       }
-      int sind = index + 2;
-      while (strn[sind]) {
-        strn[sind - 1] = strn[sind];
-        sind++;
+    } else if (c == 0xD1 && str[i+1]) {
+      uint8_t n = (uint8_t)str[++i];
+      if (n == 0x91) {                  // ё
+      #ifdef DSP_LCD
+        const char* t = "YO";
+        for (; *t && outPos < BUFLEN-1; t++) out[outPos++] = *t;
+      #else
+        out[outPos++] = uppercase ? 0xA8 : 0xB8;
+      #endif
+      } else if (n >= 128 && n <= 143) {
+      #ifdef DSP_LCD
+        n+=16;
+        const char* t = mapD0[n - 128];
+        for (; *t && outPos < BUFLEN-1; t++) out[outPos++] = *t;
+      #else
+        uint8_t ch = n + 112;
+        if(uppercase) ch-=32;
+        out[outPos++] = ch;
+      #endif
       }
-      strn[sind - 1] = 0;
-    } else {
-    	if(strn[index]==7) strn[index]=165;
-    	if(strn[index]==9) strn[index]=223;
-      char Temp[2] = {(char) strn[index] , 0 } ;
-      strcat(newStr, Temp);
+    } else {                              // ASCII
+    #ifdef DSP_LCD
+      char ch = (char)toupper(c);
+      if (ch == 7) ch = (char)165;
+      if (ch == 9) ch = (char)223;
+      out[outPos++] = ch;
+    #else
+      out[outPos++] = uppercase ? toupper(c) : c;
+    #endif
     }
-    index++;
   }
-  return newStr;
+  out[outPos] = 0;
+  return out;
 }
-#endif //#ifndef DSP_LCD
-
 
