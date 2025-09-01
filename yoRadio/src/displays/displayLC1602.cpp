@@ -1,5 +1,5 @@
 #include "../core/options.h"
-#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_1602 || DSP_MODEL==DSP_2004 || DSP_MODEL==DSP_2004I2C
+#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_1602 || DSP_MODEL==DSP_2004 || DSP_MODEL==DSP_2004I2C || DSP_MODEL==DSP_2002 || DSP_MODEL==DSP_2002I2C
 #include "dspcore.h"
 #include <WiFi.h>
 #include "../core/config.h"
@@ -33,6 +33,8 @@ void DspCore::initDisplay() {
 #else
   #ifdef LCD_2004
     begin(20, 4);
+  #elif DSP_MODEL==DSP_2002 || DSP_MODEL==DSP_2002I2C
+    begin(20, 2);
   #else
     begin(16, 2);
   #endif
@@ -50,7 +52,7 @@ void DspCore::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t colo
 }
 
 uint16_t DspCore::width(){
-#ifdef LCD_2004
+#if defined(LCD_2004) || DSP_MODEL==DSP_2002 || DSP_MODEL==DSP_2002I2C
   return 20;
 #else
   return 16;

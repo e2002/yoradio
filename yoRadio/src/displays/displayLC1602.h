@@ -9,7 +9,11 @@
   #define LCD_2004
 #endif
 
-#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_2004I2C
+#if DSP_MODEL==DSP_2002 || DSP_MODEL==DSP_2002I2C
+  #define LCD_2002
+#endif
+
+#if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_2004I2C || DSP_MODEL==DSP_2002I2C
   #define LCD_I2C
   #include "../LiquidCrystalI2C/LiquidCrystalI2CEx.h"
 #else
@@ -18,8 +22,10 @@
 
 #ifdef LCD_I2C
   typedef LiquidCrystal_I2C yoDisplay;
-  #ifdef LCD_2004
+  #if defined(LCD_2004)
     #define DSP_INIT LiquidCrystal_I2C(SCREEN_ADDRESS, 20, 4, I2C_SDA, I2C_SCL)
+  #elif defined(LCD_2002)
+    #define DSP_INIT LiquidCrystal_I2C(SCREEN_ADDRESS, 20, 2, I2C_SDA, I2C_SCL)
   #else
     #define DSP_INIT LiquidCrystal_I2C(SCREEN_ADDRESS, 16, 2, I2C_SDA, I2C_SCL)
   #endif

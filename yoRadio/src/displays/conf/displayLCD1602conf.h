@@ -7,10 +7,13 @@
 
 #ifndef displayLCD1602conf_h
 #define displayLCD1602conf_h
-
+#if DSP_MODEL==DSP_2002 || DSP_MODEL==DSP_2002I2C
+#define DSP_WIDTH       20
+#else
 #define DSP_WIDTH       16
+#endif
 #define TFT_FRAMEWDT    0
-#define MAX_WIDTH       16
+#define MAX_WIDTH       DSP_WIDTH
 #define PLMITEMS        2
 
 #define HIDE_IP

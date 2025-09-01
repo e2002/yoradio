@@ -75,6 +75,7 @@ TimeKeeper::TimeKeeper(){
 }
 
 bool TimeKeeper::loop0(){ // core0 (display)
+  if (network.status != CONNECTED) return true;
   uint32_t currentTime = millis();
   static uint32_t _last1s = 0;
   static uint32_t _last2s = 0;

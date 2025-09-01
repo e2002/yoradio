@@ -601,12 +601,16 @@ void ClockWidget::init(WidgetConfig wconf, uint16_t fgcolor, uint16_t bgcolor){
   else if(TIME_SIZE==19 || TIME_SIZE==2) _superfont=1;
   else _superfont=0;
   _space = (5*_superfont)/2; //magick
+  #ifndef HIDE_DATE
   if(_fullclock){
     _dateheight = _superfont<4?1:2;
     _clockheight = _timeheight + _space + CHARHEIGHT * _dateheight;
   } else {
     _clockheight = _timeheight;
   }
+  #else
+    _clockheight = _timeheight;
+  #endif
   _getTimeBounds();
 #ifdef PSFBUFFER
   _fb = new psFrameBuffer(dsp.width(), dsp.height());
@@ -706,6 +710,7 @@ void ClockWidget::_printClock(bool force){
         gfx.setTextColor(config.theme.dow, config.theme.background);
         gfx.print(utf8Rus(LANG::dow[network.timeinfo.tm_wday], false));
         sprintf(_tmp, "%2d %s %d", network.timeinfo.tm_mday,LANG::mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
+        #ifndef HIDE_DATE
         strlcpy(_datebuf, utf8Rus(_tmp, true), sizeof(_datebuf));
         uint16_t _datewidth = strlen(_datebuf) * CHARWIDTH*_dateheight;
         gfx.setTextSize(_dateheight);
@@ -716,6 +721,7 @@ void ClockWidget::_printClock(bool force){
         #endif
         gfx.setTextColor(config.theme.date, config.theme.background);
         gfx.print(_datebuf);
+        #endif
       }
     }
   }
@@ -949,7 +955,6 @@ void PlayListWidget::_printPLitem(uint8_t pos, const char* item){
     dsp.setTextColor(config.theme.playlist[plColor], config.theme.background);
     dsp.setCursor(TFT_FRAMEWDT, _plYStart + pos * _plItemHeight);
     dsp.fillRect(0, _plYStart + pos * _plItemHeight - 1, dsp.width(), _plItemHeight - 2, config.theme.background);
-    Serial.println(item);
     dsp.print(utf8Rus(item, true));
   }
 }

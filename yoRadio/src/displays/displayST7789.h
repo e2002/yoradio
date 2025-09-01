@@ -23,6 +23,8 @@ typedef Adafruit_ST7789 yoDisplay;
 #else
   #if DSP_MODEL==DSP_ST7789
     #include "conf/displayST7789conf.h"
+  #elif DSP_MODEL==DSP_ST7789_170
+    #include "conf/displayST7789_170conf.h"
   #elif DSP_MODEL==DSP_ST7789_76
     #include "conf/displayST7789_76conf.h"
   #else
