@@ -235,10 +235,13 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.702
+- fixed compilation error for Nokia5110 displays
+
 #### v0.9.700
 - added support for **ST7789 320x170** displays \
   `#define DSP_MODEL DSP_ST7789_170`
-- added support for **LCD 20x2** displays (e.g. [WH2002A](https://aliexpress.com/item/32812259852.html))
+- added support for **LCD 20x2** displays (e.g. [WH2002A](https://aliexpress.com/item/32812259852.html)) \
   `#define DSP_MODEL DSP_2002` or \
   `#define DSP_MODEL DSP_2002I2C`
 - added Russian language support for LCD displays that natively support Russian \

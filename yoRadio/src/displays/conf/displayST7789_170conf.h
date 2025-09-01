@@ -1,5 +1,5 @@
 /*************************************************************************************
-    ST7789 320x240 displays configuration file.
+    ST7789 320x170 displays configuration file.
     Copy this file to yoRadio/src/displays/conf/displayST7789conf_custom.h
     and modify it
     More info on https://github.com/e2002/yoradio/wiki/Widgets#widgets-description
