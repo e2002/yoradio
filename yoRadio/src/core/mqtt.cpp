@@ -8,7 +8,7 @@
 
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
-char topic[100], status[BUFLEN+50];
+char topic[100], status[BUFLEN*2];
 
 void connectToMqtt() {
   //config.waitConnection();
@@ -44,7 +44,8 @@ void mqttPublishStatus() {
     char title[BUFLEN/2];
     config.escapeQuotes(config.station.name, name, sizeof(name)-10);
     config.escapeQuotes(config.station.title, title, sizeof(title)-10);
-    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", player.status()==PLAYING?1:0, config.lastStation(), name, title, config.store.dspon);
+    sprintf(status, "{\"status\": %d, \"station\": %d, \"name\": \"%s\", \"title\": \"%s\", \"on\": %d}", 
+            player.status()==PLAYING?1:0, config.lastStation(), name, title, config.store.dspon);
     mqttClient.publish(topic, 0, true, status);
   }
 }

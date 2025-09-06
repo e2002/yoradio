@@ -51,7 +51,7 @@ public:
 		uint8_t encoderSteps,
 		bool    internalPullup = true);
 	void setBoundaries(long minValue = -100, long maxValue = 100, bool circleValues = false);
-	void IRAM_ATTR readEncoder_ISR();
+	void readEncoder_ISR();
 
 	void setup(void (*ISR_callback)(void));
 	void begin();

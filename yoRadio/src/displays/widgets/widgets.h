@@ -205,18 +205,14 @@ class ClockWidget: public Widget {
   public:
     using Widget::init;
     void init(WidgetConfig wconf, uint16_t fgcolor, uint16_t bgcolor);
-    void draw();
+    void draw(bool force=false);
     uint8_t textsize(){ return _config.textsize; }
     void clear(){ _clearClock(); }
     inline uint16_t dateSize(){ return _space+ _dateheight; }
     inline uint16_t clockWidth(){ return _clockwidth; }
   private:
   #ifndef DSP_LCD
-    #if DSP_MODEL==DSP_ILI9225
-    auto &getRealDsp();
-    #else
     Adafruit_GFX &getRealDsp();
-    #endif
   #endif
   protected:
     char  _timebuffer[20]="00:00";

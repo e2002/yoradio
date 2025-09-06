@@ -457,9 +457,9 @@ void Display::loop() {
     if(pm_result)
       switch (request.type){
         case NEWMODE: _swichMode((displayMode_e)request.payload); break;
-        case CLOSEPLAYLIST: player.sendCommand({PR_PLAY, request.payload});
+        case CLOSEPLAYLIST: player.sendCommand({PR_PLAY, request.payload}); break;
         case CLOCK: 
-          if(_mode==PLAYER || _mode==SCREENSAVER) _time(); 
+          if(_mode==PLAYER || _mode==SCREENSAVER) _time(request.payload==1); 
           /*#ifdef USE_NEXTION
             if(_mode==TIMEZONE) nextion.localTime(network.timeinfo);
             if(_mode==INFO)     nextion.rssi();
@@ -623,7 +623,7 @@ void Display::_time(bool redraw) {
     //_clock->moveTo({clockConf.left, ft, 0});
     _clock->moveTo({lt, ft, 0});
   }
-  _clock->draw();
+  _clock->draw(redraw);
   /*#ifdef USE_NEXTION
     nextion.printClock(network.timeinfo);
   #endif*/

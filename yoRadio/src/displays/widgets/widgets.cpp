@@ -234,11 +234,16 @@ void ScrollWidget::_draw() {
     uint16_t _newx = fbl - _x;
     const char* _cursor = _text + _newx / _charWidth;
     uint16_t hiddenChars = _cursor - _text;
+    uint8_t addChars = _fb->ready()?2:1;
     if (hiddenChars < strlen(_text)) {
-      snprintf(_window, _width / _charWidth + 1, "%s%s%s", _cursor, _sep, _text);
+    //TODO
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-truncation="
+      snprintf(_window, _width / _charWidth + addChars, "%s%s%s", _cursor, _sep, _text);
+    #pragma GCC diagnostic pop
     } else {
       const char* _scursor = _sep + (_cursor - (_text + strlen(_text)));
-      snprintf(_window, _width / _charWidth + 1, "%s%s", _scursor, _text);
+      snprintf(_window, _width / _charWidth + addChars, "%s%s", _scursor, _text);
     }
     if(_fb->ready()){
     #ifdef PSFBUFFER
@@ -420,26 +425,18 @@ void VuWidget::_draw(){
     #else
       _canvas->fillRect(0, 0, _bands.width-(_bands.width-measL), _bands.width, _bgcolor);
       _canvas->fillRect(_bands.width * 2 + _bands.space - measR, 0, measR, _bands.width, _bgcolor);
-      #if DSP_MODEL!=DSP_ILI9225
       dsp.startWrite();
       dsp.setAddrWindow(_config.left, _config.top, _bands.width * 2 + _bands.space, _bands.height);
       dsp.writePixels((uint16_t*)_canvas->getBuffer(), (_bands.width * 2 + _bands.space)*_bands.height);
       dsp.endWrite();
-      #else
-      dsp.drawRGBBitmap(_config.left, _config.top, _canvas->getBuffer(), _bands.width * 2 + _bands.space, _bands.height);
-      #endif
     #endif
   }else{
     _canvas->fillRect(0, 0, _bands.width, measL, _bgcolor);
     _canvas->fillRect(_bands.width + _bands.space, 0, _bands.width, measR, _bgcolor);
-    #if DSP_MODEL!=DSP_ILI9225
     dsp.startWrite();
     dsp.setAddrWindow(_config.left, _config.top, _bands.width * 2 + _bands.space, _bands.height);
     dsp.writePixels((uint16_t*)_canvas->getBuffer(), (_bands.width * 2 + _bands.space)*_bands.height);
     dsp.endWrite();
-    #else
-    dsp.drawRGBBitmap(_config.left, _config.top, _canvas->getBuffer(), _bands.width * 2 + _bands.space, _bands.height);
-    #endif
   }
 }
 
@@ -499,11 +496,11 @@ void VuWidget::_clear(){ }
 uint16_t _textWidth(const char *txt){
   uint16_t w = 0, l=strlen(txt);
   for(uint16_t c=0;c<l;c++) w+=_charWidth(txt[c]);
-  #if DSP_MODEL==DSP_ILI9225
-  return w+l;
-  #else
+//  #if DSP_MODEL==DSP_ILI9225
+//  return w+l;
+//  #else
   return w;
-  #endif
+//  #endif
 }
 
 /************************
@@ -664,18 +661,14 @@ void ClockWidget::_getTimeBounds() {
 }
 
 #ifndef DSP_LCD
-#if DSP_MODEL==DSP_ILI9225
-  auto& ClockWidget::getRealDsp(){
-    return dsp;
-  }
-#else
-  Adafruit_GFX& ClockWidget::getRealDsp(){
-  #ifdef PSFBUFFER
-    if (_fb && _fb->ready()) return *_fb;
-  #endif
-    return dsp;
-  }
+
+Adafruit_GFX& ClockWidget::getRealDsp(){
+#ifdef PSFBUFFER
+  if (_fb && _fb->ready()) return *_fb;
 #endif
+  return dsp;
+}
+
 void ClockWidget::_printClock(bool force){
   auto& gfx = getRealDsp();
   gfx.setTextSize(Clock_GFXfontPtr==nullptr?TIME_SIZE:1);
@@ -770,9 +763,9 @@ void ClockWidget::_clearClock(){
 #endif
 }
 
-void ClockWidget::draw(){
+void ClockWidget::draw(bool force){
   if(!_active) return;
-  _printClock(_getTime());
+  _printClock(_getTime() || force);
 }
 
 void ClockWidget::_draw(){

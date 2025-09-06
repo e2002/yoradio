@@ -49,7 +49,11 @@ void Telnet::toggle() {
 }
 
 void Telnet::emptyClientStream(WiFiClient client) {
+  #ifdef ESP_ARDUINO_3
+  client.clear();
+  #else
   client.flush();
+  #endif
   delay(50);
   while (client.available()) {
     client.read();
@@ -80,7 +84,7 @@ void Telnet::loop() {
     return;
   }
   uint8_t i;
-  if(config.store.telnet)
+  if(config.store.telnet){
     if (WiFi.status() == WL_CONNECTED) {
       if (server.hasClient()) {
         for (i = 0; i < MAX_TLN_CLIENTS; i++) {
@@ -88,7 +92,11 @@ void Telnet::loop() {
             if (clients[i]) {
               clients[i].stop();
             }
+            #ifdef ESP_ARDUINO_3
+            clients[i] = server.accept();
+            #else
             clients[i] = server.available();
+            #endif
             if (!clients[i]) Serial.println("available broken");
             on_connect(config.ipToStr(clients[i].remoteIP()), i);
             clients[i].setNoDelay(true);
@@ -97,7 +105,11 @@ void Telnet::loop() {
           }
         }
         if (i >= MAX_TLN_CLIENTS) {
+          #ifdef ESP_ARDUINO_3
+          server.accept().stop();
+          #else
           server.available().stop();
+          #endif
         }
       }
       for (i = 0; i < MAX_TLN_CLIENTS; i++) {
@@ -115,6 +127,7 @@ void Telnet::loop() {
       }
       delay(1000);
     }
+  }
   handleSerial();
 }
 
@@ -446,12 +459,16 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "##WIFI.STATION#\n> ");
     return;
   }
-  if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", config.tmpBuf, config.tmpBuf2) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", config.tmpBuf, config.tmpBuf2) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", config.tmpBuf, config.tmpBuf2) == 2 || sscanf(str, "wifi %[^ ] %s", config.tmpBuf, config.tmpBuf2) == 2) {
-    snprintf(cmBuf, sizeof(cmBuf), "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", config.tmpBuf, config.tmpBuf2);
+  char ssidbuf[50], passbuff[50];
+  if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", ssidbuf, passbuff) == 2 || 
+      sscanf(str, "wifi.con(%[^,],%[^)])", ssidbuf, passbuff) == 2 || 
+      sscanf(str, "wifi.con(%[^ ] %[^)])", ssidbuf, passbuff) == 2 || 
+      sscanf(str, "wifi %[^ ] %s", ssidbuf, passbuff) == 2) {
+    snprintf(cmBuf, sizeof(cmBuf), "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", ssidbuf, passbuff);
     printf(clientId, cmBuf);
     printf(clientId, "...REBOOTING...\n> ");
     memset(cmBuf, 0, sizeof(cmBuf));
-    snprintf(cmBuf, sizeof(cmBuf), "%s\t%s", config.tmpBuf, config.tmpBuf2);
+    snprintf(cmBuf, sizeof(cmBuf), "%s\t%s", ssidbuf, passbuff);
     config.saveWifiFromNextion(cmBuf);
     return;
   }

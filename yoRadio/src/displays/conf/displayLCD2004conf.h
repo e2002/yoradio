@@ -21,8 +21,8 @@
 #define META_MOVE
 
 /* SROLLS  */                            /* {{ left, top, fontsize, align }, buffsize, uppercase, width, scrolldelay, scrolldelta, scrolltime } */
-#define SDELTA      2
-#define STIME       300
+#define SDELTA      3
+#define STIME       500
 const ScrollConfig      metaConf   PROGMEM = {{ 0, 0, 1, WA_LEFT }, 140, true, MAX_WIDTH-6, 2000, SDELTA, STIME };
 const ScrollConfig    title1Conf   PROGMEM = {{ 0, 1, 1, WA_LEFT }, 140, true, MAX_WIDTH-4, 2000, SDELTA, STIME };
 const ScrollConfig    title2Conf   PROGMEM = {{ 0, 2, 1, WA_LEFT }, 140, true, MAX_WIDTH,   2000, SDELTA, STIME };

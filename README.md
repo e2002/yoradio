@@ -235,6 +235,11 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.710
+- rewritten ILI9225 display driver: now it supports framebuffer like the others and is more stable 👍🏻
+- fixed clock update bug when changing timezone in settings
+- bug/warnings fixes
+
 #### v0.9.702
 - fixed compilation error for Nokia5110 displays
 

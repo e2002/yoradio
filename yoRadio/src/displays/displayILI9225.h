@@ -3,12 +3,12 @@
 #include "../core/options.h"
 //==================================================
 #include "Arduino.h"
-#include "../ILI9225Fix/TFT_22_ILI9225Fix.h"
+#include "../Adafruit_ILI9225/Adafruit_ILI9225.h"
 #include "fonts/bootlogo99x64.h"
 #include "fonts/dsfont35.h"
 
 typedef GFXcanvas16 Canvas;
-typedef TFT_22_ILI9225 yoDisplay;
+typedef Adafruit_ILI9225 yoDisplay;
 
 #include "tools/commongfx.h"
 

@@ -1351,7 +1351,7 @@ bool Audio::parseHttpResponseHeader() { // this is the response to a GET / reque
             int32_t br = atoi(c_bitRate); // Found bitrate tag, read the bitrate in Kbit
             br = br * 1000;
             m_bitrate= br;
-            sprintf(chbuf, "%d", br);
+            sprintf(chbuf, "%ld", br);
             if(audio_bitrate) audio_bitrate(chbuf);
         }
 
@@ -1376,7 +1376,7 @@ bool Audio::parseHttpResponseHeader() { // this is the response to a GET / reque
             int32_t i_cl = atoi(c_cl);
             m_contentlength = i_cl;
             m_streamType = ST_WEBFILE; // Stream comes from a fileserver
-            if(m_f_Log) AUDIO_INFO("content-length: %i", m_contentlength);
+            if(m_f_Log) AUDIO_INFO("content-length: %lu", m_contentlength);
         }
 
         else if(startsWith(rhl, "icy-description:")) {
@@ -1610,8 +1610,11 @@ uint32_t Audio::stop_mp3client(){
     int v=read_register(SCI_VOL);
     m_f_webstream=false;
     write_register(SCI_VOL, 0);                         // Mute while stopping
-
-    _client->flush();                                     // Flush stream client
+    #ifdef ESP_ARDUINO_3
+    _client->clear();                                     // Flush stream client
+    #else
+    _client->flush();
+    #endif
     _client->stop();                                      // Stop stream client
     write_register(SCI_VOL, v);
     return pos;
@@ -1864,7 +1867,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
     if(res){
         uint32_t dt = millis() - t;
         strcpy(m_lastHost, l_host);
-        AUDIO_INFO("%s has been established in %u ms, free Heap: %u bytes",
+        AUDIO_INFO("%s has been established in %lu ms, free Heap: %lu bytes",
                     m_f_ssl?"SSL":"Connection", dt, ESP.getFreeHeap());
         m_f_running = true;
     }
@@ -2100,7 +2103,7 @@ bool Audio::connecttospeech(const char* speech, const char* lang){
         return false;
     }
     clientsecure.print(resp);
-    sprintf(chbuf, "SSL has been established, free Heap: %u bytes", ESP.getFreeHeap());
+    sprintf(chbuf, "SSL has been established, free Heap: %lu bytes", ESP.getFreeHeap());
     if(audio_info) audio_info(chbuf);
 
     m_f_webstream = true;
@@ -2191,7 +2194,7 @@ int Audio::read_MP3_Header(uint8_t *data, size_t len) {
         if(m_f_localfile){
             m_contentlength = getFileSize();
             ID3version = 0;
-            sprintf(chbuf, "Content-Length: %u", m_contentlength);
+            sprintf(chbuf, "Content-Length: %lu", m_contentlength);
             if(audio_info) audio_info(chbuf);
         }
         m_controlCounter ++;
@@ -2571,7 +2574,7 @@ uint32_t Audio::getAudioCurrentTime(){
       }
       m_localBitrateSend = prev_bitrate==m_avr_bitrate;
       if(m_avr_bitrate==0) return 0;
-      sprintf(brbuf, "%d", m_avr_bitrate);
+      sprintf(brbuf, "%lu", m_avr_bitrate);
       if(audio_bitrate && !m_localBitrateSend) audio_bitrate(brbuf);
       m_localBitrateSend = true;
       m_audioFileDuration = 8 * ((float)m_audioDataSize / (m_avr_bitrate));
@@ -2584,7 +2587,7 @@ uint32_t Audio::getAudioCurrentTime(){
     m_avr_bitrate = SCIStatus * 8;
     m_localBitrateSend = prev_bitrate==m_avr_bitrate;
     if(m_avr_bitrate==0) return 0;
-    sprintf(brbuf, "%d", m_avr_bitrate);
+    sprintf(brbuf, "%lu", m_avr_bitrate);
     if(audio_bitrate && !m_localBitrateSend) audio_bitrate(brbuf);
     m_localBitrateSend = true;
     m_audioFileDuration = 8 * ((float)m_audioDataSize / (m_avr_bitrate));

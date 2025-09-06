@@ -2,7 +2,6 @@
 #define common_gfx_h
 #include "../widgets/widgetsconfig.h" // displayXXXDDDDconf.h
 #include "utf8Rus.h"
-#define ADAFRUIT_CLIPPING !defined(DSP_LCD) && DSP_MODEL!=DSP_ILI9225
 
 typedef struct clipArea {
   uint16_t left; 
@@ -64,31 +63,7 @@ class DspCore: public yoDisplay {
     void setScrollId(void * scrollid) { _scrollid = scrollid; }
     void * getScrollId() { return _scrollid; }
     uint16_t textWidth(const char *txt);
-    #if DSP_MODEL==DSP_ILI9225
-      uint16_t width(void) { return (int16_t)maxX(); }
-      uint16_t height(void) { return (int16_t)maxY(); }
-      inline void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *bitmap, int16_t w, int16_t h){ drawBitmap(x, y, bitmap, w, h); }
-      uint16_t print(const char* s);
-      void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-      void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-      void setFont(const GFXfont *f = NULL);
-      void setFont(uint8_t* font, bool monoSp=false );
-      void setTextColor(uint16_t fg, uint16_t bg);
-      void setCursor(int16_t x, int16_t y);
-      void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-      void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-      inline uint16_t drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color = COLOR_WHITE){
-        if(_clipping){
-          if ((x < _cliparea.left) || (x >= _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height))  {
-            return cfont.width;
-          }
-        }
-        uint16_t ret=TFT_22_ILI9225::drawChar(x, y, ch, color);
-        return ret;
-      }
-      void setTextSize(uint8_t s);
-    #endif
-    #if ADAFRUIT_CLIPPING
+    #if !defined(DSP_LCD)
       inline void writePixel(int16_t x, int16_t y, uint16_t color) {
         if(_clipping){
           if ((x < _cliparea.left) || (x > _cliparea.left+_cliparea.width) || (y < _cliparea.top) || (y > _cliparea.top + _cliparea.height)) return;
@@ -121,11 +96,6 @@ class DspCore: public yoDisplay {
     void * _scrollid;
     #ifdef PSFBUFFER
     psFrameBuffer* _fb=nullptr;
-    #endif
-    #if DSP_MODEL==DSP_ILI9225
-      uint16_t _bgcolor, _fgcolor;
-      int16_t  _cursorx, _cursory;
-      bool _gFont/*, _started*/;
     #endif
 };
 

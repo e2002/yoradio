@@ -239,7 +239,7 @@ void TimeKeeper::timeTask(){
     tsFailCnt = 0;
     forceTimeSync = false;
     mktime(&network.timeinfo);
-    display.putRequest(CLOCK);
+    display.putRequest(CLOCK, 1);
     network.requestTimeSync(true);
     #if RTCSUPPORTED
       if (config.isRTCFound()) rtc.setTime(&network.timeinfo);

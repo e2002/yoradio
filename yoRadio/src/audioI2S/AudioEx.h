@@ -20,7 +20,11 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <vector>
+//TODO
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcpp"
 #include <driver/i2s.h>
+#pragma GCC diagnostic pop
 
 #ifdef SDFATFS_USED
 #include <SdFat.h>  // https://github.com/greiman/SdFat
@@ -91,8 +95,8 @@ extern __attribute__((weak)) void audio_process_extern(int16_t* buff, uint16_t l
 extern __attribute__((weak)) void audio_progress(uint32_t startpos, uint32_t endpos);
 extern __attribute__((weak)) void audio_error(const char*);
 
-#define AUDIO_INFO(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); if(audio_info) audio_info(buff);}
-#define AUDIO_ERROR(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); if(audio_error) audio_error(buff);}
+#define AUDIO_INFO(...) {char buff[512 + 64]; snprintf(buff, sizeof(buff),__VA_ARGS__); if(audio_info) audio_info(buff);}
+#define AUDIO_ERROR(...) {char buff[512 + 64]; snprintf(buff, sizeof(buff),__VA_ARGS__); if(audio_error) audio_error(buff);}
 //----------------------------------------------------------------------------------------------------------------------
 
 class AudioBuffer {
