@@ -800,7 +800,7 @@ void ClockWidget::_printClock(bool force){
 
 void ClockWidget::_clearClock(){}
 
-void ClockWidget::draw(){
+void ClockWidget::draw(bool force){
   if(!_active) return;
   _printClock(true);
 }

@@ -235,6 +235,9 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.711
+- fixed compilation error for LCD displays #210
+
 #### v0.9.710
 - rewritten ILI9225 display driver: now it supports framebuffer like the others and is more stable 👍🏻
 - fixed clock update bug when changing timezone in settings
