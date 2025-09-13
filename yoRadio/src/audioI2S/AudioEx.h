@@ -2,7 +2,7 @@
  * Audio.h
  *
  *  Created on: Oct 28,2018
- *  Updated on: Aug 17,2022
+ *  Updated on: Aug 21,2022
  *      Author: Wolle (schreibfaul1)
  */
 
@@ -243,7 +243,6 @@ private:
     void processWebStreamTS();
     void processWebStreamHLS();
     void playAudioData();
-    size_t chunkedDataTransfer(uint8_t* bytes);
     bool readPlayListData();
     const char* parsePlaylist_M3U();
     const char* parsePlaylist_PLS();
@@ -277,7 +276,6 @@ private:
     bool parseContentType(char* ct);
     bool parseHttpResponseHeader();
     bool initializeDecoder();
-    uint16_t readMetadata(uint16_t b, bool first = false);
     esp_err_t I2Sstart(uint8_t i2s_num);
     esp_err_t I2Sstop(uint8_t i2s_num);
     void urlencode(char* buff, uint16_t buffLen, bool spacesOnly = false);
@@ -291,7 +289,14 @@ private:
     bool ts_parsePacket(uint8_t* packet, uint8_t* packetStart, uint8_t* packetLength);
     void _computeVUlevel(int16_t sample[2]);
     static void connectTask(void* pvParams);
-    // implement several function with respect to the index of string
+
+    //+++ W E B S T R E A M  -  H E L P   F U N C T I O N S +++
+    uint16_t readMetadata(uint16_t b, bool first = false);
+    size_t   chunkedDataTransfer(uint8_t* bytes);
+    bool     readID3V1Tag();
+    void     slowStreamDetection(uint32_t inBuffFilled, uint32_t maxFrameSize);
+
+    //++++ implement several function with respect to the index of string ++++
     void trim(char *s) {
     //fb   trim in place
         char *pe;
@@ -383,6 +388,8 @@ private:
         }
         return result;
     }
+
+    // some other functions
     size_t bigEndian(uint8_t* base, uint8_t numBytes, uint8_t shiftLeft = 8){
         size_t result = 0;
         if(numBytes < 1 or numBytes > 4) return 0;
@@ -490,7 +497,7 @@ private:
     volatile bool _connectionResult;
     TaskHandle_t _connectTaskHandle = nullptr;
     
-    const size_t    m_frameSizeWav  = 1600;
+    const size_t    m_frameSizeWav  = 1024 * 8;
     const size_t    m_frameSizeMP3  = 1600;
     const size_t    m_frameSizeAAC  = 1600;
     const size_t    m_frameSizeFLAC = 4096 * 4;
