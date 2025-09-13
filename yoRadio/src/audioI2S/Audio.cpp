@@ -5,8 +5,8 @@
  *
  *  Created on: Oct 26.2018
  *
- *  Version 2.0.5j
- *  Updated on: Aug 21.2022
+ *  Version 2.0.5k
+ *  Updated on: Aug 23.2022
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -326,6 +326,7 @@ void Audio::setDefaults() {
       _client = static_cast<WiFiClient*>(&client); /* default to *something* so that no NULL deref can happen */
     }
     playI2Sremains();
+    ts_parsePacket(0, 0, 0); // reset ts routine
 
     AUDIO_INFO("buffers freed, free Heap: %lu bytes", ESP.getFreeHeap());
 
@@ -3311,7 +3312,6 @@ void Audio::processWebStreamTS() {
         tmr_1s = millis();
         m_t0 = millis();
         ts_packetPtr = 0;
-        ts_parsePacket(0, 0, 0); // reset ts routine
         m_controlCounter = 0;
         m_f_firstCall = false;
     }
@@ -4999,7 +4999,9 @@ bool Audio::ts_parsePacket(uint8_t* packet, uint8_t* packetStart, uint8_t* packe
         *packetLength = 0;
         return true;
     }
-    if(m_f_Log) log_e("invalid ts packet!");
+    // PES received before PAT and PMT seen
+    *packetStart = 0;
+    *packetLength = 0;
     return false;
 }
 //----------------------------------------------------------------------------------------------------------------------
