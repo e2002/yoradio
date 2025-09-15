@@ -3,17 +3,14 @@
 #include "dspcore.h"
 #include "../core/config.h"
 
-#ifndef DEF_SPI_FREQ
-  #define DEF_SPI_FREQ        16000000UL      /*  set it to 0 for system default */
-#endif
 #ifndef SSD1322_GRAYSCALE
   #define SSD1322_GRAYSCALE   false
 #endif
 
 #if DSP_HSPI
-  DspCore::DspCore(): Jamis_SSD1322(256, 64, &SPI2, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {}
+  DspCore::DspCore(): Jamis_SSD1322(256, 64, &SPI2, TFT_DC, TFT_RST, TFT_CS) {}
 #else
-  DspCore::DspCore(): Jamis_SSD1322(256, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {}
+  DspCore::DspCore(): Jamis_SSD1322(256, 64, &SPI, TFT_DC, TFT_RST, TFT_CS) {}
 #endif
 
 void DspCore::initDisplay() {

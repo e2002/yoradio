@@ -8,7 +8,7 @@
 #include "core/network.h"
 #include "core/netserver.h"
 #include "core/controls.h"
-#include "core/mqtt.h"
+//#include "core/mqtt.h"
 #include "core/optionschecker.h"
 #include "core/timekeeper.h"
 #ifdef USE_NEXTION
@@ -94,9 +94,6 @@ void setup() {
   initControls();
   display.putRequest(DSP_START);
   while(!display.ready()) delay(10);
-  #ifdef MQTT_ROOT_TOPIC
-    mqttInit();
-  #endif
   #if USE_OTA
     setupOTA();
   #endif

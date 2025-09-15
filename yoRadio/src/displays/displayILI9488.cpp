@@ -3,10 +3,6 @@
 #include "dspcore.h"
 #include "../core/config.h"
 
-#ifndef DEF_SPI_FREQ
-  #define DEF_SPI_FREQ        40000000UL      /*  set it to 0 for system default */
-#endif
-
 #if DSP_HSPI
   DspCore::DspCore(): ILI9486_SPI(&SPI2, TFT_CS, TFT_DC, TFT_RST) {}
 #else
@@ -16,7 +12,6 @@
 void DspCore::initDisplay() {
   setSpiKludge(false);
   init();
-  //if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   cp437(true);
   setTextWrap(false);
   setTextSize(1);

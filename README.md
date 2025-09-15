@@ -235,6 +235,16 @@ Work is in progress...
 
 ---
 ## Version history
+#### v0.9.720
+- PR #211 https://github.com/e2002/yoradio/pull/211
+- fix packets lost in HLS-TS
+- fix stuttering if datatransfer is chunked
+- split processWebStream/processWebFile
+- fixed the error of connecting to the next access points from the list if the first one is unavailable
+- fixed playback control errors from Home Assistant
+- the DEF_SPI_FREQ parameter, intended for setting the user speed SPI of displays, has been removed from the settings (they work fine anyway)
+- fixed an error connecting to the MQTT server during initial boot in SDCARD mode
+
 #### v0.9.711
 - fixed compilation error for LCD displays #210
 
