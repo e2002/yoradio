@@ -7,15 +7,11 @@
   #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32 or scan it https://create.arduino.cc/projecthub/abdularbi17/how-to-scan-i2c-address-in-arduino-eaadda
 #endif
 
-#ifndef DEF_SPI_FREQ
-  #define DEF_SPI_FREQ        8000000UL      /*  set it to 0 for system default */
-#endif
-
 #if DSP_MODEL==DSP_SSD1305
   #if DSP_HSPI
-    DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI2, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {}
+    DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI2, TFT_DC, TFT_RST, TFT_CS) {}
   #else
-    DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS, DEF_SPI_FREQ) {}
+    DspCore::DspCore(): Adafruit_SSD1305(128, 64, &SPI, TFT_DC, TFT_RST, TFT_CS) {}
   #endif
 #else
 #include <Wire.h>

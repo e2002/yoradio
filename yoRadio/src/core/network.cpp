@@ -58,25 +58,16 @@ bool MyNetwork::wifiBegin(bool silent){
   uint8_t ls = (config.store.lastSSID == 0 || config.store.lastSSID > config.ssidsCount) ? 0 : config.store.lastSSID - 1;
   uint8_t startedls = ls;
   uint8_t errcnt = 0;
-  WiFi.mode(WIFI_STA);
-  /*
-  char buf[MDNS_LENGTH];
-  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
-  if(strlen(config.store.mdnsname)>0){
-    WiFi.setHostname(config.store.mdnsname);
-  }else{
-    snprintf(buf, MDNS_LENGTH, "yoradio-%x", config.getChipId());
-    WiFi.setHostname(buf);
-  }
-  */
+  //WiFi.mode(WIFI_STA);
   while (true) {
     if(!silent){
       Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
       Serial.print("##[BOOT]#\t");
       display.putRequest(BOOTSTRING, ls);
     }
-    WiFi.disconnect(true, true); //disconnect & erase internal credentials https://github.com/e2002/yoradio/pull/164/commits/89d8b4450dde99cd7930b84bb14d81dab920b879
-    delay(100);
+    //WiFi.disconnect(true, true); //disconnect & erase internal credentials https://github.com/e2002/yoradio/pull/164/commits/89d8b4450dde99cd7930b84bb14d81dab920b879
+    //delay(100);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
     while (WiFi.status() != WL_CONNECTED) {
       if(!silent) Serial.print(".");
@@ -88,6 +79,7 @@ bool MyNetwork::wifiBegin(bool silent){
         ls++;
         if (ls > config.ssidsCount - 1) ls = 0;
         if(!silent) Serial.println();
+        WiFi.mode(WIFI_OFF);
         break;
       }
     }
@@ -112,6 +104,9 @@ void searchWiFi(void * pvParameters){
     telnet.begin(true);
     network.setWifiParams();
     display.putRequest(NEWIP, 0);
+    #ifdef MQTT_ROOT_TOPIC
+      mqttInit();
+    #endif
   }
   vTaskDelete( NULL );
 }
@@ -134,6 +129,9 @@ void MyNetwork::begin() {
     Serial.println(".");
     status = CONNECTED;
     setWifiParams();
+    #ifdef MQTT_ROOT_TOPIC
+      mqttInit();
+    #endif
   }else{
     status = SDREADY;
     xTaskCreatePinnedToCore(searchWiFi, "searchWiFi", 1024 * 4, NULL, 0, NULL, SEARCH_WIFI_CORE_ID);
