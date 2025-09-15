@@ -3,10 +3,6 @@
 #include "dspcore.h"
 #include "../core/config.h"
 
-#ifndef DEF_SPI_FREQ
-#define DEF_SPI_FREQ        0 //26000000UL      /*  set it to 0 for system default */
-#endif
-
 #if DSP_HSPI
 DspCore::DspCore(): Adafruit_ST7735(&SPI2, TFT_CS, TFT_DC, TFT_RST) {}
 #else
@@ -15,7 +11,6 @@ DspCore::DspCore(): Adafruit_ST7735(&SPI, TFT_CS, TFT_DC, TFT_RST) {}
 
 void DspCore::initDisplay() {
   initR(DTYPE);
-  if(DEF_SPI_FREQ > 0) setSPISpeed(DEF_SPI_FREQ);
   cp437(true);
   invert();
   flip();

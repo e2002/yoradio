@@ -3147,7 +3147,7 @@ void Audio::processWebStream() {
     if(InBuff.bufferFilled() > maxFrameSize) {f_tmr_1s = false; cnt_slow = 0; loopCnt = 0;}
     if(f_tmr_1s){
         cnt_slow ++;
-        if(cnt_slow > 50){cnt_slow = 0; AUDIO_INFO("slow stream, dropouts are possible");}
+        if(cnt_slow > 50){cnt_slow = 0; f_tmr_1s = false; AUDIO_INFO("slow stream, dropouts are possible");}
     }
     // if the buffer can't filled for several seconds try a new connection - - - - - - - - - - - - - - - - - - - - - - -
     if(f_stream && !availableBytes){
