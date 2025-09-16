@@ -303,8 +303,10 @@ void Audio::begin(){
 
     VS1053_SPI_CTL   = SPISettings( 250000, MSBFIRST, SPI_MODE0);
     VS1053_SPI_DATA  = SPISettings(8000000, MSBFIRST, SPI_MODE0); // SPIDIV 10 -> 80/10=8.00 MHz
+    // Check VS10xx type: SS_VER is 0 for VS1001, 1 for VS1011, 2 for VS1002, 3 for VS1003,
+    // 4 for VS1053 and VS8053, 5 for VS1033, 6 for VS1063/VS1163, 7 for VS1103, and 8 for VS1073
+    ssVer = ((read_register(SCI_STATUS) >> 4) & 15);
     // printDetails("Right after reset/startup");
-    //loadUserCode(); // load in VS1053B if you want to play flac
     // Most VS1053 modules will start up in midi mode.  The result is that there is no audio
     // when playing MP3.  You can modify the board, but there is a more elegant way:
     wram_write(0xC017, 3);                                  // GPIO DDR=3
@@ -322,7 +324,7 @@ void Audio::begin(){
     setVUmeter();
     m_endFillByte = wram_read(0x1E06) & 0xFF;
     //  printDetails("After last clocksetting \n");
-    if(VS_PATCH_ENABLE) loadUserCode(); // load in VS1053B if you want to play flac
+    if(VS_PATCH_ENABLE) loadUserCode(); // load in VS1053B if you want to play flac or use VUmeter
     startSong();
 }
 //---------------------------------------------------------------------------------------------------------------------
@@ -472,6 +474,15 @@ void Audio::softReset()
 void Audio::printDetails(const char* str){
 
     if(strlen(str) && audio_info) audio_info(str);
+
+    /* Note: code SS_VER=2 is used for both VS1002 and VS1011e */
+    const uint16_t chipNumber[16] = {1001, 1011, 1011, 1003, 1053, 1033, 1063, 1103, 1073, 0, 0, 0, 0, 0, 0, 0};
+    if (chipNumber[ssVer]) {
+        sprintf(chbuf, "Chip is VS%d, SCI_MODE field SS_VER = %d", chipNumber[ssVer], ssVer);
+    } else {
+        sprintf(chbuf, "Unknown VS10xx, SCI_MODE field SS_VER = %d", ssVer);
+    }
+    if (audio_info) audio_info(chbuf);
 
     char decbuf[16][6];
     char hexbuf[16][5];
@@ -1667,15 +1678,18 @@ void Audio::setDefaults(){
  * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
  */
 void Audio::setVUmeter() {
-  if(!VS_PATCH_ENABLE) return;
-  uint16_t MP3Status = read_register(SCI_STATUS);
-  if(MP3Status==0) {
-    Serial.println("VS1053 Error: Unable to write SCI_STATUS");
+  if(ssVer == 4 && VS_PATCH_ENABLE) {
+    uint16_t MP3Status = read_register(SCI_STATUS);
+    if(MP3Status==0) {
+        Serial.println("VS1053 Error: Unable to write SCI_STATUS");
+        _vuInitalized = false;
+        return;
+    }
+    _vuInitalized = true;
+    write_register(SCI_STATUS, MP3Status | _BV(9));
+  } else {
     _vuInitalized = false;
-    return;
   }
-  _vuInitalized = true;
-  write_register(SCI_STATUS, MP3Status | _BV(9));
 }
 
 //------------------------------------------------------------------------------
@@ -1908,6 +1922,8 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::loadUserCode(void) {
+
+  if (ssVer != 4) return;
   int i = 0;
 
   while (i<sizeof(flac_plugin)/sizeof(flac_plugin[0])) {
