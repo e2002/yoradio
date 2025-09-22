@@ -447,6 +447,7 @@ void Audio::stopSong()
 
     sdi_send_fillers(2052);
     delay(10);
+    if (ssVer == 3 && m_codec != CODEC_WAV) return;
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_CANCEL));
     for(i=0; i < 200; i++) {
         sdi_send_fillers(32);
