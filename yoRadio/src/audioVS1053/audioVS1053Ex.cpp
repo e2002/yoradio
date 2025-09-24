@@ -1939,27 +1939,37 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::loadUserCode(void) {
+    const uint16_t* plugin = nullptr;
+    int plugin_size = 0;
 
-  if (ssVer != 4) return;
-  int i = 0;
-
-  while (i<sizeof(flac_plugin)/sizeof(flac_plugin[0])) {
-    unsigned short addr, n, val;
-    addr = flac_plugin[i++];
-    n = flac_plugin[i++];
-    if (n & 0x8000U) { /* RLE run, replicate n samples */
-      n &= 0x7FFF;
-      val = flac_plugin[i++];
-      while (n--) {
-        write_register(addr, val);
-      }
-    } else {           /* Copy run, copy n samples */
-      while (n--) {
-        val = flac_plugin[i++];
-        write_register(addr, val);
-      }
+    if (ssVer == 4) {
+        plugin = flac_plugin;
+        plugin_size = VS1053_PLUGIN_SIZE;
+    } else if (ssVer == 6) {
+        plugin = vs1063_plugin;
+        plugin_size = VS1063_PLUGIN_SIZE;
+    } else {
+        return;
     }
-  }
+
+    int i = 0;
+    while (i<plugin_size) {
+        unsigned short addr, n, val;
+        addr = plugin[i++];
+        n = plugin[i++];
+        if (n & 0x8000U) { /* RLE run, replicate n samples */
+            n &= 0x7FFF;
+            val = plugin[i++];
+            while (n--) {
+                write_register(addr, val);
+            }
+        } else {           /* Copy run, copy n samples */
+            while (n--) {
+                val = plugin[i++];
+                write_register(addr, val);
+            }
+        }
+    }
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::UTF8toASCII(char* str){

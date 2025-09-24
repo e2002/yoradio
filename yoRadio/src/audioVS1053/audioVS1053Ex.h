@@ -26,6 +26,7 @@
 #include "WiFiClientSecure.h"
 
 #include "vs1053b-patches-flac.h"
+#include "vs1063a-playpatches.h"
 
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include "hal/gpio_ll.h"
