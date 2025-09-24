@@ -242,7 +242,7 @@ private:
     bool            m_f_stream_ready=false;         // Set after connecttohost and first streamdata are available
     bool            m_f_unsync = false;
     bool            m_f_exthdr = false;             // ID3 extended header
-    bool            _vuInitalized;
+    bool            _vuInitalized = false;
     uint16_t        ssVer = 0;
     
     const char volumetable[22]={   0,50,60,65,70,75,80,82,84,86,
@@ -335,7 +335,7 @@ public:
     void     setDefaults();
     void     forceMono(bool m) {}                        // TODO
     /* VU METER */
-    void     setVUmeter();
+    void     setVUmeter(bool enable = true);
     uint16_t get_VUlevel(uint16_t dimension);
     void     computeVUlevel();
     bool     eofHeader;

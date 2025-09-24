@@ -1681,19 +1681,25 @@ void Audio::setDefaults(){
  * \warning This feature is only available with patches that support VU meter.
  * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
  */
-void Audio::setVUmeter() {
-  if(ssVer == 4 && VS_PATCH_ENABLE) {
-    uint16_t MP3Status = read_register(SCI_STATUS);
-    if(MP3Status==0) {
-        Serial.println("VS1053 Error: Unable to write SCI_STATUS");
-        _vuInitalized = false;
+void Audio::setVUmeter(bool enable) {
+    uint16_t MP3Status = 0;
+    
+    if(ssVer == 4 && VS_PATCH_ENABLE) {
+        MP3Status = read_register(SCI_STATUS);
+        if(MP3Status==0) {
+            Serial.println("VS1053 Error: Unable to write SCI_STATUS");
+            return;
+        }
+        MP3Status = enable ? (MP3Status | _BV(9)) : (MP3Status & ~(_BV(9)));
+        write_register(SCI_STATUS, MP3Status | _BV(9));
+    } else if (ssVer == 6 || ssVer == 8) {
+        MP3Status = wram_read(0x1e09);
+        MP3Status = enable ? (MP3Status | _BV(2)) : (MP3Status & ~(_BV(2)));
+        wram_write(0x1e09, MP3Status);
+    } else {
         return;
     }
-    _vuInitalized = true;
-    write_register(SCI_STATUS, MP3Status | _BV(9));
-  } else {
-    _vuInitalized = false;
-  }
+    _vuInitalized = enable;
 }
 
 //------------------------------------------------------------------------------
@@ -1715,15 +1721,22 @@ void Audio::computeVUlevel() {
   cc++;
   if(!_vuInitalized || !config.store.vumeter || cc!=everyn) return;
   if(cc==everyn) cc=0;*/
-  int16_t reg = read_register(SCI_AICTRL3);
-  vuLeft = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
-  vuRight = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+  int16_t reg = 0;
+  if (ssVer == 4) {
+    reg = read_register(SCI_AICTRL3);
+    vuLeft = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
+    vuRight = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+  } else if (ssVer == 6 || ssVer == 8) {
+    reg = wram_read(0x1E0C);
+    vuLeft = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+    vuRight = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
+  }
+  
   if(vuLeft>config.vuThreshold)  config.vuThreshold=vuLeft;
   if(vuRight>config.vuThreshold) config.vuThreshold=vuRight;
 }
 
 uint16_t Audio::get_VUlevel(uint16_t dimension){
-  if(!VS_PATCH_ENABLE) return 0;
   if(!_vuInitalized || !config.store.vumeter/* || config.vuThreshold==0*/) return 0;
   computeVUlevel();
   uint8_t L = map(vuLeft, config.vuThreshold, 0, 0, dimension);
