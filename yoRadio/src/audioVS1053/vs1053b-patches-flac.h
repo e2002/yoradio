@@ -1099,6 +1099,6 @@ const uint16_t flac_plugin[] = { /* Compressed plugin */
 	0x0004,0x0000,0xfffa,0xffff,0x0004,0x0000,0xffff,0xffff,
 	0x000a,0x0001, /*copy 1*/
 	0x0050,
-#define PLUGIN_SIZE 8414
+#define VS1053_PLUGIN_SIZE 8414
 };
 

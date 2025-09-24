@@ -303,8 +303,10 @@ void Audio::begin(){
 
     VS1053_SPI_CTL   = SPISettings( 250000, MSBFIRST, SPI_MODE0);
     VS1053_SPI_DATA  = SPISettings(8000000, MSBFIRST, SPI_MODE0); // SPIDIV 10 -> 80/10=8.00 MHz
+    // Check VS10xx type: SS_VER is 0 for VS1001, 1 for VS1011, 2 for VS1002, 3 for VS1003,
+    // 4 for VS1053 and VS8053, 5 for VS1033, 6 for VS1063/VS1163, 7 for VS1103, and 8 for VS1073
+    ssVer = ((read_register(SCI_STATUS) >> 4) & 15);
     // printDetails("Right after reset/startup");
-    //loadUserCode(); // load in VS1053B if you want to play flac
     // Most VS1053 modules will start up in midi mode.  The result is that there is no audio
     // when playing MP3.  You can modify the board, but there is a more elegant way:
     wram_write(0xC017, 3);                                  // GPIO DDR=3
@@ -313,8 +315,11 @@ void Audio::begin(){
     softReset();                                            // Do a soft reset
     // Switch on the analog parts
     write_register(SCI_AUDATA, 44100 + 1);                  // 44.1kHz + stereo
-    // The next clocksetting allows SPI clocking at 5 MHz, 4 MHz is safe then.
-    write_register(SCI_CLOCKF, 6 << 12);                    // Normal clock settings multiplyer 3.0=12.2 MHz
+    // Set the clock depending on the VS10xx type
+    if (ssVer == 3)      { write_register(SCI_CLOCKF, 0x8000 | 0x1000); }  // VS1003: SC_MULT=3.0×, SC_ADD=1.0×
+    else if (ssVer == 6) { write_register(SCI_CLOCKF, 0x8000 | 0x1000); }  // VS1063: SC_MULT=3.5×, SC_ADD=1.5×
+    else if (ssVer == 8) { write_register(SCI_CLOCKF, 0x8000); }           // VS1073: SC_MULT=5.5×
+    else                 { write_register(SCI_CLOCKF, 0x6000 | 0x0800); }  // VS1053: SC_MULT=3.0×, SC_ADD=1.0×
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_LINE1));
     // testComm("Fast SPI, Testing VS1053 read/write registers again... \n");
     await_data_request();
@@ -322,7 +327,7 @@ void Audio::begin(){
     setVUmeter();
     m_endFillByte = wram_read(0x1E06) & 0xFF;
     //  printDetails("After last clocksetting \n");
-    if(VS_PATCH_ENABLE) loadUserCode(); // load in VS1053B if you want to play flac
+    if(VS_PATCH_ENABLE) loadUserCode(); // load in VS1053B if you want to play flac or use VUmeter
     startSong();
 }
 //---------------------------------------------------------------------------------------------------------------------
@@ -445,6 +450,7 @@ void Audio::stopSong()
 
     sdi_send_fillers(2052);
     delay(10);
+    if (ssVer == 3 && m_codec != CODEC_WAV) return;
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_CANCEL));
     for(i=0; i < 200; i++) {
         sdi_send_fillers(32);
@@ -472,6 +478,15 @@ void Audio::softReset()
 void Audio::printDetails(const char* str){
 
     if(strlen(str) && audio_info) audio_info(str);
+
+    /* Note: code SS_VER=2 is used for both VS1002 and VS1011e */
+    const uint16_t chipNumber[16] = {1001, 1011, 1011, 1003, 1053, 1033, 1063, 1103, 1073, 0, 0, 0, 0, 0, 0, 0};
+    if (chipNumber[ssVer]) {
+        sprintf(chbuf, "Chip is VS%d, SCI_MODE field SS_VER = %d", chipNumber[ssVer], ssVer);
+    } else {
+        sprintf(chbuf, "Unknown VS10xx, SCI_MODE field SS_VER = %d", ssVer);
+    }
+    if (audio_info) audio_info(chbuf);
 
     char decbuf[16][6];
     char hexbuf[16][5];
@@ -1666,16 +1681,25 @@ void Audio::setDefaults(){
  * \warning This feature is only available with patches that support VU meter.
  * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
  */
-void Audio::setVUmeter() {
-  if(!VS_PATCH_ENABLE) return;
-  uint16_t MP3Status = read_register(SCI_STATUS);
-  if(MP3Status==0) {
-    Serial.println("VS1053 Error: Unable to write SCI_STATUS");
-    _vuInitalized = false;
-    return;
-  }
-  _vuInitalized = true;
-  write_register(SCI_STATUS, MP3Status | _BV(9));
+void Audio::setVUmeter(bool enable) {
+    uint16_t MP3Status = 0;
+    
+    if(ssVer == 4 && VS_PATCH_ENABLE) {
+        MP3Status = read_register(SCI_STATUS);
+        if(MP3Status==0) {
+            Serial.println("VS1053 Error: Unable to write SCI_STATUS");
+            return;
+        }
+        MP3Status = enable ? (MP3Status | _BV(9)) : (MP3Status & ~(_BV(9)));
+        write_register(SCI_STATUS, MP3Status | _BV(9));
+    } else if (ssVer == 6 || ssVer == 8) {
+        MP3Status = wram_read(0x1e09);
+        MP3Status = enable ? (MP3Status | _BV(2)) : (MP3Status & ~(_BV(2)));
+        wram_write(0x1e09, MP3Status);
+    } else {
+        return;
+    }
+    _vuInitalized = enable;
 }
 
 //------------------------------------------------------------------------------
@@ -1697,15 +1721,22 @@ void Audio::computeVUlevel() {
   cc++;
   if(!_vuInitalized || !config.store.vumeter || cc!=everyn) return;
   if(cc==everyn) cc=0;*/
-  int16_t reg = read_register(SCI_AICTRL3);
-  vuLeft = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
-  vuRight = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+  int16_t reg = 0;
+  if (ssVer == 4) {
+    reg = read_register(SCI_AICTRL3);
+    vuLeft = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
+    vuRight = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+  } else if (ssVer == 6 || ssVer == 8) {
+    reg = wram_read(0x1E0C);
+    vuLeft = map((uint8_t)(reg >> 8), 85, 92, 0, 255);
+    vuRight = map((uint8_t)(reg & 0x00FF), 85, 92, 0, 255);
+  }
+  
   if(vuLeft>config.vuThreshold)  config.vuThreshold=vuLeft;
   if(vuRight>config.vuThreshold) config.vuThreshold=vuRight;
 }
 
 uint16_t Audio::get_VUlevel(uint16_t dimension){
-  if(!VS_PATCH_ENABLE) return 0;
   if(!_vuInitalized || !config.store.vumeter/* || config.vuThreshold==0*/) return 0;
   computeVUlevel();
   uint8_t L = map(vuLeft, config.vuThreshold, 0, 0, dimension);
@@ -1908,25 +1939,37 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::loadUserCode(void) {
-  int i = 0;
+    const uint16_t* plugin = nullptr;
+    int plugin_size = 0;
 
-  while (i<sizeof(flac_plugin)/sizeof(flac_plugin[0])) {
-    unsigned short addr, n, val;
-    addr = flac_plugin[i++];
-    n = flac_plugin[i++];
-    if (n & 0x8000U) { /* RLE run, replicate n samples */
-      n &= 0x7FFF;
-      val = flac_plugin[i++];
-      while (n--) {
-        write_register(addr, val);
-      }
-    } else {           /* Copy run, copy n samples */
-      while (n--) {
-        val = flac_plugin[i++];
-        write_register(addr, val);
-      }
+    if (ssVer == 4) {
+        plugin = flac_plugin;
+        plugin_size = VS1053_PLUGIN_SIZE;
+    } else if (ssVer == 6) {
+        plugin = vs1063_plugin;
+        plugin_size = VS1063_PLUGIN_SIZE;
+    } else {
+        return;
     }
-  }
+
+    int i = 0;
+    while (i<plugin_size) {
+        unsigned short addr, n, val;
+        addr = plugin[i++];
+        n = plugin[i++];
+        if (n & 0x8000U) { /* RLE run, replicate n samples */
+            n &= 0x7FFF;
+            val = plugin[i++];
+            while (n--) {
+                write_register(addr, val);
+            }
+        } else {           /* Copy run, copy n samples */
+            while (n--) {
+                val = plugin[i++];
+                write_register(addr, val);
+            }
+        }
+    }
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::UTF8toASCII(char* str){
