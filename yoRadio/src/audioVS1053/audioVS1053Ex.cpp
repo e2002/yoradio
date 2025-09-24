@@ -317,7 +317,7 @@ void Audio::begin(){
     write_register(SCI_AUDATA, 44100 + 1);                  // 44.1kHz + stereo
     // Set the clock depending on the VS10xx type
     if (ssVer == 3)      { write_register(SCI_CLOCKF, 0x8000 | 0x1000); }  // VS1003: SC_MULT=3.0×, SC_ADD=1.0×
-    else if (ssVer == 6) { write_register(SCI_CLOCKF, 0xA000 | 0x1000); }  // VS1063: SC_MULT=4.0×, SC_ADD=1.5×
+    else if (ssVer == 6) { write_register(SCI_CLOCKF, 0x8000 | 0x1000); }  // VS1063: SC_MULT=3.5×, SC_ADD=1.5×
     else if (ssVer == 8) { write_register(SCI_CLOCKF, 0x8000); }           // VS1073: SC_MULT=5.5×
     else                 { write_register(SCI_CLOCKF, 0x6000 | 0x0800); }  // VS1053: SC_MULT=3.0×, SC_ADD=1.0×
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_LINE1));
