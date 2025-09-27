@@ -479,9 +479,8 @@ void Audio::printDetails(const char* str){
 
     if(strlen(str) && audio_info) audio_info(str);
 
-    /* Note: code SS_VER=2 is used for both VS1002 and VS1011e */
-    const uint16_t chipNumber[16] = {1001, 1011, 1011, 1003, 1053, 1033, 1063, 1103, 1073, 0, 0, 0, 0, 0, 0, 0};
-    if (chipNumber[ssVer]) {
+    const uint16_t chipNumber[16] = {0, 0, 0, 1003, 1053, 0, 1063, 0, 1073, 0, 0, 0, 0, 0, 0, 0};
+    if (ssVer < 16 && chipNumber[ssVer]) {
         sprintf(chbuf, "Chip is VS%d, SCI_MODE field SS_VER = %d", chipNumber[ssVer], ssVer);
     } else {
         sprintf(chbuf, "Unknown VS10xx, SCI_MODE field SS_VER = %d", ssVer);
