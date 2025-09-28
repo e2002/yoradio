@@ -311,10 +311,16 @@ void Audio::begin(){
     wram_write(0xC019, 0);                                  // GPIO ODATA=0
     // printDetails("After test loop");
     softReset();                                            // Do a soft reset
+    // Check VS10xx type: SS_VER is 0 for VS1001, 1 for VS1011, 2 for VS1002, 3 for VS1003,
+    // 4 for VS1053 and VS8053, 5 for VS1033, 6 for VS1063/VS1163, 7 for VS1103, and 8 for VS1073
+    ssVer = ((read_register(SCI_STATUS) >> 4) & 15);
     // Switch on the analog parts
     write_register(SCI_AUDATA, 44100 + 1);                  // 44.1kHz + stereo
-    // The next clocksetting allows SPI clocking at 5 MHz, 4 MHz is safe then.
-    write_register(SCI_CLOCKF, 6 << 12);                    // Normal clock settings multiplyer 3.0=12.2 MHz
+    // Set the clock depending on the VS10xx type
+    if (ssVer == 3)      { write_register(SCI_CLOCKF, 0x8000 | 0x1000); }  // VS1003: SC_MULT=3.0×, SC_ADD=1.0×
+    else if (ssVer == 6) { write_register(SCI_CLOCKF, 0x8000 | 0x1000); }  // VS1063: SC_MULT=3.5×, SC_ADD=1.5×
+    else if (ssVer == 8) { write_register(SCI_CLOCKF, 0x8000); }           // VS1073: SC_MULT=5.5×
+    else                 { write_register(SCI_CLOCKF, 0x6000 | 0x0800); }  // VS1053: SC_MULT=3.0×, SC_ADD=1.0× (default)
     write_register(SCI_MODE, _BV (SM_SDINEW) | _BV(SM_LINE1));
     // testComm("Fast SPI, Testing VS1053 read/write registers again... \n");
     await_data_request();
@@ -1667,15 +1673,18 @@ void Audio::setDefaults(){
  * \n The VU meter takes about 0.2MHz of processing power with 48 kHz samplerate.
  */
 void Audio::setVUmeter() {
-  if(!VS_PATCH_ENABLE) return;
-  uint16_t MP3Status = read_register(SCI_STATUS);
-  if(MP3Status==0) {
-    Serial.println("VS1053 Error: Unable to write SCI_STATUS");
-    _vuInitalized = false;
-    return;
-  }
-  _vuInitalized = true;
-  write_register(SCI_STATUS, MP3Status | _BV(9));
+    if(ssVer == 4 && VS_PATCH_ENABLE) {
+        uint16_t MP3Status = read_register(SCI_STATUS);
+        if(MP3Status==0) {
+            Serial.println("VS1053 Error: Unable to write SCI_STATUS");
+            _vuInitalized = false;
+            return;
+        }
+        write_register(SCI_STATUS, MP3Status | _BV(9));
+        _vuInitalized = true;
+    } else {
+        _vuInitalized = false;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1908,6 +1917,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::loadUserCode(void) {
+  if (ssVer != 4) return;
   int i = 0;
 
   while (i<sizeof(flac_plugin)/sizeof(flac_plugin[0])) {
