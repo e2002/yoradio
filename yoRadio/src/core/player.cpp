@@ -50,7 +50,7 @@ void Player::init() {
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
   #if I2S_DOUT!=255
     #if !I2S_INTERNAL
-      setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+      setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT, I2S_PIN_NO_CHANGE, I2S_MCLK);
     #endif
   #else
     SPI.begin();
