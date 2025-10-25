@@ -131,6 +131,9 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #ifndef I2S_LRC
   #define I2S_LRC       25  // WSEL Left Right Clock
 #endif
+#ifndef I2S_MCLK
+  #define I2S_MCLK      I2S_PIN_NO_CHANGE  // Master Clock
+#endif
 
 /*        SDCARD                  */
 #ifndef SDC_CS
