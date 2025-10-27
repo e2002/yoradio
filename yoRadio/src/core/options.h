@@ -55,6 +55,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #define DSP_2002        26    // 20x2           https://aliexpress.com/item/32812259852.html
 #define DSP_2002I2C     27    // 20x2           https://aliexpress.com/item/32812259852.html
 #define DSP_ST7789_170  28    // 320x170  1.9'  https://aliexpress.com/item/1005008723378017.html
+#define DSP_ST7567      29    // 128x64   1.8'  https://www.aliexpress.com/item/1005005476901548.html
 #define DSP_CUSTOM      101   // your display
 
 #ifndef DSP_MODEL

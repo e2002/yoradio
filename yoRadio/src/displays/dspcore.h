@@ -102,6 +102,11 @@
   #define DSP_OLED
   #include "displayST7920.h"
 
+#elif DSP_MODEL==DSP_ST7567
+  #define TIME_SIZE           2
+  #define DSP_OLED
+  #include "displayST7567.h"
+
 #endif
 
 //extern DspCore dsp;
