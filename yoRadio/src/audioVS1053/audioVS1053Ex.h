@@ -248,10 +248,25 @@ private:
                                   88,90,91,92,93,94,95,96,97,98,99,100}; //22 elements
     uint8_t  vuLeft, vuRight;
 protected:
-    inline void DCS_HIGH() {(dcs_pin&0x20) ? GPIO.out1_w1ts.data = 1 << (dcs_pin - 32) : GPIO.out_w1ts = 1 << dcs_pin;}
-    inline void DCS_LOW()  {(dcs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << (dcs_pin - 32) : GPIO.out_w1tc = 1 << dcs_pin;}
-    inline void CS_HIGH()  {( cs_pin&0x20) ? GPIO.out1_w1ts.data = 1 << ( cs_pin - 32) : GPIO.out_w1ts = 1 <<  cs_pin;}
-    inline void CS_LOW()   {( cs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << ( cs_pin - 32) : GPIO.out_w1tc = 1 <<  cs_pin;}
+
+     #ifndef ESP_ARDUINO_VERSION_VAL
+        #define ESP_ARDUINO_VERSION_MAJOR 0
+        #define ESP_ARDUINO_VERSION_MINOR 0
+        #define ESP_ARDUINO_VERSION_PATCH 0
+    #endif
+
+    #if ESP_IDF_VERSION_MAJOR < 5
+        inline void DCS_HIGH() {(dcs_pin&0x20) ? GPIO.out1_w1ts.data = 1 << (dcs_pin - 32) : GPIO.out_w1ts = 1 << dcs_pin;}
+        inline void DCS_LOW()  {(dcs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << (dcs_pin - 32) : GPIO.out_w1tc = 1 << dcs_pin;}
+        inline void CS_HIGH()  {( cs_pin&0x20) ? GPIO.out1_w1ts.data = 1 << ( cs_pin - 32) : GPIO.out_w1ts = 1 <<  cs_pin;}
+        inline void CS_LOW()   {( cs_pin&0x20) ? GPIO.out1_w1tc.data = 1 << ( cs_pin - 32) : GPIO.out_w1tc = 1 <<  cs_pin;}
+    #else
+        inline void DCS_HIGH() {gpio_set_level((gpio_num_t)dcs_pin, 1);}
+        inline void DCS_LOW()  {gpio_set_level((gpio_num_t)dcs_pin, 0);}
+        inline void CS_HIGH()  {gpio_set_level((gpio_num_t) cs_pin, 1);}
+        inline void CS_LOW()   {gpio_set_level((gpio_num_t) cs_pin, 0);}
+    #endif
+
     inline void await_data_request() {while(!digitalRead(dreq_pin)) NOP();}    // Very short delay
     inline bool data_request()     {return(digitalRead(dreq_pin) == HIGH);}
 

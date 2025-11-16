@@ -272,7 +272,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #endif
 
 /*        ESP DEVBOARD            */
-#if defined(ARDUINO_ESP32S3_DEV) || defined(ARDUINO_ESP32C3_DEV)
+#if defined(ARDUINO_ESP32S3_DEV) || defined(ARDUINO_ESP32C3_DEV) || defined(ARDUINO_ESP32C6_DEV)
     #define ESP_S3C3       1
     #ifndef USE_BUILTIN_LED
       #define USE_BUILTIN_LED true

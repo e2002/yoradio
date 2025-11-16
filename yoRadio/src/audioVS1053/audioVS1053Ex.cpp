@@ -1851,7 +1851,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
       res = _client->connect(hostwoext, port, m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms);
     }else{
       ConnectParams* params = new ConnectParams{ strdup(hostwoext), port, this }; _connectionResult = false;
-      xTaskCreatePinnedToCore(connectTask, "ConnectTask", WATCHDOG_TASK_SIZE, params, WATCHDOG_TASK_PRIORITY, &_connectTaskHandle, WATCHDOG_TASK_CORE_ID);
+      xTaskCreatePinnedToCore(connectTask, "ConnectTask", WATCHDOG_TASK_SIZE, params, WATCHDOG_TASK_PRIORITY, &_connectTaskHandle, ESP.getChipCores() > 1 ? WATCHDOG_TASK_CORE_ID : 0);
       for(;;){
         if(millis()-t>(m_f_ssl ? m_timeout_ms_ssl : m_timeout_ms) || _connectionResult) break;
         vTaskDelay(10);

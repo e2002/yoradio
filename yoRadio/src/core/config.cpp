@@ -988,7 +988,7 @@ void Config::doSleep(){
 #ifdef USE_NEXTION
   nextion.sleep();
 #endif
-#if !defined(ARDUINO_ESP32C3_DEV)
+#if !(defined(ARDUINO_ESP32C3_DEV) || defined(ARDUINO_ESP32C6_DEV))
   if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
   esp_sleep_enable_timer_wakeup(config.sleepfor * 60 * 1000000ULL);
   esp_deep_sleep_start();
@@ -1001,7 +1001,7 @@ void Config::doSleepW(){
 #ifdef USE_NEXTION
   nextion.sleep();
 #endif
-#if !defined(ARDUINO_ESP32C3_DEV)
+#if !(defined(ARDUINO_ESP32C3_DEV) || defined(ARDUINO_ESP32C6_DEV))
   if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
   esp_deep_sleep_start();
 #endif
