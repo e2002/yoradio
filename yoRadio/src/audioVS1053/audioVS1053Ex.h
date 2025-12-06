@@ -2,7 +2,7 @@
  *  vs1053_ext.h
  *
  *  Created on: Jul 09.2017
- *  Updated on: Aug 15.2022
+ *  Updated on: Oct 22.2023
  *      Author: Wolle
  */
 
@@ -40,18 +40,19 @@ extern __attribute__((weak)) void audio_id3album(const char*);
 extern __attribute__((weak)) void audio_id3title(const char*);
 extern __attribute__((weak)) void audio_beginSDread();
 extern __attribute__((weak)) void audio_id3image(File& file, const size_t pos, const size_t size); //ID3 metadata image
+extern __attribute__((weak)) void audio_id3lyrics(File& file, const size_t pos, const size_t size); //ID3 metadata lyrics
 extern __attribute__((weak)) void audio_eof_mp3(const char*);
 extern __attribute__((weak)) void audio_eof_speech(const char*);
 extern __attribute__((weak)) void audio_bitrate(const char*);
 extern __attribute__((weak)) void audio_commercial(const char*);
 extern __attribute__((weak)) void audio_icyurl(const char*);
+extern __attribute__((weak)) void audio_icylogo(const char*);
 extern __attribute__((weak)) void audio_icydescription(const char*);
 extern __attribute__((weak)) void audio_lasthost(const char*);
 extern __attribute__((weak)) void audio_eof_stream(const char*); // The webstream comes to an end
 extern __attribute__((weak)) void audio_progress(uint32_t start, uint32_t durarion);
 extern __attribute__((weak)) void audio_error(const char*);
 
-#define AUDIO_INFO(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); if(audio_info) audio_info(buff);}
 #define AUDIO_ERROR(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); if(audio_error) audio_error(buff);}
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -147,12 +148,13 @@ private:
     static void connectTask(void* pvParams);
     
 private:
-    enum : int { AUDIO_NONE, HTTP_RESPONSE_HEADER , AUDIO_DATA, AUDIO_LOCALFILE, AUDIO_METADATA, AUDIO_PLAYLISTINIT,
-                 AUDIO_PLAYLISTHEADER,  AUDIO_PLAYLISTDATA, VS1053_SWM, VS1053_OGG};
+    const char *codecname[10] = {"unknown", "WAV", "MP3", "AAC", "M4A", "FLAC", "AACP", "OPUS", "OGG", "VORBIS" };
+    enum : int { AUDIO_NONE, HTTP_RESPONSE_HEADER , AUDIO_DATA, AUDIO_LOCALFILE, AUDIO_PLAYLISTINIT,
+                AUDIO_PLAYLISTDATA};
     enum : int { FORMAT_NONE = 0, FORMAT_M3U = 1, FORMAT_PLS = 2, FORMAT_ASX = 3, FORMAT_M3U8 = 4};
 
-    enum : int { CODEC_NONE, CODEC_WAV, CODEC_MP3, CODEC_AAC, CODEC_M4A, CODEC_FLAC, CODEC_OGG,
-                 CODEC_OGG_FLAC, CODEC_OGG_OPUS};
+    enum : int { CODEC_NONE = 0, CODEC_WAV = 1, CODEC_MP3 = 2, CODEC_AAC = 3, CODEC_M4A = 4, CODEC_FLAC = 5,
+                 CODEC_AACP = 6, CODEC_OPUS = 7, CODEC_OGG = 8, CODEC_VORBIS = 9};
     enum : int { ST_NONE = 0, ST_WEBFILE = 1, ST_WEBSTREAM = 2};
 
 private:
@@ -188,13 +190,17 @@ private:
     const uint8_t SM_LINE1          = 14 ;          // Bitnumber in SCI_MODE for Line input
 
     SPIClass*       spi_VS1053 = NULL;
-    SPISettings     VS1053_SPI_DATA;                // SPI settings normal speed
-    SPISettings     VS1053_SPI_CTL;                 // SPI settings control mode
+    SPISettings     VS1053_SPI;
 
-    char            chbuf[512];
-    char            m_lastHost[256];                // Store the last URL to a webstream
+    char*           m_ibuff = nullptr;              // used in audio_info()
+    char*           m_chbuf = NULL;
+    uint16_t        m_chbufSize = 0;                // will set in constructor (depending on PSRAM)
+    uint16_t        m_ibuffSize = 0;                // will set in constructor (depending on PSRAM)
+    char*           m_lastHost = NULL;              // Store the last URL to a webstream
+    char*           m_lastM3U8host = NULL;          // Store the last M3U8-URL to a webstream
     char*           m_playlistBuff = NULL;          // stores playlistdata
     uint8_t         m_codec = CODEC_NONE;           //
+    uint8_t         m_m3u8Codec = CODEC_AAC;        // codec of m3u8 stream
     uint8_t         m_expectedCodec = CODEC_NONE;   // set in connecttohost (e.g. http://url.mp3 -> CODEC_MP3)
     uint8_t         m_expectedPlsFmt = FORMAT_NONE; // set in connecttohost (e.g. streaming01.m3u) -> FORMAT_M3U)
     uint8_t         m_streamType = ST_NONE;
@@ -208,18 +214,21 @@ private:
     uint32_t        m_audioDataStart = 0;           // in bytes
     int             m_id3Size=0;                    // length id3 tag
     bool            m_f_ssl=false;
-    uint8_t         m_endFillByte ;                 // Byte to send when stopping song
+    uint8_t         m_endFillByte = 0;              // Byte to send when stopping song
     uint16_t        m_datamode=0;                   // Statemaschine
     bool            m_f_chunked = false ;           // Station provides chunked transfer
     bool            m_f_ctseen=false;               // First line of header seen or not
     bool            m_f_firstchunk=true;            // First chunk as input
-    bool            m_f_swm = true;                 // Stream without metadata
+    bool            m_f_metadata = false;           // Stream without metadata
     bool            m_f_tts = false;                // text to speech
     bool            m_f_Log = false;                // set in platformio.ini  -DAUDIO_LOG and -DCORE_DEBUG_LEVEL=3 or 4
     bool            m_f_continue = false;           // next m3u8 chunk is available
     bool            m_f_ts = true;                  // transport stream
-    bool            m_f_webfile = false;
     bool            m_f_firstCall = false;          // InitSequence for processWebstream and processLokalFile
+    bool            m_f_firstM3U8call = false;      // InitSequence for m3u8 parsing
+    bool            m_f_m3u8data = false;           // used in processM3U8entries
+    bool            m_f_psramFound = false;         // set in constructor, result of psramInit()
+    bool            m_f_timeout = false;            //
     int             m_LFcount;                      // Detection of end of header
     uint32_t        m_chunkcount = 0 ;              // Counter for chunked transfer
     uint32_t        m_contentlength = 0;
@@ -232,12 +241,10 @@ private:
     uint16_t        m_streamUrlHash = 0;            // remember streamURL, ignore multiple occurence in metadata
     uint16_t        m_timeout_ms = 250;
     uint16_t        m_timeout_ms_ssl = 2700;
-    int             m_metacount=0;                  // Number of bytes in metadata
+    uint32_t        m_metacount=0;                  // Number of bytes in metadata
+    uint16_t        m_m3u8_targetDuration = 10;     //
     int             m_controlCounter = 0;           // Status within readID3data() and readWaveHeader()
-    bool            m_firstmetabyte=false;          // True if first metabyte (counter)
     bool            m_f_running = false;
-    bool            m_f_localfile = false ;         // Play from local mp3-file
-    bool            m_f_webstream = false ;         // Play from URL
     bool            m_f_ogg=false;                  // Set if oggstream
     bool            m_f_stream_ready=false;         // Set after connecttohost and first streamdata are available
     bool            m_f_unsync = false;
@@ -268,31 +275,39 @@ protected:
     void     wram_write ( uint16_t address, uint16_t data ) ;
     uint16_t wram_read ( uint16_t address ) ;
     void     showstreamtitle(const char* ml);
-    void     startSong() ;                               // Prepare to start playing. Call this each
-                                                         // time a new song starts.
     void     stopSong() ;                                // Finish playing a song. Call this after
                                                          // the last playChunk call.
     void     urlencode(char* buff, uint16_t buffLen, bool spacesOnly = false);
-    int      read_MP3_Header(uint8_t *data, size_t len);
+    int      read_ID3_Header(uint8_t *data, size_t len);
     void     showID3Tag(const char* tag, const char* value);
+    bool     httpPrint(const char* host);
     void     processLocalFile();
     void     processWebStream();
-    size_t   chunkedDataTransfer();
+    void     processWebStreamTS();
+    void     processWebStreamHLS();
+    void     processWebFile();
+    void     playAudioData();
     bool     readPlayListData();
     const char* parsePlaylist_M3U();
     const char* parsePlaylist_PLS();
     const char* parsePlaylist_ASX();
-//    const char* parsePlaylist_M3U8();
+    const char* parsePlaylist_M3U8();
+    const char* m3u8redirection(uint8_t* codec);
+    uint64_t m3u8_findMediaSeqInURL();
+    bool     STfromEXTINF(char* str);
+    size_t   process_m3u8_ID3_Header(uint8_t* packet);
     bool     parseContentType(char* ct);
-    bool     latinToUTF8(char* buff, size_t bufflen);
+    bool     latinToUTF8(char* buff, size_t bufflen, bool UTF8check = true);
     bool     parseHttpResponseHeader();
-    bool     readMetadata(uint8_t b, bool first = false);
     void     UTF8toASCII(char* str);
     void     unicode2utf8(char* buff, uint32_t len);
     //void     setDefaults();
-    void     loadUserCode();
-
-
+    bool     ts_parsePacket(uint8_t* packet, uint8_t* packetStart, uint8_t* packetLength);
+    uint16_t readMetadata(uint16_t maxBytes, bool first = false);
+    size_t   chunkedDataTransfer(uint8_t* bytes);
+    bool     readID3V1Tag();
+    boolean  streamDetection(uint32_t bytesAvail);
+    uint8_t  determineOggCodec(uint8_t* data, uint16_t len);
 
 public:
     // Constructor.  Only sets pin values.  Doesn't touch the chip.  Be sure to call begin()!
@@ -309,6 +324,7 @@ public:
     void     printDetails(const char* str);             // Print configuration details to serial output.
     uint8_t  printVersion();                            // Returns version of vs1053 chip
     uint32_t printChipID();                             // Returns chipID of vs1053 chip
+    uint32_t getBitRate();                              // average br from WRAM register
     void     softReset() ;                              // Do a soft reset
     void     loop();
     void     setConnectionTimeout(uint16_t timeout_ms, uint16_t timeout_ms_ssl);
@@ -319,6 +335,7 @@ public:
     bool     connecttoFS(fs::FS &fs, const char* path, uint32_t resumeFilePos = 0);
     bool     connecttospeech(const char* speech, const char* lang);
     bool     isRunning() {return m_f_running;}
+    bool     pauseResume();
     uint32_t getFileSize();
     uint32_t getFilePos();
     uint32_t getAudioDataStartPos();
@@ -327,6 +344,9 @@ public:
     uint32_t getAudioCurrentTime();
     size_t   bufferFilled();
     size_t   bufferFree();
+    void     loadUserCode();
+    int getCodec() {return m_codec;}
+    const char *getCodecname() {return codecname[m_codec];}
     size_t   inBufferFilled(){ return bufferFilled(); }
     size_t   inBufferFree(){ return bufferFree(); }
     void     setBalance(int8_t bal = 0);
@@ -339,11 +359,24 @@ public:
     void     computeVUlevel();
     bool     eofHeader;
     // implement several function with respect to the index of string
+    void strlower(char *str){
+        unsigned char *p = (unsigned char *)str;
+        while (*p) {
+           *p = tolower((unsigned char)*p);
+            p++;
+        }
+    }
+
     bool startsWith (const char* base, const char* str) { return (strstr(base, str) - base) == 0;}
-    bool endsWith (const char* base, const char* str) {
-        int blen = strlen(base);
-        int slen = strlen(str);
-        return (blen >= slen) && (0 == strcmp(base + blen - slen, str));
+
+    bool endsWith(const char *base, const char *searchString) {
+        int32_t slen = strlen(searchString);
+        if(slen == 0) return false;
+        const char *p = base + strlen(base);
+    //  while(p > base && isspace(*p)) p--;  // rtrim
+        p -= slen;
+        if(p < base) return false;
+        return (strncmp(p, searchString, slen) == 0);
     }
 
     int indexOf (const char* base, const char* str, int startIndex = 0) {
@@ -377,8 +410,9 @@ public:
         }
         return result;
     }
+
     int specialIndexOf (uint8_t* base, const char* str, int baselen, bool exact = false){
-        int result;  // seek for str in buffer or in header up to baselen, not nullterninated
+        int result = 0;  // seek for str in buffer or in header up to baselen, not nullterninated
         if (strlen(str) > baselen) return -1; // if exact == true seekstr in buffer must have "\0" at the end
         for (int i = 0; i < baselen - strlen(str); i++){
             result = i;
@@ -392,6 +426,14 @@ public:
         }
         return result;
     }
+    
+    int32_t min3(int32_t a, int32_t b, int32_t c){
+        uint32_t min_val = a;
+        if (b < min_val) min_val = b;
+        if (c < min_val) min_val = c;
+        return min_val;
+    }
+
     size_t bigEndian(uint8_t* base, uint8_t numBytes, uint8_t shiftLeft = 8){
         size_t result = 0;
         if(numBytes < 1 or numBytes > 4) return 0;
@@ -452,6 +494,27 @@ public:
         }
         vec.clear();
         vec.shrink_to_fit();
+    }
+
+    uint32_t simpleHash(const char* str){
+        if(str == NULL) return 0;
+        uint32_t hash = 0;
+        for(int i=0; i<strlen(str); i++){
+		    if(str[i] < 32) continue; // ignore control sign
+		    hash += (str[i] - 31) * i * 32;
+        }
+        return hash;
+	}
+
+    char* x_strdup(const char* str){
+        if(m_f_psramFound){
+            char* s = (char*)ps_malloc(strlen(str) + 1);
+            strcpy(s, str);
+            return s;
+        }
+        else{
+            return strdup(str);
+        }
     }
 
     inline uint8_t  getDatamode(){return m_datamode;}
