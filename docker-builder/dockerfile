@@ -1,0 +1,54 @@
+# Using light Linux image
+FROM ubuntu:22.04
+
+# Installation of needed system tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3 \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installation of Arduino CLI
+RUN curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+
+# Configuration of Arduino CLI
+RUN arduino-cli config init
+# Adding URL for ESP32 in boards manager
+RUN arduino-cli config set board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+RUN arduino-cli core update-index
+
+# Installation of ESP32 core (version >= 2.0.0 as in requirements)
+RUN arduino-cli core install esp32:esp32
+
+# Installation of needed libs
+RUN arduino-cli lib install \
+    "Adafruit GFX Library" \
+    "Adafruit ST7735 and ST7789 Library" \
+    "Adafruit SSD1306" \
+    "Adafruit PCD8544 Nokia 5110 LCD Library" \
+    "Adafruit SH110X" \
+    "Adafruit SSD1327" \
+    "Adafruit ILI9341" \
+    "Adafruit SSD1305" \
+    "TFT_22_ILI9225" \
+    "OneButton" \
+    "IRremoteESP8266" \
+    "XPT2046_Touchscreen" \
+    "RTCLib"
+
+# Download yoRadio repo
+WORKDIR /app
+RUN git clone https://github.com/e2002/yoradio.git
+
+# Patch for glcdfont.c
+RUN cp /app/yoradio/yoRadio/fonts/glcdfont.c /root/Arduino/libraries/Adafruit_GFX_Library/glcdfont.c
+
+# Prepare compile.sh script
+COPY compile.sh /app/compile.sh
+RUN chmod +x /app/compile.sh
+
+# Make directory for future mounting on user local directory
+VOLUME /build
+
+ENTRYPOINT ["/app/compile.sh"]
