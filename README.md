@@ -182,6 +182,21 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 5. Well done!
 
 ---
+## Alternative build using a docker builder (Arduino IDE not needed)
+
+0. You need to have a [docker](https://www.docker.com/) and [esptool](https://github.com/espressif/esptool/releases) installed on your system.
+1. Create a 'yoradio-builder' folder and paste files (dockerfile, compile.sh) from 'docker-builder' folder in repository.
+2. Generate a myoptions.h file for your hardware configuration using [this tool](https://e2002.github.io/docs/myoptions-generator.html).
+3. Put myoptions.h file in 'yoradio-builder'.
+4. Open terminal/cmd and go to your "yoradio-builder" folder.
+5. Run `docker build -t yoradio-builder .` Command will create a builder image with all needed software and hardcoded compile.sh in it. If you want to change something there, you will need to run this commmand again to recreate an image.
+6. Run `docker run --rm -v $(pwd):/build yoradio-builder` This command will mount your 'yoradio-builder' folder in container and use your myoptions.h in build process. You will find your binary files in 'bin' folder in 'yoradio-builder'.
+7. Connect a board, should be recognized as COM3 by defualt.
+8. WARNING - this step will erase all your data from ESP32 so make a backup first.
+Run `esptool.exe --port COM3 write-flash 0x0000 <path to yoradio-builder\bin\yoRadio.ino.merged.bin>` to upload your yoradio firmware with partitions structure.
+9. Go to step 7. in _Quick start_ and continue.
+
+---
 ## MQTT
 1. Copy file examples/mqttoptions.h to yoRadio/ directory
 2. In the mqttoptions.h file, change the options to the ones you need
