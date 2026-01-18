@@ -143,7 +143,8 @@ private:
   std::vector<Plugin*> plugins;
 };
 
-extern pluginsManager pm;
+pluginsManager& getPluginsManager();
+extern pluginsManager& pm;
 
 #endif // PLUGINSMANAGER_H
 

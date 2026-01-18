@@ -1,12 +1,17 @@
 #include "pluginsManager.h"
 
-pluginsManager pm;
+pluginsManager& getPluginsManager() {
+  static pluginsManager instance;
+  return instance;
+}
+
+pluginsManager& pm = getPluginsManager();
 
 Plugin::Plugin() {
 }
 
 void Plugin::registerPlugin() {
-  pm.add(this);
+  getPluginsManager().add(this);
 }
 
 void pluginsManager::add(Plugin* plugin) {
