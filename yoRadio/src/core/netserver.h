@@ -124,6 +124,11 @@ class NetServer {
     static size_t chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index);
     void processQueue();
     int _readPlaylistLine(File &file, char * line, size_t size);
+    // --- Metric Caching additions ---
+    unsigned long _lastMetricsUpdate = 0;
+    String _cachedMetrics = "";
+    void _updateMetricsCache();
+    // --------------------------------    
 };
 
 extern NetServer netserver;
