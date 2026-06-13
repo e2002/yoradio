@@ -107,6 +107,7 @@ class NetServer {
     void chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path);
     void onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId);
     bool irRecordEnable;
+    String getCachedMetrics() { return cachedMetrics; };
 #if IR_PIN!=255
     void irToWs(const char* protocol, uint64_t irvalue);
     void irValsToWs(); 
@@ -124,6 +125,9 @@ class NetServer {
     static size_t chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index);
     void processQueue();
     int _readPlaylistLine(File &file, char * line, size_t size);
+    String cachedMetrics;
+    unsigned long _lastMetricsUpdate = 0;
+    void updateMetrics();
 };
 
 extern NetServer netserver;
