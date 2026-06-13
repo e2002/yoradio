@@ -41,6 +41,7 @@
 #endif
 
 //#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
+#define METRICS_INTERVAL_MS 5000
 
 NetServer netserver;
 
@@ -77,6 +78,8 @@ bool NetServer::begin(bool quiet) {
   playerBufMax = psramInit()?300000:1600 * config.store.abuff;
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
   while(nsQueue==NULL){;}
+  // Initialize the metrics cache on boot
+  updateMetrics();
 
   webserver.on("/", HTTP_ANY, handleIndex);
   webserver.onNotFound(handleNotFound);
@@ -328,6 +331,11 @@ void NetServer::loop() {
     delay(100);
     ESP.restart();
   }
+  unsigned long currentMillis = millis();
+    if (currentMillis - _lastMetricsUpdate >= METRICS_INTERVAL_MS) {
+        _lastMetricsUpdate = currentMillis;
+        updateMetrics();
+    }
   processQueue();
   websocket.cleanupClients();
   switch (importRequest) {
@@ -336,6 +344,65 @@ void NetServer::loop() {
     default:      break;
   }
   //processQueue();
+}
+
+/**
+ * Gathers target firmware, system, or player variables
+ * and binds them to the cached string variable.
+ */
+void NetServer::updateMetrics() {
+    String m = "";
+    wl_status_t wifiStatus = WiFi.status();
+
+    // 1. System Info & Hardware State Indicators
+    m += "# HELP yoradio_free_heap_bytes Free System Heap Memory.\n";
+    m += "# TYPE yoradio_free_heap_bytes gauge\n";
+    m += "yoradio_free_heap_bytes " + String(ESP.getFreeHeap()) + "\n\n";
+
+    m += "# HELP yoradio_uptime_seconds System Uptime Monitor.\n";
+    m += "# TYPE yoradio_uptime_seconds counter\n";
+    m += "yoradio_uptime_seconds " + String(millis() / 1000) + "\n\n";
+
+    // 2. Network Diagnostics (RSSI, AP Name & Status Code with value mappings)
+    m += "# HELP yoradio_wifi_status Current raw WiFi status code enum value (0=IDLE, 1=NO_SSID, 2=SCAN_COMPLETED, 3=CONNECTED, 4=CONNECT_FAILED, 5=CONNECTION_LOST, 6=DISCONNECTED).\n";
+    m += "# TYPE yoradio_wifi_status gauge\n";
+    m += "yoradio_wifi_status " + String((int)wifiStatus) + "\n\n";
+
+    m += "# HELP yoradio_wifi_rssi_dbm WiFi signal strength intensity.\n";
+    m += "# TYPE yoradio_wifi_rssi_dbm gauge\n";
+    int rssi = (wifiStatus == WL_CONNECTED) ? WiFi.RSSI() : 0;
+    m += "yoradio_wifi_rssi_dbm " + String(rssi) + "\n\n";
+
+    m += "# HELP yoradio_wifi_ap_info Connected Wi-Fi AP Access Point Name details.\n";
+    m += "# TYPE yoradio_wifi_ap_info gauge\n";
+    String currentSSID = (wifiStatus == WL_CONNECTED) ? WiFi.SSID() : "Disconnected";
+    currentSSID.replace("\"", "\\\""); // Escape quotes to keep Prometheus structural formatting clean
+    m += "yoradio_wifi_ap_info{ssid=\"" + currentSSID + "\"} 1\n\n";
+
+    // 3. Current Playback Context Metrics (Mirroring core attributes of cli.info)
+    m += "# HELP yoradio_volume Current audio playback volume level.\n";
+    m += "# TYPE yoradio_volume gauge\n";
+    m += "yoradio_volume " + String(config.store.volume) + "\n\n";
+
+    m += "# HELP yoradio_current_station_index Active playlist index item sequence.\n";
+    m += "# TYPE yoradio_current_station_index gauge\n";
+    m += "yoradio_current_station_index " + String(config.store.lastStation) + "\n\n";
+
+    m += "# HELP yoradio_playing_status Active playback flag (1=STREAMING/PLAYING, 0=IDLE/STOPPED).\n";
+    m += "# TYPE yoradio_playing_status gauge\n";
+    int isPlaying = (player.status() == PR_PLAY) ? 1 : 0;
+    m += "yoradio_playing_status " + String(isPlaying) + "\n\n";
+
+    // 4. Metadata Metadata Tag Export (Prometheus Labels Style)
+    m += "# HELP yoradio_station_info Current radio profile metadata. Mode labels define audio input sources (0=Radio Stream, 1=Bluetooth Receiver, 2=SD Card Playback, 3=Line-In/Aux).\n";
+    m += "# TYPE yoradio_station_info gauge\n";
+    String stationName = String(config.station.name);
+    stationName.replace("\"", "\\\""); // Escape quotes to avoid broken exposition lines
+
+    m += "yoradio_station_info{name=\"" + stationName + "\",mode=\"" + String(config.getMode()) + "\"} 1\n";
+
+    // Atomically swap the memory block reference string pointers
+    cachedMetrics = m;
 }
 
 #if IR_PIN!=255
@@ -609,6 +676,10 @@ void handleNotFound(AsyncWebServerRequest * request) {
   }
   if (request->method() == HTTP_GET && request->url() == "/webboard") {
     request->send_P(200, "text/html", emptyfs_html);
+    return;
+  }
+  if (request->method() == HTTP_GET && request->url() == "/metrics") {
+    request->send(200, "text/plain; version=0.0.4; charset=utf-8", netserver.getCachedMetrics());
     return;
   }
   Serial.print("Not Found: ");
