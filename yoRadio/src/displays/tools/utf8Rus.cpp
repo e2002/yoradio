@@ -92,7 +92,59 @@ char* utf8Rus(const char* str, bool uppercase) {
         #endif
       #endif
       }
-    } else {                              // ASCII
+    }
+#if !defined(DSP_LCD)
+    // Czech (and Slovak-compatible) diacritics -> font glyphs at 0x80-0x9D
+    // (see yoRadio/fonts/glcdfont.c). Glyphs live in glcdfont.c, which only
+    // applies to GFX displays, hence the !DSP_LCD guard.
+    else if (c == 0xC3 && str[i+1]) {
+      uint8_t n = (uint8_t)str[++i];
+      switch (n) {
+        case 0x81: out[outPos++] = 0x8F; break;                          // Á
+        case 0x89: out[outPos++] = 0x92; break;                          // É
+        case 0x8D: out[outPos++] = 0x94; break;                          // Í
+        case 0x93: out[outPos++] = 0x96; break;                          // Ó
+        case 0x9A: out[outPos++] = 0x9A; break;                          // Ú
+        case 0x9D: out[outPos++] = 0x9C; break;                          // Ý
+        case 0xA1: out[outPos++] = uppercase ? 0x8F : 0x80; break;       // á
+        case 0xA9: out[outPos++] = uppercase ? 0x92 : 0x83; break;       // é
+        case 0xAD: out[outPos++] = uppercase ? 0x94 : 0x85; break;       // í
+        case 0xB3: out[outPos++] = uppercase ? 0x96 : 0x87; break;       // ó
+        case 0xBA: out[outPos++] = uppercase ? 0x9A : 0x8B; break;       // ú
+        case 0xBD: out[outPos++] = uppercase ? 0x9C : 0x8D; break;       // ý
+        default: break;                                                  // non-Czech: skip
+      }
+    } else if (c == 0xC4 && str[i+1]) {
+      uint8_t n = (uint8_t)str[++i];
+      switch (n) {
+        case 0x8C: out[outPos++] = 0x90; break;                          // Č
+        case 0x8E: out[outPos++] = 0x91; break;                          // Ď
+        case 0x9A: out[outPos++] = 0x93; break;                          // Ě
+        case 0x8D: out[outPos++] = uppercase ? 0x90 : 0x81; break;       // č
+        case 0x8F: out[outPos++] = uppercase ? 0x91 : 0x82; break;       // ď
+        case 0x9B: out[outPos++] = uppercase ? 0x93 : 0x84; break;       // ě
+        default: break;
+      }
+    } else if (c == 0xC5 && str[i+1]) {
+      uint8_t n = (uint8_t)str[++i];
+      switch (n) {
+        case 0x87: out[outPos++] = 0x95; break;                          // Ň
+        case 0x98: out[outPos++] = 0x97; break;                          // Ř
+        case 0xA0: out[outPos++] = 0x98; break;                          // Š
+        case 0xA4: out[outPos++] = 0x99; break;                          // Ť
+        case 0xAE: out[outPos++] = 0x9B; break;                          // Ů
+        case 0xBD: out[outPos++] = 0x9D; break;                          // Ž
+        case 0x88: out[outPos++] = uppercase ? 0x95 : 0x86; break;       // ň
+        case 0x99: out[outPos++] = uppercase ? 0x97 : 0x88; break;       // ř
+        case 0xA1: out[outPos++] = uppercase ? 0x98 : 0x89; break;       // š
+        case 0xA5: out[outPos++] = uppercase ? 0x99 : 0x8A; break;       // ť
+        case 0xAF: out[outPos++] = uppercase ? 0x9B : 0x8C; break;       // ů
+        case 0xBE: out[outPos++] = uppercase ? 0x9D : 0x8E; break;       // ž
+        default: break;
+      }
+    }
+#endif
+    else {                              // ASCII
     #if defined(DSP_LCD) && !defined(LCD_RUS)
       char ch = (char)toupper(c);
       if (ch == 7) ch = (char)165;

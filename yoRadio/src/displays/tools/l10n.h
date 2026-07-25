@@ -2,8 +2,13 @@
 #define _display_l10n_h
 namespace LANG{
 //==================================================
+#ifndef CS
+  #define CS 3
+#endif
 #if L10N_LANGUAGE==RU
   #define L10N_PATH "../../../locale/displayL10n_ru.h"
+#elif L10N_LANGUAGE==CS
+  #define L10N_PATH "../../../locale/displayL10n_cs.h"
 #else
   #define L10N_PATH "../../../locale/displayL10n_en.h"
 #endif
