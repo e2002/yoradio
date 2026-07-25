@@ -39,14 +39,37 @@ void audio_bitrate(const char *info)
 }
 
 bool printable(const char *info) {
-  if(L10N_LANGUAGE!=RU) return true;
-  bool p = true;
-  for (int c = 0; c < strlen(info); c++)
-  {
-    if ((uint8_t)info[c] > 0x7e || (uint8_t)info[c] < 0x20) p = false;
+  #ifndef CS
+    #define CS 3
+  #endif
+  if(L10N_LANGUAGE!=RU && L10N_LANGUAGE!=CS) return true;
+  // Validate the whole string as printable ASCII and/or well-formed UTF-8.
+  // Unlike the old first-byte-only heuristic, this also accepts mixed strings
+  // such as "Rádio Česko" (ASCII lead + diacritics) while still rejecting
+  // binary garbage that some streams put in ICY metadata.
+  size_t len = strlen(info);
+  if (!len) return false;
+  for (size_t c = 0; c < len; ) {
+    uint8_t b = (uint8_t)info[c];
+    if (b >= 0x20 && b <= 0x7e) { c++; continue; }        // printable ASCII
+    int nb;                                              // expected continuation bytes
+    if      (b >= 0xC2 && b <= 0xDF) nb = 1;             // 2-byte
+    else if (b == 0xE0)              nb = 2;             // 3-byte (2nd >= 0xA0)
+    else if (b >= 0xE1 && b <= 0xEC) nb = 2;
+    else if (b == 0xED)              nb = 2;             // 3-byte (2nd <= 0x9F, no surrog)
+    else if (b >= 0xEE && b <= 0xEF) nb = 2;
+    else if (b == 0xF0)              nb = 3;             // 4-byte (2nd >= 0x90)
+    else if (b >= 0xF1 && b <= 0xF3) nb = 3;
+    else if (b == 0xF4)              nb = 3;             // 4-byte (2nd <= 0x8F)
+    else return false;                                   // bare continuation / invalid lead / control
+    if (c + nb >= len) return false;                     // truncated sequence
+    for (int i = 1; i <= nb; i++) {
+      uint8_t cb = (uint8_t)info[c + i];
+      if (cb < 0x80 || cb > 0xBF) return false;
+    }
+    c += nb + 1;
   }
-  if (!p) p = (uint8_t)info[0] >= 0xC2 && (uint8_t)info[1] >= 0x80 && (uint8_t)info[1] <= 0xBF;
-  return p;
+  return true;
 }
 
 void audio_showstation(const char *info) {
