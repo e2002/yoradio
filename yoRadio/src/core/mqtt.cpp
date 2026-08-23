@@ -94,6 +94,7 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     if (strcmp(buf, "turnon") == 0) {
       config.setDspOn(1);
       if (config.store.smartstart == 1) player.sendCommand({PR_PLAY, config.lastStation()});
+      mqttPublishStatus();
       return;
     }
     int volume;
