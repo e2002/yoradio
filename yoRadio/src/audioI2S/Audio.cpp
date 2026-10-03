@@ -485,7 +485,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
       strcat(rqh, "\r\n");
     }
     strcat(rqh, "Accept-Encoding: identity;q=1,*;q=0\r\n");
-    strcat(rqh, "User-Agent: Mozilla/5.0\r\n");
+    strcat(rqh, "User-Agent: Mozilla/5.0 (compatible; yoRadio)\r\n");
     strcat(rqh, "Connection: keep-alive\r\n\r\n");
 
     if(ESP_ARDUINO_VERSION_MAJOR == 2 && ESP_ARDUINO_VERSION_MINOR == 0 && ESP_ARDUINO_VERSION_PATCH >= 3 && MAX_AUDIO_SOCKET_TIMEOUT){
@@ -614,7 +614,7 @@ bool Audio::httpPrint(const char* host) {
     strcat(rqh, hostwoext);
     strcat(rqh, "\r\n");
     strcat(rqh, "Accept-Encoding: identity;q=1,*;q=0\r\n");
-    strcat(rqh, "User-Agent: Mozilla/5.0\r\n");
+    strcat(rqh, "User-Agent: Mozilla/5.0 (compatible; yoRadio)\r\n");
     strcat(rqh, "Connection: keep-alive\r\n\r\n");
 
     if(m_f_ssl){ _client = static_cast<WiFiClient*>(&clientsecure); if(port == 80) port = 443;}
@@ -812,7 +812,7 @@ bool Audio::connecttospeech(const char* speech, const char* lang){
     strcat(resp, "Host: ");
     strcat(resp, host);
     strcat(resp, "\r\n");
-    strcat(resp, "User-Agent: Mozilla/5.0 \r\n");
+    strcat(resp, "User-Agent: Mozilla/5.0 (compatible; yoRadio)\r\n");
     strcat(resp, "Accept-Encoding: identity\r\n");
     strcat(resp, "Accept: text/html\r\n");
     strcat(resp, "Connection: close\r\n\r\n");
@@ -904,7 +904,7 @@ bool Audio::connecttomarytts(const char* speech, const char* lang, const char* v
     strcat(resp, "Host: ");
     strcat(resp, host);
     strcat(resp, "\r\n");
-    strcat(resp, "User-Agent: Mozilla/5.0 \r\n");
+    strcat(resp, "User-Agent: Mozilla/5.0 (compatible; yoRadio)\r\n");
     strcat(resp, "Accept-Encoding: identity\r\n");
     strcat(resp, "Accept: text/html\r\n");
     strcat(resp, "Connection: close\r\n\r\n");
